@@ -70,14 +70,14 @@ export default function InventoryPage() {
   }, 0);
 
   const computedStats = [
-    { label: 'Total Products', value: String(products.length), icon: 'ri-archive-line', accent: 'bg-blue-500' },
+    { label: 'Total Parts', value: String(products.length), icon: 'ri-archive-line', accent: 'bg-blue-500' },
     { label: 'Low Stock Items', value: String(products.filter(p => p.stock > 0 && p.stock <= 2).length), icon: 'ri-alert-line', accent: 'bg-amber-500' },
     { label: 'Out of Stock', value: String(products.filter(p => p.stock === 0).length), icon: 'ri-close-circle-line', accent: 'bg-red-500' },
     { label: 'Total Value', value: totalValue > 0 ? `GHS ${totalValue.toLocaleString()}` : 'GHS 0', icon: 'ri-money-dollar-circle-line', accent: 'bg-emerald-500' },
   ];
 
   return (
-    <AdminLayout title="Inventory" subtitle="Manage products, stock, and suppliers">
+    <AdminLayout title="Parts & Components" subtitle="Spare parts, consumables and repair materials">
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
         {computedStats.map((s) => (
@@ -104,7 +104,7 @@ export default function InventoryPage() {
           </div>
           <input
             type="text"
-            placeholder="Search products..."
+            placeholder="Search parts..."
             value={search}
             onChange={(e) => {
               const next = e.target.value;
@@ -160,7 +160,7 @@ export default function InventoryPage() {
                 <tr>
                   <td colSpan={7} className="px-4 py-16 text-center text-sm text-slate-400">
                     <i className="ri-archive-line text-3xl block mb-2 text-slate-200" />
-                    No products yet. Add your first product to get started.
+                    No parts in stock. Add spare parts to get started.
                   </td>
                 </tr>
               )}

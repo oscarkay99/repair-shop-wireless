@@ -24,7 +24,7 @@ export default function CertificatePreview({ cert }: Props) {
           <i className="ri-shield-check-line" style={{ color: '#F5A623' }} />
         </div>
         <div>
-          <p className="text-xs font-bold text-white">iDeals Tech Hub</p>
+          <p className="text-xs font-bold text-white">FixHub</p>
           <p className="text-[10px] text-white/40">Authenticity Certificate</p>
         </div>
         <div className="ml-auto">
@@ -82,7 +82,7 @@ export default function CertificatePreview({ cert }: Props) {
         </div>
         <div>
           <p className="text-[10px] font-bold" style={{ color: '#F5A623' }}>Verified Authentic</p>
-          <p className="text-[10px] text-white/40">idealstech.gh/verify/{cert.id}</p>
+          <p className="text-[10px] text-white/40">fixhub.com/verify/{cert.id}</p>
         </div>
       </div>
 

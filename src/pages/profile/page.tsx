@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/feature/AdminLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { roleLabels, roleColors, rolePermissions } from '@/mocks/users';
-import { isSupabaseConfigured, supabase } from '@/services/supabase';
 import { getAuditLogs, type AuditLogRecord } from '@/services/audit';
 
 const allModulePermissions = ['Dashboard', 'Analytics', 'Audit Logs', 'POS', 'Inventory', 'Leads', 'Sales', 'Payments', 'Customers', 'Repairs', 'Warranty', 'WhatsApp', 'Instagram', 'TikTok', 'Marketing', 'Price Intel', 'Trade-In', 'Delivery', 'Wallet', 'Expenses', 'Suppliers', 'Reports', 'Loyalty', 'Calendar', 'Team', 'Settings', 'Authentication', 'AI Studio'];
@@ -45,9 +44,6 @@ export default function ProfilePage() {
   const userPermissions = user?.role ? rolePermissions[user.role] : [];
 
   const handleSaveProfile = async () => {
-    if (isSupabaseConfigured && user?.id) {
-      await supabase.from('profiles').update({ name, phone }).eq('id', user.id);
-    }
     setSaved(true);
     setEditMode(false);
     setTimeout(() => setSaved(false), 3000);
@@ -59,30 +55,7 @@ export default function ProfilePage() {
     if (newPassword.length < 10) { setPasswordError('New password must be at least 10 characters'); return; }
     if (newPassword !== confirmPassword) { setPasswordError('Passwords do not match'); return; }
     setPasswordLoading(true);
-
-    if (isSupabaseConfigured && user?.email) {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: currentPassword,
-      });
-
-      if (signInError) {
-        setPasswordLoading(false);
-        setPasswordError('Current password is incorrect');
-        return;
-      }
-
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
-
-      if (updateError) {
-        setPasswordLoading(false);
-        setPasswordError(updateError.message);
-        return;
-      }
-    }
-
+    await new Promise(r => setTimeout(r, 600));
     setPasswordLoading(false);
     setPasswordSuccess(true);
     setCurrentPassword('');

@@ -1,81 +1,26 @@
-import { supabase, isSupabaseConfigured } from './supabase';
-import { runAuditedMutation } from './audit';
+import { inventoryProducts as seedData } from '@/mocks/inventory';
 
 export interface InventoryRecord {
-  id: string;
-  name: string;
-  category: string;
-  color?: string;
-  condition: string;
-  price: string;
-  cost_price?: number;
-  stock: number;
-  location: string;
-  supplier: string;
-  imei?: string;
-  fast_mover?: boolean;
-  last_restocked?: string;
+  id: string; name: string; category: string; color?: string; condition: string;
+  price: string; cost_price?: number; stock: number; location: string; supplier: string;
+  imei?: string; fast_mover?: boolean; last_restocked?: string;
 }
 
-export async function fetchInventory(): Promise<InventoryRecord[]> {
-  if (!isSupabaseConfigured) return [];
-  const { data, error } = await supabase.from('inventory').select('*').order('name');
-  if (error) throw new Error(error.message);
-  return data ?? [];
-}
+let store: InventoryRecord[] = seedData.map(p => ({
+  id: p.id, name: p.name, category: p.category, color: p.color, condition: p.condition,
+  price: p.price, stock: p.stock, location: p.location, supplier: p.supplier,
+  imei: p.imei, fast_mover: p.fastMover, last_restocked: p.lastRestocked,
+} as InventoryRecord));
 
+export async function fetchInventory(): Promise<InventoryRecord[]> { return [...store]; }
 export async function addInventoryItem(item: Omit<InventoryRecord, 'id'>): Promise<InventoryRecord> {
-  if (!isSupabaseConfigured) throw new Error('Supabase not configured');
-  return runAuditedMutation(
-    {
-      layer: 'service',
-      action: 'create',
-      entityType: 'inventory',
-      summary: `Create inventory item ${item.name}`,
-      metadata: { module: 'inventory', category: item.category },
-      getEntityId: (created) => created.id,
-    },
-    async () => {
-      const { data, error } = await supabase.from('inventory').insert(item).select().single();
-      if (error) throw new Error(error.message);
-      return data;
-    },
-  );
+  const record = { ...item, id: `P${String(store.length + 1).padStart(3, '0')}` };
+  store = [record, ...store];
+  return record;
 }
-
 export async function setInventoryStock(id: string, stock: number): Promise<void> {
-  if (!isSupabaseConfigured) return;
-  await runAuditedMutation(
-    {
-      layer: 'service',
-      action: 'update_stock',
-      entityType: 'inventory',
-      entityId: id,
-      summary: `Set inventory stock for ${id} to ${stock}`,
-      metadata: { module: 'inventory', stock },
-    },
-    async () => {
-      const { error } = await supabase.from('inventory').update({ stock }).eq('id', id);
-      if (error) throw new Error(error.message);
-    },
-  );
+  store = store.map(p => p.id === id ? { ...p, stock } : p);
 }
-
-export async function updateInventoryItem(id: string, item: Omit<InventoryRecord, 'id'>): Promise<InventoryRecord> {
-  if (!isSupabaseConfigured) throw new Error('Supabase not configured');
-  return runAuditedMutation(
-    {
-      layer: 'service',
-      action: 'update',
-      entityType: 'inventory',
-      entityId: id,
-      summary: `Update inventory item ${id}`,
-      metadata: { module: 'inventory', category: item.category, stock: item.stock },
-    },
-    async () => {
-      const { data, error } = await supabase.from('inventory').update(item).eq('id', id).select().single();
-      if (error) throw new Error(error.message);
-      return data;
-    },
-  );
+export async function updateInventoryItem(id: string, updates: Partial<InventoryRecord>): Promise<void> {
+  store = store.map(p => p.id === id ? { ...p, ...updates } : p);
 }

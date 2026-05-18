@@ -1,6 +1,6 @@
-export const APP_NAME = 'GadgetFlow';
-export const APP_FULL_NAME = 'GadgetFlow Command Center';
-export const COMPANY_NAME = 'Ideals Tech Hub';
+export const APP_NAME = 'FixHub';
+export const APP_FULL_NAME = 'FixHub Command Center';
+export const COMPANY_NAME = 'FixHub';
 export const SUPPORT_WHATSAPP = '+233 24 000 0000';
 export const CURRENCY = 'GHS';
 

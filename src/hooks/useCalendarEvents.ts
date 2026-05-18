@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getCalendarEvents, createCalendarEvent, updateCalendarEvent } from '@/services/events';
+import { getEvents, createEvent, deleteEvent } from '@/services/events';
 import type { CalendarEvent } from '@/services/events';
 import { useToast } from '@/contexts/ToastContext';
 
@@ -9,32 +9,24 @@ export function useCalendarEvents() {
   const { showToast } = useToast();
 
   useEffect(() => {
-    getCalendarEvents()
-      .then(data => setEvents(data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    getEvents().then(setEvents).finally(() => setLoading(false));
   }, []);
 
-  const add = async (e: Omit<CalendarEvent, 'id'>) => {
-    try {
-      const created = await createCalendarEvent(e);
-      setEvents(prev => [...prev, created]);
-      showToast('Event created');
-      return created;
-    } catch {
-      const local: CalendarEvent = { ...e, id: `EVT-${Date.now()}` };
-      setEvents(prev => [...prev, local]);
-      showToast('Event saved locally — sync failed', 'warning');
-      return local;
-    }
+  const add = async (e: Omit<CalendarEvent, 'id'>): Promise<void> => {
+    const created = await createEvent(e);
+    setEvents(prev => [...prev, created]);
+    showToast('Event added');
   };
 
-  const update = (id: string, patch: Partial<Omit<CalendarEvent, 'id'>>) => {
-    setEvents(prev => prev.map(e => e.id === id ? { ...e, ...patch } : e));
-    updateCalendarEvent(id, patch)
-      .then(() => showToast('Event updated'))
-      .catch(() => showToast('Could not sync changes', 'warning'));
+  const remove = async (id: string) => {
+    await deleteEvent(id);
+    setEvents(prev => prev.filter(e => e.id !== id));
+    showToast('Event removed');
   };
 
-  return { events, loading, add, update };
+  const update = (id: string, changes: Partial<CalendarEvent>) => {
+    setEvents(prev => prev.map(e => e.id === id ? { ...e, ...changes } : e));
+  };
+
+  return { events, loading, add, remove, update };
 }

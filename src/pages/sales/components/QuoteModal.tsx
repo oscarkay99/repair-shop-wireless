@@ -50,7 +50,7 @@ export default function QuoteModal({ cartItems, customerName, deliveryType, paym
                   <div>
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0D1F4A]/6 text-[#0D1F4A] text-[11px] font-semibold mb-4">
                       <span className="w-2 h-2 rounded-full bg-[#0D1F4A]" />
-                      iDeals Tech Hub
+                      FixHub
                     </div>
                     <h2 className="text-3xl font-black text-slate-900 tracking-tight">Quote</h2>
                     <p className="text-sm text-slate-500 mt-2 max-w-md">Structured like the TriAxis layout, with clear billing metadata, itemized lines, and a separate financial summary.</p>
@@ -82,7 +82,7 @@ export default function QuoteModal({ cartItems, customerName, deliveryType, paym
                   <div className="rounded-2xl border border-slate-100 p-4">
                     <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-3">Bill To</p>
                     <p className="text-base font-bold text-slate-800">{customerName || 'Walk-in Customer'}</p>
-                    <p className="text-sm text-slate-500 mt-2">Prepared by iDeals Tech Hub</p>
+                    <p className="text-sm text-slate-500 mt-2">Prepared by FixHub</p>
                     <p className="text-sm text-slate-500">Accra, Ghana</p>
                   </div>
                   <div className="rounded-2xl border border-slate-100 p-4">

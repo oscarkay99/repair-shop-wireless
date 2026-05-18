@@ -3,49 +3,26 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { roleLabels } from '@/mocks/users';
 import { canAccessModule } from '@/utils/access';
-import idealsTechHubLogo from '@/assets/ideals-tech-hub-logo.png';
 import { navGroups, publicItems } from './navigation';
 
-function TransparentLogo({ width = 150 }: { width?: number }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const img = new Image();
-    img.src = idealsTechHubLogo;
-    img.onload = () => {
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      ctx.drawImage(img, 0, 0);
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
-      for (let i = 0; i < data.length; i += 4) {
-        const r = data[i], g = data[i + 1], b = data[i + 2];
-        if (r > 235 && g > 235 && b > 235) { data[i + 3] = 0; continue; }
-        const max = Math.max(r, g, b);
-        const saturation = max === 0 ? 0 : (max - Math.min(r, g, b)) / max;
-        if (saturation < 0.25) {
-          const darkness = 1 - r / 255;
-          data[i] = 255; data[i + 1] = 255; data[i + 2] = 255;
-          data[i + 3] = Math.round(darkness * data[i + 3]);
-        }
-      }
-      ctx.putImageData(imageData, 0, 0);
-    };
-  }, []);
-
+function FixHubIcon({ size = 32 }: { size?: number }) {
   return (
-    <canvas
-      ref={canvasRef}
-      style={{
-        width: `${width}px`,
-        height: 'auto',
-        filter: 'drop-shadow(0 0 8px rgba(245,166,35,0.25)) drop-shadow(0 0 4px rgba(245,166,35,0.2))',
-      }}
-    />
+    <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="40" height="40" rx="10" fill="#0D1F4A" />
+      <path d="M12 28 L16 16 L20 22 L24 16 L28 28" stroke="#F5A623" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <circle cx="20" cy="13" r="3" fill="#F5A623" />
+    </svg>
+  );
+}
+
+function FixHubWordmark() {
+  return (
+    <div className="flex items-center gap-2.5">
+      <FixHubIcon size={30} />
+      <span className="text-[19px] font-black tracking-tight" style={{ color: 'white', letterSpacing: '-0.02em' }}>
+        Fix<span style={{ color: '#F5A623' }}>Hub</span>
+      </span>
+    </div>
   );
 }
 
@@ -56,23 +33,6 @@ const roleGradients: Record<string, string> = {
   technician: 'linear-gradient(135deg, #D97706, #F59E0B)',
   inventory_manager: 'linear-gradient(135deg, #DC2626, #F87171)',
 };
-
-function LogoMark({ size = 32 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 100 110" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="goldArcS" x1="20" y1="90" x2="30" y2="20" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#F5A623" />
-          <stop offset="100%" stopColor="#FFD166" />
-        </linearGradient>
-      </defs>
-      <path d="M32 88 Q5 58 30 22" stroke="url(#goldArcS)" strokeWidth="13" strokeLinecap="round" fill="none" />
-      <path d="M88 65 C88 88 74 102 55 102 C36 102 22 88 22 65 C22 42 36 30 55 30 C74 30 88 42 88 65 Z" fill="#0D1F4A" />
-      <path d="M38 90 Q55 76 72 86" stroke="white" strokeWidth="8" strokeLinecap="round" fill="none" />
-      <circle cx="63" cy="16" r="13" fill="#0D1F4A" />
-    </svg>
-  );
-}
 
 interface SidebarProps {
   onWidthChange?: (width: number) => void;
@@ -119,7 +79,7 @@ export default function Sidebar({ onWidthChange }: SidebarProps) {
         className={`flex items-center flex-shrink-0 ${collapsed ? 'justify-center px-3 py-4' : 'px-5 py-4'}`}
         style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}
       >
-        {collapsed ? <LogoMark size={34} /> : <TransparentLogo width={148} />}
+        {collapsed ? <FixHubIcon size={34} /> : <FixHubWordmark />}
       </div>
 
       {/* Nav */}

@@ -187,7 +187,7 @@ export default function TradeInPage() {
                   <i className="ri-calendar-check-line mr-1" />Book Appointment
                 </button>
                 <button
-                  onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`Trade-In Valuation from iDeals Tech Hub\n\nDevice: ${selectedModel} (${selectedStorage})\nCondition: ${conditionDetails[selectedCondition].label}\nTrade-In Value: GHS ${tradeValue.toLocaleString()}\n\nReady to upgrade? Book an appointment at iDeals Tech Hub.`)}`, '_blank')}
+                  onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`Trade-In Valuation from FixHub\n\nDevice: ${selectedModel} (${selectedStorage})\nCondition: ${conditionDetails[selectedCondition].label}\nTrade-In Value: GHS ${tradeValue.toLocaleString()}\n\nReady to upgrade? Book an appointment at FixHub.`)}`, '_blank')}
                   className="flex-1 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-medium cursor-pointer whitespace-nowrap"
                 >
                   <i className="ri-whatsapp-line mr-1" />Share via WhatsApp

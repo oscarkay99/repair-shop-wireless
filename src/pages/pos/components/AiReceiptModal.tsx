@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import type { CartItem, TradeIn } from '../page';
 import type { PosCustomer } from '@/mocks/pos';
-import idealsLogo from '@/assets/ideals-tech-hub-logo.png';
+
 
 interface Props {
   cart: CartItem[];
@@ -46,7 +46,7 @@ export default function AiReceiptModal({ cart, customer, total, tradeIn, payment
 
   function buildReceiptText() {
     const lines: string[] = [
-      `*iDeals Tech Hub — ${isPaid ? 'Receipt' : 'Invoice'} #${txn}*`,
+      `*FixHub — ${isPaid ? 'Receipt' : 'Invoice'} #${txn}*`,
       '',
       `Customer: ${customer?.name ?? 'Walk-in Customer'}`,
       `Date: ${dateStr} · ${timeStr}`,
@@ -62,7 +62,7 @@ export default function AiReceiptModal({ cart, customer, total, tradeIn, payment
       '',
       'Returns accepted within 7 days with this receipt.',
       'Thank you for shopping with us!',
-      'ideals@idealsgh.com · idealsgh.com',
+      'hello@fixhub.com · fixhub.com',
     ];
     return lines.join('\n');
   }
@@ -77,7 +77,7 @@ export default function AiReceiptModal({ cart, customer, total, tradeIn, payment
 
   function handleSendEmail() {
     const email = customer?.email ?? '';
-    const subject = encodeURIComponent(`Your Receipt from iDeals Tech Hub — #${txn}`);
+    const subject = encodeURIComponent(`Your Receipt from FixHub — #${txn}`);
     const body = encodeURIComponent(
       buildReceiptText().replace(/\*/g, ''),
     );
@@ -174,7 +174,7 @@ export default function AiReceiptModal({ cart, customer, total, tradeIn, payment
 
               {/* Watermark */}
               <div className="pointer-events-none select-none absolute inset-0 flex items-center justify-center" style={{ zIndex: 0 }}>
-                <img src={idealsLogo} alt="" className="w-[340px] opacity-[0.04]" style={{ filter: 'grayscale(100%)' }} />
+                <img style={{ display: 'none' }} alt="" className="w-[340px] opacity-[0.04]" style={{ filter: 'grayscale(100%)' }} />
               </div>
 
               {/* All receipt content sits above the watermark */}
@@ -183,10 +183,10 @@ export default function AiReceiptModal({ cart, customer, total, tradeIn, payment
               {/* Top: company logo + title block */}
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6 mb-5">
                 <div>
-                  <img src={idealsLogo} alt="iDeals Tech Hub" className="h-12 w-auto mb-1" />
+                  <img style={{ display: 'none' }} alt="FixHub" className="h-12 w-auto mb-1" />
                   <p className="text-[11px] leading-relaxed" style={{ color: '#5f7184' }}>
                     Accra, Ghana<br />
-                    ideals@idealsgh.com · idealsgh.com
+                    hello@fixhub.com · fixhub.com
                   </p>
                 </div>
                 <div className="sm:text-right">
@@ -334,8 +334,8 @@ export default function AiReceiptModal({ cart, customer, total, tradeIn, payment
 
               {/* Footer */}
               <div className="border-t border-slate-200 pt-4 text-center">
-                <p className="text-[11px]" style={{ color: '#5f7184' }}>Thank you for shopping at iDeals Tech Hub</p>
-                <p className="text-[11px] mt-0.5" style={{ color: '#5f7184' }}>ideals@idealsgh.com · idealsgh.com</p>
+                <p className="text-[11px]" style={{ color: '#5f7184' }}>Thank you for shopping at FixHub</p>
+                <p className="text-[11px] mt-0.5" style={{ color: '#5f7184' }}>hello@fixhub.com · fixhub.com</p>
               </div>
 
               </div>{/* end z-index wrapper */}

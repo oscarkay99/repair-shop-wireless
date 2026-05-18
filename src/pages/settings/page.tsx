@@ -22,14 +22,14 @@ const sections = [
 ];
 
 const messageTemplates = [
-  { id: 'mt1', name: 'Quote Ready', channel: 'WhatsApp', message: 'Hi {name}, your quote for {product} is ready! Total: GHS {amount}. Valid until {date}. Reply YES to confirm. — iDeals Tech Hub' },
-  { id: 'mt2', name: 'Repair Complete', channel: 'SMS', message: 'Hi {name}, your {device} repair is complete! Total: GHS {amount}. Pick up at iDeals Tech Hub. Open till 7PM today.' },
+  { id: 'mt1', name: 'Quote Ready', channel: 'WhatsApp', message: 'Hi {name}, your quote for {product} is ready! Total: GHS {amount}. Valid until {date}. Reply YES to confirm. — FixHub' },
+  { id: 'mt2', name: 'Repair Complete', channel: 'SMS', message: 'Hi {name}, your {device} repair is complete! Total: GHS {amount}. Pick up at FixHub. Open till 7PM today.' },
   { id: 'mt3', name: 'Payment Reminder', channel: 'WhatsApp', message: 'Hi {name}, friendly reminder that your payment of GHS {amount} is due {date}. Pay via MTN Momo: 0244-XXX-XXX. Thank you!' },
-  { id: 'mt4', name: 'Delivery Update', channel: 'SMS', message: 'Your order #{order} has been dispatched! Expected delivery: {date}. Track: {link}. iDeals Tech Hub' },
-  { id: 'mt5', name: 'Trade-In Valuation', channel: 'WhatsApp', message: 'Hi {name}, your {device} trade-in is valued at GHS {value}. Ready to upgrade? Visit us or reply to confirm. — iDeals Tech Hub' },
-  { id: 'mt6', name: 'Birthday Offer', channel: 'SMS', message: 'Happy Birthday {name}! Enjoy 10% OFF any purchase today. Show this SMS at checkout. Valid today only. iDeals Tech Hub' },
-  { id: 'mt7', name: 'Warranty Expiry', channel: 'WhatsApp', message: 'Hi {name}, your warranty for {device} expires on {date}. Extend for GHS {price}. Reply EXTEND to proceed. — iDeals Tech Hub' },
-  { id: 'mt8', name: 'New Arrival Alert', channel: 'SMS', message: 'NEW ARRIVAL! {product} now in stock at iDeals Tech Hub. Limited units. Call 0244-XXX-XXX or visit us today!' },
+  { id: 'mt4', name: 'Delivery Update', channel: 'SMS', message: 'Your order #{order} has been dispatched! Expected delivery: {date}. Track: {link}. FixHub' },
+  { id: 'mt5', name: 'Trade-In Valuation', channel: 'WhatsApp', message: 'Hi {name}, your {device} trade-in is valued at GHS {value}. Ready to upgrade? Visit us or reply to confirm. — FixHub' },
+  { id: 'mt6', name: 'Birthday Offer', channel: 'SMS', message: 'Happy Birthday {name}! Enjoy 10% OFF any purchase today. Show this SMS at checkout. Valid today only. FixHub' },
+  { id: 'mt7', name: 'Warranty Expiry', channel: 'WhatsApp', message: 'Hi {name}, your warranty for {device} expires on {date}. Extend for GHS {price}. Reply EXTEND to proceed. — FixHub' },
+  { id: 'mt8', name: 'New Arrival Alert', channel: 'SMS', message: 'NEW ARRIVAL! {product} now in stock at FixHub. Limited units. Call 0244-XXX-XXX or visit us today!' },
 ];
 
 const teamRoles = [
@@ -65,7 +65,7 @@ const integrations = [
 export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState('branding');
   const [saved, setSaved] = useState(false);
-  const [businessName, setBusinessName] = useState('iDeals Tech Hub');
+  const [businessName, setBusinessName] = useState('FixHub');
   const [tagline, setTagline] = useState('Premium Gadgets in Accra');
   const [phone, setPhone] = useState('+233 24 000 0000');
   const [whatsapp, setWhatsapp] = useState('+233 24 000 0000');
@@ -108,7 +108,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <AdminLayout title="Settings" subtitle="Configure your iDeals Tech Hub Command Center">
+    <AdminLayout title="Settings" subtitle="Configure your FixHub Command Center">
       <div className="flex gap-5">
         <SettingsSidebar sections={sections} activeSection={activeSection} onSelect={setActiveSection} />
 

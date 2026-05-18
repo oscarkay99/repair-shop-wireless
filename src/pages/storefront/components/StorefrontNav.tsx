@@ -19,10 +19,10 @@ export default function StorefrontNav() {
         <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => navigate('/store')}>
           <img
             src="https://public.readdy.ai/ai/img_res/7bf43506-9df4-4671-b4ee-9c6d6fc6f9c0.png"
-            alt="GadgetFlow"
+            alt="FixHub"
             className="w-8 h-8 rounded-lg object-cover"
           />
-          <span className={`font-bold text-sm tracking-tight ${scrolled ? 'text-slate-800' : 'text-white'}`}>GadgetFlow</span>
+          <span className={`font-bold text-sm tracking-tight ${scrolled ? 'text-slate-800' : 'text-white'}`}>FixHub</span>
         </div>
 
         {/* Desktop Nav */}

@@ -199,7 +199,7 @@ export default function TopBar({
                   const isActive = index === activeIndex;
                   return (
                     <button
-                      key={item.path}
+                      key={item.id}
                       type="button"
                       onMouseDown={(e) => e.preventDefault()}
                       onMouseEnter={() => setActiveIndex(index)}

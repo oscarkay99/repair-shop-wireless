@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getLeads, createLead, updateLeadStatus } from '@/services/leads';
-import type { Lead, LeadStatus } from '@/types/lead';
+import type { Lead } from '@/types/lead';
 import { useToast } from '@/contexts/ToastContext';
 
 export function useLeads() {
@@ -9,35 +9,20 @@ export function useLeads() {
   const { showToast } = useToast();
 
   useEffect(() => {
-    getLeads()
-      .then(data => setLeads(data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    getLeads().then(setLeads).finally(() => setLoading(false));
   }, []);
 
   const add = async (l: Omit<Lead, 'id'>) => {
-    try {
-      const created = await createLead(l);
-      setLeads(prev => [created, ...prev]);
-      showToast('Lead added');
-      return created;
-    } catch {
-      const local = { ...l, id: `L${Date.now()}` } as Lead;
-      setLeads(prev => [local, ...prev]);
-      showToast('Lead saved locally — sync failed', 'warning');
-      return local;
-    }
+    const created = await createLead(l);
+    setLeads(prev => [created, ...prev]);
+    showToast('Lead added');
+    return created;
   };
 
-  const move = async (id: string, status: LeadStatus) => {
+  const setStatus = async (id: string, status: Lead['status']) => {
+    await updateLeadStatus(id, status);
     setLeads(prev => prev.map(l => l.id === id ? { ...l, status } : l));
-    try {
-      await updateLeadStatus(id, status);
-      showToast('Lead status updated');
-    } catch {
-      showToast('Could not sync status', 'warning');
-    }
   };
 
-  return { leads, loading, add, move };
+  return { leads, loading, add, setStatus };
 }

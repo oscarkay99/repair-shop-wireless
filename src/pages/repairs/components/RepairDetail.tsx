@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Repair, RepairStatus } from '@/types/repair';
+import RepairReceiptModal from './RepairReceiptModal';
 
 const statusConfig: Record<string, { label: string; color: string; dot: string; step: number }> = {
   received:      { label: 'Received',      color: 'bg-slate-100 text-slate-600',    dot: 'bg-slate-400',   step: 1 },
@@ -32,6 +33,7 @@ export default function RepairDetail({ repair, onClose, onUpdateStatus, onAddNot
   const [addingNote, setAddingNote] = useState(false);
   const [noteText, setNoteText] = useState('');
   const [notified, setNotified] = useState(false);
+  const [showReceipt, setShowReceipt] = useState(false);
 
   const handleSaveNote = () => {
     if (!noteText.trim()) return;
@@ -207,8 +209,20 @@ export default function RepairDetail({ repair, onClose, onUpdateStatus, onAddNot
               Add Note
             </button>
           </div>
+
+          <button
+            onClick={() => setShowReceipt(true)}
+            className="w-full mt-2 py-2.5 border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-50 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+          >
+            <i className="ri-receipt-line text-sm" />
+            {repair.status === 'ready' || repair.status === 'completed' ? 'View Receipt' : 'View Job Card'}
+          </button>
         </div>
       </div>
+
+      {showReceipt && (
+        <RepairReceiptModal repair={repair} onClose={() => setShowReceipt(false)} />
+      )}
     </div>
   );
 }

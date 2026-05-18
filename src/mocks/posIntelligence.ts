@@ -13,9 +13,8 @@ export interface SaleRecord {
   discountPct: number;
 }
 
-// Returns empty history — real data comes from Supabase
+// Generates a plausible 30-day sales history for an Accra gadget shop
 function makeHistory(): SaleRecord[] {
-  return [];
   const records: SaleRecord[] = [];
   let id = 1;
 

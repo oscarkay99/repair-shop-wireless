@@ -1,8 +1,29 @@
-export const inventoryProducts: never[] = [];
+export const inventoryProducts = [
+  { id: 'PT001', name: 'iPhone 15 Pro Max OLED Display',  category: 'Screens',     color: '—', condition: 'New', price: 'GHS 480', costPrice: 480, stock: 4,  imei: '—', location: 'Shelf A1', supplier: 'iFixit Pro',       lastRestocked: 'Apr 15, 2026', fastMover: true  },
+  { id: 'PT002', name: 'iPhone 14 OLED Display',           category: 'Screens',     color: '—', condition: 'New', price: 'GHS 320', costPrice: 320, stock: 6,  imei: '—', location: 'Shelf A1', supplier: 'iFixit Pro',       lastRestocked: 'Apr 10, 2026', fastMover: true  },
+  { id: 'PT003', name: 'iPhone 13 Pro Screen Assembly',    category: 'Screens',     color: '—', condition: 'New', price: 'GHS 280', costPrice: 280, stock: 3,  imei: '—', location: 'Shelf A1', supplier: 'iFixit Pro',       lastRestocked: 'Apr 8, 2026',  fastMover: true  },
+  { id: 'PT004', name: 'iPhone 15 Series Battery',         category: 'Batteries',   color: '—', condition: 'New', price: 'GHS 95',  costPrice: 95,  stock: 12, imei: '—', location: 'Shelf B1', supplier: 'Battery Hub GH',   lastRestocked: 'Apr 12, 2026', fastMover: true  },
+  { id: 'PT005', name: 'iPhone 14 Battery',                category: 'Batteries',   color: '—', condition: 'New', price: 'GHS 80',  costPrice: 80,  stock: 9,  imei: '—', location: 'Shelf B1', supplier: 'Battery Hub GH',   lastRestocked: 'Apr 12, 2026', fastMover: false },
+  { id: 'PT006', name: 'iPhone 13 Back Glass Panel',       category: 'Housings',    color: '—', condition: 'New', price: 'GHS 120', costPrice: 120, stock: 5,  imei: '—', location: 'Shelf C2', supplier: 'Parts Direct',     lastRestocked: 'Apr 5, 2026',  fastMover: false },
+  { id: 'PT007', name: 'iPhone Charging Port Flex (USB-C)',category: 'Charging',    color: '—', condition: 'New', price: 'GHS 65',  costPrice: 65,  stock: 8,  imei: '—', location: 'Shelf D1', supplier: 'Parts Direct',     lastRestocked: 'Apr 14, 2026', fastMover: true  },
+  { id: 'PT008', name: 'TrueDepth Camera Module (iPhone 15)', category: 'Cameras',  color: '—', condition: 'New', price: 'GHS 350', costPrice: 350, stock: 2,  imei: '—', location: 'Safe',    supplier: 'Apple Auth Parts', lastRestocked: 'Apr 18, 2026', fastMover: false },
+  { id: 'PT009', name: 'Samsung S24 Ultra Display',        category: 'Screens',     color: '—', condition: 'New', price: 'GHS 420', costPrice: 420, stock: 2,  imei: '—', location: 'Shelf A2', supplier: 'Samsung Parts',    lastRestocked: 'Apr 9, 2026',  fastMover: false },
+  { id: 'PT010', name: 'Samsung A54 Screen Assembly',      category: 'Screens',     color: '—', condition: 'New', price: 'GHS 180', costPrice: 180, stock: 5,  imei: '—', location: 'Shelf A2', supplier: 'Samsung Parts',    lastRestocked: 'Apr 3, 2026',  fastMover: false },
+  { id: 'PT011', name: 'Samsung Charging Port Flex',       category: 'Charging',    color: '—', condition: 'New', price: 'GHS 55',  costPrice: 55,  stock: 7,  imei: '—', location: 'Shelf D1', supplier: 'Parts Direct',     lastRestocked: 'Apr 6, 2026',  fastMover: false },
+  { id: 'PT012', name: 'Samsung Galaxy Battery (S-series)',category: 'Batteries',   color: '—', condition: 'New', price: 'GHS 85',  costPrice: 85,  stock: 6,  imei: '—', location: 'Shelf B2', supplier: 'Battery Hub GH',   lastRestocked: 'Apr 7, 2026',  fastMover: false },
+  { id: 'PT013', name: 'MacBook Air M2 Top Case Assembly', category: 'Keyboards',   color: '—', condition: 'New', price: 'GHS 780', costPrice: 780, stock: 1,  imei: '—', location: 'Shelf E1', supplier: 'Apple Auth Parts', lastRestocked: 'Mar 28, 2026', fastMover: false },
+  { id: 'PT014', name: 'MacBook Pro Trackpad Assembly',    category: 'Trackpads',   color: '—', condition: 'New', price: 'GHS 320', costPrice: 320, stock: 2,  imei: '—', location: 'Shelf E1', supplier: 'Apple Auth Parts', lastRestocked: 'Apr 2, 2026',  fastMover: false },
+  { id: 'PT015', name: 'MacBook Battery (M1/M2)',          category: 'Batteries',   color: '—', condition: 'New', price: 'GHS 480', costPrice: 480, stock: 3,  imei: '—', location: 'Shelf B3', supplier: 'Battery Hub GH',   lastRestocked: 'Apr 11, 2026', fastMover: false },
+  { id: 'PT016', name: 'Laptop Battery 97Wh (Dell XPS)',   category: 'Batteries',   color: '—', condition: 'New', price: 'GHS 390', costPrice: 390, stock: 1,  imei: '—', location: 'Shelf B3', supplier: 'LaptopParts GH',   lastRestocked: 'Mar 20, 2026', fastMover: false },
+  { id: 'PT017', name: 'iPad Pro 12.9" Display',           category: 'Screens',     color: '—', condition: 'New', price: 'GHS 620', costPrice: 620, stock: 1,  imei: '—', location: 'Shelf A3', supplier: 'Apple Auth Parts', lastRestocked: 'Mar 25, 2026', fastMover: false },
+  { id: 'PT018', name: 'iPad Air Screen Assembly',          category: 'Screens',     color: '—', condition: 'New', price: 'GHS 380', costPrice: 380, stock: 2,  imei: '—', location: 'Shelf A3', supplier: 'iFixit Pro',       lastRestocked: 'Apr 1, 2026',  fastMover: false },
+  { id: 'PT019', name: 'UV LOCA Adhesive Glue (50ml)',     category: 'Consumables', color: '—', condition: 'New', price: 'GHS 35',  costPrice: 35,  stock: 10, imei: '—', location: 'Workshop', supplier: 'Tech Supplies GH', lastRestocked: 'Apr 16, 2026', fastMover: true  },
+  { id: 'PT020', name: 'Isopropyl Alcohol 99% (500ml)',    category: 'Consumables', color: '—', condition: 'New', price: 'GHS 28',  costPrice: 28,  stock: 0,  imei: '—', location: 'Workshop', supplier: 'Tech Supplies GH', lastRestocked: 'Mar 30, 2026', fastMover: true  },
+];
 
 export const inventoryStats = [
-  { label: 'Total Products', value: '0', change: '0', icon: 'ri-archive-line', accent: 'bg-blue-500' },
-  { label: 'Low Stock Items', value: '0', change: '0', icon: 'ri-alert-line', accent: 'bg-amber-500' },
-  { label: 'Out of Stock', value: '0', change: '0', icon: 'ri-close-circle-line', accent: 'bg-red-500' },
-  { label: 'Total Value', value: 'GHS 0', change: '0%', icon: 'ri-money-dollar-circle-line', accent: 'bg-emerald-500' },
+  { label: 'Total Parts',   value: '20',       change: '+3',  icon: 'ri-archive-line',           accent: 'bg-blue-500'    },
+  { label: 'Low Stock',     value: '4',        change: '+1',  icon: 'ri-alert-line',             accent: 'bg-amber-500'   },
+  { label: 'Out of Stock',  value: '1',        change: '0',   icon: 'ri-close-circle-line',      accent: 'bg-red-500'     },
+  { label: 'Parts Value',   value: 'GHS 8.4K', change: '+5%', icon: 'ri-money-cedi-circle-line', accent: 'bg-emerald-500' },
 ];

@@ -74,7 +74,7 @@ export default function CustomerDetail({ customer, onClose }: Props) {
 
           <div className="flex gap-2">
             <button
-              onClick={() => window.open(`https://wa.me/${customer.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi ${customer.name}, we have a special offer for you! Contact us at iDeals Tech Hub.`)}`, '_blank')}
+              onClick={() => window.open(`https://wa.me/${customer.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi ${customer.name}, we have a special offer for you! Contact us at FixHub.`)}`, '_blank')}
               className="flex-1 py-2.5 bg-emerald-600 text-white text-xs font-semibold rounded-xl hover:bg-emerald-700 transition-all cursor-pointer whitespace-nowrap"
             >
               Send Offer

@@ -1,401 +1,370 @@
-import { useMemo, useState, useEffect } from 'react';
-import { useMonthlyTarget } from '@/hooks/useSettings';
+import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/feature/AdminLayout';
-import StatCard from './components/StatCard';
-import RevenueChart from './components/RevenueChart';
-import AIPanel from './components/AIPanel';
-import AlertBanner from './components/AlertBanner';
-import LiveFeed from './components/LiveFeed';
-import TopProducts from './components/TopProducts';
-import KPIStrip from './components/KPIStrip';
-import ProfitSection from './components/ProfitSection';
-import { useSales } from '@/hooks/useSales';
-import { useLeads } from '@/hooks/useLeads';
-import { useInventory } from '@/hooks/useInventory';
-import { useExpenses } from '@/hooks/useExpenses';
-import { useTransactions } from '@/hooks/useTransactions';
+import { useRepairs } from '@/hooks/useRepairs';
+import { useAuth } from '@/hooks/useAuth';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid } from 'recharts';
 
-type Period = 'today' | 'yesterday' | 'week' | 'month' | 'custom';
-
-const PERIOD_LABELS: Record<Period, string> = {
-  today: 'Today', yesterday: 'Yesterday', week: 'This Week', month: 'This Month', custom: 'Custom',
+const STATUS_META: Record<string, { label: string; color: string; bg: string }> = {
+  received:      { label: 'Received',       color: '#6366F1', bg: 'rgba(99,102,241,0.12)' },
+  diagnosed:     { label: 'Diagnosed',      color: '#F5A623', bg: 'rgba(245,166,35,0.12)' },
+  in_progress:   { label: 'In Progress',    color: '#3B82F6', bg: 'rgba(59,130,246,0.12)' },
+  parts_pending: { label: 'Parts Pending',  color: '#EF4444', bg: 'rgba(239,68,68,0.12)'  },
+  ready:         { label: 'Ready Pickup',   color: '#10B981', bg: 'rgba(16,185,129,0.12)' },
+  completed:     { label: 'Completed',      color: '#059669', bg: 'rgba(5,150,105,0.12)'  },
 };
 
-function parseNum(t: string | number) {
-  return typeof t === 'number' ? t : parseFloat(String(t).replace(/[^0-9.]/g, '')) || 0;
+const DEVICE_COLORS = ['#3B82F6', '#F5A623', '#10B981', '#6366F1', '#EF4444'];
+
+function fmt(n: number) {
+  if (n >= 1000) return `GHS ${(n / 1000).toFixed(1)}k`;
+  return `GHS ${n.toLocaleString()}`;
 }
 
-function parseSaleDate(s: string): Date | null {
-  if (!s) return null;
-  const d = new Date(s);
-  return isNaN(d.getTime()) ? null : d;
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
 }
 
-function startOfDay(d: Date) {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
-}
-
-function inRange(dateStr: string, start: Date, end: Date): boolean {
-  const d = parseSaleDate(dateStr);
-  if (!d) return false;
-  const day = startOfDay(d);
-  return day >= start && day <= end;
-}
-
-function getRange(period: Period, customStart: string, customEnd: string): { start: Date; end: Date } {
-  const now = new Date();
-  const today = startOfDay(now);
-  switch (period) {
-    case 'today':     return { start: today, end: today };
-    case 'yesterday': { const y = new Date(today); y.setDate(y.getDate() - 1); return { start: y, end: y }; }
-    case 'week':      { const ws = new Date(today); ws.setDate(today.getDate() - ((today.getDay() + 6) % 7)); return { start: ws, end: today }; }
-    case 'month':     return { start: new Date(today.getFullYear(), today.getMonth(), 1), end: today };
-    case 'custom':    return {
-      start: customStart ? startOfDay(new Date(customStart)) : today,
-      end:   customEnd   ? startOfDay(new Date(customEnd))   : today,
+function lastNDays(n: number) {
+  return Array.from({ length: n }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (n - 1) + i);
+    return {
+      label: d.toLocaleDateString('en-GH', { day: 'numeric', month: 'short' }),
+      key: d.toISOString().split('T')[0],
     };
-  }
-}
-
-function getPrevRange(period: Period, range: { start: Date; end: Date }): { start: Date; end: Date } {
-  const span = range.end.getTime() - range.start.getTime();
-  return {
-    start: new Date(range.start.getTime() - span - 86400000),
-    end:   new Date(range.start.getTime() - 86400000),
-  };
-}
-
-function last7Days(): Date[] {
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(); d.setDate(d.getDate() - 6 + i); return startOfDay(d);
   });
 }
 
-function fmt(n: number) {
-  if (Math.abs(n) >= 1_000_000) return `GHS ${(n / 1_000_000).toFixed(1)}M`;
-  if (Math.abs(n) >= 1_000)     return `GHS ${(n / 1_000).toFixed(1)}k`;
-  return `GHS ${Math.round(n).toLocaleString()}`;
-}
-
-function changeBadge(curr: number, prev: number): { label: string; trend: 'up' | 'down' | 'neutral' } {
-  if (prev === 0 && curr === 0) return { label: 'No data', trend: 'neutral' };
-  if (prev === 0) return { label: 'New', trend: 'up' };
-  const pct = Math.round(((curr - prev) / Math.abs(prev)) * 100);
-  return { label: `${pct >= 0 ? '+' : ''}${pct}% vs prev period`, trend: curr >= prev ? 'up' : 'down' };
-}
-
 export default function DashboardPage() {
-  const { sales } = useSales();
-  const { leads } = useLeads();
-  const { products } = useInventory();
-  const { expenses } = useExpenses();
-  const { transactions } = useTransactions();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { repairs, loading } = useRepairs();
 
-  const [period, setPeriod] = useState<Period>('month');
-  const [customStart, setCustomStart] = useState('');
-  const [customEnd, setCustomEnd] = useState('');
-  const { target: monthlyTarget, save: saveTargetToDb, loading: targetLoading } = useMonthlyTarget();
-  const [localTarget, setLocalTarget] = useState(0);
-  const [editingTarget, setEditingTarget] = useState(false);
+  const stats = useMemo(() => {
+    const active    = repairs.filter(r => !['completed', 'cancelled'].includes(r.status));
+    const ready     = repairs.filter(r => r.status === 'ready');
+    const completed = repairs.filter(r => r.status === 'completed');
+    const revenue   = completed.reduce((s, r) => s + (r.costNum ?? 0), 0);
 
-  useEffect(() => { setLocalTarget(monthlyTarget); }, [monthlyTarget]);
-
-  const dateSubtitle = useMemo(() =>
-    new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).format(new Date()) + ' · Accra, Ghana'
-  , []);
-
-  const range     = getRange(period, customStart, customEnd);
-  const prevRange = getPrevRange(period, range);
-
-  const activeSales = sales.filter(s => s.status !== 'cancelled' && s.status !== 'refunded');
-
-  function estimateCogs(itemsStr: string) {
-    return itemsStr.split(',').reduce((sum, part) => {
-      const m = part.trim().match(/^(\d+)x\s+(.+)$/);
-      if (!m) return sum;
-      const product = products.find(p => p.name.toLowerCase() === m[2].trim().toLowerCase());
-      return sum + (product?.costPrice ? product.costPrice * parseInt(m[1]) : 0);
-    }, 0);
-  }
-  const saleCogs = (s: typeof activeSales[number]) => s.cogs ?? estimateCogs(s.items);
-
-  const { currSales, prevSales, currRevenue, prevRevenue, currCogs, currOpEx, currProfit, prevProfit,
-          revenueSparkline, profitSparkline } = useMemo(() => {
-    const curr = activeSales.filter(s => inRange(s.date, range.start, range.end));
-    const prev = activeSales.filter(s => inRange(s.date, prevRange.start, prevRange.end));
-
-    const rev  = (arr: typeof curr) => arr.reduce((s, x) => s + parseNum(x.total), 0);
-    const cogs = (arr: typeof curr) => arr.reduce((s, x) => s + saleCogs(x), 0);
-    const opex = (start: Date, end: Date) => expenses
-      .filter(e => e.type === 'expense' && inRange(e.date ?? '', start, end))
-      .reduce((s, e) => s + parseNum(e.amount), 0);
-
-    const cRev  = rev(curr);
-    const cCogs = cogs(curr);
-    const cOpEx = opex(range.start, range.end);
-    const pRev  = rev(prev);
-    const pCogs = cogs(prev);
-    const pOpEx = opex(prevRange.start, prevRange.end);
-
-    const days = last7Days();
-    const revSparkline = days.map(d => {
-      return activeSales.filter(s => {
-        const sd = parseSaleDate(s.date);
-        return sd && startOfDay(sd).getTime() === d.getTime();
-      }).reduce((s, x) => s + parseNum(x.total), 0);
-    });
-    const profSparkline = days.map((d, i) => {
-      const daySales = activeSales.filter(s => {
-        const sd = parseSaleDate(s.date);
-        return sd && startOfDay(sd).getTime() === d.getTime();
+    // avg turnaround for completed jobs (days between started and completedDate)
+    const turnarounds = completed
+      .filter(r => r.completedDate && r.started)
+      .map(r => {
+        const s = new Date(r.started).getTime();
+        const e = new Date(r.completedDate!).getTime();
+        return (e - s) / 86400000;
       });
-      const dRev  = daySales.reduce((s, x) => s + parseNum(x.total), 0);
-      const dCogs = daySales.reduce((s, x) => s + saleCogs(x), 0);
-      const dOpEx = opex(d, d);
-      return Math.max(dRev - dCogs - dOpEx, 0);
+    const avgDays = turnarounds.length
+      ? (turnarounds.reduce((a, b) => a + b, 0) / turnarounds.length).toFixed(1)
+      : '—';
+
+    return { active, ready, completed, revenue, avgDays };
+  }, [repairs]);
+
+  const [revPeriod, setRevPeriod] = useState<7 | 14 | 30>(14);
+
+  const revenueData = useMemo(() => {
+    return lastNDays(revPeriod).map(({ label, key }) => {
+      const dayRepairs = repairs.filter(r => r.completedDate === key);
+      return {
+        day: label,
+        revenue: dayRepairs.reduce((s, r) => s + (r.costNum ?? 0), 0),
+        jobs: dayRepairs.length,
+      };
     });
+  }, [repairs, revPeriod]);
 
-    return {
-      currSales: curr, prevSales: prev,
-      currRevenue: cRev, prevRevenue: pRev,
-      currCogs: cCogs, currOpEx: cOpEx,
-      currProfit: cRev - cCogs - cOpEx,
-      prevProfit: pRev - pCogs - pOpEx,
-      revenueSparkline: revSparkline,
-      profitSparkline:  profSparkline,
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sales, expenses, products, period, customStart, customEnd]);
+  const revTotal   = revenueData.reduce((s, d) => s + d.revenue, 0);
+  const revJobs    = revenueData.reduce((s, d) => s + d.jobs, 0);
+  const revAvg     = revJobs > 0 ? Math.round(revTotal / revJobs) : 0;
 
-  async function saveTarget(val: string) {
-    const n = parseFloat(val.replace(/[^0-9.]/g, ''));
-    if (!isNaN(n) && n > 0) {
-      const ok = await saveTargetToDb(n);
-      if (!ok) alert('Could not save target — please log out and back in, then try again.');
-    }
-    setEditingTarget(false);
-  }
+  // Device type breakdown
+  const deviceData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    repairs.forEach(r => { counts[r.deviceType] = (counts[r.deviceType] ?? 0) + 1; });
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, value]) => ({ name, value }));
+  }, [repairs]);
 
-  const monthNetProfit = useMemo(() => {
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const ms = activeSales.filter(s => inRange(s.date, monthStart, today));
-    const rev  = ms.reduce((s, x) => s + parseNum(x.total), 0);
-    const cogs = ms.reduce((s, x) => s + saleCogs(x), 0);
-    const opex = expenses
-      .filter(e => e.type === 'expense' && inRange(e.date ?? '', monthStart, today))
-      .reduce((s, e) => s + parseNum(e.amount), 0);
-    return rev - cogs - opex;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sales, expenses, products]);
+  // Pipeline (active jobs by status)
+  const pipeline = useMemo(() => {
+    const order = ['received', 'diagnosed', 'in_progress', 'parts_pending', 'ready'];
+    return order.map(s => ({
+      ...STATUS_META[s],
+      key: s,
+      count: repairs.filter(r => r.status === s).length,
+    }));
+  }, [repairs]);
 
-  const targetPct = localTarget > 0 ? Math.min(Math.round((monthNetProfit / localTarget) * 100), 100) : 0;
+  // Technician workload
+  const techWorkload = useMemo(() => {
+    const map: Record<string, number> = {};
+    repairs.filter(r => !['completed', 'cancelled'].includes(r.status))
+      .forEach(r => { map[r.technician] = (map[r.technician] ?? 0) + 1; });
+    return Object.entries(map).sort((a, b) => b[1] - a[1]);
+  }, [repairs]);
 
-  const stockAlerts  = products.filter(p => p.stock <= 2).length;
-  const outOfStock   = products.filter(p => p.stock === 0).length;
-  const currLeads    = leads.filter(l => l.status === 'hot' || l.status === 'warm').length;
-  const hotLeads     = leads.filter(l => l.status === 'hot').length;
-  const pendingPay   = transactions.filter(t => t.status === 'pending' || t.status === 'needs_review');
-  const pendingAmt   = pendingPay.reduce((s, t) => s + parseNum(t.amount), 0);
+  if (loading) return (
+    <AdminLayout title="Dashboard" subtitle="">
+      <div className="flex items-center justify-center h-64 text-slate-400">
+        <i className="ri-loader-4-line animate-spin mr-2" /> Loading…
+      </div>
+    </AdminLayout>
+  );
 
-  const revChange    = changeBadge(currRevenue, prevRevenue);
-  const profitChange = changeBadge(currProfit, prevProfit);
-  const margin       = currRevenue > 0 ? Math.round((currProfit / currRevenue) * 100) : 0;
-
-  const stockSparkline = [stockAlerts, stockAlerts, stockAlerts, stockAlerts, stockAlerts, stockAlerts, stockAlerts];
-  const pendingSparkline = [pendingAmt, pendingAmt, pendingAmt, pendingAmt, pendingAmt, pendingAmt, pendingAmt];
+  const activeRepairs = repairs.filter(r => !['completed', 'cancelled'].includes(r.status));
 
   return (
-    <AdminLayout title="Dashboard" subtitle={dateSubtitle}>
-      {/* Hero */}
-      <div className="rounded-2xl p-5 mb-5 flex items-center justify-between overflow-hidden relative" style={{ background: 'linear-gradient(135deg, #07101F 0%, #0D1F4A 50%, #1552A8 100%)' }}>
-        <div className="absolute right-0 top-0 bottom-0 w-64 bg-gradient-to-l from-white/5 to-transparent pointer-events-none" />
-        <div className="absolute right-20 top-1/2 -translate-y-1/2 w-32 h-32 rounded-full blur-2xl pointer-events-none" style={{ background: 'rgba(245,166,35,0.15)' }} />
-        <div className="relative">
-          <p className="text-white/50 text-xs font-medium uppercase tracking-widest mb-1">Good morning</p>
-          <h2 className="text-white text-xl font-bold tracking-tight">Welcome to your <span style={{ color: '#F5A623' }}>iDeals Tech Hub</span> dashboard.</h2>
-          <p className="text-white/50 text-xs mt-1.5">Add products, leads, and sales to see live stats here.</p>
-        </div>
-        <div className="relative hidden md:flex items-center gap-3">
-          <div className="text-right">
-            <p className="text-white/40 text-[10px] uppercase tracking-wider mb-1">Profit Target (Mo)</p>
-            {editingTarget ? (
-              <div className="flex items-center gap-1.5 justify-end">
-                <span className="text-white/60 text-sm">GHS</span>
-                <input
-                  autoFocus
-                  type="number"
-                  placeholder="e.g. 50000"
-                  defaultValue={localTarget > 0 ? String(localTarget) : ''}
-                  onBlur={e => saveTarget(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') saveTarget((e.target as HTMLInputElement).value); if (e.key === 'Escape') setEditingTarget(false); }}
-                  className="w-28 bg-white/10 border border-white/20 rounded-lg px-2 py-1 text-white text-sm outline-none text-right"
-                />
-              </div>
-            ) : (
-              <>
-                <p className="text-white text-lg font-bold">
-                  {localTarget > 0 ? fmt(localTarget) : 'GHS —'}
-                </p>
-                {localTarget > 0 ? (
-                  <div className="mt-1.5">
-                    <div className="flex items-center justify-end gap-1.5 mb-1">
-                      <span className="text-[10px] text-white/40">{fmt(Math.max(monthNetProfit, 0))} net profit</span>
-                      <span className="text-[10px] font-semibold" style={{ color: targetPct >= 100 ? '#25D366' : '#F5A623' }}>
-                        {targetPct}%
-                      </span>
-                    </div>
-                    <div className="w-28 h-1.5 rounded-full bg-white/10 ml-auto">
-                      <div className="h-full rounded-full transition-all duration-500"
-                        style={{ width: `${targetPct}%`, background: targetPct >= 100 ? '#25D366' : '#F5A623' }} />
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setEditingTarget(true)}
-                    className="mt-0.5 flex items-center gap-1 justify-end cursor-pointer group"
-                  >
-                    <i className="ri-add-line text-xs" style={{ color: '#F5A623' }} />
-                    <span className="text-xs font-semibold group-hover:underline" style={{ color: '#F5A623' }}>Set target</span>
-                  </button>
-                )}
-                {localTarget > 0 && (
-                  <button onClick={() => setEditingTarget(true)} className="mt-1 text-[10px] text-white/30 hover:text-white/60 cursor-pointer block ml-auto">
-                    Edit target
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(245,166,35,0.2)' }}>
-            <i className={`ri-trophy-line text-2xl`} style={{ color: targetPct >= 100 ? '#25D366' : '#F5A623' }} />
-          </div>
-        </div>
+    <AdminLayout title="" subtitle="">
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-slate-800">
+          {greeting()}, {user?.name?.split(' ')[0]} 👋
+        </h1>
+        <p className="text-sm text-slate-400 mt-0.5">
+          {new Date().toLocaleDateString('en-GH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+        </p>
       </div>
-
-      {/* Filter Bar */}
-      <div className="flex flex-wrap items-center gap-2 mb-4">
-        <div className="flex items-center bg-white border border-slate-200 rounded-xl p-1 gap-0.5">
-          {(Object.keys(PERIOD_LABELS) as Period[]).filter(p => p !== 'custom').map(p => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap"
-              style={period === p
-                ? { background: '#0D1F4A', color: 'white' }
-                : { color: '#64748b' }}
-            >
-              {PERIOD_LABELS[p]}
-            </button>
-          ))}
-          <button
-            onClick={() => setPeriod('custom')}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap"
-            style={period === 'custom'
-              ? { background: '#0D1F4A', color: 'white' }
-              : { color: '#64748b' }}
-          >
-            Custom
-          </button>
-        </div>
-
-        {period === 'custom' && (
-          <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5">
-            <input
-              type="date"
-              value={customStart}
-              onChange={e => setCustomStart(e.target.value)}
-              className="text-xs text-slate-700 outline-none bg-transparent cursor-pointer"
-            />
-            <span className="text-slate-300 text-xs">→</span>
-            <input
-              type="date"
-              value={customEnd}
-              onChange={e => setCustomEnd(e.target.value)}
-              className="text-xs text-slate-700 outline-none bg-transparent cursor-pointer"
-            />
-          </div>
-        )}
-
-        <span className="text-xs text-slate-400 ml-1">
-          {currSales.length} sale{currSales.length !== 1 ? 's' : ''} in period
-        </span>
-      </div>
-
-      {/* Stat Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-5">
-        <StatCard
-          label="Revenue"
-          value={fmt(currRevenue)}
-          change={revChange.label}
-          trend={revChange.trend}
-          icon="ri-money-dollar-circle-line"
-          accentColor="#0D1F4A"
-          sub={`${currSales.length} sales`}
-          sparkline={revenueSparkline}
-        />
-        <StatCard
-          label="Net Profit"
-          value={fmt(currProfit)}
-          change={profitChange.label}
-          trend={profitChange.trend}
-          icon="ri-line-chart-line"
-          accentColor="#25D366"
-          sub={`${margin}% net margin`}
-          sparkline={profitSparkline}
-        />
-        <StatCard
-          label="Active Leads"
-          value={String(currLeads)}
-          change={`${leads.length} total leads`}
-          trend="neutral"
-          icon="ri-user-star-line"
-          accentColor="#F5A623"
-          sub={`${hotLeads} hot · ${leads.filter(l => l.status === 'warm').length} warm`}
-          sparkline={[0, currLeads, currLeads, currLeads, currLeads, currLeads, currLeads]}
-        />
-        <StatCard
-          label="Stock Alerts"
-          value={String(stockAlerts)}
-          change={`${outOfStock} out of stock`}
-          trend={stockAlerts > 0 ? 'down' : 'up'}
-          icon="ri-alert-line"
-          accentColor="#E05A2B"
-          sub={`${products.length} total products`}
-          sparkline={stockSparkline}
-        />
-        <StatCard
-          label="Pending Payments"
-          value={fmt(pendingAmt)}
-          change={`${pendingPay.length} transactions`}
-          trend={pendingPay.length > 0 ? 'down' : 'up'}
-          icon="ri-time-line"
-          accentColor="#1552A8"
-          sub={`${pendingPay.length} awaiting`}
-          sparkline={pendingSparkline}
-        />
-      </div>
-
-      {/* Alert Banner */}
-      <div className="mb-5"><AlertBanner /></div>
-
-      {/* Revenue + AI */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
-        <div className="lg:col-span-2"><RevenueChart /></div>
-        <div><AIPanel /></div>
-      </div>
-
-      {/* Profit Section */}
-      <div className="mb-5"><ProfitSection /></div>
 
       {/* KPI Strip */}
-      <div className="mb-5"><KPIStrip /></div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {[
+          { label: 'Active Jobs',       value: stats.active.length,             icon: 'ri-tools-line',        color: '#3B82F6', sub: 'in the shop'         },
+          { label: 'Ready for Pickup',  value: stats.ready.length,              icon: 'ri-check-double-line', color: '#10B981', sub: 'awaiting customer'   },
+          { label: 'Completed (Month)', value: stats.completed.length,          icon: 'ri-checkbox-circle-line', color: '#6366F1', sub: 'this month'        },
+          { label: 'Revenue (Month)',   value: fmt(stats.revenue),              icon: 'ri-money-cedi-circle-line', color: '#F5A623', sub: 'from repair fees' },
+        ].map(card => (
+          <div key={card.label} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{card.label}</span>
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: card.color + '18' }}>
+                <i className={`${card.icon} text-sm`} style={{ color: card.color }} />
+              </div>
+            </div>
+            <div className="text-2xl font-black text-slate-800">{card.value}</div>
+            <div className="text-xs text-slate-400 mt-1">{card.sub}</div>
+          </div>
+        ))}
+      </div>
 
-      {/* Bottom Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <LiveFeed />
-        <TopProducts />
+      {/* Row 1: Pipeline + Active Jobs */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
+
+        {/* Repair Pipeline */}
+        <div className="lg:col-span-2 bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h2 className="text-sm font-bold text-slate-800">Repair Pipeline</h2>
+              <p className="text-xs text-slate-400">Current job distribution by stage</p>
+            </div>
+            <span className="text-xs font-semibold text-slate-400">{stats.active.length} active</span>
+          </div>
+          <div className="space-y-3">
+            {pipeline.map(stage => {
+              const pct = stats.active.length > 0
+                ? Math.round((stage.count / stats.active.length) * 100)
+                : 0;
+              return (
+                <div key={stage.key}>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full" style={{ background: stage.color }} />
+                      <span className="text-xs font-medium text-slate-600">{stage.label}</span>
+                    </div>
+                    <span className="text-xs font-bold text-slate-700">{stage.count}</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ width: `${pct}%`, background: stage.color }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {/* Avg turnaround */}
+          <div className="mt-5 pt-4 border-t border-slate-100 flex items-center gap-6">
+            <div>
+              <div className="text-xs text-slate-400">Avg Turnaround</div>
+              <div className="text-lg font-black text-slate-800">{stats.avgDays} <span className="text-sm font-normal text-slate-400">days</span></div>
+            </div>
+            <div>
+              <div className="text-xs text-slate-400">Technicians</div>
+              <div className="text-lg font-black text-slate-800">{techWorkload.length}</div>
+            </div>
+            <div>
+              <div className="text-xs text-slate-400">Parts Waiting</div>
+              <div className="text-lg font-black text-slate-800">{repairs.filter(r => r.status === 'parts_pending').length}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Active Jobs list */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-bold text-slate-800">Active Jobs</h2>
+            <button onClick={() => navigate('/repairs')} className="text-xs font-semibold cursor-pointer" style={{ color: '#F5A623' }}>
+              View all
+            </button>
+          </div>
+          <div className="flex-1 space-y-2 overflow-y-auto max-h-72">
+            {activeRepairs.slice(0, 7).map(r => {
+              const meta = STATUS_META[r.status] ?? STATUS_META.received;
+              return (
+                <div
+                  key={r.id}
+                  onClick={() => navigate('/repairs')}
+                  className="flex items-center gap-3 p-2.5 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors"
+                >
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: meta.bg }}>
+                    <i className="ri-tools-line text-xs" style={{ color: meta.color }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-semibold text-slate-800 truncate">{r.customer}</div>
+                    <div className="text-[10px] text-slate-400 truncate">{r.device}</div>
+                  </div>
+                  <div
+                    className="text-[9px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
+                    style={{ background: meta.bg, color: meta.color }}
+                  >
+                    {meta.label}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Row 2: Weekly Chart + Device Breakdown + Technician Workload */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+        {/* Repair Revenue trend */}
+        <div className="lg:col-span-2 bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-sm font-bold text-slate-800">Repair Revenue</h2>
+              <p className="text-xs text-slate-400">Payments received from completed jobs</p>
+            </div>
+            <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1">
+              {([7, 14, 30] as const).map(n => (
+                <button
+                  key={n}
+                  onClick={() => setRevPeriod(n)}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${revPeriod === n ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                  {n}d
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Summary strip */}
+          <div className="flex items-center gap-5 mb-4">
+            <div>
+              <div className="text-[10px] text-slate-400 uppercase tracking-wide">Total</div>
+              <div className="text-lg font-black text-slate-800">{fmt(revTotal)}</div>
+            </div>
+            <div className="w-px h-8 bg-slate-100" />
+            <div>
+              <div className="text-[10px] text-slate-400 uppercase tracking-wide">Jobs</div>
+              <div className="text-lg font-black text-slate-800">{revJobs}</div>
+            </div>
+            <div className="w-px h-8 bg-slate-100" />
+            <div>
+              <div className="text-[10px] text-slate-400 uppercase tracking-wide">Avg per Job</div>
+              <div className="text-lg font-black text-slate-800">{fmt(revAvg)}</div>
+            </div>
+          </div>
+
+          <ResponsiveContainer width="100%" height={160}>
+            <BarChart data={revenueData} barSize={revPeriod === 30 ? 8 : revPeriod === 14 ? 14 : 22}>
+              <CartesianGrid vertical={false} stroke="#f1f5f9" />
+              <XAxis
+                dataKey="day"
+                tick={{ fontSize: 10, fill: '#94a3b8' }}
+                axisLine={false}
+                tickLine={false}
+                interval={revPeriod === 30 ? 4 : revPeriod === 14 ? 1 : 0}
+              />
+              <YAxis
+                tick={{ fontSize: 10, fill: '#94a3b8' }}
+                axisLine={false}
+                tickLine={false}
+                width={36}
+                tickFormatter={(v: number) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : String(v)}
+              />
+              <Tooltip
+                contentStyle={{ background: '#0D1F4A', border: 'none', borderRadius: 10, fontSize: 12, color: 'white' }}
+                formatter={(v: number, name: string) => [
+                  name === 'revenue' ? `GHS ${v.toLocaleString()}` : v,
+                  name === 'revenue' ? 'Revenue' : 'Jobs',
+                ]}
+                labelStyle={{ color: 'rgba(255,255,255,0.6)', fontSize: 11 }}
+              />
+              <Bar dataKey="revenue" fill="#0D1F4A" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Right column: Device types + Technician workload */}
+        <div className="flex flex-col gap-5">
+
+          {/* Device type breakdown */}
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+            <h2 className="text-sm font-bold text-slate-800 mb-3">Device Types</h2>
+            <div className="flex items-center gap-3">
+              <PieChart width={80} height={80}>
+                <Pie data={deviceData} cx={35} cy={35} innerRadius={22} outerRadius={38} dataKey="value" stroke="none">
+                  {deviceData.map((_, i) => <Cell key={i} fill={DEVICE_COLORS[i % DEVICE_COLORS.length]} />)}
+                </Pie>
+              </PieChart>
+              <div className="flex-1 space-y-1.5">
+                {deviceData.map((d, i) => (
+                  <div key={d.name} className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full" style={{ background: DEVICE_COLORS[i % DEVICE_COLORS.length] }} />
+                      <span className="text-[11px] text-slate-600">{d.name}</span>
+                    </div>
+                    <span className="text-[11px] font-bold text-slate-700">{d.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Technician workload */}
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+            <h2 className="text-sm font-bold text-slate-800 mb-3">Technician Workload</h2>
+            <div className="space-y-3">
+              {techWorkload.map(([name, count]) => {
+                const max = techWorkload[0]?.[1] ?? 1;
+                const pct = Math.round((count / max) * 100);
+                return (
+                  <div key={name}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium text-slate-600">{name}</span>
+                      <span className="text-xs font-bold text-slate-700">{count} jobs</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                      <div className="h-full rounded-full" style={{ width: `${pct}%`, background: '#0D1F4A' }} />
+                    </div>
+                  </div>
+                );
+              })}
+              {techWorkload.length === 0 && (
+                <p className="text-xs text-slate-400 text-center py-2">No active assignments</p>
+              )}
+            </div>
+          </div>
+
+        </div>
       </div>
     </AdminLayout>
   );

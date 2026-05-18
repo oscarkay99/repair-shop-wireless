@@ -145,38 +145,8 @@ export default function AiChat() {
       return;
     }
 
-    // Fall back to pos-ai Edge Function for open-ended questions
-    try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? import.meta.env.VITE_SUPABASE_ANON_KEY;
-      const res = await fetch(`${supabaseUrl}/functions/v1/pos-ai`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseKey}`,
-        },
-        body: JSON.stringify({
-          action: 'chat',
-          query: q,
-          context: {
-            todaySummary: getTodaySummary(),
-            topSellers: productMetrics.sort((a, b) => b.unitsSold30d - a.unitsSold30d).slice(0, 5).map(m => ({
-              name: posProducts.find(p => p.id === m.productId)?.name,
-              unitsSold30d: m.unitsSold30d,
-              velocity: m.velocity,
-            })),
-          },
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setMessages(prev => [...prev, { role: 'assistant', content: data.reply ?? data.answer ?? JSON.stringify(data) }]);
-      } else {
-        throw new Error('API error');
-      }
-    } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: "I don't have a specific answer for that, but you can check the Intelligence tab for detailed analytics." }]);
-    }
+    await new Promise(r => setTimeout(r, 500));
+    setMessages(prev => [...prev, { role: 'assistant', content: "I don't have a specific answer for that, but you can check the Analytics or Reports tabs for detailed insights." }]);
 
     setLoading(false);
   }
@@ -206,7 +176,7 @@ export default function AiChat() {
             </div>
             <div>
               <p className="text-xs font-bold text-white">AI Sales Assistant</p>
-              <p className="text-[10px] text-white/70">Powered by iDeals Intelligence</p>
+              <p className="text-[10px] text-white/70">Powered by FixHub Intelligence</p>
             </div>
             <div className="ml-auto w-2 h-2 rounded-full bg-emerald-400" />
           </div>

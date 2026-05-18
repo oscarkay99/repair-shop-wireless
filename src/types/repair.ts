@@ -9,12 +9,15 @@ export interface Repair {
   id: string;
   customer: string;
   device: string;
+  deviceType?: string;
   issue: string;
   status: RepairStatus;
   technician: string;
   eta: string;
   cost: string;
+  costNum?: number;
   started: string;
+  completedDate?: string;
   warranty: boolean;
   parts: RepairPart[];
   notes: string[];

@@ -76,7 +76,7 @@ export default function UserFormModal({
               value={editingUser.email || ''}
               onChange={(e) => onFieldChange('email', e.target.value)}
               className="w-full px-3 py-2.5 rounded-xl bg-slate-50 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-200"
-              placeholder="user@idealstechhub.com"
+              placeholder="user@fixhub.com"
             />
           </div>
 

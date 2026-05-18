@@ -43,7 +43,7 @@ export default function PriceDetail({ product }: Props) {
               <div className="w-7 h-7 bg-emerald-100 rounded-lg flex items-center justify-center">
                 <i className="ri-store-2-line text-emerald-600 text-sm" />
               </div>
-              <span className="text-sm font-bold text-slate-800">GadgetFlow (You)</span>
+              <span className="text-sm font-bold text-slate-800">FixHub (You)</span>
             </div>
             <span className="text-base font-bold text-emerald-600">GHS {product.ourPrice.toLocaleString()}</span>
           </div>

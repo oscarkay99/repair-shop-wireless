@@ -1,5 +1,90 @@
-export const featuredProducts: never[] = [];
+export const featuredProducts = [
+  {
+    id: '1',
+    name: 'iPhone 15 Pro Max',
+    category: 'Phones',
+    condition: 'New',
+    price: 'GHS 8,200',
+    originalPrice: null,
+    stock: 3,
+    warranty: '12 Months',
+    badge: 'Best Seller',
+  },
+  {
+    id: '2',
+    name: 'MacBook Air M2',
+    category: 'Laptops',
+    condition: 'New',
+    price: 'GHS 12,400',
+    originalPrice: 'GHS 13,800',
+    stock: 5,
+    warranty: '12 Months',
+    badge: 'Sale',
+  },
+  {
+    id: '3',
+    name: 'Samsung Galaxy S24 Ultra',
+    category: 'Phones',
+    condition: 'New',
+    price: 'GHS 6,800',
+    originalPrice: null,
+    stock: 1,
+    warranty: '12 Months',
+    badge: 'Low Stock',
+  },
+  {
+    id: '4',
+    name: 'AirPods Pro 2nd Gen',
+    category: 'Accessories',
+    condition: 'New',
+    price: 'GHS 1,600',
+    originalPrice: 'GHS 1,900',
+    stock: 8,
+    warranty: '6 Months',
+    badge: null,
+  },
+];
 
-export const productDetail = null;
+export const productDetail = {
+  id: '1',
+  name: 'iPhone 15 Pro Max — 256GB Titanium',
+  category: 'Phones',
+  condition: 'New',
+  conditionDetails: {
+    grade: 'Brand New',
+    batteryHealth: '100%',
+    cosmetic: 'Sealed in original box',
+    includes: ['iPhone 15 Pro Max', 'USB-C Cable', 'Documentation', 'Original Box'],
+  },
+  price: 'GHS 8,200',
+  originalPrice: null,
+  stock: 3,
+  warranty: '12 Months Apple Warranty',
+  warrantyDetails: 'Full manufacturer warranty. Covers hardware defects and manufacturing faults. Claim at any Apple Authorized Service Provider or through GadgetFlow.',
+  specs: [
+    { label: 'Chip', value: 'A17 Pro' },
+    { label: 'Display', value: '6.7" Super Retina XDR' },
+    { label: 'Storage', value: '256GB' },
+    { label: 'RAM', value: '8GB' },
+    { label: 'Camera', value: '48MP + 12MP + 12MP' },
+    { label: 'Battery', value: '4422 mAh' },
+    { label: 'OS', value: 'iOS 17' },
+    { label: 'Color', value: 'Natural Titanium' },
+  ],
+  addOns: [
+    { id: 'a1', name: 'Premium Leather Case', price: 'GHS 180' },
+    { id: 'a2', name: 'Tempered Glass Screen Protector', price: 'GHS 80' },
+    { id: 'a3', name: 'MagSafe Charger 15W', price: 'GHS 220' },
+  ],
+  reviews: [
+    { name: 'Kwame A.', rating: 5, text: 'Absolutely genuine product. Sealed box, fast delivery. GadgetFlow is the real deal in Accra!', date: '2 weeks ago', verified: true },
+    { name: 'Abena M.', rating: 5, text: 'Bought my second phone here. Warranty claim was smooth. Highly recommend.', date: '1 month ago', verified: true },
+    { name: 'Yaw D.', rating: 4, text: 'Great service, WhatsApp response was quick. Phone is perfect.', date: '1 month ago', verified: true },
+  ],
+};
 
-export const testimonials: never[] = [];
+export const testimonials = [
+  { name: 'Kofi Mensah', role: 'Business Owner', text: 'GadgetFlow is the only place I trust for authentic iPhones in Accra. Fast, genuine, and the warranty is real.', rating: 5, avatar: 'https://readdy.ai/api/search-image?query=professional%20Ghanaian%20man%20smiling%20portrait%2C%20clean%20background%2C%20natural%20lighting&width=80&height=80&seq=t1&orientation=squarish' },
+  { name: 'Ama Owusu', role: 'Teacher', text: 'I was nervous buying online but they responded on WhatsApp immediately. My MacBook arrived same day. Amazing!', rating: 5, avatar: 'https://readdy.ai/api/search-image?query=professional%20Ghanaian%20woman%20smiling%20portrait%2C%20clean%20background%2C%20natural%20lighting&width=80&height=80&seq=t2&orientation=squarish' },
+  { name: 'Kwabena Asante', role: 'Software Developer', text: 'Best refurbished laptop deal I\'ve ever gotten. Battery health was exactly as described. Will buy again.', rating: 5, avatar: 'https://readdy.ai/api/search-image?query=young%20Ghanaian%20man%20professional%20portrait%20smiling%2C%20clean%20background&width=80&height=80&seq=t3&orientation=squarish' },
+];

@@ -14,11 +14,11 @@ export interface SystemUser {
 }
 
 export const rolePermissions: Record<UserRole, string[]> = {
-  admin: ['Dashboard', 'Analytics', 'Audit Logs', 'POS', 'Inventory', 'Leads', 'Sales', 'Payments', 'Customers', 'Repairs', 'Warranty', 'Marketing', 'Price Intel', 'Trade-In', 'Delivery', 'Wallet', 'Expenses', 'Suppliers', 'Reports', 'Loyalty', 'Calendar', 'Team', 'Settings', 'Authentication', 'AI Studio', 'Users'],
-  sales_manager: ['Dashboard', 'Analytics', 'Audit Logs', 'POS', 'Inventory', 'Leads', 'Sales', 'Payments', 'Customers', 'Marketing', 'Reports', 'Loyalty', 'Calendar', 'Team'],
-  sales_rep: ['Dashboard', 'Audit Logs', 'POS', 'Inventory', 'Leads', 'Sales', 'Customers', 'Calendar'],
-  technician: ['Dashboard', 'Audit Logs', 'Repairs', 'Warranty', 'Inventory', 'Customers', 'Calendar'],
-  inventory_manager: ['Dashboard', 'Analytics', 'Audit Logs', 'Inventory', 'Suppliers', 'Delivery', 'Reports'],
+  admin:             ['Dashboard', 'Analytics', 'Audit Logs', 'Inventory', 'Payments', 'Customers', 'Repairs', 'Warranty', 'Delivery', 'Expenses', 'Reports', 'Loyalty', 'Team', 'Settings', 'Authentication', 'AI Studio', 'Users'],
+  sales_manager:     ['Dashboard', 'Analytics', 'Audit Logs', 'Inventory', 'Payments', 'Customers', 'Repairs', 'Reports', 'Loyalty', 'Team'],
+  sales_rep:         ['Dashboard', 'Audit Logs', 'Repairs', 'Customers', 'Inventory'],
+  technician:        ['Dashboard', 'Audit Logs', 'Repairs', 'Warranty', 'Inventory', 'Customers'],
+  inventory_manager: ['Dashboard', 'Analytics', 'Audit Logs', 'Inventory', 'Delivery', 'Reports'],
 };
 
 export const roleLabels: Record<UserRole, string> = {
@@ -37,4 +37,77 @@ export const roleColors: Record<UserRole, string> = {
   inventory_manager: '#07101F',
 };
 
-export const systemUsers: SystemUser[] = [];
+export const systemUsers: SystemUser[] = [
+  {
+    id: 'U001',
+    name: 'Kwame Asante',
+    email: 'admin@fixhub.com',
+    role: 'admin',
+    avatar: 'KA',
+    status: 'active',
+    lastLogin: 'Apr 23, 2026 · 9:42 AM',
+    createdAt: 'Jan 1, 2026',
+    phone: '+233 24 000 0001',
+    permissions: rolePermissions.admin,
+  },
+  {
+    id: 'U002',
+    name: 'Kofi Mensah',
+    email: 'kofi@fixhub.com',
+    role: 'sales_manager',
+    avatar: 'KM',
+    status: 'active',
+    lastLogin: 'Apr 23, 2026 · 8:15 AM',
+    createdAt: 'Jan 5, 2026',
+    phone: '+233 24 000 0002',
+    permissions: rolePermissions.sales_manager,
+  },
+  {
+    id: 'U003',
+    name: 'Abena Frimpong',
+    email: 'abena@fixhub.com',
+    role: 'sales_rep',
+    avatar: 'AF',
+    status: 'active',
+    lastLogin: 'Apr 22, 2026 · 5:30 PM',
+    createdAt: 'Feb 1, 2026',
+    phone: '+233 24 000 0003',
+    permissions: rolePermissions.sales_rep,
+  },
+  {
+    id: 'U004',
+    name: 'Ama Owusu',
+    email: 'ama@fixhub.com',
+    role: 'technician',
+    avatar: 'AO',
+    status: 'active',
+    lastLogin: 'Apr 22, 2026 · 4:00 PM',
+    createdAt: 'Feb 10, 2026',
+    phone: '+233 24 000 0004',
+    permissions: rolePermissions.technician,
+  },
+  {
+    id: 'U005',
+    name: 'Yaw Darko',
+    email: 'yaw@fixhub.com',
+    role: 'inventory_manager',
+    avatar: 'YD',
+    status: 'active',
+    lastLogin: 'Apr 21, 2026 · 6:00 PM',
+    createdAt: 'Mar 1, 2026',
+    phone: '+233 24 000 0005',
+    permissions: rolePermissions.inventory_manager,
+  },
+  {
+    id: 'U006',
+    name: 'Efua Boateng',
+    email: 'efua@fixhub.com',
+    role: 'sales_rep',
+    avatar: 'EB',
+    status: 'inactive',
+    lastLogin: 'Apr 10, 2026 · 2:00 PM',
+    createdAt: 'Mar 15, 2026',
+    phone: '+233 24 000 0006',
+    permissions: rolePermissions.sales_rep,
+  },
+];

@@ -23,7 +23,7 @@ export default function GeneratorCanvas({ selectedTemplate }: GeneratorCanvasPro
     setTimeout(() => {
       const result = selectedTemplate && sampleOutputs[selectedTemplate]
         ? sampleOutputs[selectedTemplate]
-        : `Here's your generated content based on your prompt:\n\n"${prompt}"\n\nThis is a premium AI-generated response tailored for GadgetFlow's brand voice — trustworthy, warm, and conversion-focused. In production, this connects to your AI model for real-time generation.`;
+        : `Here's your generated content based on your prompt:\n\n"${prompt}"\n\nThis is a premium AI-generated response tailored for FixHub's brand voice — trustworthy, warm, and conversion-focused. In production, this connects to your AI model for real-time generation.`;
       setOutput(result);
       setLoading(false);
     }, 1800);

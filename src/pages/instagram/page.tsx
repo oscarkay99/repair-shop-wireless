@@ -14,7 +14,7 @@ import {
   type SocialContact,
 } from '@/services/social';
 import { generateAiReply } from '@/services/ai';
-import { isSupabaseConfigured } from '@/services/supabase';
+
 import IgStatsStrip from './components/IgStatsStrip';
 import IgPosts from './components/IgPosts';
 import IgCampaigns from './components/IgCampaigns';
@@ -49,7 +49,7 @@ export default function InstagramPage() {
   }, []);
 
   useEffect(() => {
-    if (!isSupabaseConfigured) return;
+    
     const sub = subscribeToConversations('instagram', (updated) => {
       setConversations(prev => prev.map(c => c.id === updated.id ? { ...c, ...updated } : c));
     });
@@ -69,7 +69,7 @@ export default function InstagramPage() {
   }, [selectedConvId]);
 
   useEffect(() => {
-    if (!selectedConvId || !isSupabaseConfigured) return;
+    if (!selectedConvId) return;
     const sub = subscribeToMessages(selectedConvId, (newMsg) => {
       setMessages(prev => [...prev, newMsg]);
     });
@@ -86,7 +86,7 @@ export default function InstagramPage() {
     setMessage('');
     try {
       const sent = await sendAgentMessage(selectedConvId, 'instagram', text);
-      if (!isSupabaseConfigured) setMessages(prev => [...prev, sent]);
+      setMessages(prev => [...prev, sent]);
     } catch (err) { console.error(err); }
   }, [message, selectedConvId]);
 

@@ -9,24 +9,14 @@ export function useCustomers() {
   const { showToast } = useToast();
 
   useEffect(() => {
-    getCustomers()
-      .then(data => setCustomers(data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    getCustomers().then(setCustomers).finally(() => setLoading(false));
   }, []);
 
   const add = async (c: Omit<Customer, 'id'>) => {
-    try {
-      const created = await createCustomer(c);
-      setCustomers(prev => [created, ...prev]);
-      showToast(`${c.name} added`);
-      return created;
-    } catch {
-      const local = { ...c, id: `C${Date.now()}` } as Customer;
-      setCustomers(prev => [local, ...prev]);
-      showToast('Customer saved locally — sync failed', 'warning');
-      return local;
-    }
+    const created = await createCustomer(c);
+    setCustomers(prev => [created, ...prev]);
+    showToast(`${c.name} added`);
+    return created;
   };
 
   return { customers, loading, add };

@@ -9,7 +9,7 @@ interface Props {
 
 export default function AddRepairModal({ onSave, onClose }: Props) {
   const [form, setForm] = useState({
-    customer: '', device: '', issue: '', technician: '',
+    customer: '', device: '', deviceType: 'Other' as string, issue: '', technician: '',
     cost: 'TBD', eta: '', warranty: false,
   });
   const [saving, setSaving] = useState(false);
@@ -21,10 +21,12 @@ export default function AddRepairModal({ onSave, onClose }: Props) {
     if (!form.customer || !form.device || !form.issue) return;
     setSaving(true);
     try {
+      const costNum = parseFloat(form.cost.replace(/[^0-9.]/g, '')) || 0;
       await onSave({
         ...form,
         status: 'received',
-        started: new Date().toLocaleDateString('en-GH', { month: 'short', day: 'numeric' }),
+        costNum,
+        started: new Date().toISOString().split('T')[0],
         parts: [],
         notes: [],
       });
@@ -65,6 +67,14 @@ export default function AddRepairModal({ onSave, onClose }: Props) {
               className="w-full text-sm rounded-xl px-3 py-2 outline-none"
               style={{ border: '1px solid rgba(7,16,31,0.12)', background: 'rgba(7,16,31,0.02)', color: '#07101F' }}
               placeholder="Screen cracked, battery dead..." />
+          </div>
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'rgba(7,16,31,0.4)' }}>Device Type</label>
+            <select value={form.deviceType} onChange={e => set('deviceType', e.target.value)}
+              className="w-full text-sm rounded-xl px-3 py-2 outline-none"
+              style={{ border: '1px solid rgba(7,16,31,0.12)', background: 'rgba(7,16,31,0.02)', color: '#07101F' }}>
+              {['iPhone','Android','MacBook','iPad','Windows','Other'].map(t => <option key={t}>{t}</option>)}
+            </select>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>

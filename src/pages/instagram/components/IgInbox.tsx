@@ -75,7 +75,7 @@ export default function IgInbox({
               <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: igGradient }}>
                 <i className="ri-instagram-line text-white text-sm" />
               </div>
-              <span className="text-sm font-bold text-slate-800">@ideals_techhub</span>
+              <span className="text-sm font-bold text-slate-800">@fixhub</span>
               <span className="ml-auto text-[10px] text-slate-400">{igStats.followers} followers</span>
             </div>
             <div className="relative">

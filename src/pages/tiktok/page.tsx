@@ -13,7 +13,7 @@ import {
   type SocialContact,
 } from '@/services/social';
 import { generateAiReply } from '@/services/ai';
-import { isSupabaseConfigured } from '@/services/supabase';
+
 import TikTokVideos from './components/TikTokVideos';
 import TikTokCampaigns from './components/TikTokCampaigns';
 import TikTokAutomations from './components/TikTokAutomations';
@@ -52,7 +52,7 @@ export default function TikTokPage() {
   }, []);
 
   useEffect(() => {
-    if (!isSupabaseConfigured) return;
+    
     const sub = subscribeToConversations('tiktok', (updated) => {
       setConversations(prev => prev.map(c => c.id === updated.id ? { ...c, ...updated } : c));
     });
@@ -71,7 +71,7 @@ export default function TikTokPage() {
   }, [selectedConvId]);
 
   useEffect(() => {
-    if (!selectedConvId || !isSupabaseConfigured) return;
+    if (!selectedConvId) return;
     const sub = subscribeToMessages(selectedConvId, (newMsg) => {
       setMessages(prev => [...prev, newMsg]);
     });
@@ -84,7 +84,7 @@ export default function TikTokPage() {
     setChatInput('');
     try {
       const sent = await sendAgentMessage(selectedConvId, 'tiktok', text);
-      if (!isSupabaseConfigured) setMessages(prev => [...prev, sent]);
+      setMessages(prev => [...prev, sent]);
     } catch (err) { console.error(err); }
   }, [chatInput, selectedConvId]);
 
@@ -103,7 +103,7 @@ export default function TikTokPage() {
   const useMock = conversations.length === 0;
 
   return (
-    <AdminLayout title="TikTok" subtitle="Command Center · @idealstechhub">
+    <AdminLayout title="TikTok" subtitle="Command Center · @fixhub">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
         {[
           { label: 'Total Reach', value: formatNumber(totalReach), icon: 'ri-eye-line', color: '#FE2C55' },

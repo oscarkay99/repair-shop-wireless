@@ -55,7 +55,7 @@ export default function WalletPage() {
   };
 
   return (
-    <AdminLayout title="GadgetFlow Wallet" subtitle="Customer store credit, loyalty tiers & wallet management">
+    <AdminLayout title="FixHub Wallet" subtitle="Customer store credit, loyalty tiers & wallet management">
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
         {[

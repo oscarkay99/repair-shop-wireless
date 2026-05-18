@@ -1,14 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { supabase } from '@/services/supabase';
 import { getAllIntegrations, disconnectChannel, type ChannelIntegration } from '@/services/channels';
-
-const META_APP_ID = import.meta.env.VITE_META_APP_ID ?? '';
-const INSTAGRAM_APP_ID = import.meta.env.VITE_INSTAGRAM_APP_ID ?? '';
-const TIKTOK_CLIENT_KEY = import.meta.env.VITE_TIKTOK_CLIENT_KEY ?? '';
-const CALLBACK_BASE = import.meta.env.VITE_SUPABASE_URL
-  ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/oauth-callback`
-  : '';
 
 const CHANNEL_META = {
   whatsapp: {
@@ -41,27 +33,7 @@ const OTHER_INTEGRATIONS = [
   { id: 'qb', name: 'QuickBooks', icon: 'ri-book-2-line', color: '#2CA01C', status: 'disconnected', description: 'Sync sales and expenses to accounting', lastSync: 'Never' },
 ];
 
-async function buildOAuthUrl(channel: 'instagram' | 'whatsapp' | 'tiktok'): Promise<string | null> {
-  // Get the current user's JWT to use as state (identifies who is connecting)
-  const { data } = await supabase.auth.getSession();
-  const jwt = data.session?.access_token;
-  if (!jwt) return null;
-
-  const statePayload = btoa(JSON.stringify({ jwt, channel }));
-  const redirectUri = encodeURIComponent(CALLBACK_BASE);
-
-  if (channel === 'instagram' || channel === 'whatsapp') {
-    if (!META_APP_ID) return null;
-    const scopes = encodeURIComponent(CHANNEL_META[channel].scopes);
-    return `https://www.facebook.com/v19.0/dialog/oauth?client_id=${META_APP_ID}&redirect_uri=${redirectUri}&scope=${scopes}&state=${statePayload}&response_type=code`;
-  }
-
-  if (channel === 'tiktok') {
-    if (!TIKTOK_CLIENT_KEY) return null;
-    const scopes = encodeURIComponent('user.info.basic,video.list,message.send');
-    return `https://www.tiktok.com/v2/auth/authorize?client_key=${TIKTOK_CLIENT_KEY}&redirect_uri=${redirectUri}&scope=${scopes}&state=${state}&response_type=code`;
-  }
-
+async function buildOAuthUrl(_channel: 'instagram' | 'whatsapp' | 'tiktok'): Promise<string | null> {
   return null;
 }
 
@@ -72,7 +44,7 @@ export default function IntegrationsSection() {
   const [connecting, setConnecting] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
-  const notConfigured = !META_APP_ID && !TIKTOK_CLIENT_KEY;
+  const notConfigured = true;
 
   useEffect(() => {
     // Show feedback from OAuth redirect

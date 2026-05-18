@@ -1,62 +1,11 @@
-import { supabase, isSupabaseConfigured } from './supabase';
-import { runAuditedMutation } from './audit';
+import { customers as seedData } from '@/mocks/customers';
 import type { Customer } from '@/types/customer';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapCustomer(row: any): Customer {
-  return {
-    id: row.id,
-    name: row.name,
-    phone: row.phone,
-    email: row.email,
-    segment: row.segment,
-    ltv: row.ltv,
-    orders: row.orders,
-    lastOrder: row.last_order,
-    avgOrder: row.avg_order,
-    warranties: row.warranties,
-    repairs: row.repairs,
-    since: row.since,
-  };
-}
+let store: Customer[] = seedData.map(c => ({ ...c } as unknown as Customer));
 
-function toRow(c: Omit<Customer, 'id'>) {
-  return {
-    name: c.name, phone: c.phone, email: c.email, segment: c.segment,
-    ltv: c.ltv, orders: c.orders, last_order: c.lastOrder,
-    avg_order: c.avgOrder, warranties: c.warranties, repairs: c.repairs, since: c.since,
-  };
-}
-
-export async function getCustomers(): Promise<Customer[]> {
-  if (!isSupabaseConfigured) return [];
-  const { data, error } = await supabase.from('customers').select('*').order('name');
-  if (error) throw new Error(error.message);
-  return (data ?? []).map(mapCustomer);
-}
-
-export async function getCustomerById(id: string): Promise<Customer | null> {
-  if (!isSupabaseConfigured) return null;
-  const { data, error } = await supabase.from('customers').select('*').eq('id', id).single();
-  if (error) throw new Error(error.message);
-  return data ? mapCustomer(data) : null;
-}
-
-export async function createCustomer(customer: Omit<Customer, 'id'>): Promise<Customer> {
-  if (!isSupabaseConfigured) throw new Error('Supabase not configured');
-  return runAuditedMutation(
-    {
-      layer: 'service',
-      action: 'create',
-      entityType: 'customers',
-      summary: `Create customer ${customer.name}`,
-      metadata: { module: 'customers' },
-      getEntityId: (created) => created.id,
-    },
-    async () => {
-      const { data, error } = await supabase.from('customers').insert(toRow(customer)).select().single();
-      if (error) throw new Error(error.message);
-      return mapCustomer(data);
-    },
-  );
+export async function getCustomers(): Promise<Customer[]> { return [...store]; }
+export async function createCustomer(c: Omit<Customer, 'id'>): Promise<Customer> {
+  const item = { ...c, id: `C${String(store.length + 1).padStart(3, '0')}` } as Customer;
+  store = [item, ...store];
+  return item;
 }

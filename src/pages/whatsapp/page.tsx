@@ -14,7 +14,7 @@ import {
   type SocialContact,
 } from '@/services/social';
 import { generateAiReply } from '@/services/ai';
-import { isSupabaseConfigured } from '@/services/supabase';
+
 import WaStatsStrip from './components/WaStatsStrip';
 import WaBroadcasts from './components/WaBroadcasts';
 import WaAutomations from './components/WaAutomations';
@@ -67,7 +67,7 @@ export default function WhatsAppPage() {
 
   // Realtime: update conversation list when any conversation changes
   useEffect(() => {
-    if (!isSupabaseConfigured) return;
+    
     const sub = subscribeToConversations('whatsapp', (updated) => {
       setConversations(prev => prev.map(c => c.id === updated.id ? { ...c, ...updated } : c));
     });
@@ -89,7 +89,7 @@ export default function WhatsAppPage() {
 
   // Realtime: append new messages to active conversation
   useEffect(() => {
-    if (!selectedConvId || !isSupabaseConfigured) return;
+    if (!selectedConvId) return;
     const sub = subscribeToMessages(selectedConvId, (newMsg) => {
       setMessages(prev => [...prev, newMsg]);
     });
@@ -106,7 +106,7 @@ export default function WhatsAppPage() {
     setMessage('');
     try {
       const sent = await sendAgentMessage(selectedConvId, 'whatsapp', text);
-      if (!isSupabaseConfigured) setMessages(prev => [...prev, sent]);
+      setMessages(prev => [...prev, sent]);
     } catch (err) {
       console.error('Send failed:', err);
     }

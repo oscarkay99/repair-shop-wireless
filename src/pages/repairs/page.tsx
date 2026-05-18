@@ -7,11 +7,13 @@ import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/shared/Pagination';
 
 const statusConfig: Record<string, { label: string; color: string; dot: string; step: number }> = {
-  received:     { label: 'Received',     color: 'bg-slate-100 text-slate-600',    dot: 'bg-slate-400', step: 1 },
-  diagnosed:    { label: 'Diagnosed',    color: 'bg-blue-100 text-blue-700',      dot: 'bg-blue-500',  step: 2 },
-  parts_pending:{ label: 'Parts Pending',color: 'bg-amber-100 text-amber-700',    dot: 'bg-amber-500', step: 3 },
-  in_progress:  { label: 'In Progress',  color: 'bg-violet-100 text-violet-700',  dot: 'bg-violet-500',step: 4 },
-  ready:        { label: 'Ready',        color: 'bg-emerald-100 text-emerald-700',dot: 'bg-emerald-500',step: 6 },
+  received:     { label: 'Received',     color: 'bg-slate-100 text-slate-600',    dot: 'bg-slate-400',   step: 1 },
+  diagnosed:    { label: 'Diagnosed',    color: 'bg-blue-100 text-blue-700',      dot: 'bg-blue-500',    step: 2 },
+  parts_pending:{ label: 'Parts Pending',color: 'bg-amber-100 text-amber-700',    dot: 'bg-amber-500',   step: 3 },
+  in_progress:  { label: 'In Progress',  color: 'bg-violet-100 text-violet-700',  dot: 'bg-violet-500',  step: 4 },
+  ready:        { label: 'Ready',        color: 'bg-emerald-100 text-emerald-700',dot: 'bg-emerald-500', step: 5 },
+  completed:    { label: 'Completed',    color: 'bg-emerald-100 text-emerald-700',dot: 'bg-emerald-600', step: 6 },
+  cancelled:    { label: 'Cancelled',    color: 'bg-red-100 text-red-600',        dot: 'bg-red-400',     step: 0 },
 };
 
 export default function RepairsPage() {
@@ -76,7 +78,7 @@ export default function RepairsPage() {
           />
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {['all', 'received', 'diagnosed', 'parts_pending', 'in_progress', 'ready'].map((f) => (
+          {['all', 'received', 'diagnosed', 'parts_pending', 'in_progress', 'ready', 'completed'].map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
@@ -107,7 +109,7 @@ export default function RepairsPage() {
           </div>
         )}
         {paginated.map((r) => {
-          const st = statusConfig[r.status];
+          const st = statusConfig[r.status] ?? statusConfig.received;
           return (
             <div
               key={r.id}
