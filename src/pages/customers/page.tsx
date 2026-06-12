@@ -8,7 +8,7 @@ import Pagination from '@/components/shared/Pagination';
 
 const segmentConfig: Record<string, { label: string; color: string }> = {
   VIP: { label: 'VIP', color: 'bg-amber-100 text-amber-700' },
-  Repeat: { label: 'Repeat', color: 'bg-blue-100 text-blue-700' },
+  Repeat: { label: 'Repeat', color: 'bg-slate-100 text-slate-700' },
   New: { label: 'New', color: 'bg-emerald-100 text-emerald-700' },
   'At-Risk': { label: 'At-Risk', color: 'bg-red-100 text-red-600' },
 };
@@ -23,7 +23,7 @@ export default function CustomersPage() {
   const parseLtv = (s: string) => parseFloat(s.replace(/[^0-9.]/g, '')) || 0;
   const avgLtv = customers.length ? customers.reduce((sum, c) => sum + parseLtv(c.ltv), 0) / customers.length : 0;
   const stats = [
-    { label: 'Total Customers', value: customers.length, icon: 'ri-group-line', accent: 'bg-blue-500' },
+    { label: 'Total Customers', value: customers.length, icon: 'ri-group-line', accent: 'bg-[#DC1F1F]' },
     { label: 'VIP',             value: customers.filter(c => c.segment === 'VIP').length, icon: 'ri-vip-crown-line', accent: 'bg-amber-500' },
     { label: 'At-Risk',         value: customers.filter(c => c.segment === 'At-Risk').length, icon: 'ri-alarm-warning-line', accent: 'bg-red-500' },
     { label: 'Avg. LTV',        value: `GHS ${Math.round(avgLtv).toLocaleString()}`, icon: 'ri-line-chart-line', accent: 'bg-emerald-500' },
@@ -78,7 +78,7 @@ export default function CustomersPage() {
               key={f}
               onClick={() => setFilter(f)}
               className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${
-                filter === f ? 'bg-slate-900 text-white' : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'
+                filter === f ? 'bg-[#DC1F1F] text-white' : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'
               }`}
             >
               {f === 'all' ? 'All' : f}
@@ -87,8 +87,7 @@ export default function CustomersPage() {
         </div>
         <button
           onClick={() => setShowAdd(true)}
-          className="flex items-center gap-2 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap"
-          style={{ background: '#0D1F4A' }}
+          className="flex items-center gap-2 bg-[#DC1F1F] hover:bg-[#B81616] text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors duration-150 cursor-pointer whitespace-nowrap"
         >
           <i className="ri-add-line text-sm" />
           New Customer

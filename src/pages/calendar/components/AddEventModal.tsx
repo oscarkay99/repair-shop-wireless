@@ -13,11 +13,11 @@ const typeLabels: Record<string, string> = {
 
 const typeColors: Record<string, string> = {
   repair: '#E05A2B',
-  consultation: '#0D1F4A',
-  tradein: '#F5A623',
-  internal: '#07101F',
-  marketing: '#F5A623',
-  delivery: '#1552A8',
+  consultation: '#DC1F1F',
+  tradein: '#F59E0B',
+  internal: '#0F172A',
+  marketing: '#F59E0B',
+  delivery: '#06B6D4',
 };
 
 interface Props {
@@ -156,7 +156,7 @@ export default function AddEventModal({ onSave, onClose }: Props) {
             onClick={handleSubmit}
             disabled={saving || !title.trim() || !customer.trim()}
             className="w-full py-3 rounded-xl text-sm font-semibold text-white cursor-pointer whitespace-nowrap disabled:opacity-50"
-            style={{ background: '#0D1F4A' }}
+            style={{ background: '#DC1F1F' }}
           >
             {saving ? 'Saving…' : 'Add Appointment'}
           </button>

@@ -54,12 +54,12 @@ export default function IgPosts({ posts, onNewPost }: IgPostsProps) {
                 <div className="flex items-center gap-3 text-xs text-slate-500 mb-2">
                   <span className="flex items-center gap-1"><i className="ri-heart-line text-rose-400" />{post.likes.toLocaleString()}</span>
                   <span className="flex items-center gap-1"><i className="ri-chat-1-line text-sky-400" />{post.comments}</span>
-                  <span className="flex items-center gap-1"><i className="ri-share-line text-violet-400" />{post.shares}</span>
+                  <span className="flex items-center gap-1"><i className="ri-share-line text-slate-400" />{post.shares}</span>
                   <span className="flex items-center gap-1"><i className="ri-bookmark-line text-amber-400" />{post.saves}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] text-slate-400">Reach: <strong className="text-slate-700">{post.reach.toLocaleString()}</strong></span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(7,16,31,0.06)', color: '#0D1F4A' }}>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(220,31,31,0.08)', color: '#DC1F1F' }}>
                     {post.leads} leads
                   </span>
                   <span className="text-[10px] text-slate-400 ml-auto">{post.postedAt}</span>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { getRepairs, createRepair, updateRepairStatus, updateRepairNotes } from '@/services/repairs';
-import type { Repair, RepairStatus } from '@/types/repair';
+import { getRepairs, createRepair, updateRepairStatus, updateRepairNotes, addRepairMedia, updateRepair } from '@/services/repairs';
+import type { Repair, RepairStatus, RepairMediaUploadInput } from '@/types/repair';
 import { useToast } from '@/contexts/ToastContext';
 
 export function useRepairs() {
@@ -38,5 +38,24 @@ export function useRepairs() {
     await setNotes(id, [...(repair.notes ?? []), note]);
   };
 
-  return { repairs, loading, add, setStatus, setNotes, updateStatus, addNote };
+  const addMedia = async (id: string, input: RepairMediaUploadInput) => {
+    const media = await addRepairMedia(id, input);
+    setRepairs(prev => prev.map((repair) => (
+      repair.id === id
+        ? { ...repair, media: [media, ...(repair.media ?? [])] }
+        : repair
+    )));
+    showToast('Media uploaded');
+    return media;
+  };
+
+  const patchRepair = async (id: string, patch: Partial<Repair>) => {
+    await updateRepair(id, patch);
+    setRepairs(prev => prev.map((repair) => (
+      repair.id === id ? { ...repair, ...patch } : repair
+    )));
+    showToast('Repair updated');
+  };
+
+  return { repairs, loading, add, setStatus, setNotes, updateStatus, addNote, addMedia, patchRepair };
 }

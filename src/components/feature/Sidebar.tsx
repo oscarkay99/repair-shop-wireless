@@ -1,37 +1,52 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useDarkMode } from '@/hooks/useDarkMode';
 import { roleLabels } from '@/mocks/users';
 import { canAccessModule } from '@/utils/access';
 import { navGroups, publicItems } from './navigation';
 
-function FixHubIcon({ size = 32 }: { size?: number }) {
+function WirelessLogoMark({ size = 32 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="40" height="40" rx="10" fill="#0D1F4A" />
-      <path d="M12 28 L16 16 L20 22 L24 16 L28 28" stroke="#F5A623" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-      <circle cx="20" cy="13" r="3" fill="#F5A623" />
-    </svg>
+    <img
+      src="/wireless-logo.png"
+      alt="Wireless"
+      width={size}
+      height={size}
+      style={{ width: size, height: size, objectFit: 'contain', display: 'block' }}
+    />
   );
 }
 
-function FixHubWordmark() {
+function WirelessWordmark({ isDark }: { isDark: boolean }) {
   return (
     <div className="flex items-center gap-2.5">
-      <FixHubIcon size={30} />
-      <span className="text-[19px] font-black tracking-tight" style={{ color: 'white', letterSpacing: '-0.02em' }}>
-        Fix<span style={{ color: '#F5A623' }}>Hub</span>
+      <div
+        className="flex-shrink-0 flex items-center justify-center rounded-lg overflow-hidden"
+        style={{ width: 30, height: 30, background: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(220,31,31,0.08)' }}
+      >
+        <WirelessLogoMark size={24} />
+      </div>
+      <span
+        className="text-[18px] font-bold tracking-tight lowercase"
+        style={{
+          color: isDark ? 'white' : '#0F172A',
+          letterSpacing: '-0.03em',
+          fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+        }}
+      >
+        wireless
       </span>
     </div>
   );
 }
 
 const roleGradients: Record<string, string> = {
-  admin: 'linear-gradient(135deg, #07101F, #2463BE)',
-  sales_manager: 'linear-gradient(135deg, #7C3AED, #A855F7)',
-  sales_rep: 'linear-gradient(135deg, #059669, #34D399)',
-  technician: 'linear-gradient(135deg, #D97706, #F59E0B)',
-  inventory_manager: 'linear-gradient(135deg, #DC2626, #F87171)',
+  admin:             'linear-gradient(135deg, #991B1B, #DC1F1F)',
+  sales_manager:     'linear-gradient(135deg, #D97706, #F59E0B)',
+  sales_rep:         'linear-gradient(135deg, #059669, #10B981)',
+  technician:        'linear-gradient(135deg, #0E7490, #06B6D4)',
+  inventory_manager: 'linear-gradient(135deg, #475569, #64748b)',
 };
 
 interface SidebarProps {
@@ -42,6 +57,7 @@ export default function Sidebar({ onWidthChange }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { isDark } = useDarkMode();
   const [collapsed, setCollapsed] = useState(false);
   const navRef = useRef<HTMLElement>(null);
 
@@ -63,23 +79,43 @@ export default function Sidebar({ onWidthChange }: SidebarProps) {
 
   const avatarGradient = user?.role ? roleGradients[user.role] : roleGradients.admin;
 
+  const dividerColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.07)';
+  const inactiveIcon  = isDark ? 'rgba(255,255,255,0.32)' : '#94a3b8';
+  const inactiveLabel = isDark ? 'rgba(255,255,255,0.45)' : '#64748b';
+  const hoverBg       = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(15,23,42,0.05)';
+  const groupLabelColor = isDark ? 'rgba(200,64,21,0.65)' : 'rgba(220,31,31,0.55)';
+  const actionBase    = isDark ? 'rgba(255,255,255,0.28)' : '#94a3b8';
+
   return (
     <aside
       className={`fixed left-0 top-0 h-full flex flex-col z-40 transition-[width] duration-300 select-none`}
       style={{
         width: collapsed ? 72 : 260,
-        background: 'linear-gradient(170deg, #07101F 0%, #0D1F4A 55%, #07101F 100%)',
+        background: isDark
+          ? 'linear-gradient(170deg, #160403 0%, #240807 55%, #160403 100%)'
+          : 'white',
+        borderRight: isDark ? 'none' : '1px solid rgba(15,23,42,0.07)',
+        boxShadow: isDark ? 'none' : '4px 0 20px rgba(15,23,42,0.04)',
       }}
     >
-      {/* Top shimmer line */}
-      <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(245,166,35,0.7), rgba(245,166,35,0.3), transparent)' }} />
+      {/* Top shimmer — dark only */}
+      {isDark && (
+        <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(200,64,21,0.7), rgba(200,64,21,0.3), transparent)' }} />
+      )}
 
       {/* Logo */}
       <div
         className={`flex items-center flex-shrink-0 ${collapsed ? 'justify-center px-3 py-4' : 'px-5 py-4'}`}
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}
+        style={{ borderBottom: `1px solid ${dividerColor}` }}
       >
-        {collapsed ? <FixHubIcon size={34} /> : <FixHubWordmark />}
+        {collapsed ? (
+          <div
+            className="flex items-center justify-center rounded-lg overflow-hidden"
+            style={{ width: 34, height: 34, background: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(220,31,31,0.08)' }}
+          >
+            <WirelessLogoMark size={26} />
+          </div>
+        ) : <WirelessWordmark isDark={isDark} />}
       </div>
 
       {/* Nav */}
@@ -90,15 +126,15 @@ export default function Sidebar({ onWidthChange }: SidebarProps) {
               <div className="flex items-center gap-2 px-3 pt-4 pb-1.5">
                 <span
                   className="text-[9px] font-bold uppercase tracking-[0.14em]"
-                  style={{ color: 'rgba(245,166,35,0.55)' }}
+                  style={{ color: groupLabelColor }}
                 >
                   {group.label}
                 </span>
-                <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                <div className="flex-1 h-px" style={{ background: dividerColor }} />
               </div>
             )}
             {collapsed && gi > 0 && (
-              <div className="mx-3 my-2 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+              <div className="mx-3 my-2 h-px" style={{ background: dividerColor }} />
             )}
             <div className="space-y-0.5">
               {group.items.map((item) => {
@@ -111,27 +147,24 @@ export default function Sidebar({ onWidthChange }: SidebarProps) {
                     className={`w-full flex items-center gap-3 rounded-xl transition-all duration-150 cursor-pointer group relative overflow-hidden ${
                       collapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2'
                     }`}
-                    style={active ? { background: '#F5A623', boxShadow: '0 4px 16px rgba(245,166,35,0.35)' } : undefined}
+                    style={active ? { background: '#DC1F1F', boxShadow: '0 4px 16px rgba(220,31,31,0.30)' } : undefined}
                     onMouseEnter={(e) => {
-                      if (!active) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.07)';
+                      if (!active) (e.currentTarget as HTMLElement).style.background = hoverBg;
                     }}
                     onMouseLeave={(e) => {
                       if (!active) (e.currentTarget as HTMLElement).style.background = '';
                     }}
                   >
-                    {/* Icon */}
                     <div className="w-7 h-7 flex items-center justify-center rounded-lg flex-shrink-0">
                       <i
                         className={`${item.icon} text-[15px]`}
-                        style={{ color: active ? 'white' : 'rgba(255,255,255,0.32)' }}
+                        style={{ color: active ? 'white' : inactiveIcon }}
                       />
                     </div>
-
-                    {/* Label */}
                     {!collapsed && (
                       <span
                         className="text-[13px] font-semibold flex-1 text-left leading-none"
-                        style={{ color: active ? 'white' : 'rgba(255,255,255,0.38)' }}
+                        style={{ color: active ? 'white' : inactiveLabel }}
                       >
                         {item.label}
                       </span>
@@ -147,11 +180,11 @@ export default function Sidebar({ onWidthChange }: SidebarProps) {
         <div className="mt-1">
           {!collapsed && (
             <div className="flex items-center gap-2 px-3 pt-4 pb-1.5">
-              <span className="text-[9px] font-bold uppercase tracking-[0.14em]" style={{ color: 'rgba(245,166,35,0.55)' }}>Public</span>
-              <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+              <span className="text-[9px] font-bold uppercase tracking-[0.14em]" style={{ color: groupLabelColor }}>Public</span>
+              <div className="flex-1 h-px" style={{ background: dividerColor }} />
             </div>
           )}
-          {collapsed && <div className="mx-3 my-2 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />}
+          {collapsed && <div className="mx-3 my-2 h-px" style={{ background: dividerColor }} />}
           {publicItems.map((item) => {
             const active = isActive(item.path);
             return (
@@ -162,15 +195,15 @@ export default function Sidebar({ onWidthChange }: SidebarProps) {
                 className={`w-full flex items-center gap-3 rounded-xl transition-all duration-150 cursor-pointer group relative overflow-hidden ${
                   collapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2'
                 }`}
-                style={active ? { background: '#F5A623', boxShadow: '0 4px 16px rgba(245,166,35,0.35)' } : undefined}
-                onMouseEnter={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.07)'; }}
+                style={active ? { background: '#DC1F1F', boxShadow: '0 4px 16px rgba(220,31,31,0.30)' } : undefined}
+                onMouseEnter={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = hoverBg; }}
                 onMouseLeave={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = ''; }}
               >
                 <div className="w-7 h-7 flex items-center justify-center rounded-lg flex-shrink-0">
-                  <i className={`${item.icon} text-[15px]`} style={{ color: active ? 'white' : 'rgba(255,255,255,0.32)' }} />
+                  <i className={`${item.icon} text-[15px]`} style={{ color: active ? 'white' : inactiveIcon }} />
                 </div>
                 {!collapsed && (
-                  <span className="text-[13px] font-semibold flex-1 text-left" style={{ color: active ? 'white' : 'rgba(255,255,255,0.38)' }}>
+                  <span className="text-[13px] font-semibold flex-1 text-left" style={{ color: active ? 'white' : inactiveLabel }}>
                     {item.label}
                   </span>
                 )}
@@ -181,21 +214,39 @@ export default function Sidebar({ onWidthChange }: SidebarProps) {
       </nav>
 
       {/* Bottom — user + actions */}
-      <div className="flex-shrink-0 p-3" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+      <div className="flex-shrink-0 p-3" style={{ borderTop: `1px solid ${dividerColor}` }}>
+        {/* Avatar row (expanded only) */}
+        {!collapsed && (
+          <div className="flex items-center gap-2.5 px-2 py-2 mb-1 rounded-xl">
+            <div
+              className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
+              style={{ background: avatarGradient }}
+            >
+              {user?.avatar ?? 'U'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[12px] font-bold leading-tight truncate" style={{ color: isDark ? 'rgba(255,255,255,0.85)' : '#0F172A' }}>{user?.name ?? 'User'}</p>
+              <p className="text-[10px] leading-tight mt-0.5 truncate" style={{ color: isDark ? 'rgba(255,255,255,0.35)' : '#94a3b8' }}>
+                {user?.role ? roleLabels[user.role] : ''}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Action row */}
         <div className={`flex ${collapsed ? 'flex-col items-center gap-1' : 'items-center gap-1'}`}>
           <button
             onClick={handleLogout}
             title="Sign Out"
             className={`flex items-center justify-center gap-1.5 rounded-xl transition-all cursor-pointer ${collapsed ? 'w-10 h-9' : 'flex-1 py-2'}`}
-            style={{ color: 'rgba(255,255,255,0.28)' }}
+            style={{ color: actionBase }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.1)';
-              (e.currentTarget as HTMLElement).style.color = '#F87171';
+              (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.08)';
+              (e.currentTarget as HTMLElement).style.color = '#EF4444';
             }}
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLElement).style.background = '';
-              (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.28)';
+              (e.currentTarget as HTMLElement).style.color = actionBase;
             }}
           >
             <i className="ri-logout-box-line text-sm" />
@@ -206,14 +257,14 @@ export default function Sidebar({ onWidthChange }: SidebarProps) {
             onClick={() => setCollapsed(!collapsed)}
             title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             className={`flex items-center justify-center gap-1.5 rounded-xl transition-all cursor-pointer ${collapsed ? 'w-10 h-9' : 'flex-1 py-2'}`}
-            style={{ color: 'rgba(255,255,255,0.28)' }}
+            style={{ color: actionBase }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)';
-              (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.7)';
+              (e.currentTarget as HTMLElement).style.background = hoverBg;
+              (e.currentTarget as HTMLElement).style.color = isDark ? 'rgba(255,255,255,0.7)' : '#475569';
             }}
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLElement).style.background = '';
-              (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.28)';
+              (e.currentTarget as HTMLElement).style.color = actionBase;
             }}
           >
             <i className={`${collapsed ? 'ri-arrow-right-double-line' : 'ri-arrow-left-double-line'} text-sm`} />

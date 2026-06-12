@@ -22,7 +22,7 @@ export function useToast() {
 const config: Record<ToastType, { icon: string; color: string; bg: string }> = {
   success: { icon: 'ri-checkbox-circle-line', color: '#25D366', bg: '#25D36618' },
   error:   { icon: 'ri-error-warning-line',   color: '#E05A2B', bg: '#E05A2B18' },
-  warning: { icon: 'ri-alert-line',           color: '#F5A623', bg: '#F5A62318' },
+  warning: { icon: 'ri-alert-line',           color: '#F59E0B', bg: 'rgba(245,158,11,0.10)' },
 };
 
 function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }) {

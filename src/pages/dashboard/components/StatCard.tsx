@@ -39,7 +39,7 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
 
 export default function StatCard({ label, value, change, trend, icon, accentColor, sub, sparkline }: StatCardProps) {
   const [hovered, setHovered] = useState(false);
-  const color = accentColor || '#0D1F4A';
+  const color = accentColor || '#DC1F1F';
   const isPositive = trend === 'up';
   const isNeutral  = trend === 'neutral';
 
@@ -51,7 +51,7 @@ export default function StatCard({ label, value, change, trend, icon, accentColo
         border: '1px solid rgba(7,16,31,0.07)',
         boxShadow: hovered
           ? '0 4px 24px rgba(7,16,31,0.1), 0 1px 4px rgba(7,16,31,0.05)'
-          : '0 1px 3px rgba(7,16,31,0.04), 0 6px 24px rgba(7,16,31,0.06)',
+          : '0 1px 3px rgba(7,16,31,0.04), 0 6px 24px rgba(220,31,31,0.08)',
         transform: hovered ? 'translateY(-2px)' : 'translateY(0)',
       }}
       onMouseEnter={() => setHovered(true)}
@@ -70,7 +70,7 @@ export default function StatCard({ label, value, change, trend, icon, accentColo
           <p className="text-[10px] font-bold uppercase tracking-[0.12em] mb-2.5" style={{ color: 'rgba(10,31,74,0.38)' }}>
             {label}
           </p>
-          <p className="text-[26px] font-bold leading-none mb-1" style={{ color: '#07101F', letterSpacing: '-0.03em' }}>
+          <p className="text-[26px] font-bold leading-none mb-1" style={{ color: '#0F172A', letterSpacing: '-0.03em' }}>
             {value}
           </p>
           {sub && (

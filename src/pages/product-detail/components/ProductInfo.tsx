@@ -96,14 +96,14 @@ export default function ProductInfo() {
       </div>
 
       {/* Warranty */}
-      <div className="border-l-4 border-blue-400 bg-blue-50 rounded-r-xl px-4 py-3">
+      <div className="border-l-4 border-slate-300 bg-slate-50 rounded-r-xl px-4 py-3">
         <div className="flex items-center gap-2 mb-1">
-          <div className="w-4 h-4 flex items-center justify-center text-blue-600">
+          <div className="w-4 h-4 flex items-center justify-center text-slate-500">
             <i className="ri-shield-star-line text-sm" />
           </div>
-          <span className="text-sm font-semibold text-blue-800">{productDetail.warranty}</span>
+          <span className="text-sm font-semibold text-slate-700">{productDetail.warranty}</span>
         </div>
-        <p className="text-xs text-blue-600 leading-relaxed">{productDetail.warrantyDetails}</p>
+        <p className="text-xs text-slate-500 leading-relaxed">{productDetail.warrantyDetails}</p>
       </div>
 
       {/* Specs grid */}

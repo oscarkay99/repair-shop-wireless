@@ -40,7 +40,7 @@ export default function AddRoleModal({ open, onClose, editRole }: AddRoleModalPr
               ))}
             </div>
           </div>
-          <button onClick={onClose} className="w-full py-3 rounded-xl text-sm font-semibold text-white cursor-pointer whitespace-nowrap" style={{ background: '#0D1F4A' }}>
+          <button onClick={onClose} className="w-full py-3 rounded-xl text-sm font-semibold text-white cursor-pointer whitespace-nowrap bg-[#DC1F1F] hover:bg-[#B81616] transition-colors duration-150">
             {isEditing ? 'Save Changes' : 'Create Role'}
           </button>
         </div>

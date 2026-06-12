@@ -157,7 +157,7 @@ export default function AiChat() {
       <button
         onClick={() => setOpen(!open)}
         className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full text-white flex items-center justify-center shadow-xl cursor-pointer transition-all hover:scale-105"
-        style={{ background: 'linear-gradient(135deg, #0D1F4A, #6366f1)' }}
+        style={{ background: 'linear-gradient(135deg, #DC1F1F, #6366f1)' }}
         title="AI Sales Assistant"
       >
         {open ? <i className="ri-close-line text-xl" /> : <i className="ri-sparkling-2-line text-xl" />}
@@ -170,13 +170,13 @@ export default function AiChat() {
       {open && (
         <div className="fixed bottom-24 right-6 z-50 w-80 bg-white rounded-3xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden" style={{ height: 440 }}>
           {/* Header */}
-          <div className="px-4 py-3 flex items-center gap-2 border-b border-slate-100" style={{ background: 'linear-gradient(135deg, #0D1F4A, #6366f1)' }}>
+          <div className="px-4 py-3 flex items-center gap-2 border-b border-slate-100" style={{ background: 'linear-gradient(135deg, #DC1F1F, #6366f1)' }}>
             <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
               <i className="ri-sparkling-2-line text-white text-sm" />
             </div>
             <div>
               <p className="text-xs font-bold text-white">AI Sales Assistant</p>
-              <p className="text-[10px] text-white/70">Powered by FixHub Intelligence</p>
+              <p className="text-[10px] text-white/70">Powered by Wireless Intelligence</p>
             </div>
             <div className="ml-auto w-2 h-2 rounded-full bg-emerald-400" />
           </div>
@@ -188,7 +188,7 @@ export default function AiChat() {
                 <div
                   className={`max-w-[85%] rounded-2xl px-3 py-2 text-xs leading-relaxed whitespace-pre-line ${
                     m.role === 'user'
-                      ? 'bg-[#0D1F4A] text-white rounded-tr-sm'
+                      ? 'bg-[#DC1F1F] text-white rounded-tr-sm'
                       : 'bg-slate-100 text-slate-800 rounded-tl-sm'
                   }`}
                 >
@@ -215,7 +215,7 @@ export default function AiChat() {
                 <button
                   key={p}
                   onClick={() => send(p)}
-                  className="text-[10px] bg-indigo-50 text-indigo-600 border border-indigo-100 px-2 py-1 rounded-full hover:bg-indigo-100 cursor-pointer"
+                  className="text-[10px] bg-[rgba(220,31,31,0.06)] text-[#DC1F1F] border border-[rgba(220,31,31,0.15)] px-2 py-1 rounded-full hover:bg-[rgba(220,31,31,0.1)] cursor-pointer"
                 >
                   {p}
                 </button>
@@ -230,12 +230,12 @@ export default function AiChat() {
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send(input)}
               placeholder="Ask anything…"
-              className="flex-1 bg-slate-50 rounded-xl px-3 py-2 text-xs text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-[#0D1F4A]/30"
+              className="flex-1 bg-slate-50 rounded-xl px-3 py-2 text-xs text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-[#DC1F1F]/30"
             />
             <button
               onClick={() => send(input)}
               disabled={!input.trim() || loading}
-              className="w-8 h-8 rounded-xl bg-[#0D1F4A] text-white flex items-center justify-center disabled:opacity-40 cursor-pointer hover:bg-[#1a53a8] flex-shrink-0"
+              className="w-8 h-8 rounded-xl bg-[#DC1F1F] text-white flex items-center justify-center disabled:opacity-40 cursor-pointer hover:bg-[#B81616] flex-shrink-0"
             >
               <i className="ri-send-plane-fill text-sm" />
             </button>

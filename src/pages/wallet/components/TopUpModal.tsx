@@ -55,7 +55,7 @@ export default function TopUpModal({ customer, topupAmount, onAmountChange, onCl
         </div>
         <div className="flex gap-3 mt-5">
           <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 cursor-pointer whitespace-nowrap">Cancel</button>
-          <button onClick={onConfirm} disabled={!topupAmount || parseFloat(topupAmount) <= 0} className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold cursor-pointer whitespace-nowrap hover:opacity-90 disabled:opacity-40" style={{ background: '#0D1F4A' }}>
+          <button onClick={onConfirm} disabled={!topupAmount || parseFloat(topupAmount) <= 0} className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold cursor-pointer whitespace-nowrap hover:opacity-90 disabled:opacity-40" style={{ background: '#DC1F1F' }}>
             <i className="ri-add-circle-line mr-1" />Add GHS {topupAmount ? parseInt(topupAmount).toLocaleString() : '0'}
           </button>
         </div>

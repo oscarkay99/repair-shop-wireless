@@ -36,8 +36,8 @@ const automationRules = [
     handled: 203,
     converted: 203,
     icon: 'ri-truck-line',
-    color: 'bg-violet-50 border-violet-200',
-    iconColor: 'text-violet-600',
+    color: 'bg-cyan-50 border-cyan-200',
+    iconColor: 'text-cyan-600',
   },
   {
     trigger: 'Availability Check',
@@ -64,17 +64,17 @@ const automationRules = [
 export default function WaAutomations() {
   return (
     <div className="space-y-4">
-      <div className="bg-gradient-to-r from-violet-600 to-violet-700 rounded-2xl p-5 text-white">
+      <div className="bg-gradient-to-r from-[#DC1F1F] to-[#B81616] rounded-2xl p-5 text-white">
         <div className="flex items-center gap-3 mb-2">
           <div className="w-10 h-10 flex items-center justify-center bg-white/20 rounded-xl">
             <i className="ri-robot-2-line text-xl" />
           </div>
           <div>
             <h3 className="font-bold">AI Auto-Reply Engine</h3>
-            <p className="text-violet-200 text-xs">Handles 78% of incoming messages automatically</p>
+            <p className="text-white/70 text-xs">Handles 78% of incoming messages automatically</p>
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <span className="text-xs text-violet-200">Active</span>
+            <span className="text-xs text-white/70">Active</span>
             <div className="w-10 h-5 bg-white/30 rounded-full relative">
               <span className="absolute right-0.5 top-0.5 w-4 h-4 bg-white rounded-full" />
             </div>

@@ -5,7 +5,7 @@ const igGradient = 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%,
 const statusColors: Record<string, string> = {
   hot_lead: 'bg-rose-100 text-rose-600',
   inquiry: 'bg-amber-100 text-amber-600',
-  customer: 'bg-blue-100 text-blue-700',
+  customer: 'bg-emerald-100 text-emerald-700',
 };
 const statusLabels: Record<string, string> = {
   hot_lead: 'Hot Lead',
@@ -181,7 +181,7 @@ export default function IgInbox({
                         ? 'bg-white text-slate-700 rounded-tl-sm border border-slate-100'
                         : 'text-white rounded-tr-sm'
                     }`}
-                    style={msg.from !== 'customer' ? { background: msg.aiGenerated ? igGradient : '#0D1F4A' } : {}}
+                    style={msg.from !== 'customer' ? { background: msg.aiGenerated ? igGradient : '#DC1F1F' } : {}}
                   >
                     {msg.text}
                   </div>
@@ -222,10 +222,10 @@ export default function IgInbox({
               <button className="text-xs cursor-pointer flex items-center gap-1" style={{ color: '#dc2743' }}>
                 <i className="ri-sparkling-2-line" />Generate AI Reply
               </button>
-              <button className="text-xs cursor-pointer flex items-center gap-1" style={{ color: '#F5A623' }}>
+              <button className="text-xs cursor-pointer flex items-center gap-1" style={{ color: '#F59E0B' }}>
                 <i className="ri-file-add-line" />Create Quote
               </button>
-              <button className="text-xs cursor-pointer flex items-center gap-1" style={{ color: '#0D1F4A' }}>
+              <button className="text-xs cursor-pointer flex items-center gap-1" style={{ color: '#DC1F1F' }}>
                 <i className="ri-user-star-line" />Convert to Lead
               </button>
               <button className="text-xs cursor-pointer flex items-center gap-1 text-slate-500">
@@ -264,8 +264,8 @@ export default function IgInbox({
           <div className="space-y-2">
             <p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Quick Actions</p>
             {[
-              { label: 'Create Quote', icon: 'ri-file-add-line', color: '#0D1F4A' },
-              { label: 'Add to Leads', icon: 'ri-user-star-line', color: '#F5A623' },
+              { label: 'Create Quote', icon: 'ri-file-add-line', color: '#DC1F1F' },
+              { label: 'Add to Leads', icon: 'ri-user-star-line', color: '#DC1F1F' },
               { label: 'View Profile', icon: 'ri-instagram-line', color: '#dc2743' },
               { label: 'Send Catalog', icon: 'ri-store-2-line', color: '#cc2366' },
               { label: 'Book Repair', icon: 'ri-tools-line', color: '#e6683c' },

@@ -22,14 +22,14 @@ const sections = [
 ];
 
 const messageTemplates = [
-  { id: 'mt1', name: 'Quote Ready', channel: 'WhatsApp', message: 'Hi {name}, your quote for {product} is ready! Total: GHS {amount}. Valid until {date}. Reply YES to confirm. — FixHub' },
-  { id: 'mt2', name: 'Repair Complete', channel: 'SMS', message: 'Hi {name}, your {device} repair is complete! Total: GHS {amount}. Pick up at FixHub. Open till 7PM today.' },
+  { id: 'mt1', name: 'Quote Ready', channel: 'WhatsApp', message: 'Hi {name}, your quote for {product} is ready! Total: GHS {amount}. Valid until {date}. Reply YES to confirm. — Wireless' },
+  { id: 'mt2', name: 'Repair Complete', channel: 'SMS', message: 'Hi {name}, your {device} repair is complete! Total: GHS {amount}. Pick up at Wireless. Open till 7PM today.' },
   { id: 'mt3', name: 'Payment Reminder', channel: 'WhatsApp', message: 'Hi {name}, friendly reminder that your payment of GHS {amount} is due {date}. Pay via MTN Momo: 0244-XXX-XXX. Thank you!' },
-  { id: 'mt4', name: 'Delivery Update', channel: 'SMS', message: 'Your order #{order} has been dispatched! Expected delivery: {date}. Track: {link}. FixHub' },
-  { id: 'mt5', name: 'Trade-In Valuation', channel: 'WhatsApp', message: 'Hi {name}, your {device} trade-in is valued at GHS {value}. Ready to upgrade? Visit us or reply to confirm. — FixHub' },
-  { id: 'mt6', name: 'Birthday Offer', channel: 'SMS', message: 'Happy Birthday {name}! Enjoy 10% OFF any purchase today. Show this SMS at checkout. Valid today only. FixHub' },
-  { id: 'mt7', name: 'Warranty Expiry', channel: 'WhatsApp', message: 'Hi {name}, your warranty for {device} expires on {date}. Extend for GHS {price}. Reply EXTEND to proceed. — FixHub' },
-  { id: 'mt8', name: 'New Arrival Alert', channel: 'SMS', message: 'NEW ARRIVAL! {product} now in stock at FixHub. Limited units. Call 0244-XXX-XXX or visit us today!' },
+  { id: 'mt4', name: 'Delivery Update', channel: 'SMS', message: 'Your order #{order} has been dispatched! Expected delivery: {date}. Track: {link}. Wireless' },
+  { id: 'mt5', name: 'Trade-In Valuation', channel: 'WhatsApp', message: 'Hi {name}, your {device} trade-in is valued at GHS {value}. Ready to upgrade? Visit us or reply to confirm. — Wireless' },
+  { id: 'mt6', name: 'Birthday Offer', channel: 'SMS', message: 'Happy Birthday {name}! Enjoy 10% OFF any purchase today. Show this SMS at checkout. Valid today only. Wireless' },
+  { id: 'mt7', name: 'Warranty Expiry', channel: 'WhatsApp', message: 'Hi {name}, your warranty for {device} expires on {date}. Extend for GHS {price}. Reply EXTEND to proceed. — Wireless' },
+  { id: 'mt8', name: 'New Arrival Alert', channel: 'SMS', message: 'NEW ARRIVAL! {product} now in stock at Wireless. Limited units. Call 0244-XXX-XXX or visit us today!' },
 ];
 
 const teamRoles = [
@@ -65,12 +65,12 @@ const integrations = [
 export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState('branding');
   const [saved, setSaved] = useState(false);
-  const [businessName, setBusinessName] = useState('FixHub');
+  const [businessName, setBusinessName] = useState('Wireless');
   const [tagline, setTagline] = useState('Premium Gadgets in Accra');
   const [phone, setPhone] = useState('+233 24 000 0000');
   const [whatsapp, setWhatsapp] = useState('+233 24 000 0000');
   const [address, setAddress] = useState('Accra Mall, Accra, Ghana');
-  const [primaryColor, setPrimaryColor] = useState('#0D1F4A');
+  const [primaryColor, setPrimaryColor] = useState('#DC1F1F');
   const [editingTemplate, setEditingTemplate] = useState<string | null>(null);
   const [automations, setAutomations] = useState(automationRules);
   const [showAddRole, setShowAddRole] = useState(false);
@@ -108,7 +108,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <AdminLayout title="Settings" subtitle="Configure your FixHub Command Center">
+    <AdminLayout title="Settings" subtitle="Configure your Wireless Command Center">
       <div className="flex gap-5">
         <SettingsSidebar sections={sections} activeSection={activeSection} onSelect={setActiveSection} />
 
@@ -157,7 +157,7 @@ export default function SettingsPage() {
             <span className="text-xs text-slate-400">{saved ? '✓ Changes saved successfully' : 'Unsaved changes'}</span>
             <div className="flex items-center gap-3">
               <button className="text-sm text-slate-500 hover:text-slate-700 cursor-pointer">Discard</button>
-              <button onClick={handleSave} className="px-5 py-2 text-white text-sm font-semibold rounded-xl cursor-pointer whitespace-nowrap" style={{ background: '#0D1F4A' }}>
+              <button onClick={handleSave} className="px-5 py-2 bg-[#DC1F1F] hover:bg-[#B81616] text-white text-sm font-semibold rounded-xl cursor-pointer whitespace-nowrap transition-colors duration-150">
                 Save Changes
               </button>
             </div>

@@ -3,7 +3,7 @@ import { customerSegmentData } from '@/mocks/analytics';
 
 const segmentColors: Record<string, { bg: string; text: string; dot: string }> = {
   VIP:      { bg: 'bg-amber-50',   text: 'text-amber-700',   dot: 'bg-amber-400'   },
-  Repeat:   { bg: 'bg-blue-50',    text: 'text-blue-700',    dot: 'bg-blue-500'    },
+  Repeat:   { bg: 'bg-slate-50',   text: 'text-slate-700',   dot: 'bg-slate-400'   },
   New:      { bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500' },
   'At-Risk':{ bg: 'bg-red-50',     text: 'text-red-600',     dot: 'bg-red-400'     },
 };

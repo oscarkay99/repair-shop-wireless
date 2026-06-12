@@ -11,7 +11,7 @@ export function Input({ label, error, icon, className = '', id, ...props }: Inpu
   return (
     <div className="flex flex-col gap-1.5">
       {label && (
-        <label htmlFor={inputId} className="text-xs font-medium text-slate-400">
+        <label htmlFor={inputId} className="text-xs font-semibold text-slate-600">
           {label}
         </label>
       )}
@@ -21,10 +21,10 @@ export function Input({ label, error, icon, className = '', id, ...props }: Inpu
         )}
         <input
           id={inputId}
-          className={`w-full bg-[#07101F] border rounded-lg text-sm text-white placeholder-slate-500
-            focus:outline-none focus:ring-2 focus:ring-[#0D1F4A]/50 transition-colors
-            ${error ? 'border-red-500' : 'border-[#1E3A6E]'}
-            ${icon ? 'pl-9 pr-3' : 'px-3'} py-2 ${className}`}
+          className={`w-full bg-slate-50 border rounded-xl text-sm text-slate-800 placeholder-slate-400
+            focus:outline-none focus:border-[#DC1F1F] focus:bg-white transition-all
+            ${error ? 'border-red-400' : 'border-slate-200'}
+            ${icon ? 'pl-9 pr-3' : 'px-3'} py-2.5 ${className}`}
           {...props}
         />
       </div>

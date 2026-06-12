@@ -46,7 +46,7 @@ export default function Pagination({ page, totalPages, total, from, to, onPageCh
                 className={`w-7 h-7 flex items-center justify-center rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                   p === page ? 'text-white' : 'text-slate-500 hover:bg-slate-100'
                 }`}
-                style={p === page ? { background: '#0D1F4A' } : {}}
+                style={p === page ? { background: '#DC1F1F' } : {}}
               >
                 {p}
               </button>

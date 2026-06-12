@@ -91,7 +91,7 @@ export default function ComposeModal({
             <button onClick={onClose} className="flex-1 py-3 rounded-xl text-sm font-semibold text-slate-500 border border-slate-200 cursor-pointer whitespace-nowrap">
               Save Draft
             </button>
-            <button onClick={onClose} className="flex-1 py-3 rounded-xl text-sm font-semibold text-white cursor-pointer whitespace-nowrap" style={{ background: '#0D1F4A' }}>
+            <button onClick={onClose} className="flex-1 py-3 rounded-xl text-sm font-semibold text-white cursor-pointer whitespace-nowrap" style={{ background: '#DC1F1F' }}>
               Send Campaign
             </button>
           </div>

@@ -18,7 +18,7 @@ export default function WaStatsStrip({ stats }: WaStatsStripProps) {
         { label: 'Total Chats', value: stats.totalChats.toLocaleString(), icon: 'ri-chat-3-line', color: 'text-emerald-600' },
         { label: 'Active Now', value: stats.activeChats.toString(), icon: 'ri-radio-button-line', color: 'text-rose-500' },
         { label: 'Avg Response', value: stats.avgResponseTime, icon: 'ri-time-line', color: 'text-amber-500' },
-        { label: 'AI Handled', value: stats.aiHandled, icon: 'ri-robot-2-line', color: 'text-violet-500' },
+        { label: 'AI Handled', value: stats.aiHandled, icon: 'ri-robot-2-line', color: 'text-slate-500' },
         { label: 'Conversion', value: stats.conversionRate, icon: 'ri-arrow-up-circle-line', color: 'text-sky-500' },
         { label: 'Today', value: stats.todayMessages.toString(), icon: 'ri-message-2-line', color: 'text-teal-500' },
       ].map(s => (

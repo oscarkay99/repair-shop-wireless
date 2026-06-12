@@ -14,11 +14,11 @@ const typeLabels: Record<string, string> = {
 
 const typeColors: Record<string, string> = {
   repair: '#E05A2B',
-  consultation: '#0D1F4A',
-  tradein: '#F5A623',
-  internal: '#07101F',
-  marketing: '#F5A623',
-  delivery: '#1552A8',
+  consultation: '#DC1F1F',
+  tradein: '#F59E0B',
+  internal: '#0F172A',
+  marketing: '#F59E0B',
+  delivery: '#06B6D4',
 };
 
 const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -36,9 +36,9 @@ export default function CalendarPage() {
   const todayEvents = events.filter(e => e.date === today);
 
   const stats = [
-    { label: "Today's Appts", value: String(todayEvents.length), icon: 'ri-calendar-check-line', color: '#0D1F4A' },
-    { label: 'This Week', value: String(events.length), icon: 'ri-calendar-2-line', color: '#07101F' },
-    { label: 'Pending Confirm', value: String(events.filter(e => e.status === 'pending').length), icon: 'ri-time-line', color: '#F5A623' },
+    { label: "Today's Appts", value: String(todayEvents.length), icon: 'ri-calendar-check-line', color: '#DC1F1F' },
+    { label: 'This Week', value: String(events.length), icon: 'ri-calendar-2-line', color: '#0F172A' },
+    { label: 'Pending Confirm', value: String(events.filter(e => e.status === 'pending').length), icon: 'ri-time-line', color: '#F59E0B' },
     { label: 'Repair Queue', value: String(events.filter(e => e.type === 'repair').length), icon: 'ri-tools-line', color: '#E05A2B' },
     { label: 'Completed', value: String(todayEvents.filter(e => e.status === 'completed').length), icon: 'ri-check-double-line', color: '#25D366' },
   ];
@@ -85,7 +85,7 @@ export default function CalendarPage() {
               <button
                 onClick={() => setShowAddEvent(true)}
                 className="px-4 py-2 rounded-lg text-xs font-semibold text-white cursor-pointer whitespace-nowrap"
-                style={{ background: '#0D1F4A' }}
+                style={{ background: '#DC1F1F' }}
               >
                 <i className="ri-add-line mr-1" /> Add
               </button>
@@ -95,9 +95,9 @@ export default function CalendarPage() {
           {/* Week Header */}
           <div className="grid grid-cols-7 border-b border-slate-100">
             {weekDays.map((day, i) => (
-              <div key={day} className={`p-3 text-center ${i === currentDayIndex ? 'bg-blue-50/50' : ''}`}>
+              <div key={day} className={`p-3 text-center ${i === currentDayIndex ? 'bg-[rgba(220,31,31,0.05)]' : ''}`}>
                 <p className="text-[10px] text-slate-400 uppercase">{day}</p>
-                <p className={`text-sm font-semibold ${i === currentDayIndex ? 'text-blue-600' : 'text-slate-700'}`}>{currentWeekDates[i]}</p>
+                <p className={`text-sm font-semibold ${i === currentDayIndex ? 'text-[#DC1F1F]' : 'text-slate-700'}`}>{currentWeekDates[i]}</p>
               </div>
             ))}
           </div>
@@ -110,7 +110,7 @@ export default function CalendarPage() {
                 return parseInt(e.date.split('-')[2]) === dayNum;
               });
               return (
-                <div key={dayIndex} className={`p-2 space-y-2 ${dayIndex === currentDayIndex ? 'bg-blue-50/30' : ''}`}>
+                <div key={dayIndex} className={`p-2 space-y-2 ${dayIndex === currentDayIndex ? 'bg-[rgba(220,31,31,0.03)]' : ''}`}>
                   {dayEvents.map((event) => (
                     <button
                       key={event.id}
@@ -207,7 +207,7 @@ export default function CalendarPage() {
                       <div className="flex gap-2 pt-2">
                         <button
                           onClick={() => { updateEvent(event.id, { status: 'confirmed' }); setSelectedEvent(null); }}
-                          className="flex-1 py-2 rounded-lg text-xs font-semibold text-white cursor-pointer whitespace-nowrap" style={{ background: '#0D1F4A' }}>
+                          className="flex-1 py-2 rounded-lg text-xs font-semibold text-white cursor-pointer whitespace-nowrap" style={{ background: '#DC1F1F' }}>
                           Confirm
                         </button>
                         <button

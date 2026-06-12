@@ -54,10 +54,10 @@ export default function RedeemModal({ customers, rewards, selectedReward, onRewa
             <div className="h-px bg-slate-200 my-1" />
             <div className="flex items-center justify-between text-xs">
               <span className="text-slate-500">Remaining</span>
-              <span className="font-semibold" style={{ color: '#F5A623' }}>3,200</span>
+              <span className="font-semibold" style={{ color: '#F59E0B' }}>3,200</span>
             </div>
           </div>
-          <button onClick={onClose} className="w-full py-3 rounded-xl text-sm font-semibold text-white cursor-pointer whitespace-nowrap" style={{ background: '#F5A623' }}>
+          <button onClick={onClose} className="w-full py-3 rounded-xl text-sm font-semibold text-white cursor-pointer whitespace-nowrap" style={{ background: '#DC1F1F' }}>
             Confirm Redemption
           </button>
         </div>

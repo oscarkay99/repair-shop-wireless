@@ -281,7 +281,7 @@ export default function InstagramPage() {
                       <i className={`${aiGenerating ? 'ri-loader-4-line animate-spin' : 'ri-sparkling-2-line'}`} />
                       {aiGenerating ? 'Generating...' : 'Generate AI Reply'}
                     </button>
-                    <button className="text-xs cursor-pointer flex items-center gap-1 text-violet-600">
+                    <button className="text-xs cursor-pointer flex items-center gap-1 text-[#DC1F1F]">
                       <i className="ri-image-add-line" />Send Product Photo
                     </button>
                   </div>

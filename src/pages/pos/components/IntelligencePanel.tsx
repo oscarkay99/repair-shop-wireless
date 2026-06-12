@@ -80,13 +80,13 @@ export default function IntelligencePanel() {
   const insightTypeStyle = {
     opportunity: { icon: 'ri-lightbulb-flash-line', color: '#059669', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.2)' },
     warning:     { icon: 'ri-alert-line',            color: '#D97706', bg: 'rgba(217,119,6,0.08)',  border: 'rgba(217,119,6,0.2)' },
-    trend:       { icon: 'ri-line-chart-line',        color: '#1E5FBE', bg: 'rgba(7,16,31,0.06)',  border: 'rgba(7,16,31,0.15)' },
+    trend:       { icon: 'ri-line-chart-line',        color: '#1E5FBE', bg: 'rgba(220,31,31,0.08)',  border: 'rgba(7,16,31,0.15)' },
   };
 
   const cardStyle = {
     background: 'white',
     border: '1px solid rgba(7,16,31,0.07)',
-    boxShadow: '0 1px 3px rgba(7,16,31,0.04), 0 6px 24px rgba(7,16,31,0.06)',
+    boxShadow: '0 1px 3px rgba(7,16,31,0.04), 0 6px 24px rgba(220,31,31,0.08)',
   };
 
   return (
@@ -99,7 +99,7 @@ export default function IntelligencePanel() {
       {aiInsights.length > 0 && (
         <div className="lg:col-span-2 rounded-2xl p-4" style={cardStyle}>
           <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: 'rgba(10,31,74,0.4)' }}>
-            <i className="ri-sparkling-2-line mr-1" style={{ color: '#F5A623' }} />Weekly AI Insights
+            <i className="ri-sparkling-2-line mr-1" style={{ color: '#F59E0B' }} />Weekly AI Insights
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {aiInsights.slice(0, 3).map(ins => {
@@ -124,7 +124,7 @@ export default function IntelligencePanel() {
       {/* ── Top performers ─────────────────────────────────────────────────── */}
       <div className="rounded-2xl p-4" style={cardStyle}>
         <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: 'rgba(10,31,74,0.4)' }}>
-          <i className="ri-bar-chart-fill mr-1" style={{ color: '#F5A623' }} />Top Performers — 30 Days
+          <i className="ri-bar-chart-fill mr-1" style={{ color: '#F59E0B' }} />Top Performers — 30 Days
         </p>
         <div className="space-y-2">
           {topSellers.map((m, i) => {
@@ -140,8 +140,8 @@ export default function IntelligencePanel() {
                   <TrendIcon t={m.trend} />
                   <span className="text-xs font-bold text-slate-700">{formatGHS(m.revenue30d)}</span>
                 </div>
-                <div className="ml-6 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(7,16,31,0.08)' }}>
-                  <div className="h-full rounded-full" style={{ width: `${barWidth}%`, background: 'linear-gradient(90deg, #07101F, #2463BE)' }} />
+                <div className="ml-6 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(220,31,31,0.08)' }}>
+                  <div className="h-full rounded-full" style={{ width: `${barWidth}%`, background: 'linear-gradient(90deg, #0F172A, #2463BE)' }} />
                 </div>
                 <div className="ml-6 flex gap-3 mt-0.5 text-[9px]" style={{ color: 'rgba(10,31,74,0.38)' }}>
                   <span>{m.unitsSold30d} units</span>
@@ -213,7 +213,7 @@ export default function IntelligencePanel() {
       <div className="rounded-2xl p-4" style={cardStyle}>
         <div className="flex items-center justify-between mb-3">
           <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'rgba(10,31,74,0.4)' }}>
-            <i className="ri-time-line mr-1" style={{ color: '#F5A623' }} />
+            <i className="ri-time-line mr-1" style={{ color: '#F59E0B' }} />
             Peak Hours {hasRealData ? '— Real Data' : '— 30 Day Avg'}
           </p>
           {peakHour && (
@@ -233,7 +233,7 @@ export default function IntelligencePanel() {
                   style={{
                     height: `${height}%`, minHeight: 2,
                     background: isTop
-                      ? 'linear-gradient(180deg, #F5A623, #D4890A)'
+                      ? 'linear-gradient(180deg, #F59E0B, #D97706)'
                       : 'rgba(7,16,31,0.1)',
                   }}
                 />
@@ -319,7 +319,7 @@ export default function IntelligencePanel() {
                     <div className="flex items-center gap-1 mt-0.5">
                       {[...Array(5)].map((_, i) => (
                         <div key={i} className="w-1.5 h-1.5 rounded-full" style={{
-                          background: i < Math.round(ci.vipScore / 20) ? '#F5A623' : 'rgba(10,31,74,0.1)',
+                          background: i < Math.round(ci.vipScore / 20) ? '#F59E0B' : 'rgba(10,31,74,0.1)',
                         }} />
                       ))}
                     </div>
@@ -342,7 +342,7 @@ export default function IntelligencePanel() {
 
       {/* ── Demand forecast ────────────────────────────────────────────────── */}
       <div className="lg:col-span-2 rounded-2xl p-4 text-white"
-        style={{ background: 'linear-gradient(135deg, #07101F 0%, #0D1F4A 50%, #1552A8 100%)' }}>
+        style={{ background: 'linear-gradient(135deg, #0F172A 0%, #DC1F1F 50%, #06B6D4 100%)' }}>
         <p className="text-[10px] font-bold text-white/60 uppercase tracking-wider mb-3">
           <i className="ri-sparkling-2-line mr-1 text-amber-400" />
           AI Demand Forecast — Next 7 Days
@@ -359,7 +359,7 @@ export default function IntelligencePanel() {
                 <p className="text-xs font-semibold text-white truncate mb-1">{product.name}</p>
                 <p className="text-2xl font-black text-white figure">{forecastUnits}</p>
                 <p className="text-[10px] text-white/50">units expected</p>
-                <p className="text-[10px] font-semibold mt-1" style={{ color: '#F5A623' }}>{formatGHS(forecastRevenue)}</p>
+                <p className="text-[10px] font-semibold mt-1" style={{ color: '#F59E0B' }}>{formatGHS(forecastRevenue)}</p>
                 <div className={`text-[9px] mt-1.5 px-1.5 py-0.5 rounded-full inline-block ${
                   m.trend === 'up' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-white/10 text-white/60'
                 }`}>

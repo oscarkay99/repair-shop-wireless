@@ -2,7 +2,7 @@ const statusColors: Record<string, string> = {
   hot_lead: 'bg-rose-100 text-rose-600',
   trade_in: 'bg-amber-100 text-amber-600',
   inquiry: 'bg-sky-100 text-sky-600',
-  repair: 'bg-violet-100 text-violet-600',
+  repair: 'bg-cyan-100 text-cyan-600',
   customer: 'bg-emerald-100 text-emerald-600',
 };
 
@@ -79,7 +79,7 @@ export default function WaInbox({
               <button
                 key={contact.id}
                 onClick={() => onSelectContact(contact)}
-                className={`w-full flex items-start gap-3 p-3 border-b border-slate-50 hover:bg-slate-50 transition-all cursor-pointer text-left ${selectedContact.id === contact.id ? 'bg-blue-50' : ''}`}
+                className={`w-full flex items-start gap-3 p-3 border-b border-slate-50 hover:bg-slate-50 transition-all cursor-pointer text-left ${selectedContact.id === contact.id ? 'bg-[rgba(220,31,31,0.05)]' : ''}`}
               >
                 <div className="relative flex-shrink-0">
                   <div className={`w-10 h-10 rounded-full ${contact.avatarColor} flex items-center justify-center text-white text-xs font-bold`}>
@@ -147,7 +147,7 @@ export default function WaInbox({
                   {msg.from !== 'customer' && (
                     <div className="flex items-center gap-1 mb-1 justify-end">
                       {msg.aiGenerated && (
-                        <span className="text-[10px] bg-violet-100 text-violet-600 px-1.5 py-0.5 rounded-full font-medium">
+                        <span className="text-[10px] bg-[rgba(220,31,31,0.08)] text-[#DC1F1F] px-1.5 py-0.5 rounded-full font-medium">
                           <i className="ri-robot-2-line mr-0.5" />AI
                         </span>
                       )}
@@ -160,7 +160,7 @@ export default function WaInbox({
                         ? 'bg-white text-slate-700 rounded-tl-sm border border-slate-100'
                         : 'text-white rounded-tr-sm'
                     }`}
-                    style={msg.from !== 'customer' ? { background: msg.aiGenerated ? '#0D1F4A' : '#1552A8' } : {}}
+                    style={msg.from !== 'customer' ? { background: msg.aiGenerated ? '#DC1F1F' : '#06B6D4' } : {}}
                   >
                     {msg.text}
                   </div>
@@ -189,19 +189,19 @@ export default function WaInbox({
               <button
                 onClick={onSendMessage}
                 className="w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer hover:opacity-90"
-                style={{ background: '#0D1F4A' }}
+                style={{ background: '#DC1F1F' }}
               >
                 <i className="ri-send-plane-fill text-white text-sm" />
               </button>
             </div>
             <div className="flex items-center gap-3 mt-2">
-              <button className="text-xs cursor-pointer flex items-center gap-1" style={{ color: '#0D1F4A' }}>
+              <button className="text-xs cursor-pointer flex items-center gap-1" style={{ color: '#DC1F1F' }}>
                 <i className="ri-sparkling-2-line" />Generate AI Reply
               </button>
-              <button className="text-xs cursor-pointer flex items-center gap-1" style={{ color: '#F5A623' }}>
+              <button className="text-xs cursor-pointer flex items-center gap-1" style={{ color: '#F59E0B' }}>
                 <i className="ri-file-add-line" />Create Quote
               </button>
-              <button className="text-xs cursor-pointer flex items-center gap-1" style={{ color: '#1552A8' }}>
+              <button className="text-xs cursor-pointer flex items-center gap-1" style={{ color: '#06B6D4' }}>
                 <i className="ri-user-star-line" />Convert to Lead
               </button>
             </div>
@@ -226,7 +226,7 @@ export default function WaInbox({
               { label: 'Create Quote', icon: 'ri-file-add-line', color: 'text-emerald-600' },
               { label: 'Add to Leads', icon: 'ri-user-star-line', color: 'text-amber-600' },
               { label: 'View Profile', icon: 'ri-user-line', color: 'text-sky-600' },
-              { label: 'Send Catalog', icon: 'ri-store-2-line', color: 'text-violet-600' },
+              { label: 'Send Catalog', icon: 'ri-store-2-line', color: 'text-slate-600' },
               { label: 'Book Repair', icon: 'ri-tools-line', color: 'text-rose-600' },
             ].map(a => (
               <button key={a.label} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 hover:bg-slate-100 cursor-pointer text-left">

@@ -38,7 +38,7 @@ export default function SecuritySection() {
               </div>
               <button
                 onClick={() => toggleSetting(item.label)}
-                className={`relative w-11 h-6 rounded-full transition-all cursor-pointer flex-shrink-0 ${item.enabled ? 'bg-blue-500' : 'bg-slate-200'}`}
+                className={`relative w-11 h-6 rounded-full transition-all cursor-pointer flex-shrink-0 ${item.enabled ? 'bg-[#DC1F1F]' : 'bg-slate-200'}`}
               >
                 <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${item.enabled ? 'left-6' : 'left-1'}`} />
               </button>
@@ -51,8 +51,8 @@ export default function SecuritySection() {
         <div className="space-y-3">
           {sessions.map((session, i) => (
             <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: '#0D1F4A15' }}>
-                <i className="ri-computer-line text-sm" style={{ color: '#0D1F4A' }} />
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(220,31,31,0.08)' }}>
+                <i className="ri-computer-line text-sm" style={{ color: '#DC1F1F' }} />
               </div>
               <div className="flex-1">
                 <p className="text-xs font-semibold text-slate-800">{session.device}</p>

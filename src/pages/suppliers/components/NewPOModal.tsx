@@ -144,7 +144,7 @@ export default function NewPOModal({ suppliers, onSave, onClose }: Props) {
             onClick={handleSubmit}
             disabled={saving || !supplier || !expectedDate}
             className="w-full py-3 rounded-xl text-sm font-semibold text-white cursor-pointer whitespace-nowrap disabled:opacity-50"
-            style={{ background: '#0D1F4A' }}
+            style={{ background: '#DC1F1F' }}
           >
             {saving ? 'Submitting…' : 'Submit Purchase Order'}
           </button>

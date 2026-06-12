@@ -262,7 +262,7 @@ supabase secrets set APP_URL=https://yourapp.com`}</pre>
               </div>
               <button
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer whitespace-nowrap flex-shrink-0 ${integration.status === 'connected' ? 'border border-slate-200 text-slate-500 hover:bg-slate-50' : 'text-white'}`}
-                style={integration.status !== 'connected' ? { background: '#0D1F4A' } : {}}
+                style={integration.status !== 'connected' ? { background: '#DC1F1F' } : {}}
               >
                 {integration.status === 'connected' ? 'Manage' : 'Connect'}
               </button>

@@ -30,7 +30,7 @@ class PageErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundary
           <button
             onClick={() => this.setState({ error: null })}
             className="px-4 py-2 rounded-xl text-xs font-semibold text-white"
-            style={{ background: '#0D1F4A' }}
+            style={{ background: '#DC1F1F' }}
           >
             Try again
           </button>

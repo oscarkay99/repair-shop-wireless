@@ -36,10 +36,10 @@ export default function AnalyticsPage() {
       ? (turnarounds.reduce((a, b) => a + b, 0) / turnarounds.length).toFixed(1)
       : '—';
     return [
-      { label: 'Total Revenue',     value: fmtGHS(revenue),        change: `${completed.length} jobs done`,   icon: 'ri-money-cedi-circle-line', accent: 'bg-emerald-500', sub: 'From completed repairs'   },
-      { label: 'Jobs Completed',    value: `${completed.length}`,  change: `${active} still active`,          icon: 'ri-checkbox-circle-line',   accent: 'bg-blue-500',    sub: 'All-time finished'        },
-      { label: 'Avg Job Value',     value: fmtGHS(avgJob),         change: `${repairs.length} total jobs`,    icon: 'ri-bar-chart-box-line',     accent: 'bg-violet-500',  sub: 'Per completed repair'     },
-      { label: 'Avg Turnaround',    value: `${avgDays} days`,      change: `${customers.length} customers`,   icon: 'ri-time-line',              accent: 'bg-amber-500',   sub: 'Days to complete a job'   },
+      { label: 'Total Revenue',     value: fmtGHS(revenue),        change: `${completed.length} jobs done`,   icon: 'ri-money-cedi-circle-line', accent: 'bg-emerald-500', iconBg: 'bg-emerald-50',  iconText: 'text-emerald-500', sub: 'From completed repairs'   },
+      { label: 'Jobs Completed',    value: `${completed.length}`,  change: `${active} still active`,          icon: 'ri-checkbox-circle-line',   accent: 'bg-[#DC1F1F]',  iconBg: 'bg-[rgba(220,31,31,0.08)]', iconText: 'text-[#DC1F1F]', sub: 'All-time finished'        },
+      { label: 'Avg Job Value',     value: fmtGHS(avgJob),         change: `${repairs.length} total jobs`,    icon: 'ri-bar-chart-box-line',     accent: 'bg-slate-500',  iconBg: 'bg-slate-100',   iconText: 'text-slate-500',   sub: 'Per completed repair'     },
+      { label: 'Avg Turnaround',    value: `${avgDays} days`,      change: `${customers.length} customers`,   icon: 'ri-time-line',              accent: 'bg-amber-500',  iconBg: 'bg-amber-50',    iconText: 'text-amber-500',   sub: 'Days to complete a job'   },
     ];
   }, [repairs, customers]);
 
@@ -52,7 +52,7 @@ export default function AnalyticsPage() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${
-                activeTab === tab.id ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                activeTab === tab.id ? 'bg-[#DC1F1F] text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
               }`}
             >
               <i className={`${tab.icon} text-sm`} />
@@ -63,7 +63,7 @@ export default function AnalyticsPage() {
         <div className="flex items-center gap-1 bg-white border border-slate-100 rounded-xl p-1">
           {['1M', '3M', '6M', '1Y'].map((p) => (
             <button key={p} onClick={() => setPeriod(p)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${period === p ? 'bg-slate-900 text-white' : 'text-slate-400 hover:text-slate-600'}`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${period === p ? 'bg-[#DC1F1F] text-white' : 'text-slate-400 hover:text-slate-600'}`}
             >{p}</button>
           ))}
         </div>
@@ -83,7 +83,7 @@ export default function AnalyticsPage() {
                   <i className="ri-arrow-up-line text-xs" />{kpi.change}
                 </div>
               </div>
-              <div className={`w-11 h-11 flex items-center justify-center rounded-2xl ${kpi.accent.replace('-500', '-50')} ${kpi.accent.replace('bg-', 'text-')} flex-shrink-0`}>
+              <div className={`w-11 h-11 flex items-center justify-center rounded-2xl ${kpi.iconBg} ${kpi.iconText} flex-shrink-0`}>
                 <i className={`${kpi.icon} text-xl`} />
               </div>
             </div>
@@ -94,15 +94,15 @@ export default function AnalyticsPage() {
       {/* Overview */}
       {activeTab === 'overview' && (
         <div className="space-y-5">
-          <div className="bg-[#0A0F1E] rounded-2xl p-5 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="bg-white border border-slate-100 shadow-sm rounded-2xl p-5 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-[rgba(220,31,31,0.05)] rounded-full blur-3xl pointer-events-none" />
             <div className="relative flex items-center gap-4">
-              <div className="w-10 h-10 flex items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex-shrink-0">
+              <div className="w-10 h-10 flex items-center justify-center rounded-2xl bg-gradient-to-br from-[#DC1F1F] to-[#B81616] flex-shrink-0">
                 <i className="ri-sparkling-2-fill text-white text-base" />
               </div>
               <div>
-                <p className="text-white font-bold text-sm mb-1">AI Performance Summary</p>
-                <p className="text-white/60 text-xs leading-relaxed">
+                <p className="text-slate-800 font-bold text-sm mb-1">AI Performance Summary</p>
+                <p className="text-slate-500 text-xs leading-relaxed">
                   Log more repairs and expenses to unlock AI-powered insights on technician efficiency, common faults, and revenue trends.
                 </p>
               </div>
@@ -127,7 +127,7 @@ export default function AnalyticsPage() {
               {(() => {
                 const counts: Record<string, number> = {};
                 repairs.forEach(r => { counts[r.deviceType ?? 'Other'] = (counts[r.deviceType ?? 'Other'] ?? 0) + 1; });
-                const colors = ['#3B82F6','#F5A623','#10B981','#6366F1','#EF4444'];
+                const colors = ['#3B82F6','#F59E0B','#10B981','#6366F1','#EF4444'];
                 return Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([type, count], i) => (
                   <div key={type} className="bg-slate-50 rounded-2xl p-4 text-center">
                     <div className="text-2xl font-black" style={{ color: colors[i % colors.length] }}>{count}</div>
@@ -153,7 +153,7 @@ export default function AnalyticsPage() {
                     <span className="text-xs text-slate-600 capitalize">{issue}</span>
                     <div className="flex items-center gap-3">
                       <div className="w-24 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                        <div className="h-full rounded-full bg-[#0D1F4A]" style={{ width: `${(count / repairs.length) * 100}%` }} />
+                        <div className="h-full rounded-full bg-[#DC1F1F]" style={{ width: `${(count / repairs.length) * 100}%` }} />
                       </div>
                       <span className="text-xs font-bold text-slate-700 w-4 text-right">{count}</span>
                     </div>
@@ -214,9 +214,9 @@ export default function AnalyticsPage() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {[
                 { label: 'Repeat Customers', value: '41%',    change: '+6%',    icon: 'ri-refresh-line',      color: 'text-emerald-600' },
-                { label: 'Avg Days Between Repairs', value: '52 days', change: '-4 days', icon: 'ri-calendar-line', color: 'text-blue-600' },
+                { label: 'Avg Days Between Repairs', value: '52 days', change: '-4 days', icon: 'ri-calendar-line', color: 'text-slate-600' },
                 { label: 'NPS Score',         value: '76',     change: '+8',     icon: 'ri-star-line',         color: 'text-amber-600'   },
-                { label: 'Satisfaction Rate', value: '94%',    change: '+2%',    icon: 'ri-heart-pulse-line',  color: 'text-violet-600'  },
+                { label: 'Satisfaction Rate', value: '94%',    change: '+2%',    icon: 'ri-heart-pulse-line',  color: 'text-slate-600'   },
               ].map((m) => (
                 <div key={m.label} className="bg-slate-50 rounded-2xl p-4">
                   <div className={`w-8 h-8 flex items-center justify-center rounded-xl bg-white mb-3 ${m.color}`}>
@@ -242,7 +242,7 @@ export default function AnalyticsPage() {
               {[
                 { name: 'Ama Owusu',   role: 'Lead Technician',   metric: '38 repairs', sub: '96% satisfaction', avatar: 'AO', color: '#D97706' },
                 { name: 'Yaw Darko',   role: 'Technician',        metric: '29 repairs', sub: '94% satisfaction', avatar: 'YD', color: '#DC2626' },
-                { name: 'Kwame Asante',role: 'Workshop Manager',  metric: '—',          sub: 'Operations lead',   avatar: 'KA', color: '#0D1F4A' },
+                { name: 'Kwame Asante',role: 'Workshop Manager',  metric: '—',          sub: 'Operations lead',   avatar: 'KA', color: '#DC1F1F' },
               ].map((m) => (
                 <div key={m.name} className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl">
                   <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0" style={{ background: m.color }}>

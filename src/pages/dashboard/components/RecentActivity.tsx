@@ -2,10 +2,10 @@ import { useNavigate } from 'react-router-dom';
 import { recentActivity } from '@/mocks/dashboard';
 
 const iconMap: Record<string, { icon: string; color: string }> = {
-  sale: { icon: 'ri-shopping-bag-3-line', color: 'text-emerald-500 bg-emerald-50' },
-  lead: { icon: 'ri-user-star-line', color: 'text-blue-500 bg-blue-50' },
-  payment: { icon: 'ri-bank-card-line', color: 'text-violet-500 bg-violet-50' },
-  repair: { icon: 'ri-tools-line', color: 'text-amber-500 bg-amber-50' },
+  sale:    { icon: 'ri-shopping-bag-3-line', color: 'text-emerald-500 bg-emerald-50' },
+  lead:    { icon: 'ri-user-star-line',       color: 'text-amber-500 bg-amber-50'   },
+  payment: { icon: 'ri-bank-card-line',       color: 'text-cyan-500 bg-cyan-50'     },
+  repair:  { icon: 'ri-tools-line',           color: 'text-amber-500 bg-amber-50'   },
 };
 
 export default function RecentActivity() {
@@ -14,7 +14,7 @@ export default function RecentActivity() {
     <div className="bg-white rounded-2xl p-5 border border-slate-100">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-slate-800">Recent Activity</h3>
-        <button onClick={() => navigate('/analytics')} className="text-xs text-emerald-600 hover:text-emerald-700 cursor-pointer">View all</button>
+        <button onClick={() => navigate('/analytics')} className="text-xs cursor-pointer" style={{ color: '#DC1F1F' }}>View all</button>
       </div>
       <div className="space-y-3">
         {recentActivity.map((item, i) => {

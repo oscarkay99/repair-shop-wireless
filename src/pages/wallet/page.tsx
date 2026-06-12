@@ -22,7 +22,7 @@ const tierConfig: Record<string, { icon: string; color: string; bg: string }> = 
   Bronze:   { icon: 'ri-medal-line',     color: 'text-amber-700',  bg: 'bg-amber-100' },
   Silver:   { icon: 'ri-medal-2-line',   color: 'text-slate-600',  bg: 'bg-slate-100' },
   Gold:     { icon: 'ri-trophy-line',    color: 'text-yellow-600', bg: 'bg-yellow-100' },
-  Platinum: { icon: 'ri-vip-crown-line', color: 'text-violet-600', bg: 'bg-violet-100' },
+  Platinum: { icon: 'ri-vip-crown-line', color: 'text-slate-700', bg: 'bg-slate-200' },
 };
 
 export default function WalletPage() {
@@ -55,14 +55,14 @@ export default function WalletPage() {
   };
 
   return (
-    <AdminLayout title="FixHub Wallet" subtitle="Customer store credit, loyalty tiers & wallet management">
+    <AdminLayout title="Wireless Wallet" subtitle="Customer store credit, loyalty tiers & wallet management">
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
         {[
           { label: 'Total Wallet Balance',   value: `GHS ${totalBalance.toLocaleString()}`,     icon: 'ri-wallet-3-line',         color: 'text-emerald-600', bg: 'bg-emerald-50' },
           { label: 'Active Wallets',         value: customers.length.toString(),                 icon: 'ri-group-line',            color: 'text-sky-600',     bg: 'bg-sky-50' },
           { label: 'Deposits This Month',    value: `GHS ${totalDeposits.toLocaleString()}`,     icon: 'ri-arrow-down-circle-line', color: 'text-teal-600',    bg: 'bg-teal-50' },
-          { label: 'Avg Balance',            value: `GHS ${avgBalance.toLocaleString()}`,        icon: 'ri-bar-chart-line',        color: 'text-violet-600',  bg: 'bg-violet-50' },
+          { label: 'Avg Balance',            value: `GHS ${avgBalance.toLocaleString()}`,        icon: 'ri-bar-chart-line',        color: 'text-amber-600',   bg: 'bg-amber-50' },
         ].map(s => (
           <div key={s.label} className={`${s.bg} rounded-2xl p-4`}>
             <div className="flex items-center gap-2 mb-2">
@@ -115,7 +115,7 @@ export default function WalletPage() {
               <button
                 onClick={() => setShowAddCustomer(true)}
                 className="px-4 py-2 rounded-xl text-xs font-semibold text-white cursor-pointer"
-                style={{ background: '#0D1F4A' }}
+                style={{ background: '#DC1F1F' }}
               >
                 <i className="ri-add-line mr-1" />Add First Customer
               </button>

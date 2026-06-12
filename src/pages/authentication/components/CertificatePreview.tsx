@@ -18,13 +18,13 @@ interface Props {
 
 export default function CertificatePreview({ cert }: Props) {
   return (
-    <div className="rounded-2xl p-5 text-white" style={{ background: 'linear-gradient(180deg, #07101F 0%, #0D1F4A 100%)' }}>
+    <div className="rounded-2xl p-5 text-white" style={{ background: 'linear-gradient(180deg, #0F172A 0%, #DC1F1F 100%)' }}>
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-8 h-8 flex items-center justify-center rounded-lg" style={{ background: 'rgba(245,166,35,0.2)' }}>
-          <i className="ri-shield-check-line" style={{ color: '#F5A623' }} />
+        <div className="w-8 h-8 flex items-center justify-center rounded-lg" style={{ background: 'rgba(220,31,31,0.2)' }}>
+          <i className="ri-shield-check-line" style={{ color: '#DC1F1F' }} />
         </div>
         <div>
-          <p className="text-xs font-bold text-white">FixHub</p>
+          <p className="text-xs font-bold text-white">Wireless</p>
           <p className="text-[10px] text-white/40">Authenticity Certificate</p>
         </div>
         <div className="ml-auto">
@@ -47,7 +47,7 @@ export default function CertificatePreview({ cert }: Props) {
         </div>
         <div className="bg-white/5 rounded-xl p-3">
           <p className="text-[10px] text-white/40 mb-0.5">Condition</p>
-          <p className="text-xs font-bold" style={{ color: '#F5A623' }}>{cert.condition}</p>
+          <p className="text-xs font-bold text-amber-400">{cert.condition}</p>
         </div>
       </div>
 
@@ -76,12 +76,12 @@ export default function CertificatePreview({ cert }: Props) {
         <p className="text-[10px] text-white/40 mt-1">Purchased {cert.purchaseDate}</p>
       </div>
 
-      <div className="flex items-center gap-2 p-3 rounded-xl border" style={{ background: 'rgba(245,166,35,0.15)', borderColor: 'rgba(245,166,35,0.3)' }}>
+      <div className="flex items-center gap-2 p-3 rounded-xl border" style={{ background: 'rgba(220,31,31,0.15)', borderColor: 'rgba(220,31,31,0.3)' }}>
         <div className="w-5 h-5 flex items-center justify-center">
-          <i className="ri-shield-check-fill text-sm" style={{ color: '#F5A623' }} />
+          <i className="ri-shield-check-fill text-sm" style={{ color: '#DC1F1F' }} />
         </div>
         <div>
-          <p className="text-[10px] font-bold" style={{ color: '#F5A623' }}>Verified Authentic</p>
+          <p className="text-[10px] font-bold" style={{ color: '#DC1F1F' }}>Verified Authentic</p>
           <p className="text-[10px] text-white/40">fixhub.com/verify/{cert.id}</p>
         </div>
       </div>
@@ -90,7 +90,7 @@ export default function CertificatePreview({ cert }: Props) {
         <button className="flex-1 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs text-white cursor-pointer whitespace-nowrap">
           <i className="ri-download-line mr-1" />Download PDF
         </button>
-        <button className="flex-1 py-2 rounded-xl text-xs text-white cursor-pointer whitespace-nowrap hover:opacity-90" style={{ background: '#F5A623' }}>
+        <button className="flex-1 py-2 rounded-xl text-xs text-white cursor-pointer whitespace-nowrap hover:opacity-90" style={{ background: '#25D366' }}>
           <i className="ri-whatsapp-line mr-1" />Send via WA
         </button>
       </div>

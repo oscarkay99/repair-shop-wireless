@@ -4,8 +4,8 @@ import { recentActivity } from '@/mocks/dashboard';
 
 const iconMap: Record<string, { icon: string; bg: string; text: string }> = {
   sale:    { icon: 'ri-shopping-bag-3-line', bg: 'bg-emerald-50', text: 'text-emerald-600' },
-  lead:    { icon: 'ri-user-star-line',       bg: 'bg-blue-50',    text: 'text-blue-600'   },
-  payment: { icon: 'ri-bank-card-line',       bg: 'bg-violet-50',  text: 'text-violet-600' },
+  lead:    { icon: 'ri-user-star-line',       bg: 'bg-amber-50',   text: 'text-amber-600'  },
+  payment: { icon: 'ri-bank-card-line',       bg: 'bg-cyan-50',    text: 'text-cyan-600'   },
   repair:  { icon: 'ri-tools-line',           bg: 'bg-amber-50',   text: 'text-amber-600'  },
 };
 
@@ -28,7 +28,7 @@ export default function LiveFeed() {
             <span className="text-[10px] text-emerald-600 font-semibold">Live</span>
           </div>
         </div>
-        <button onClick={() => navigate('/analytics')} className="text-xs text-emerald-600 hover:text-emerald-700 cursor-pointer font-medium">View all</button>
+        <button onClick={() => navigate('/analytics')} className="text-xs cursor-pointer font-medium" style={{ color: '#DC1F1F' }}>View all</button>
       </div>
       <div className="divide-y divide-slate-50">
         {recentActivity.map((item, i) => {

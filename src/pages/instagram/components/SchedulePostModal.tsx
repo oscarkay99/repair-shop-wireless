@@ -35,7 +35,7 @@ export default function SchedulePostModal({ open, onClose }: SchedulePostModalPr
           </div>
           <div>
             <label className="text-xs font-semibold text-slate-600 mb-1 block">Caption</label>
-            <textarea className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none resize-none" rows={3} placeholder="Write your caption... #FixHubGhana" maxLength={500} />
+            <textarea className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none resize-none" rows={3} placeholder="Write your caption... #WirelessGhana" maxLength={500} />
           </div>
           <div>
             <label className="text-xs font-semibold text-slate-600 mb-1 block">Schedule Date & Time</label>

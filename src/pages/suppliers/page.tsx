@@ -13,8 +13,8 @@ const tabs = ['Purchase Orders', 'Suppliers'];
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
   delivered:  { label: 'Delivered',  color: '#25D366', bg: '#25D36615' },
-  in_transit: { label: 'In Transit', color: '#0D1F4A', bg: '#0D1F4A15' },
-  pending:    { label: 'Pending',    color: '#F5A623', bg: '#F5A62315' },
+  in_transit: { label: 'In Transit', color: '#DC1F1F', bg: 'rgba(220,31,31,0.08)' },
+  pending:    { label: 'Pending',    color: '#F59E0B', bg: '#F59E0B15' },
   cancelled:  { label: 'Cancelled',  color: '#E05A2B', bg: '#E05A2B15' },
 };
 
@@ -50,11 +50,11 @@ export default function SuppliersPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-5">
         {[
-          { label: 'Total Suppliers',    value: `${suppliers.length}`,                                                                                           icon: 'ri-store-2-line',            color: '#0D1F4A' },
-          { label: 'Active Orders',      value: `${activeOrders}`,                                                                                                icon: 'ri-file-list-3-line',        color: '#F5A623' },
+          { label: 'Total Suppliers',    value: `${suppliers.length}`,                                                                                           icon: 'ri-store-2-line',            color: '#DC1F1F' },
+          { label: 'Active Orders',      value: `${activeOrders}`,                                                                                                icon: 'ri-file-list-3-line',        color: '#F59E0B' },
           { label: `${thisMonth} Spend`, value: monthSpend >= 1000 ? `GHS ${(monthSpend / 1000).toFixed(1)}K` : `GHS ${Math.round(monthSpend).toLocaleString()}`, icon: 'ri-money-dollar-circle-line', color: '#E05A2B' },
-          { label: 'In Transit',         value: `${pendingDeliveries}`,                                                                                           icon: 'ri-truck-line',              color: '#07101F' },
-          { label: 'Total Orders',       value: `${purchaseOrders.length}`,                                                                                       icon: 'ri-time-line',               color: '#1552A8' },
+          { label: 'In Transit',         value: `${pendingDeliveries}`,                                                                                           icon: 'ri-truck-line',              color: '#0F172A' },
+          { label: 'Total Orders',       value: `${purchaseOrders.length}`,                                                                                       icon: 'ri-time-line',               color: '#06B6D4' },
         ].map(s => (
           <div key={s.label} className="bg-white rounded-2xl p-4 border border-slate-100">
             <div className="flex items-center gap-2 mb-2">
@@ -74,7 +74,7 @@ export default function SuppliersPage() {
           {tabs.map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${activeTab === tab ? 'text-white' : 'text-slate-500 hover:text-slate-700'}`}
-              style={activeTab === tab ? { background: '#0D1F4A' } : {}}>
+              style={activeTab === tab ? { background: '#DC1F1F' } : {}}>
               {tab}
             </button>
           ))}
@@ -82,13 +82,13 @@ export default function SuppliersPage() {
         {activeTab === 'Purchase Orders' ? (
           <button onClick={() => setShowNewPO(true)}
             className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer whitespace-nowrap"
-            style={{ background: '#0D1F4A' }}>
+            style={{ background: '#DC1F1F' }}>
             <i className="ri-add-line mr-1" /> New Purchase Order
           </button>
         ) : (
           <button onClick={() => setShowAddSupplier(true)}
             className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer whitespace-nowrap"
-            style={{ background: '#0D1F4A' }}>
+            style={{ background: '#DC1F1F' }}>
             <i className="ri-add-line mr-1" /> Add Supplier
           </button>
         )}
@@ -110,7 +110,7 @@ export default function SuppliersPage() {
                   const st = statusConfig[po.status] ?? statusConfig.pending;
                   return (
                     <button key={po.id} onClick={() => setSelectedPO(selectedPO === po.id ? null : po.id)}
-                      className={`w-full flex items-center gap-4 p-4 text-left hover:bg-slate-50/50 transition-colors ${selectedPO === po.id ? 'bg-blue-50/30' : ''}`}>
+                      className={`w-full flex items-center gap-4 p-4 text-left hover:bg-slate-50/50 transition-colors ${selectedPO === po.id ? 'bg-[rgba(220,31,31,0.04)]' : ''}`}>
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: st.bg }}>
                         <i className="ri-file-list-3-line text-sm" style={{ color: st.color }} />
                       </div>
@@ -153,7 +153,7 @@ export default function SuppliersPage() {
               <p className="text-sm text-slate-400 mb-4">No suppliers yet. Add your first one.</p>
               <button onClick={() => setShowAddSupplier(true)}
                 className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer"
-                style={{ background: '#0D1F4A' }}>
+                style={{ background: '#DC1F1F' }}>
                 <i className="ri-add-line mr-1" /> Add Supplier
               </button>
             </div>
@@ -180,8 +180,8 @@ export default function SuppliersPage() {
                   ) : (
                     <>
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: '#0D1F4A15' }}>
-                          <i className="ri-store-2-line text-sm" style={{ color: '#0D1F4A' }} />
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(220,31,31,0.08)' }}>
+                          <i className="ri-store-2-line text-sm" style={{ color: '#DC1F1F' }} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-slate-800 truncate">{supplier.name}</p>
@@ -189,7 +189,7 @@ export default function SuppliersPage() {
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0">
                           <button onClick={() => setEditingSupplier(supplier)}
-                            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-blue-50 text-slate-400 hover:text-blue-600 cursor-pointer transition-colors">
+                            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 cursor-pointer transition-colors">
                             <i className="ri-pencil-line text-sm" />
                           </button>
                           <button onClick={() => setConfirmDeleteSupplierId(supplier.id)}
@@ -201,7 +201,7 @@ export default function SuppliersPage() {
                       <div className="flex items-center mb-3">
                         {Array.from({ length: 5 }).map((_, i) => (
                           <i key={i} className={i < supplier.rating ? 'ri-star-fill text-xs' : 'ri-star-line text-xs'}
-                            style={{ color: i < supplier.rating ? '#F5A623' : '#E2E8F0' }} />
+                            style={{ color: i < supplier.rating ? '#F59E0B' : '#E2E8F0' }} />
                         ))}
                       </div>
                       <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
@@ -227,7 +227,7 @@ export default function SuppliersPage() {
                       )}
                       <button onClick={() => { setShowNewPO(true); setActiveTab('Purchase Orders'); }}
                         className="w-full py-2 rounded-xl text-xs font-semibold text-white cursor-pointer whitespace-nowrap"
-                        style={{ background: '#0D1F4A' }}>
+                        style={{ background: '#DC1F1F' }}>
                         Create Purchase Order
                       </button>
                     </>

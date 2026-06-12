@@ -48,9 +48,9 @@ export default function QuoteModal({ cartItems, customerName, deliveryType, paym
               <div className="px-8 py-7 border-b border-slate-100">
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
                   <div>
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0D1F4A]/6 text-[#0D1F4A] text-[11px] font-semibold mb-4">
-                      <span className="w-2 h-2 rounded-full bg-[#0D1F4A]" />
-                      FixHub
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#DC1F1F]/6 text-[#DC1F1F] text-[11px] font-semibold mb-4">
+                      <span className="w-2 h-2 rounded-full bg-[#DC1F1F]" />
+                      Wireless
                     </div>
                     <h2 className="text-3xl font-black text-slate-900 tracking-tight">Quote</h2>
                     <p className="text-sm text-slate-500 mt-2 max-w-md">Structured like the TriAxis layout, with clear billing metadata, itemized lines, and a separate financial summary.</p>
@@ -82,7 +82,7 @@ export default function QuoteModal({ cartItems, customerName, deliveryType, paym
                   <div className="rounded-2xl border border-slate-100 p-4">
                     <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-3">Bill To</p>
                     <p className="text-base font-bold text-slate-800">{customerName || 'Walk-in Customer'}</p>
-                    <p className="text-sm text-slate-500 mt-2">Prepared by FixHub</p>
+                    <p className="text-sm text-slate-500 mt-2">Prepared by Wireless</p>
                     <p className="text-sm text-slate-500">Accra, Ghana</p>
                   </div>
                   <div className="rounded-2xl border border-slate-100 p-4">
@@ -132,7 +132,7 @@ export default function QuoteModal({ cartItems, customerName, deliveryType, paym
                     <div className="space-y-2 text-sm">
                       <div className="flex items-center justify-between"><span className="text-slate-500">Subtotal</span><span className="font-semibold text-slate-800">{formatGHS(subtotal)}</span></div>
                       <div className="flex items-center justify-between"><span className="text-slate-500">Delivery</span><span className="font-semibold text-slate-800">{deliveryFee > 0 ? formatGHS(deliveryFee) : 'Free'}</span></div>
-                      <div className="flex items-center justify-between pt-3 border-t border-slate-200"><span className="text-slate-800 font-bold">Total</span><span className="text-xl font-black text-[#0D1F4A]">{formatGHS(total)}</span></div>
+                      <div className="flex items-center justify-between pt-3 border-t border-slate-200"><span className="text-slate-800 font-bold">Total</span><span className="text-xl font-black text-[#DC1F1F]">{formatGHS(total)}</span></div>
                     </div>
                   </div>
                 </div>

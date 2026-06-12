@@ -24,7 +24,7 @@ export default function WaBroadcasts({ broadcasts, onNewBroadcast }: WaBroadcast
         <button
           onClick={onNewBroadcast}
           className="flex items-center gap-2 px-4 py-2 text-white rounded-xl text-sm font-medium cursor-pointer whitespace-nowrap hover:opacity-90"
-          style={{ background: '#0D1F4A' }}
+          style={{ background: '#DC1F1F' }}
         >
           <i className="ri-add-line" />New Broadcast
         </button>
@@ -53,7 +53,7 @@ export default function WaBroadcasts({ broadcasts, onNewBroadcast }: WaBroadcast
                   { label: 'Sent', value: b.sent, icon: 'ri-send-plane-line', color: 'text-slate-500' },
                   { label: 'Delivered', value: b.delivered, icon: 'ri-check-double-line', color: 'text-sky-500' },
                   { label: 'Read', value: b.read, icon: 'ri-eye-line', color: 'text-emerald-500' },
-                  { label: 'Replied', value: b.replied, icon: 'ri-reply-line', color: 'text-violet-500' },
+                  { label: 'Replied', value: b.replied, icon: 'ri-reply-line', color: 'text-slate-500' },
                 ].map(s => (
                   <div key={s.label} className="text-center">
                     <div className="w-5 h-5 flex items-center justify-center mx-auto mb-1">

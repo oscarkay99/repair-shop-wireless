@@ -35,7 +35,7 @@ export const paymentMethods = [
   { method: 'MTN MoMo', value: 48200, pct: 57, color: '#F59E0B' },
   { method: 'Bank Transfer', value: 22100, pct: 26, color: '#3B82F6' },
   { method: 'Cash', value: 8400, pct: 10, color: '#059669' },
-  { method: 'Card', value: 5620, pct: 7, color: '#8B5CF6' },
+  { method: 'Card', value: 5620, pct: 7, color: '#64748b' },
 ];
 
 export const aiInsights = [

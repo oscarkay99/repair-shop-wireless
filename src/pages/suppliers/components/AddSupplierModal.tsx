@@ -63,7 +63,7 @@ export default function AddSupplierModal({ supplier, onSave, onClose }: Props) {
             <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block text-slate-400">Supplier Name *</label>
             <input required value={form.name} onChange={e => set('name', e.target.value)}
               className="w-full text-sm rounded-xl px-3 py-2.5 outline-none"
-              style={{ border: '1px solid rgba(7,16,31,0.12)', background: 'rgba(7,16,31,0.02)', color: '#07101F' }}
+              style={{ border: '1px solid rgba(7,16,31,0.12)', background: 'rgba(7,16,31,0.02)', color: '#0F172A' }}
               placeholder="e.g. TechZone Distributors" />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -71,7 +71,7 @@ export default function AddSupplierModal({ supplier, onSave, onClose }: Props) {
               <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block text-slate-400">Category</label>
               <select value={form.category} onChange={e => set('category', e.target.value)}
                 className="w-full text-sm rounded-xl px-3 py-2.5 outline-none cursor-pointer"
-                style={{ border: '1px solid rgba(7,16,31,0.12)', background: 'rgba(7,16,31,0.02)', color: '#07101F' }}>
+                style={{ border: '1px solid rgba(7,16,31,0.12)', background: 'rgba(7,16,31,0.02)', color: '#0F172A' }}>
                 {categories.map(c => <option key={c}>{c}</option>)}
               </select>
             </div>
@@ -79,7 +79,7 @@ export default function AddSupplierModal({ supplier, onSave, onClose }: Props) {
               <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block text-slate-400">Contact *</label>
               <input required value={form.contact} onChange={e => set('contact', e.target.value)}
                 className="w-full text-sm rounded-xl px-3 py-2.5 outline-none"
-                style={{ border: '1px solid rgba(7,16,31,0.12)', background: 'rgba(7,16,31,0.02)', color: '#07101F' }}
+                style={{ border: '1px solid rgba(7,16,31,0.12)', background: 'rgba(7,16,31,0.02)', color: '#0F172A' }}
                 placeholder="Phone or email" />
             </div>
           </div>
@@ -88,14 +88,14 @@ export default function AddSupplierModal({ supplier, onSave, onClose }: Props) {
               <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block text-slate-400">Lead Time</label>
               <input value={form.leadTime} onChange={e => set('leadTime', e.target.value)}
                 className="w-full text-sm rounded-xl px-3 py-2.5 outline-none"
-                style={{ border: '1px solid rgba(7,16,31,0.12)', background: 'rgba(7,16,31,0.02)', color: '#07101F' }}
+                style={{ border: '1px solid rgba(7,16,31,0.12)', background: 'rgba(7,16,31,0.02)', color: '#0F172A' }}
                 placeholder="e.g. 3-5 days" />
             </div>
             <div>
               <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block text-slate-400">Payment Terms</label>
               <select value={form.paymentTerms} onChange={e => set('paymentTerms', e.target.value)}
                 className="w-full text-sm rounded-xl px-3 py-2.5 outline-none cursor-pointer"
-                style={{ border: '1px solid rgba(7,16,31,0.12)', background: 'rgba(7,16,31,0.02)', color: '#07101F' }}>
+                style={{ border: '1px solid rgba(7,16,31,0.12)', background: 'rgba(7,16,31,0.02)', color: '#0F172A' }}>
                 {paymentOptions.map(o => <option key={o}>{o}</option>)}
               </select>
             </div>
@@ -107,7 +107,7 @@ export default function AddSupplierModal({ supplier, onSave, onClose }: Props) {
                 <button key={star} type="button" onClick={() => set('rating', star)}
                   className="cursor-pointer transition-transform hover:scale-110">
                   <i className={`${star <= form.rating ? 'ri-star-fill' : 'ri-star-line'} text-xl`}
-                    style={{ color: star <= form.rating ? '#F5A623' : '#E2E8F0' }} />
+                    style={{ color: star <= form.rating ? '#F59E0B' : '#E2E8F0' }} />
                 </button>
               ))}
             </div>
@@ -116,18 +116,17 @@ export default function AddSupplierModal({ supplier, onSave, onClose }: Props) {
             <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block text-slate-400">Notes</label>
             <textarea value={form.notes} onChange={e => set('notes', e.target.value)} rows={2}
               className="w-full text-sm rounded-xl px-3 py-2.5 outline-none resize-none"
-              style={{ border: '1px solid rgba(7,16,31,0.12)', background: 'rgba(7,16,31,0.02)', color: '#07101F' }}
+              style={{ border: '1px solid rgba(7,16,31,0.12)', background: 'rgba(7,16,31,0.02)', color: '#0F172A' }}
               placeholder="Optional notes about this supplier…" />
           </div>
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose}
               className="flex-1 py-2.5 rounded-xl text-sm font-semibold cursor-pointer"
-              style={{ background: 'rgba(7,16,31,0.06)', color: 'rgba(7,16,31,0.6)' }}>
+              style={{ background: 'rgba(220,31,31,0.08)', color: 'rgba(7,16,31,0.6)' }}>
               Cancel
             </button>
             <button type="submit" disabled={saving}
-              className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white cursor-pointer"
-              style={{ background: '#0D1F4A', opacity: saving ? 0.7 : 1 }}>
+              className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white cursor-pointer bg-[#DC1F1F] hover:bg-[#B81616] disabled:opacity-70 transition-colors duration-150">
               {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Supplier'}
             </button>
           </div>

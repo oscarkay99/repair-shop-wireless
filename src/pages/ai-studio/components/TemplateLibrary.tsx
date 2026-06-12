@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { promptTemplates } from '@/mocks/aiStudio';
 
 const categories = ['All', 'Follow-ups', 'Campaigns', 'Summaries', 'Product'];
@@ -17,17 +18,24 @@ export default function TemplateLibrary({ selected, onSelect }: TemplateLibraryP
   return (
     <div className="h-full flex flex-col">
       <div className="mb-4">
-        <p className="text-xs text-white/40 uppercase tracking-widest mb-3">Templates</p>
-        <div className="space-y-1">
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Templates</p>
+        <div className="space-y-0.5">
           {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`w-full text-left px-3 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${
+              className="w-full text-left px-3 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer"
+              style={
                 activeCategory === cat
-                  ? 'bg-blue-500/20 text-blue-400 border-l-2 border-blue-400'
-                  : 'text-white/50 hover:text-white hover:bg-white/5'
-              }`}
+                  ? { background: 'rgba(220,31,31,0.08)', color: '#DC1F1F', borderLeft: '2px solid #DC1F1F' }
+                  : { color: '#64748b' }
+              }
+              onMouseEnter={(e) => {
+                if (activeCategory !== cat) (e.currentTarget as HTMLElement).style.background = '#f8fafc';
+              }}
+              onMouseLeave={(e) => {
+                if (activeCategory !== cat) (e.currentTarget as HTMLElement).style.background = '';
+              }}
             >
               {cat}
             </button>
@@ -40,24 +48,27 @@ export default function TemplateLibrary({ selected, onSelect }: TemplateLibraryP
           <button
             key={t.id}
             onClick={() => onSelect(t.id)}
-            className={`w-full text-left p-3 rounded-xl transition-all cursor-pointer ${
+            className="w-full text-left p-3 rounded-xl transition-all cursor-pointer border"
+            style={
               selected === t.id
-                ? 'bg-blue-500/20 border border-blue-500/30'
-                : 'hover:bg-white/5 border border-transparent'
-            }`}
+                ? { background: 'rgba(220,31,31,0.06)', borderColor: 'rgba(220,31,31,0.20)' }
+                : { borderColor: 'transparent' }
+            }
+            onMouseEnter={(e) => {
+              if (selected !== t.id) (e.currentTarget as HTMLElement).style.background = '#f8fafc';
+            }}
+            onMouseLeave={(e) => {
+              if (selected !== t.id) (e.currentTarget as HTMLElement).style.background = '';
+            }}
           >
             <div className="flex items-center gap-2 mb-1">
-              <div className="w-4 h-4 flex items-center justify-center text-blue-400">
-                <i className={`${t.icon} text-xs`} />
-              </div>
-              <span className="text-xs font-medium text-white/80">{t.name}</span>
+              <i className={`${t.icon} text-xs`} style={{ color: selected === t.id ? '#DC1F1F' : '#94a3b8' }} />
+              <span className="text-xs font-medium text-slate-700">{t.name}</span>
             </div>
-            <p className="text-[10px] text-white/40 leading-relaxed">{t.description}</p>
+            <p className="text-[10px] text-slate-400 leading-relaxed">{t.description}</p>
           </button>
         ))}
       </div>
     </div>
   );
 }
-
-import { useState } from 'react';

@@ -4,17 +4,18 @@ import AdminLayout from '@/components/feature/AdminLayout';
 import { useRepairs } from '@/hooks/useRepairs';
 import { useAuth } from '@/hooks/useAuth';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid } from 'recharts';
+import FinancialOverview from './components/FinancialOverview';
 
 const STATUS_META: Record<string, { label: string; color: string; bg: string }> = {
-  received:      { label: 'Received',       color: '#6366F1', bg: 'rgba(99,102,241,0.12)' },
-  diagnosed:     { label: 'Diagnosed',      color: '#F5A623', bg: 'rgba(245,166,35,0.12)' },
-  in_progress:   { label: 'In Progress',    color: '#3B82F6', bg: 'rgba(59,130,246,0.12)' },
-  parts_pending: { label: 'Parts Pending',  color: '#EF4444', bg: 'rgba(239,68,68,0.12)'  },
-  ready:         { label: 'Ready Pickup',   color: '#10B981', bg: 'rgba(16,185,129,0.12)' },
-  completed:     { label: 'Completed',      color: '#059669', bg: 'rgba(5,150,105,0.12)'  },
+  received:      { label: 'Received',       color: '#64748b', bg: 'rgba(100,116,139,0.10)' },
+  diagnosed:     { label: 'Diagnosed',      color: '#F59E0B', bg: 'rgba(245,158,11,0.10)'  },
+  in_progress:   { label: 'In Progress',    color: '#06B6D4', bg: 'rgba(6,182,212,0.10)'   },
+  parts_pending: { label: 'Parts Pending',  color: '#EF4444', bg: 'rgba(239,68,68,0.10)'   },
+  ready:         { label: 'Ready Pickup',   color: '#10B981', bg: 'rgba(16,185,129,0.10)'  },
+  completed:     { label: 'Completed',      color: '#059669', bg: 'rgba(5,150,105,0.10)'   },
 };
 
-const DEVICE_COLORS = ['#3B82F6', '#F5A623', '#10B981', '#6366F1', '#EF4444'];
+const DEVICE_COLORS = ['#DC1F1F', '#06B6D4', '#10B981', '#F59E0B', '#64748b'];
 
 function fmt(n: number) {
   if (n >= 1000) return `GHS ${(n / 1000).toFixed(1)}k`;
@@ -134,10 +135,10 @@ export default function DashboardPage() {
       {/* KPI Strip */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {[
-          { label: 'Active Jobs',       value: stats.active.length,             icon: 'ri-tools-line',        color: '#3B82F6', sub: 'in the shop'         },
-          { label: 'Ready for Pickup',  value: stats.ready.length,              icon: 'ri-check-double-line', color: '#10B981', sub: 'awaiting customer'   },
-          { label: 'Completed (Month)', value: stats.completed.length,          icon: 'ri-checkbox-circle-line', color: '#6366F1', sub: 'this month'        },
-          { label: 'Revenue (Month)',   value: fmt(stats.revenue),              icon: 'ri-money-cedi-circle-line', color: '#F5A623', sub: 'from repair fees' },
+          { label: 'Active Jobs',       value: stats.active.length,             icon: 'ri-tools-line',               color: '#06B6D4', sub: 'in the shop'         },
+          { label: 'Ready for Pickup',  value: stats.ready.length,              icon: 'ri-check-double-line',        color: '#10B981', sub: 'awaiting customer'   },
+          { label: 'Completed (Month)', value: stats.completed.length,          icon: 'ri-checkbox-circle-line',     color: '#F59E0B', sub: 'this month'          },
+          { label: 'Revenue (Month)',   value: fmt(stats.revenue),              icon: 'ri-money-cedi-circle-line',   color: '#DC1F1F', sub: 'from repair fees'    },
         ].map(card => (
           <div key={card.label} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
             <div className="flex items-center justify-between mb-3">
@@ -209,7 +210,7 @@ export default function DashboardPage() {
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-bold text-slate-800">Active Jobs</h2>
-            <button onClick={() => navigate('/repairs')} className="text-xs font-semibold cursor-pointer" style={{ color: '#F5A623' }}>
+            <button onClick={() => navigate('/repairs')} className="text-xs font-semibold cursor-pointer" style={{ color: '#DC1F1F' }}>
               View all
             </button>
           </div>
@@ -301,14 +302,14 @@ export default function DashboardPage() {
                 tickFormatter={(v: number) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : String(v)}
               />
               <Tooltip
-                contentStyle={{ background: '#0D1F4A', border: 'none', borderRadius: 10, fontSize: 12, color: 'white' }}
+                contentStyle={{ background: '#160403', border: 'none', borderRadius: 10, fontSize: 12, color: 'white' }}
                 formatter={(v: number, name: string) => [
                   name === 'revenue' ? `GHS ${v.toLocaleString()}` : v,
                   name === 'revenue' ? 'Revenue' : 'Jobs',
                 ]}
                 labelStyle={{ color: 'rgba(255,255,255,0.6)', fontSize: 11 }}
               />
-              <Bar dataKey="revenue" fill="#0D1F4A" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="revenue" fill="#DC1F1F" radius={[4, 4, 0, 0]} name="Revenue" />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -353,7 +354,7 @@ export default function DashboardPage() {
                       <span className="text-xs font-bold text-slate-700">{count} jobs</span>
                     </div>
                     <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                      <div className="h-full rounded-full" style={{ width: `${pct}%`, background: '#0D1F4A' }} />
+                      <div className="h-full rounded-full" style={{ width: `${pct}%`, background: '#06B6D4' }} />
                     </div>
                   </div>
                 );
@@ -366,6 +367,9 @@ export default function DashboardPage() {
 
         </div>
       </div>
+
+      {/* Financial Overview section */}
+      <FinancialOverview />
     </AdminLayout>
   );
 }

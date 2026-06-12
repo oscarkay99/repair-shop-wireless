@@ -21,8 +21,8 @@ export default function TikTokCampaigns({ campaigns, formatNumber }: TikTokCampa
     <div className="space-y-3">
       {campaigns.map((campaign) => (
         <div key={campaign.id} className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: campaign.status === 'Active' ? '#FE2C5515' : campaign.status === 'Completed' ? '#25F4EE15' : '#F5A62315' }}>
-            <i className={`${campaign.status === 'Active' ? 'ri-fire-line' : campaign.status === 'Completed' ? 'ri-check-line' : 'ri-time-line'} text-lg`} style={{ color: campaign.status === 'Active' ? '#FE2C55' : campaign.status === 'Completed' ? '#25F4EE' : '#F5A623' }} />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: campaign.status === 'Active' ? '#FE2C5515' : campaign.status === 'Completed' ? '#25F4EE15' : '#F59E0B15' }}>
+            <i className={`${campaign.status === 'Active' ? 'ri-fire-line' : campaign.status === 'Completed' ? 'ri-check-line' : 'ri-time-line'} text-lg`} style={{ color: campaign.status === 'Active' ? '#FE2C55' : campaign.status === 'Completed' ? '#25F4EE' : '#F59E0B' }} />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
@@ -30,7 +30,7 @@ export default function TikTokCampaigns({ campaigns, formatNumber }: TikTokCampa
               <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
                 campaign.status === 'Active' ? 'text-white' : campaign.status === 'Completed' ? 'text-slate-700' : 'text-slate-600'
               }`}
-              style={{ background: campaign.status === 'Active' ? '#FE2C55' : campaign.status === 'Completed' ? '#25F4EE' : '#F5A623' }}
+              style={{ background: campaign.status === 'Active' ? '#FE2C55' : campaign.status === 'Completed' ? '#25F4EE' : '#F59E0B' }}
               >
                 {campaign.status}
               </span>

@@ -7,11 +7,11 @@ interface Props {
 }
 
 const typeConfig = {
-  sale: { icon: 'ri-shopping-bag-3-fill', bg: '#0D1F4A', label: 'Sale' },
-  lead: { icon: 'ri-user-star-fill', bg: '#F5A623', label: 'Lead' },
-  payment: { icon: 'ri-bank-card-fill', bg: '#1552A8', label: 'Payment' },
-  repair: { icon: 'ri-tools-fill', bg: '#07101F', label: 'Repair' },
-  alert: { icon: 'ri-alert-fill', bg: '#E05A2B', label: 'Alert' },
+  sale:    { icon: 'ri-shopping-bag-3-fill', bg: '#10B981', label: 'Sale'    },
+  lead:    { icon: 'ri-user-star-fill',      bg: '#F59E0B', label: 'Lead'    },
+  payment: { icon: 'ri-bank-card-fill',      bg: '#06B6D4', label: 'Payment' },
+  repair:  { icon: 'ri-tools-fill',          bg: '#DC1F1F', label: 'Repair'  },
+  alert:   { icon: 'ri-alert-fill',          bg: '#EF4444', label: 'Alert'   },
 };
 
 function Toast({ notif, onDismiss }: { notif: Notification; onDismiss: () => void }) {

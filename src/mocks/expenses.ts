@@ -1,12 +1,12 @@
 export const expenseCategories = [
-  { id: 'rent', name: 'Rent & Utilities', budget: 8000, spent: 8000, color: '#0D1F4A' },
-  { id: 'salaries', name: 'Staff Salaries', budget: 15000, spent: 15000, color: '#07101F' },
-  { id: 'stock', name: 'Stock Purchases', budget: 45000, spent: 42300, color: '#F5A623' },
-  { id: 'marketing', name: 'Marketing & Ads', budget: 5000, spent: 3870, color: '#E05A2B' },
-  { id: 'repairs', name: 'Repair Parts', budget: 3000, spent: 2450, color: '#1552A8' },
-  { id: 'delivery', name: 'Delivery & Logistics', budget: 2000, spent: 1780, color: '#0E3D8A' },
-  { id: 'utilities', name: 'Internet & Phone', budget: 800, spent: 800, color: '#2D7DD2' },
-  { id: 'misc', name: 'Miscellaneous', budget: 1500, spent: 890, color: '#8B9DC3' },
+  { id: 'rent', name: 'Rent & Utilities', budget: 8000, spent: 8000, color: '#DC1F1F' },
+  { id: 'salaries', name: 'Staff Salaries',      budget: 15000, spent: 15000, color: '#64748b' },
+  { id: 'stock',    name: 'Stock Purchases',      budget: 45000, spent: 42300, color: '#F59E0B' },
+  { id: 'marketing',name: 'Marketing & Ads',      budget: 5000,  spent: 3870,  color: '#C84015' },
+  { id: 'repairs',  name: 'Repair Parts',         budget: 3000,  spent: 2450,  color: '#06B6D4' },
+  { id: 'delivery', name: 'Delivery & Logistics', budget: 2000,  spent: 1780,  color: '#10B981' },
+  { id: 'utilities',name: 'Internet & Phone',     budget: 800,   spent: 800,   color: '#94a3b8' },
+  { id: 'misc',     name: 'Miscellaneous',        budget: 1500,  spent: 890,   color: '#cbd5e1' },
 ];
 
 export const monthlyExpenses = [

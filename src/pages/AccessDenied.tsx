@@ -19,7 +19,7 @@ export default function AccessDeniedPage() {
           <button
             onClick={() => navigate('/')}
             className="flex-1 py-3 rounded-xl text-sm font-semibold text-white"
-            style={{ background: '#0D1F4A' }}
+            style={{ background: '#DC1F1F' }}
           >
             Go to Dashboard
           </button>

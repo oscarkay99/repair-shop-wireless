@@ -5,6 +5,9 @@ export interface Customer {
   name: string;
   phone: string;
   email: string;
+  websiteAuthUserId?: string;
+  hasWebsiteAccount?: boolean;
+  source?: 'website' | 'admin' | 'imported';
   segment: CustomerSegment;
   ltv: string;
   orders: number;

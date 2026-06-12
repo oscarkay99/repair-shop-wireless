@@ -14,12 +14,12 @@ function receiptNumber(id: string) {
   return `FH-${id.replace('R-', '')}`;
 }
 
-function FixHubLogoSVG({ size = 36 }: { size?: number }) {
+function WirelessLogoSVG({ size = 36 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="40" height="40" rx="10" fill="#0D1F4A" />
-      <path d="M12 28 L16 16 L20 22 L24 16 L28 28" stroke="#F5A623" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-      <circle cx="20" cy="13" r="3" fill="#F5A623" />
+      <rect width="40" height="40" rx="10" fill="#DC1F1F" />
+      <path d="M12 28 L16 16 L20 22 L24 16 L28 28" stroke="#DC1F1F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <circle cx="20" cy="13" r="3" fill="#DC1F1F" />
     </svg>
   );
 }
@@ -35,7 +35,7 @@ export default function RepairReceiptModal({ repair, onClose }: Props) {
 
   function buildWhatsAppText() {
     const lines = [
-      `*FixHub Repair ${isReady ? 'Receipt' : 'Job Card'} — ${txn}*`,
+      `*Wireless Repair ${isReady ? 'Receipt' : 'Job Card'} — ${txn}*`,
       '',
       `Customer: ${repair.customer}`,
       `Device: ${repair.device}`,
@@ -49,7 +49,7 @@ export default function RepairReceiptModal({ repair, onClose }: Props) {
       '',
       repair.warranty ? '✅ This repair is covered under warranty.' : '',
       '',
-      'Thank you for choosing FixHub!',
+      'Thank you for choosing Wireless!',
       'fixhub.com',
     ].filter(l => l !== undefined);
     return lines.join('\n');
@@ -64,7 +64,7 @@ export default function RepairReceiptModal({ repair, onClose }: Props) {
 
   function handleSendEmail(email?: string) {
     if (!email) return;
-    const subject = encodeURIComponent(`FixHub Repair ${isReady ? 'Receipt' : 'Job Card'} — ${txn}`);
+    const subject = encodeURIComponent(`Wireless Repair ${isReady ? 'Receipt' : 'Job Card'} — ${txn}`);
     const body = encodeURIComponent(buildWhatsAppText().replace(/\*/g, ''));
     window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
   }
@@ -75,14 +75,14 @@ export default function RepairReceiptModal({ repair, onClose }: Props) {
     const win = window.open('', '_blank', 'width=780,height=900');
     if (!win) return;
     win.document.write(`
-      <html><head><title>FixHub ${isReady ? 'Receipt' : 'Job Card'} ${txn}</title>
+      <html><head><title>Wireless ${isReady ? 'Receipt' : 'Job Card'} ${txn}</title>
       <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family:'Segoe UI',Arial,sans-serif; font-size:13px; color:#1e1e1e; background:#fff; padding:32px; max-width:740px; margin:0 auto; }
         .rcp-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; }
         .rcp-logo-row { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
-        .rcp-logo-text { font-size:22px; font-weight:900; color:#0D1F4A; letter-spacing:-0.02em; }
-        .rcp-logo-text span { color:#F5A623; }
+        .rcp-logo-text { font-size:22px; font-weight:900; color:#DC1F1F; letter-spacing:-0.02em; }
+        .rcp-logo-text span { color:#DC1F1F; }
         .rcp-company-address { font-size:11px; color:#5f7184; line-height:1.6; }
         .rcp-title-block { text-align:right; }
         .rcp-ready-stamp { display:inline-block; border:3px solid #16a34a; color:#16a34a; font-size:13px; font-weight:800; padding:4px 12px; border-radius:4px; transform:rotate(-8deg); margin-bottom:8px; letter-spacing:.08em; }
@@ -100,9 +100,9 @@ export default function RepairReceiptModal({ repair, onClose }: Props) {
         .rcp-meta-value { font-weight:600; color:#1e1e1e; }
         .rcp-total-row { background:#eff6ff; }
         .rcp-total-label { font-weight:700; color:#1e1e1e; }
-        .rcp-total-value { font-weight:800; color:#0D1F4A; }
+        .rcp-total-value { font-weight:800; color:#DC1F1F; }
         table { width:100%; border-collapse:collapse; margin-bottom:20px; }
-        thead tr { background:#0D1F4A; color:#fff; }
+        thead tr { background:#DC1F1F; color:#fff; }
         thead th { padding:10px 12px; text-align:left; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
         tbody tr { border-bottom:1px solid #f0f0f0; }
         tbody tr:nth-child(even) { background:#fafafa; }
@@ -110,8 +110,8 @@ export default function RepairReceiptModal({ repair, onClose }: Props) {
         .rcp-note-block { margin-top:16px; padding:12px; background:#f8fafc; border-radius:6px; }
         .rcp-note-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#5f7184; margin-bottom:5px; }
         .rcp-note-text { font-size:11px; color:#444; line-height:1.6; }
-        .warranty-block { border:1px solid #0D1F4A20; border-radius:6px; padding:12px 16px; margin-top:16px; }
-        .warranty-title { font-size:11px; font-weight:700; color:#0D1F4A; text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px; }
+        .warranty-block { border:1px solid #DC1F1F20; border-radius:6px; padding:12px 16px; margin-top:16px; }
+        .warranty-title { font-size:11px; font-weight:700; color:#DC1F1F; text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px; }
         .warranty-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; font-size:11px; }
         .warranty-key { color:#5f7184; margin-bottom:2px; }
         .warranty-val { font-weight:600; color:#1e1e1e; }
@@ -155,9 +155,9 @@ export default function RepairReceiptModal({ repair, onClose }: Props) {
               {/* Watermark */}
               <div className="pointer-events-none select-none absolute inset-0 flex items-center justify-center" style={{ zIndex: 0, opacity: 0.04 }}>
                 <svg width="320" height="320" viewBox="0 0 40 40" fill="none">
-                  <rect width="40" height="40" rx="10" fill="#0D1F4A" />
-                  <path d="M12 28 L16 16 L20 22 L24 16 L28 28" stroke="#F5A623" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                  <circle cx="20" cy="13" r="3" fill="#F5A623" />
+                  <rect width="40" height="40" rx="10" fill="#DC1F1F" />
+                  <path d="M12 28 L16 16 L20 22 L24 16 L28 28" stroke="#DC1F1F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                  <circle cx="20" cy="13" r="3" fill="#DC1F1F" />
                 </svg>
               </div>
 
@@ -167,9 +167,9 @@ export default function RepairReceiptModal({ repair, onClose }: Props) {
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6 mb-5">
                   <div>
                     <div className="rcp-logo-row flex items-center gap-2.5 mb-1">
-                      <FixHubLogoSVG size={38} />
-                      <span className="text-[22px] font-black tracking-tight text-[#0D1F4A]" style={{ letterSpacing: '-0.02em' }}>
-                        Fix<span style={{ color: '#F5A623' }}>Hub</span>
+                      <WirelessLogoSVG size={38} />
+                      <span className="text-[22px] font-black tracking-tight text-[#DC1F1F]" style={{ letterSpacing: '-0.02em' }}>
+                        Fix<span style={{ color: '#DC1F1F' }}>Hub</span>
                       </span>
                     </div>
                     <p className="text-[11px] leading-relaxed text-[#5f7184]">
@@ -212,7 +212,7 @@ export default function RepairReceiptModal({ repair, onClose }: Props) {
                     ))}
                     <div className="flex justify-between px-3.5 py-2.5 text-[12px]" style={{ background: '#eff6ff' }}>
                       <span className="font-bold text-slate-800">Total</span>
-                      <span className="font-black text-[#0D1F4A]">{costNum > 0 ? formatGHS(costNum) : repair.cost}</span>
+                      <span className="font-black text-[#DC1F1F]">{costNum > 0 ? formatGHS(costNum) : repair.cost}</span>
                     </div>
                   </div>
                 </div>
@@ -221,7 +221,7 @@ export default function RepairReceiptModal({ repair, onClose }: Props) {
                 <div className="overflow-x-auto mb-6">
                   <table className="w-full border-collapse">
                     <thead>
-                      <tr style={{ background: '#0D1F4A' }}>
+                      <tr style={{ background: '#DC1F1F' }}>
                         {['Description', 'Device', 'Status', 'Amount'].map(h => (
                           <th key={h} className="px-3 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-white">{h}</th>
                         ))}
@@ -232,7 +232,7 @@ export default function RepairReceiptModal({ repair, onClose }: Props) {
                         <td className="px-3 py-3 text-[13px] font-semibold text-slate-800">{repair.issue}</td>
                         <td className="px-3 py-3 text-[12px] text-slate-600">{repair.device}</td>
                         <td className="px-3 py-3">
-                          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${isReady ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>
+                          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${isReady ? 'bg-emerald-100 text-emerald-700' : 'bg-cyan-100 text-cyan-700'}`}>
                             {repair.status.replace('_', ' ')}
                           </span>
                         </td>
@@ -247,7 +247,7 @@ export default function RepairReceiptModal({ repair, onClose }: Props) {
                           <td className="px-3 py-2.5">
                             <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                               part.status === 'installed' ? 'bg-emerald-100 text-emerald-700' :
-                              part.status === 'ordered'   ? 'bg-blue-100 text-blue-700' :
+                              part.status === 'ordered'   ? 'bg-cyan-100 text-cyan-700' :
                                                             'bg-amber-100 text-amber-700'
                             }`}>{part.status}</span>
                           </td>
@@ -270,10 +270,10 @@ export default function RepairReceiptModal({ repair, onClose }: Props) {
 
                 {/* Warranty block */}
                 {repair.warranty && (
-                  <div className="border rounded-lg p-4 mb-6" style={{ borderColor: '#0D1F4A20' }}>
+                  <div className="border rounded-lg p-4 mb-6" style={{ borderColor: '#DC1F1F20' }}>
                     <div className="flex items-center gap-2 mb-3">
-                      <i className="ri-shield-star-line text-sm text-[#0D1F4A]" />
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-[#0D1F4A]">Warranty Certificate</p>
+                      <i className="ri-shield-star-line text-sm text-[#DC1F1F]" />
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-[#DC1F1F]">Warranty Certificate</p>
                     </div>
                     <div className="grid grid-cols-3 gap-4 text-[11px]">
                       <div><span className="block mb-0.5 text-[#5f7184]">Device</span><p className="font-semibold text-slate-800">{repair.device}</p></div>
@@ -285,7 +285,7 @@ export default function RepairReceiptModal({ repair, onClose }: Props) {
 
                 {/* Footer */}
                 <div className="border-t border-slate-200 pt-4 text-center">
-                  <p className="text-[11px] text-[#5f7184]">Thank you for choosing FixHub</p>
+                  <p className="text-[11px] text-[#5f7184]">Thank you for choosing Wireless</p>
                   <p className="text-[11px] mt-0.5 text-[#5f7184]">repairs@fixhub.com · fixhub.com</p>
                 </div>
 
@@ -302,7 +302,7 @@ export default function RepairReceiptModal({ repair, onClose }: Props) {
                 <span className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold border ${
                   isReady
                     ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                    : 'bg-blue-50 text-blue-700 border-blue-100'
+                    : 'bg-cyan-50 text-cyan-700 border-cyan-100'
                 }`}>
                   {repair.status.replace('_', ' ')}
                 </span>
@@ -321,7 +321,7 @@ export default function RepairReceiptModal({ repair, onClose }: Props) {
                 <button
                   onClick={onClose}
                   className="w-full py-3 rounded-xl text-white text-sm font-bold flex items-center justify-center gap-2 cursor-pointer hover:opacity-90 transition-opacity"
-                  style={{ background: 'linear-gradient(135deg, #0D1F4A 0%, #2463BE 100%)' }}
+                  style={{ background: 'linear-gradient(135deg, #DC1F1F 0%, #2463BE 100%)' }}
                 >
                   <i className="ri-close-line" /> Close
                 </button>
@@ -346,7 +346,7 @@ export default function RepairReceiptModal({ repair, onClose }: Props) {
                 <button
                   onClick={() => handleSendEmail()}
                   className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all cursor-not-allowed opacity-40"
-                  style={{ background: '#0D1F4A', color: 'white' }}
+                  style={{ background: '#DC1F1F', color: 'white' }}
                   title="Add customer email to enable"
                 >
                   <i className="ri-mail-send-line" /> Send via Email

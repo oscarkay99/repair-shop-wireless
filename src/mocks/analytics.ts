@@ -1,7 +1,7 @@
 export const analyticsKPIs = [
   { label: 'Total Revenue', value: 'GHS 399,520', change: '+18.6%', trend: 'up', icon: 'ri-money-dollar-circle-line', accent: 'bg-emerald-500', sub: '6-month total' },
-  { label: 'Total Orders', value: '503', change: '+22.4%', trend: 'up', icon: 'ri-shopping-bag-3-line', accent: 'bg-blue-500', sub: 'Completed sales' },
-  { label: 'Avg Order Value', value: 'GHS 5,420', change: '+4.1%', trend: 'up', icon: 'ri-bar-chart-box-line', accent: 'bg-violet-500', sub: 'Per transaction' },
+  { label: 'Total Orders', value: '503', change: '+22.4%', trend: 'up', icon: 'ri-shopping-bag-3-line', accent: 'bg-cyan-500', sub: 'Completed sales' },
+  { label: 'Avg Order Value', value: 'GHS 5,420', change: '+4.1%', trend: 'up', icon: 'ri-bar-chart-box-line', accent: 'bg-amber-500', sub: 'Per transaction' },
   { label: 'Customer LTV', value: 'GHS 14,200', change: '+9.3%', trend: 'up', icon: 'ri-user-heart-line', accent: 'bg-amber-500', sub: 'Avg lifetime value' },
 ];
 
@@ -40,11 +40,11 @@ export const repairMetrics = [
 ];
 
 export const salesFunnel = [
-  { stage: 'Leads', value: 312, color: '#3B82F6' },
-  { stage: 'Contacted', value: 248, color: '#6366F1' },
-  { stage: 'Quoted', value: 148, color: '#8B5CF6' },
-  { stage: 'Negotiating', value: 96, color: '#D97706' },
-  { stage: 'Closed', value: 87, color: '#059669' },
+  { stage: 'Leads',       value: 312, color: '#DC1F1F' },
+  { stage: 'Contacted',   value: 248, color: '#F59E0B' },
+  { stage: 'Quoted',      value: 148, color: '#06B6D4' },
+  { stage: 'Negotiating', value: 96,  color: '#10B981' },
+  { stage: 'Closed',      value: 87,  color: '#059669' },
 ];
 
 export const stockHealthData = [

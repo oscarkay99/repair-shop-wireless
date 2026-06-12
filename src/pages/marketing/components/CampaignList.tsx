@@ -11,7 +11,7 @@ const statusConfig: Record<string, { label: string; color: string; dot: string }
 const channelIcons: Record<string, { icon: string; color: string }> = {
   whatsapp:  { icon: 'ri-whatsapp-line',  color: 'text-[#25D366]' },
   instagram: { icon: 'ri-instagram-line', color: 'text-pink-500'  },
-  sms:       { icon: 'ri-message-2-line', color: 'text-blue-500'  },
+  sms:       { icon: 'ri-message-2-line', color: 'text-slate-500' },
 };
 
 export default function CampaignList() {
@@ -31,7 +31,7 @@ export default function CampaignList() {
               key={s}
               onClick={() => setFilter(s)}
               className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer whitespace-nowrap capitalize ${
-                filter === s ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                filter === s ? 'bg-[#DC1F1F] text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
               }`}
             >
               {s === 'all' ? 'All' : statusConfig[s]?.label}

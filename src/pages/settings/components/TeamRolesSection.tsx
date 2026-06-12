@@ -20,15 +20,15 @@ export default function TeamRolesSection({ roles, onAddRole, onEditRole }: TeamR
             <h3 className="text-sm font-bold text-slate-800">Roles & Permissions</h3>
             <p className="text-xs text-slate-400 mt-0.5">Control what each role can access</p>
           </div>
-          <button onClick={onAddRole} className="px-4 py-2 rounded-xl text-xs font-semibold text-white cursor-pointer whitespace-nowrap" style={{ background: '#0D1F4A' }}>
+          <button onClick={onAddRole} className="px-4 py-2 rounded-xl text-xs font-semibold text-white cursor-pointer whitespace-nowrap bg-[#DC1F1F] hover:bg-[#B81616] transition-colors duration-150">
             <i className="ri-add-line mr-1" /> Add Role
           </button>
         </div>
         <div className="divide-y divide-slate-100">
           {roles.map((role) => (
             <div key={role.id} className="p-4 flex items-start gap-4 hover:bg-slate-50/50 transition-colors">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: '#0D1F4A15' }}>
-                <i className="ri-shield-user-line text-sm" style={{ color: '#0D1F4A' }} />
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(220,31,31,0.08)' }}>
+                <i className="ri-shield-user-line text-sm" style={{ color: '#DC1F1F' }} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
@@ -37,7 +37,7 @@ export default function TeamRolesSection({ roles, onAddRole, onEditRole }: TeamR
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {role.permissions.map((perm) => (
-                    <span key={perm} className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">{perm}</span>
+                    <span key={perm} className="text-[10px] px-2 py-0.5 rounded-full bg-[rgba(220,31,31,0.08)] text-[#DC1F1F]">{perm}</span>
                   ))}
                 </div>
               </div>

@@ -2,7 +2,7 @@ import { Customer } from '@/types/customer';
 
 const segmentConfig: Record<string, { label: string; color: string }> = {
   VIP: { label: 'VIP', color: 'bg-amber-100 text-amber-700' },
-  Repeat: { label: 'Repeat', color: 'bg-blue-100 text-blue-700' },
+  Repeat: { label: 'Repeat', color: 'bg-slate-100 text-slate-700' },
   New: { label: 'New', color: 'bg-emerald-100 text-emerald-700' },
   'At-Risk': { label: 'At-Risk', color: 'bg-red-100 text-red-600' },
 };
@@ -74,7 +74,7 @@ export default function CustomerDetail({ customer, onClose }: Props) {
 
           <div className="flex gap-2">
             <button
-              onClick={() => window.open(`https://wa.me/${customer.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi ${customer.name}, we have a special offer for you! Contact us at FixHub.`)}`, '_blank')}
+              onClick={() => window.open(`https://wa.me/${customer.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi ${customer.name}, we have a special offer for you! Contact us at Wireless.`)}`, '_blank')}
               className="flex-1 py-2.5 bg-emerald-600 text-white text-xs font-semibold rounded-xl hover:bg-emerald-700 transition-all cursor-pointer whitespace-nowrap"
             >
               Send Offer

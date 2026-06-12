@@ -21,11 +21,11 @@ export default function LoyaltyPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-5">
         {[
-          { label: 'Total Members', value: loyaltyStats.totalMembers.toLocaleString(), icon: 'ri-group-line', color: '#0D1F4A' },
+          { label: 'Total Members', value: loyaltyStats.totalMembers.toLocaleString(), icon: 'ri-group-line', color: '#DC1F1F' },
           { label: 'Active Members', value: loyaltyStats.activeMembers.toLocaleString(), icon: 'ri-user-follow-line', color: '#25D366' },
-          { label: 'Points Issued', value: (loyaltyStats.totalPointsIssued / 1000).toFixed(0) + 'K', icon: 'ri-coin-line', color: '#F5A623' },
+          { label: 'Points Issued', value: (loyaltyStats.totalPointsIssued / 1000).toFixed(0) + 'K', icon: 'ri-coin-line', color: '#F59E0B' },
           { label: 'Points Redeemed', value: (loyaltyStats.totalPointsRedeemed / 1000).toFixed(0) + 'K', icon: 'ri-exchange-line', color: '#E05A2B' },
-          { label: 'Retention Rate', value: `${loyaltyStats.retentionRate}%`, icon: 'ri-heart-pulse-line', color: '#07101F' },
+          { label: 'Retention Rate', value: `${loyaltyStats.retentionRate}%`, icon: 'ri-heart-pulse-line', color: '#0F172A' },
         ].map((s) => (
           <div key={s.label} className="bg-white rounded-2xl p-4 border border-slate-100">
             <div className="flex items-center gap-2 mb-2">
@@ -49,7 +49,7 @@ export default function LoyaltyPage() {
               className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === tab ? 'text-white' : 'text-slate-500 hover:text-slate-700'
               }`}
-              style={activeTab === tab ? { background: '#0D1F4A' } : {}}
+              style={activeTab === tab ? { background: '#DC1F1F' } : {}}
             >
               {tab}
             </button>
@@ -57,8 +57,7 @@ export default function LoyaltyPage() {
         </div>
         <button
           onClick={() => setShowRedeem(true)}
-          className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer whitespace-nowrap"
-          style={{ background: '#F5A623' }}
+          className="bg-[#DC1F1F] hover:bg-[#B81616] px-5 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer whitespace-nowrap transition-colors duration-150"
         >
           <i className="ri-gift-line mr-1" /> Redeem Points
         </button>
@@ -150,7 +149,7 @@ export default function LoyaltyPage() {
               </div>
               <p className="text-sm font-semibold text-slate-800 mb-1">{reward.name}</p>
               <div className="flex items-baseline gap-1 mb-3">
-                <span className="text-2xl font-bold" style={{ color: '#F5A623' }}>{reward.points.toLocaleString()}</span>
+                <span className="text-2xl font-bold" style={{ color: '#F59E0B' }}>{reward.points.toLocaleString()}</span>
                 <span className="text-xs text-slate-400">points</span>
               </div>
               <div className="flex items-center justify-between">
@@ -158,7 +157,7 @@ export default function LoyaltyPage() {
                 <button
                   onClick={() => { setSelectedReward(reward.id); setShowRedeem(true); }}
                   className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white cursor-pointer whitespace-nowrap"
-                  style={{ background: '#0D1F4A' }}
+                  style={{ background: '#DC1F1F' }}
                 >
                   Redeem
                 </button>
@@ -194,10 +193,10 @@ export default function LoyaltyPage() {
             <h3 className="text-sm font-bold text-slate-800 mb-4">Program Performance</h3>
             <div className="space-y-4">
               {[
-                { label: 'Revenue from Loyalty Members', value: `GHS ${loyaltyStats.revenueFromLoyalty.toLocaleString()}`, percent: 62.5, color: '#0D1F4A' },
-                { label: 'Points Redemption Rate', value: `${((loyaltyStats.totalPointsRedeemed / loyaltyStats.totalPointsIssued) * 100).toFixed(1)}%`, percent: 41, color: '#F5A623' },
+                { label: 'Revenue from Loyalty Members', value: `GHS ${loyaltyStats.revenueFromLoyalty.toLocaleString()}`, percent: 62.5, color: '#DC1F1F' },
+                { label: 'Points Redemption Rate', value: `${((loyaltyStats.totalPointsRedeemed / loyaltyStats.totalPointsIssued) * 100).toFixed(1)}%`, percent: 41, color: '#F59E0B' },
                 { label: 'Member Retention', value: `${loyaltyStats.retentionRate}%`, percent: loyaltyStats.retentionRate, color: '#25D366' },
-                { label: 'Top Tier Percentage', value: `${loyaltyStats.topTierPercentage}%`, percent: loyaltyStats.topTierPercentage * 5, color: '#07101F' },
+                { label: 'Top Tier Percentage', value: `${loyaltyStats.topTierPercentage}%`, percent: loyaltyStats.topTierPercentage * 5, color: '#0F172A' },
               ].map((item) => (
                 <div key={item.label}>
                   <div className="flex items-center justify-between text-xs mb-1">

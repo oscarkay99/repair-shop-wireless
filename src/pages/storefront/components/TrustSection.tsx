@@ -11,7 +11,7 @@ export default function TrustSection() {
           </div>
           <h2 className="text-2xl lg:text-3xl font-bold text-white mb-4">Every Product Comes with a Warranty Promise</h2>
           <p className="text-white/60 text-base max-w-xl mx-auto mb-6">
-            We stand behind every product we sell. New items come with full manufacturer warranty. Used and refurbished items include our FixHub warranty — real coverage, real support.
+            We stand behind every product we sell. New items come with full manufacturer warranty. Used and refurbished items include our Wireless warranty — real coverage, real support.
           </p>
           <a href="#" className="inline-flex items-center gap-2 text-emerald-400 text-sm font-medium hover:text-emerald-300 transition-colors">
             Learn about our warranty
@@ -89,7 +89,7 @@ export default function TrustSection() {
             {[
               { q: 'Are your products authentic?', a: 'Yes — 100%. We source directly from authorized distributors and verified suppliers. Every product comes with authenticity documentation.' },
               { q: 'Do you accept Mobile Money?', a: 'Absolutely. We accept MTN MoMo, Vodafone Cash, AirtelTigo Money, bank transfers, and cash. Pay the way that works for you.' },
-              { q: 'What warranty do used/refurbished items come with?', a: 'All used and refurbished items come with a FixHub warranty (3–6 months depending on the item). We cover hardware defects and provide free diagnosis.' },
+              { q: 'What warranty do used/refurbished items come with?', a: 'All used and refurbished items come with a Wireless warranty (3–6 months depending on the item). We cover hardware defects and provide free diagnosis.' },
               { q: 'Can I pick up in person?', a: 'Yes! We have a pickup location in Accra. You can also choose same-day or next-day delivery within Greater Accra.' },
               { q: 'How do I track my order?', a: 'You\'ll receive a tracking link via WhatsApp and SMS once your order is confirmed and packed.' },
             ].map((faq, i) => (
@@ -137,12 +137,12 @@ export default function TrustSection() {
             <div className="flex items-center gap-2">
               <img
 loading="lazy" decoding="async"                 src="https://public.readdy.ai/ai/img_res/7bf43506-9df4-4671-b4ee-9c6d6fc6f9c0.png"
-                alt="FixHub"
+                alt="Wireless"
                 className="w-7 h-7 rounded-lg object-cover"
               />
-              <span className="text-sm font-bold text-slate-700">FixHub</span>
+              <span className="text-sm font-bold text-slate-700">Wireless</span>
             </div>
-            <p className="text-xs text-slate-400">&copy; 2026 FixHub. Premium Gadgets in Accra, Ghana.</p>
+            <p className="text-xs text-slate-400">&copy; 2026 Wireless. Premium Gadgets in Accra, Ghana.</p>
             <div className="flex items-center gap-4">
               {['Privacy', 'Terms', 'Warranty', 'Repairs'].map((link) => (
                 <a key={link} href="#" className="text-xs text-slate-500 hover:text-slate-700" rel="nofollow">{link}</a>

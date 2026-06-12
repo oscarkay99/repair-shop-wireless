@@ -61,7 +61,7 @@ export default function UserTable({
         <button
           onClick={onAddUser}
           className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer whitespace-nowrap flex items-center gap-2"
-          style={{ background: '#0D1F4A' }}
+          style={{ background: '#DC1F1F' }}
         >
           <i className="ri-user-add-line" /> Add User
         </button>
@@ -76,7 +76,7 @@ export default function UserTable({
               <div
                 key={user.id}
                 onClick={() => onSelect(user.id)}
-                className={`flex items-center gap-4 p-4 cursor-pointer transition-colors hover:bg-slate-50/50 ${selectedUser === user.id ? 'bg-blue-50/30' : ''}`}
+                className={`flex items-center gap-4 p-4 cursor-pointer transition-colors hover:bg-slate-50/50 ${selectedUser === user.id ? 'bg-[rgba(220,31,31,0.04)]' : ''}`}
               >
                 <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0" style={{ background: rc }}>
                   {user.avatar}
@@ -85,7 +85,7 @@ export default function UserTable({
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-semibold text-slate-800">{user.name}</p>
                     {user.role === 'admin' && (
-                      <i className="ri-shield-star-line text-xs" style={{ color: '#0D1F4A' }} />
+                      <i className="ri-shield-star-line text-xs" style={{ color: '#DC1F1F' }} />
                     )}
                   </div>
                   <p className="text-xs text-slate-400">{user.email}</p>

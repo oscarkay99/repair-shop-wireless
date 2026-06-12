@@ -1,6 +1,6 @@
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
   active:        { label: 'Active',        color: '#25D366', bg: '#25D36615' },
-  expiring_soon: { label: 'Expiring Soon', color: '#F5A623', bg: '#F5A62315' },
+  expiring_soon: { label: 'Expiring Soon', color: '#F59E0B', bg: '#F59E0B15' },
   expired:       { label: 'Expired',       color: '#94A3B8', bg: '#F1F5F9'   },
 };
 
@@ -40,7 +40,7 @@ export default function WarrantyDetail({ warranty, onClose, onNewReturn }: Props
           className="h-full rounded-full transition-all"
           style={{
             width: `${warranty.status === 'expired' ? 100 : Math.max(5, 100 - (warranty.daysLeft / 365) * 100)}%`,
-            background: warranty.status === 'active' ? '#25D366' : warranty.status === 'expiring_soon' ? '#F5A623' : '#94A3B8',
+            background: warranty.status === 'active' ? '#25D366' : warranty.status === 'expiring_soon' ? '#F59E0B' : '#94A3B8',
           }}
         />
       </div>

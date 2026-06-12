@@ -8,30 +8,35 @@ import Pagination from '@/components/shared/Pagination';
 
 const statusConfig: Record<string, { label: string; color: string; dot: string; step: number }> = {
   received:     { label: 'Received',     color: 'bg-slate-100 text-slate-600',    dot: 'bg-slate-400',   step: 1 },
-  diagnosed:    { label: 'Diagnosed',    color: 'bg-blue-100 text-blue-700',      dot: 'bg-blue-500',    step: 2 },
+  diagnosis_paid:{ label: 'Diagnosis Paid', color: 'bg-sky-100 text-sky-700',     dot: 'bg-sky-500',     step: 1 },
+  diagnosing:   { label: 'Diagnosing',   color: 'bg-cyan-100 text-cyan-700',      dot: 'bg-cyan-500',    step: 2 },
+  awaiting_approval:{ label: 'Awaiting Approval', color: 'bg-amber-100 text-amber-700', dot: 'bg-amber-500', step: 3 },
   parts_pending:{ label: 'Parts Pending',color: 'bg-amber-100 text-amber-700',    dot: 'bg-amber-500',   step: 3 },
-  in_progress:  { label: 'In Progress',  color: 'bg-violet-100 text-violet-700',  dot: 'bg-violet-500',  step: 4 },
+  in_progress:  { label: 'In Progress',  color: 'bg-cyan-100 text-cyan-700',      dot: 'bg-cyan-500',    step: 4 },
   ready:        { label: 'Ready',        color: 'bg-emerald-100 text-emerald-700',dot: 'bg-emerald-500', step: 5 },
   completed:    { label: 'Completed',    color: 'bg-emerald-100 text-emerald-700',dot: 'bg-emerald-600', step: 6 },
+  diagnosis_only_closed: { label: 'Diagnosis Only Closed', color: 'bg-slate-100 text-slate-700', dot: 'bg-slate-500', step: 6 },
   cancelled:    { label: 'Cancelled',    color: 'bg-red-100 text-red-600',        dot: 'bg-red-400',     step: 0 },
 };
 
 export default function RepairsPage() {
-  const { repairs, add, updateStatus, addNote } = useRepairs();
+  const { repairs, add, updateStatus, addNote, addMedia, patchRepair } = useRepairs();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [selected, setSelected] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
 
-  const active    = repairs.filter(r => r.status !== 'completed' && r.status !== 'cancelled');
+  const active    = repairs.filter(r => !['completed', 'cancelled', 'diagnosis_only_closed'].includes(r.status));
   const ready     = repairs.filter(r => r.status === 'ready');
-  const pending   = repairs.filter(r => r.status === 'diagnosed' || r.status === 'parts_pending');
-  const revenue   = repairs.filter(r => r.status === 'completed').reduce((s, r) => s + (parseFloat(r.cost.replace(/[^0-9.]/g, '')) || 0), 0);
+  const pending   = repairs.filter(r => r.status === 'awaiting_approval' || r.status === 'parts_pending');
+  const revenue   = repairs.reduce((sum, repair) => (
+    sum + (repair.payments ?? []).filter(payment => payment.status === 'paid').reduce((acc, payment) => acc + payment.amount, 0)
+  ), 0);
   const repairStats = [
-    { label: 'Active Repairs',    value: active.length,     icon: 'ri-tools-line',         accent: 'bg-violet-500' },
+    { label: 'Active Repairs',    value: active.length,     icon: 'ri-tools-line',         accent: 'bg-cyan-500' },
     { label: 'Ready for Pickup',  value: ready.length,      icon: 'ri-checkbox-circle-line',accent: 'bg-emerald-500' },
     { label: 'Pending Approval',  value: pending.length,    icon: 'ri-time-line',           accent: 'bg-amber-500' },
-    { label: 'Total Repair Revenue', value: `GHS ${Math.round(revenue).toLocaleString()}`, icon: 'ri-money-dollar-circle-line', accent: 'bg-blue-500' },
+    { label: 'Total Repair Revenue', value: `GHS ${Math.round(revenue).toLocaleString()}`, icon: 'ri-money-dollar-circle-line', accent: 'bg-emerald-500' },
   ];
 
   const q = search.trim().toLowerCase();
@@ -78,12 +83,12 @@ export default function RepairsPage() {
           />
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {['all', 'received', 'diagnosed', 'parts_pending', 'in_progress', 'ready', 'completed'].map((f) => (
+          {['all', 'diagnosis_paid', 'diagnosing', 'awaiting_approval', 'parts_pending', 'in_progress', 'ready', 'completed', 'diagnosis_only_closed'].map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
               className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer whitespace-nowrap capitalize ${
-                filter === f ? 'bg-slate-900 text-white' : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'
+                filter === f ? 'bg-[#DC1F1F] text-white' : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'
               }`}
             >
               {f === 'all' ? 'All' : statusConfig[f]?.label || f}
@@ -92,8 +97,7 @@ export default function RepairsPage() {
         </div>
         <button
           onClick={() => setShowAdd(true)}
-          className="flex items-center gap-2 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap"
-          style={{ background: '#0D1F4A' }}
+          className="flex items-center gap-2 bg-[#DC1F1F] hover:bg-[#B81616] text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors duration-150 cursor-pointer whitespace-nowrap"
         >
           <i className="ri-add-line text-sm" />
           New Repair
@@ -142,10 +146,10 @@ export default function RepairsPage() {
               </div>
               {r.warranty && (
                 <div className="mt-3 flex items-center gap-1.5">
-                  <div className="w-3 h-3 flex items-center justify-center text-blue-500">
+                  <div className="w-3 h-3 flex items-center justify-center text-emerald-500">
                     <i className="ri-shield-check-line text-xs" />
                   </div>
-                  <span className="text-[10px] text-blue-600 font-medium">Under Warranty</span>
+                  <span className="text-[10px] text-emerald-600 font-medium">Under Warranty</span>
                 </div>
               )}
             </div>
@@ -160,7 +164,9 @@ export default function RepairsPage() {
           repair={repair}
           onClose={() => setSelected(null)}
           onUpdateStatus={updateStatus}
+          onPatchRepair={patchRepair}
           onAddNote={addNote}
+          onAddMedia={addMedia}
         />
       )}
       {showAdd && <AddRepairModal onSave={add} onClose={() => setShowAdd(false)} />}

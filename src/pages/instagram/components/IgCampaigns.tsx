@@ -76,8 +76,8 @@ export default function IgCampaigns({ campaigns }: IgCampaignsProps) {
                 {[
                   { label: 'Reach', value: c.reach.toLocaleString(), icon: 'ri-eye-line', color: '#dc2743' },
                   { label: 'Clicks', value: c.clicks.toLocaleString(), icon: 'ri-cursor-line', color: '#e6683c' },
-                  { label: 'Leads', value: c.leads.toString(), icon: 'ri-user-star-line', color: '#0D1F4A' },
-                  { label: 'Spent', value: c.spend, icon: 'ri-money-dollar-circle-line', color: '#F5A623' },
+                  { label: 'Leads', value: c.leads.toString(), icon: 'ri-user-star-line', color: '#DC1F1F' },
+                  { label: 'Spent', value: c.spend, icon: 'ri-money-dollar-circle-line', color: '#F59E0B' },
                 ].map(s => (
                   <div key={s.label} className="text-center">
                     <div className="w-8 h-8 rounded-xl flex items-center justify-center mx-auto mb-1" style={{ background: `${s.color}18` }}>

@@ -29,7 +29,7 @@ export default function LeadsPage() {
 
   const columns = ['hot', 'warm', 'cold'] as const;
   const leadStats = [
-    { label: 'Total Leads',  value: leads.length,                                      icon: 'ri-user-star-line',    accent: 'bg-blue-500' },
+    { label: 'Total Leads',  value: leads.length,                                      icon: 'ri-user-star-line',    accent: 'bg-[#DC1F1F]' },
     { label: 'Hot Leads',    value: leads.filter(l => l.status === 'hot').length,       icon: 'ri-fire-line',         accent: 'bg-red-500' },
     { label: 'Quote Ready',  value: leads.filter(l => l.quoteReady).length,             icon: 'ri-file-list-3-line',  accent: 'bg-emerald-500' },
     { label: 'Warm Leads',   value: leads.filter(l => l.status === 'warm').length,      icon: 'ri-temp-hot-line',     accent: 'bg-amber-500' },
@@ -77,7 +77,7 @@ export default function LeadsPage() {
               key={f}
               onClick={() => setFilter(f)}
               className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${
-                filter === f ? 'bg-slate-900 text-white' : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'
+                filter === f ? 'bg-[#DC1F1F] text-white' : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'
               }`}
             >
               {f === 'all' ? 'All Sources' : f}
@@ -86,8 +86,7 @@ export default function LeadsPage() {
         </div>
         <button
           onClick={() => { setAddStatus('warm'); setShowAdd(true); }}
-          className="flex items-center gap-2 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap"
-          style={{ background: '#0D1F4A' }}
+          className="flex items-center gap-2 bg-[#DC1F1F] hover:bg-[#B81616] text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors duration-150 cursor-pointer whitespace-nowrap"
         >
           <i className="ri-add-line text-sm" />
           New Lead
@@ -160,7 +159,7 @@ export default function LeadsPage() {
                     )}
                     {/* Hover actions */}
                     <div className="flex items-center gap-1 mt-3 pt-2 border-t border-slate-50 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <a href={`tel:${l.phone}`} onClick={(e) => e.stopPropagation()} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-blue-50 text-blue-500 cursor-pointer transition-all">
+                      <a href={`tel:${l.phone}`} onClick={(e) => e.stopPropagation()} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-500 cursor-pointer transition-all">
                         <i className="ri-phone-line text-sm" />
                       </a>
                       <a href={`https://wa.me/${l.phone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-emerald-50 text-emerald-500 cursor-pointer transition-all">

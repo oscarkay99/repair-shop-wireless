@@ -5,7 +5,7 @@ import type { Customer } from '@/types/customer';
 interface Props {
   value: string;
   phone?: string;
-  onChange: (name: string, phone: string) => void;
+  onChange: (name: string, phone: string, customer?: Customer | null) => void;
   required?: boolean;
   label?: string;
   placeholder?: string;
@@ -14,7 +14,7 @@ interface Props {
 
 const segmentColor: Record<string, string> = {
   VIP: 'bg-amber-500',
-  Repeat: 'bg-blue-500',
+  Repeat: 'bg-cyan-500',
   New: 'bg-emerald-500',
   'At-Risk': 'bg-red-500',
 };
@@ -50,13 +50,13 @@ export default function CustomerPicker({
 
   const pick = (c: Customer) => {
     setPickedId(c.id);
-    onChange(c.name, c.phone);
+    onChange(c.name, c.phone, c);
     setOpen(false);
   };
 
   const clear = () => {
     setPickedId(null);
-    onChange('', '');
+    onChange('', '', null);
   };
 
   const isDark = theme === 'dark';
@@ -64,7 +64,7 @@ export default function CustomerPicker({
     ? 'w-full text-sm rounded-xl px-3 py-2 outline-none pr-8'
     : 'w-full px-4 py-2.5 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-200 pr-8';
   const inputStyle = isDark
-    ? { border: '1px solid rgba(7,16,31,0.12)', background: 'rgba(7,16,31,0.02)', color: '#07101F' }
+    ? { border: '1px solid rgba(7,16,31,0.12)', background: 'rgba(7,16,31,0.02)', color: '#0F172A' }
     : { background: '#f8fafc', border: '1px solid #e2e8f0' };
 
   const labelCls = isDark
@@ -85,7 +85,7 @@ export default function CustomerPicker({
           value={value}
           onChange={e => {
             setPickedId(null);
-            onChange(e.target.value, phone);
+            onChange(e.target.value, phone, null);
             setOpen(true);
           }}
           onFocus={() => setOpen(true)}

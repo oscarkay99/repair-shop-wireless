@@ -43,7 +43,7 @@ export default function PriceDetail({ product }: Props) {
               <div className="w-7 h-7 bg-emerald-100 rounded-lg flex items-center justify-center">
                 <i className="ri-store-2-line text-emerald-600 text-sm" />
               </div>
-              <span className="text-sm font-bold text-slate-800">FixHub (You)</span>
+              <span className="text-sm font-bold text-slate-800">Wireless (You)</span>
             </div>
             <span className="text-base font-bold text-emerald-600">GHS {product.ourPrice.toLocaleString()}</span>
           </div>
@@ -90,13 +90,13 @@ export default function PriceDetail({ product }: Props) {
           </div>
         </div>
 
-        <div className="bg-violet-50 border border-violet-200 rounded-xl p-4">
+        <div className="bg-[rgba(220,31,31,0.05)] border border-[rgba(220,31,31,0.15)] rounded-xl p-4">
           <div className="flex items-start gap-2">
             <div className="w-6 h-6 flex items-center justify-center flex-shrink-0">
-              <i className="ri-sparkling-2-line text-violet-600 text-sm" />
+              <i className="ri-sparkling-2-line text-[#DC1F1F] text-sm" />
             </div>
             <div>
-              <p className="text-xs font-bold text-violet-700 mb-0.5">AI Pricing Suggestion</p>
+              <p className="text-xs font-bold text-[#DC1F1F] mb-0.5">AI Pricing Suggestion</p>
               <p className="text-xs text-slate-600">{product.suggestion}</p>
             </div>
           </div>

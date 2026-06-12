@@ -9,7 +9,7 @@ import Pagination from '@/components/shared/Pagination';
 
 const conditionConfig: Record<string, { label: string; color: string; dot: string }> = {
   'New': { label: 'New', color: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
-  'Used - Excellent': { label: 'Used — Excellent', color: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500' },
+  'Used - Excellent': { label: 'Used — Excellent', color: 'bg-slate-100 text-slate-600', dot: 'bg-slate-400' },
   'Used - Good': { label: 'Used — Good', color: 'bg-slate-100 text-slate-600', dot: 'bg-slate-400' },
   'Refurbished': { label: 'Refurbished', color: 'bg-amber-100 text-amber-700', dot: 'bg-amber-500' },
 };
@@ -70,7 +70,7 @@ export default function InventoryPage() {
   }, 0);
 
   const computedStats = [
-    { label: 'Total Parts', value: String(products.length), icon: 'ri-archive-line', accent: 'bg-blue-500' },
+    { label: 'Total Parts', value: String(products.length), icon: 'ri-archive-line', accent: 'bg-[#DC1F1F]' },
     { label: 'Low Stock Items', value: String(products.filter(p => p.stock > 0 && p.stock <= 2).length), icon: 'ri-alert-line', accent: 'bg-amber-500' },
     { label: 'Out of Stock', value: String(products.filter(p => p.stock === 0).length), icon: 'ri-close-circle-line', accent: 'bg-red-500' },
     { label: 'Total Value', value: totalValue > 0 ? `GHS ${totalValue.toLocaleString()}` : 'GHS 0', icon: 'ri-money-dollar-circle-line', accent: 'bg-emerald-500' },
@@ -127,7 +127,7 @@ export default function InventoryPage() {
               key={f}
               onClick={() => setFilter(f)}
               className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer whitespace-nowrap capitalize ${
-                filter === f ? 'bg-slate-900 text-white' : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'
+                filter === f ? 'bg-[#DC1F1F] text-white' : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'
               }`}
             >
               {f === 'all' ? 'All' : f === 'low' ? 'Low Stock' : f === 'out' ? 'Out of Stock' : f}
@@ -137,7 +137,7 @@ export default function InventoryPage() {
         <button
           onClick={() => setShowAdd(true)}
           className="flex items-center gap-2 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap"
-          style={{ background: '#0D1F4A' }}
+          style={{ background: '#DC1F1F' }}
         >
           <i className="ri-add-line text-sm" />
           Add Product

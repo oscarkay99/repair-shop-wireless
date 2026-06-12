@@ -3,9 +3,9 @@ import { useTransactions } from '@/hooks/useTransactions';
 
 const statusConfig: Record<string, { label: string; dot: string; badge: string; text: string }> = {
   verified:     { label: 'Verified',     dot: '#10B981', badge: 'rgba(16,185,129,0.1)',  text: '#059669' },
-  pending:      { label: 'Pending',      dot: '#F59E0B', badge: 'rgba(245,166,35,0.12)', text: '#B8860B' },
+  pending:      { label: 'Pending',      dot: '#F59E0B', badge: 'rgba(245,158,11,0.12)', text: '#92400E' },
   failed:       { label: 'Failed',       dot: '#EF4444', badge: 'rgba(239,68,68,0.1)',   text: '#DC2626' },
-  needs_review: { label: 'Needs Review', dot: '#8B5CF6', badge: 'rgba(139,92,246,0.1)', text: '#7C3AED' },
+  needs_review: { label: 'Needs Review', dot: '#06B6D4', badge: 'rgba(6,182,212,0.1)',   text: '#0E7490' },
 };
 
 const methodIcons: Record<string, string> = {
@@ -43,19 +43,19 @@ export default function TransactionTable() {
       style={{
         background: 'white',
         border: '1px solid rgba(7,16,31,0.07)',
-        boxShadow: '0 1px 3px rgba(7,16,31,0.04), 0 8px 32px rgba(7,16,31,0.06)',
+        boxShadow: '0 1px 3px rgba(7,16,31,0.04), 0 8px 32px rgba(220,31,31,0.08)',
         height: '620px',
       }}
     >
       {/* ── LEFT: Transaction list ─────────────────────────────────── */}
       <div className="flex flex-col w-[300px] flex-shrink-0" style={{ borderRight: '1px solid rgba(7,16,31,0.07)' }}>
         {/* List header */}
-        <div className="px-4 pt-4 pb-3" style={{ borderBottom: '1px solid rgba(7,16,31,0.06)' }}>
+        <div className="px-4 pt-4 pb-3" style={{ borderBottom: '1px solid rgba(220,31,31,0.08)' }}>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-[14px] font-bold" style={{ color: '#07101F' }}>Transactions</h3>
+            <h3 className="text-[14px] font-bold" style={{ color: '#0F172A' }}>Transactions</h3>
             <button
               className="w-7 h-7 flex items-center justify-center rounded-lg text-white text-sm cursor-pointer"
-              style={{ background: '#0D1F4A' }}
+              style={{ background: '#DC1F1F' }}
             >
               <i className="ri-add-line" />
             </button>
@@ -68,8 +68,8 @@ export default function TransactionTable() {
                 onClick={() => setFilter(f)}
                 className="text-[10px] font-semibold px-2 py-1 rounded-full cursor-pointer transition-all whitespace-nowrap"
                 style={filter === f
-                  ? { background: '#0D1F4A', color: 'white' }
-                  : { background: 'rgba(7,16,31,0.06)', color: 'rgba(7,16,31,0.5)' }
+                  ? { background: '#DC1F1F', color: 'white' }
+                  : { background: 'rgba(220,31,31,0.08)', color: 'rgba(7,16,31,0.5)' }
                 }
               >
                 {f === 'all' ? 'All' : statusConfig[f]?.label}
@@ -91,13 +91,13 @@ export default function TransactionTable() {
                 style={{
                   borderBottom: '1px solid rgba(7,16,31,0.05)',
                   background: isSelected ? 'rgba(7,16,31,0.04)' : 'transparent',
-                  borderLeft: isSelected ? '3px solid #F5A623' : '3px solid transparent',
+                  borderLeft: isSelected ? '3px solid #DC1F1F' : '3px solid transparent',
                 }}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 mb-0.5">
-                      <span className="text-[12px] font-bold" style={{ color: '#07101F' }}>{txn.id}</span>
+                      <span className="text-[12px] font-bold" style={{ color: '#0F172A' }}>{txn.id}</span>
                       <span
                         className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
                         style={{ background: s.badge, color: s.text }}
@@ -109,7 +109,7 @@ export default function TransactionTable() {
                     <p className="text-[10px] mt-0.5" style={{ color: 'rgba(7,16,31,0.38)' }}>{txn.customer}</p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-[12px] font-bold" style={{ color: '#07101F' }}>{txn.amount}</p>
+                    <p className="text-[12px] font-bold" style={{ color: '#0F172A' }}>{txn.amount}</p>
                     <p className="text-[10px] mt-0.5" style={{ color: 'rgba(7,16,31,0.38)' }}>{txn.date.split(',')[0]}</p>
                   </div>
                 </div>
@@ -125,7 +125,7 @@ export default function TransactionTable() {
         </div>
 
         {/* Search */}
-        <div className="px-4 py-3" style={{ borderTop: '1px solid rgba(7,16,31,0.06)' }}>
+        <div className="px-4 py-3" style={{ borderTop: '1px solid rgba(220,31,31,0.08)' }}>
           <div
             className="flex items-center gap-2 rounded-xl px-3 py-2"
             style={{ background: 'rgba(7,16,31,0.05)', border: '1px solid rgba(7,16,31,0.07)' }}
@@ -137,7 +137,7 @@ export default function TransactionTable() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="bg-transparent text-[12px] outline-none flex-1 min-w-0"
-              style={{ color: '#07101F' }}
+              style={{ color: '#0F172A' }}
             />
           </div>
         </div>
@@ -149,12 +149,12 @@ export default function TransactionTable() {
           {/* Breadcrumb */}
           <div
             className="px-6 py-3 flex items-center gap-2"
-            style={{ borderBottom: '1px solid rgba(7,16,31,0.06)' }}
+            style={{ borderBottom: '1px solid rgba(220,31,31,0.08)' }}
           >
             <i className="ri-time-line text-sm" style={{ color: 'rgba(7,16,31,0.35)' }} />
             <span className="text-[11px]" style={{ color: 'rgba(7,16,31,0.4)' }}>Transactions</span>
             <i className="ri-arrow-right-s-line text-sm" style={{ color: 'rgba(7,16,31,0.25)' }} />
-            <span className="text-[11px] font-semibold" style={{ color: '#07101F' }}>Payment Detail</span>
+            <span className="text-[11px] font-semibold" style={{ color: '#0F172A' }}>Payment Detail</span>
             <div className="ml-auto flex items-center gap-2">
               <button className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer" style={{ background: 'rgba(7,16,31,0.05)' }}>
                 <i className="ri-more-2-line text-sm" style={{ color: 'rgba(7,16,31,0.4)' }} />
@@ -165,7 +165,7 @@ export default function TransactionTable() {
           <div className="flex-1 overflow-y-auto px-6 py-5">
             {/* Order header */}
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-[20px] font-bold" style={{ color: '#07101F' }}>{selected.id}</h2>
+              <h2 className="text-[20px] font-bold" style={{ color: '#0F172A' }}>{selected.id}</h2>
               <span
                 className="text-[11px] font-bold px-3 py-1.5 rounded-full"
                 style={{ background: sc.badge, color: sc.text }}
@@ -181,13 +181,13 @@ export default function TransactionTable() {
             {/* Details grid */}
             <div
               className="rounded-2xl p-4 mb-4"
-              style={{ background: 'rgba(7,16,31,0.03)', border: '1px solid rgba(7,16,31,0.06)' }}
+              style={{ background: 'rgba(7,16,31,0.03)', border: '1px solid rgba(220,31,31,0.08)' }}
             >
               <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: 'rgba(7,16,31,0.4)' }}>Details</p>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <p className="text-[10px] mb-0.5" style={{ color: 'rgba(7,16,31,0.38)' }}>Customer</p>
-                  <p className="text-[12px] font-bold" style={{ color: '#07101F' }}>{selected.customer}</p>
+                  <p className="text-[12px] font-bold" style={{ color: '#0F172A' }}>{selected.customer}</p>
                   {selected.customerPhone && (
                     <p className="text-[10px] mt-0.5" style={{ color: 'rgba(7,16,31,0.45)' }}>{selected.customerPhone}</p>
                   )}
@@ -199,20 +199,20 @@ export default function TransactionTable() {
                 ].map(({ label, value }) => (
                   <div key={label}>
                     <p className="text-[10px] mb-0.5" style={{ color: 'rgba(7,16,31,0.38)' }}>{label}</p>
-                    <p className="text-[12px] font-bold" style={{ color: '#07101F' }}>{value}</p>
+                    <p className="text-[12px] font-bold" style={{ color: '#0F172A' }}>{value}</p>
                   </div>
                 ))}
               </div>
-              <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(7,16,31,0.06)' }}>
+              <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(220,31,31,0.08)' }}>
                 <p className="text-[10px] mb-0.5" style={{ color: 'rgba(7,16,31,0.38)' }}>Reference</p>
-                <p className="text-[11px] font-mono font-semibold" style={{ color: '#0D1F4A' }}>{selected.reference}</p>
+                <p className="text-[11px] font-mono font-semibold" style={{ color: '#DC1F1F' }}>{selected.reference}</p>
               </div>
             </div>
 
             {/* Line items */}
             <div
               className="rounded-2xl p-4 mb-4"
-              style={{ border: '1px solid rgba(7,16,31,0.06)' }}
+              style={{ border: '1px solid rgba(220,31,31,0.08)' }}
             >
               <div className="flex items-center justify-between mb-3">
                 <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'rgba(7,16,31,0.4)' }}>Order info</p>
@@ -232,11 +232,11 @@ export default function TransactionTable() {
                         <i className="ri-box-3-line text-sm" style={{ color: 'rgba(7,16,31,0.4)' }} />
                       </div>
                       <div>
-                        <p className="text-[12px] font-semibold" style={{ color: '#07101F' }}>{item.name}</p>
+                        <p className="text-[12px] font-semibold" style={{ color: '#0F172A' }}>{item.name}</p>
                         {item.qty > 1 && <p className="text-[10px]" style={{ color: 'rgba(7,16,31,0.4)' }}>{item.qty}×</p>}
                       </div>
                     </div>
-                    <p className="text-[12px] font-bold flex-shrink-0" style={{ color: '#07101F' }}>{item.price}</p>
+                    <p className="text-[12px] font-bold flex-shrink-0" style={{ color: '#0F172A' }}>{item.price}</p>
                   </div>
                 ))}
               </div>
@@ -244,8 +244,8 @@ export default function TransactionTable() {
                 className="flex items-center justify-between mt-4 pt-3"
                 style={{ borderTop: '1px solid rgba(7,16,31,0.07)' }}
               >
-                <p className="text-[13px] font-bold" style={{ color: '#07101F' }}>Total</p>
-                <p className="text-[16px] font-black" style={{ color: '#07101F' }}>{selected.amount}</p>
+                <p className="text-[13px] font-bold" style={{ color: '#0F172A' }}>Total</p>
+                <p className="text-[16px] font-black" style={{ color: '#0F172A' }}>{selected.amount}</p>
               </div>
             </div>
           </div>
@@ -256,7 +256,7 @@ export default function TransactionTable() {
               <button
                 onClick={() => approve(selected.id)}
                 className="w-full py-3.5 rounded-2xl text-[13px] font-bold text-white cursor-pointer transition-all hover:opacity-90"
-                style={{ background: 'linear-gradient(135deg, #F5A623, #D4890A)' }}
+                style={{ background: 'linear-gradient(135deg, #DC1F1F, #B81616)' }}
               >
                 <i className="ri-checkbox-circle-line mr-2" />
                 Mark as Verified — {selected.amount}
@@ -265,7 +265,7 @@ export default function TransactionTable() {
               <div className="flex gap-3">
                 <button
                   className="flex-1 py-3 rounded-2xl text-[12px] font-bold cursor-pointer transition-all"
-                  style={{ background: 'rgba(7,16,31,0.06)', color: '#0D1F4A' }}
+                  style={{ background: 'rgba(220,31,31,0.08)', color: '#DC1F1F' }}
                 >
                   <i className="ri-printer-line mr-1.5" />Print Receipt
                 </button>

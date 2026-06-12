@@ -4,7 +4,7 @@ import { topCreatives } from '@/mocks/marketing';
 const channelMeta: Record<string, { icon: string; color: string; label: string }> = {
   instagram: { icon: 'ri-instagram-line', color: 'text-pink-500', label: 'Instagram' },
   whatsapp:  { icon: 'ri-whatsapp-line',  color: 'text-[#25D366]', label: 'WhatsApp' },
-  sms:       { icon: 'ri-message-2-line', color: 'text-blue-500',  label: 'SMS'      },
+  sms:       { icon: 'ri-message-2-line', color: 'text-slate-500', label: 'SMS'      },
 };
 
 export default function TopCreatives() {

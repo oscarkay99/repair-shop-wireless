@@ -11,15 +11,15 @@ interface EmptyStateProps {
 export function EmptyState({ icon = 'ri-inbox-line', title, description, action }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="w-14 h-14 bg-[#1E3A6E] rounded-full flex items-center justify-center mb-4">
+      <div className="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center mb-4">
         <i className={`${icon} text-2xl text-slate-400`} />
       </div>
-      <h3 className="text-sm font-semibold text-white mb-1">{title}</h3>
+      <h3 className="text-sm font-semibold text-slate-700 mb-1">{title}</h3>
       {description && <p className="text-xs text-slate-400 max-w-xs">{description}</p>}
       {action && (
         <button
           onClick={action.onClick}
-          className="mt-4 px-4 py-2 text-xs font-medium bg-[#0D1F4A] hover:bg-[#1a52a8] text-white rounded-lg transition-colors cursor-pointer"
+          className="mt-4 px-4 py-2 text-xs font-medium bg-[#DC1F1F] hover:bg-[#B81616] text-white rounded-lg transition-colors cursor-pointer"
         >
           {action.label}
         </button>

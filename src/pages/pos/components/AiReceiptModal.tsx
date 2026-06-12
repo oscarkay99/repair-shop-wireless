@@ -46,7 +46,7 @@ export default function AiReceiptModal({ cart, customer, total, tradeIn, payment
 
   function buildReceiptText() {
     const lines: string[] = [
-      `*FixHub — ${isPaid ? 'Receipt' : 'Invoice'} #${txn}*`,
+      `*Wireless — ${isPaid ? 'Receipt' : 'Invoice'} #${txn}*`,
       '',
       `Customer: ${customer?.name ?? 'Walk-in Customer'}`,
       `Date: ${dateStr} · ${timeStr}`,
@@ -77,7 +77,7 @@ export default function AiReceiptModal({ cart, customer, total, tradeIn, payment
 
   function handleSendEmail() {
     const email = customer?.email ?? '';
-    const subject = encodeURIComponent(`Your Receipt from FixHub — #${txn}`);
+    const subject = encodeURIComponent(`Your Receipt from Wireless — #${txn}`);
     const body = encodeURIComponent(
       buildReceiptText().replace(/\*/g, ''),
     );
@@ -183,7 +183,7 @@ export default function AiReceiptModal({ cart, customer, total, tradeIn, payment
               {/* Top: company logo + title block */}
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6 mb-5">
                 <div>
-                  <img style={{ display: 'none' }} alt="FixHub" className="h-12 w-auto mb-1" />
+                  <img style={{ display: 'none' }} alt="Wireless" className="h-12 w-auto mb-1" />
                   <p className="text-[11px] leading-relaxed" style={{ color: '#5f7184' }}>
                     Accra, Ghana<br />
                     hello@fixhub.com · fixhub.com
@@ -334,7 +334,7 @@ export default function AiReceiptModal({ cart, customer, total, tradeIn, payment
 
               {/* Footer */}
               <div className="border-t border-slate-200 pt-4 text-center">
-                <p className="text-[11px]" style={{ color: '#5f7184' }}>Thank you for shopping at FixHub</p>
+                <p className="text-[11px]" style={{ color: '#5f7184' }}>Thank you for shopping at Wireless</p>
                 <p className="text-[11px] mt-0.5" style={{ color: '#5f7184' }}>hello@fixhub.com · fixhub.com</p>
               </div>
 
@@ -365,7 +365,7 @@ export default function AiReceiptModal({ cart, customer, total, tradeIn, payment
                 <button
                   onClick={onNewSale}
                   className="w-full py-3 rounded-xl text-white text-sm font-bold flex items-center justify-center gap-2 cursor-pointer hover:opacity-90"
-                  style={{ background: 'linear-gradient(135deg, #002d55 0%, #1552A8 100%)' }}
+                  style={{ background: 'linear-gradient(135deg, #002d55 0%, #06B6D4 100%)' }}
                 >
                   <i className="ri-add-line" />New Sale
                 </button>
@@ -386,7 +386,7 @@ export default function AiReceiptModal({ cart, customer, total, tradeIn, payment
                   disabled={!customer?.phone}
                   className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer"
                   style={{
-                    background: customer?.phone ? '#25D366' : 'rgba(7,16,31,0.06)',
+                    background: customer?.phone ? '#25D366' : 'rgba(220,31,31,0.08)',
                     color: customer?.phone ? 'white' : 'rgba(7,16,31,0.3)',
                     cursor: customer?.phone ? 'pointer' : 'not-allowed',
                   }}
@@ -400,7 +400,7 @@ export default function AiReceiptModal({ cart, customer, total, tradeIn, payment
                   disabled={!customer?.email}
                   className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all"
                   style={{
-                    background: customer?.email ? '#0D1F4A' : 'rgba(7,16,31,0.06)',
+                    background: customer?.email ? '#DC1F1F' : 'rgba(220,31,31,0.08)',
                     color: customer?.email ? 'white' : 'rgba(7,16,31,0.3)',
                     cursor: customer?.email ? 'pointer' : 'not-allowed',
                   }}

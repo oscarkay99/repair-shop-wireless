@@ -30,7 +30,20 @@ If `OPENAI_MODEL` is not set, the functions now default to `gpt-4.1-mini`.
 
 ## Apply the backend schema
 
-Run the SQL in `supabase/migrations/20260423_init_core.sql` inside the Supabase SQL editor, or apply it through the Supabase CLI after linking the project.
+Apply the migrations in `supabase/migrations/` in order. For the repair portal + customer website flow, the important newer migrations are:
+
+- `20260609123000_repair_media.sql`
+- `20260609143000_repair_diagnosis_and_customer_linking.sql`
+- `20260609170000_customer_portal_auth_and_rls.sql`
+
+That last migration is what:
+
+- adds the safe `customer` auth role
+- links website signups to `customers`
+- restricts customers to only their own repairs/media
+- allows website users to create only initial intake bookings
+
+You can run them in the Supabase SQL editor, or apply them through the Supabase CLI after linking the project.
 
 ## Admin access still needed
 
@@ -38,3 +51,14 @@ The frontend can connect with the publishable key, but creating tables, policies
 
 - A Supabase personal access token for CLI login, or
 - The project service role key for admin-level automation
+
+## Wireless Website Configuration
+
+The static customer website in `wireless-site/` uses:
+
+- `wireless-site/assets/js/config.js`
+
+Set these two values there before testing the public login/booking portal:
+
+- `WIRELESS_SUPABASE_URL`
+- `WIRELESS_SUPABASE_PUBLISHABLE_KEY`

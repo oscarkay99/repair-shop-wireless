@@ -9,7 +9,7 @@ import type { SaleStatus } from '@/types/sale';
 const statusConfig: Record<string, { label: string; color: string }> = {
   completed:       { label: 'Completed',      color: 'bg-emerald-100 text-emerald-700' },
   pending_payment: { label: 'Pending Payment', color: 'bg-amber-100 text-amber-700' },
-  packing:         { label: 'Packing',         color: 'bg-blue-100 text-blue-700' },
+  packing:         { label: 'Packing',         color: 'bg-cyan-100 text-cyan-700' },
   cancelled:       { label: 'Voided',          color: 'bg-slate-100 text-slate-400' },
   refunded:        { label: 'Refunded',        color: 'bg-rose-100 text-rose-500' },
 };
@@ -86,8 +86,8 @@ export default function SalesPage() {
 
   const stats = [
     { label: 'Revenue (Active)',  value: `GHS ${Math.round(totalRevenue).toLocaleString()}`, icon: 'ri-shopping-bag-3-line', accent: 'bg-emerald-500' },
-    { label: 'Total Orders',      value: String(sales.length),                               icon: 'ri-file-list-3-line',    accent: 'bg-blue-500' },
-    { label: 'Completed',         value: String(completedSales.length),                      icon: 'ri-check-double-line',   accent: 'bg-violet-500' },
+    { label: 'Total Orders',      value: String(sales.length),                               icon: 'ri-file-list-3-line',    accent: 'bg-[#DC1F1F]' },
+    { label: 'Completed',         value: String(completedSales.length),                      icon: 'ri-check-double-line',   accent: 'bg-emerald-500' },
     { label: 'Voided / Refunded', value: String(voidedCount),                                icon: 'ri-close-circle-line',   accent: 'bg-rose-400' },
   ];
 
@@ -225,7 +225,7 @@ export default function SalesPage() {
         {/* POS CTA */}
         <div className="lg:col-span-2">
           <div className="bg-white rounded-2xl border border-slate-100 p-6 flex flex-col items-center text-center gap-4 sticky top-4">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #0D1F4A 0%, #1a53a8 100%)' }}>
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #DC1F1F 0%, #B81616 100%)' }}>
               <i className="ri-store-3-line text-white text-2xl" />
             </div>
             <div>
@@ -235,7 +235,7 @@ export default function SalesPage() {
             <button
               onClick={() => navigate('/pos')}
               className="w-full py-3 rounded-xl text-white text-sm font-bold flex items-center justify-center gap-2 cursor-pointer hover:opacity-90 transition-all"
-              style={{ background: 'linear-gradient(135deg, #0D1F4A 0%, #1a53a8 100%)' }}
+              style={{ background: 'linear-gradient(135deg, #DC1F1F 0%, #B81616 100%)' }}
             >
               <i className="ri-shopping-cart-2-line" />
               Open POS

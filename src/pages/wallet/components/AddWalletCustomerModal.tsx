@@ -81,7 +81,7 @@ export default function AddWalletCustomerModal({ onAdd, onClose }: Props) {
               value={phone}
               onChange={e => setPhone(e.target.value)}
               className="w-full text-sm rounded-xl px-3 py-2.5 outline-none"
-              style={{ border: '1px solid rgba(7,16,31,0.12)', background: 'rgba(7,16,31,0.02)', color: '#07101F' }}
+              style={{ border: '1px solid rgba(7,16,31,0.12)', background: 'rgba(7,16,31,0.02)', color: '#0F172A' }}
               placeholder="e.g. 0244000000"
             />
           </div>
@@ -93,7 +93,7 @@ export default function AddWalletCustomerModal({ onAdd, onClose }: Props) {
               value={initialBalance}
               onChange={e => setInitialBalance(e.target.value)}
               className="w-full text-sm rounded-xl px-3 py-2.5 outline-none"
-              style={{ border: '1px solid rgba(7,16,31,0.12)', background: 'rgba(7,16,31,0.02)', color: '#07101F' }}
+              style={{ border: '1px solid rgba(7,16,31,0.12)', background: 'rgba(7,16,31,0.02)', color: '#0F172A' }}
               placeholder="0.00"
             />
             {initialBalance && (
@@ -105,7 +105,7 @@ export default function AddWalletCustomerModal({ onAdd, onClose }: Props) {
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose}
               className="flex-1 py-2.5 rounded-xl text-sm font-semibold cursor-pointer"
-              style={{ background: 'rgba(7,16,31,0.06)', color: 'rgba(7,16,31,0.6)' }}>
+              style={{ background: 'rgba(220,31,31,0.08)', color: 'rgba(7,16,31,0.6)' }}>
               Cancel
             </button>
             <button type="submit"

@@ -1,5 +1,5 @@
 let settingsStore: Record<string, unknown> = {
-  businessName: 'FixHub',
+  businessName: 'Wireless',
   currency: 'GHS',
   monthlyTarget: 50000,
 };

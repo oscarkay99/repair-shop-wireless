@@ -96,18 +96,18 @@ export default function ProductDetailPage() {
             </div>
           )}
           {activeTab === 3 && (
-            <div className="bg-blue-50 rounded-2xl p-6 border border-blue-100">
+            <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600">
                   <i className="ri-shield-star-line text-lg" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-blue-900">{productDetail.warranty}</h3>
-                  <p className="text-xs text-blue-600">Full coverage from date of purchase</p>
+                  <h3 className="text-sm font-bold text-slate-800">{productDetail.warranty}</h3>
+                  <p className="text-xs text-slate-500">Full coverage from date of purchase</p>
                 </div>
               </div>
-              <p className="text-sm text-blue-800 leading-relaxed">{productDetail.warrantyDetails}</p>
-              <button className="mt-4 text-sm text-blue-600 font-medium hover:text-blue-800 cursor-pointer">
+              <p className="text-sm text-slate-700 leading-relaxed">{productDetail.warrantyDetails}</p>
+              <button className="mt-4 text-sm text-[#DC1F1F] font-medium hover:text-[#B81616] cursor-pointer">
                 How to file a warranty claim →
               </button>
             </div>
