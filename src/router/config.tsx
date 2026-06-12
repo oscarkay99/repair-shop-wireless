@@ -22,31 +22,49 @@ import ReportsPage from "../pages/reports/page";
 import ProfilePage from "../pages/profile/page";
 import AccessDeniedPage from "../pages/AccessDenied";
 import AuditLogsPage from "../pages/audit-logs/page";
+import TicketsPage from "../pages/tickets/page";
+import TechniciansPage from "../pages/technicians/page";
+import InvoicesPage from "../pages/invoices/page";
+import CustomerPortalPage from "../pages/portal/page";
+import TechPortalPage from "../pages/tech-portal/page";
+import InventoryPortalPage from "../pages/inventory-portal/page";
+import ReceptionPortalPage from "../pages/reception/page";
+import ActivityPage from "../pages/activity/page";
 
 const routes: RouteObject[] = [
   { path: "/signin", element: <SignInPage /> },
   {
     element: <AppShell />,
     children: [
-      { path: "/",              element: <AuthGuard requiredModule="Dashboard"><DashboardPage /></AuthGuard> },
-      { path: "/access-denied", element: <AuthGuard><AccessDeniedPage /></AuthGuard> },
-      { path: "/users",         element: <AuthGuard requiredModule="Users"><UsersPage /></AuthGuard> },
-      { path: "/analytics",     element: <AuthGuard requiredModule="Analytics"><AnalyticsPage /></AuthGuard> },
-      { path: "/inventory",     element: <AuthGuard requiredModule="Inventory"><InventoryPage /></AuthGuard> },
-      { path: "/payments",      element: <AuthGuard requiredModule="Payments"><PaymentsPage /></AuthGuard> },
-      { path: "/customers",     element: <AuthGuard requiredModule="Customers"><CustomersPage /></AuthGuard> },
-      { path: "/repairs",       element: <AuthGuard requiredModule="Repairs"><RepairsPage /></AuthGuard> },
-      { path: "/ai-studio",     element: <AuthGuard requiredModule="AI Studio"><AIStudioPage /></AuthGuard> },
-      { path: "/team",          element: <AuthGuard requiredModule="Team"><TeamPage /></AuthGuard> },
-      { path: "/settings",      element: <AuthGuard requiredModule="Settings"><SettingsPage /></AuthGuard> },
-      { path: "/authentication",element: <AuthGuard requiredModule="Authentication"><AuthenticationPage /></AuthGuard> },
-      { path: "/delivery",      element: <AuthGuard requiredModule="Delivery"><DeliveryPage /></AuthGuard> },
-      { path: "/loyalty",       element: <AuthGuard requiredModule="Loyalty"><LoyaltyPage /></AuthGuard> },
-      { path: "/expenses",      element: <AuthGuard requiredModule="Expenses"><ExpensesPage /></AuthGuard> },
-      { path: "/warranty",      element: <AuthGuard requiredModule="Warranty"><WarrantyPage /></AuthGuard> },
-      { path: "/reports",       element: <AuthGuard requiredModule="Reports"><ReportsPage /></AuthGuard> },
-      { path: "/audit-logs",    element: <AuthGuard requiredModule="Audit Logs"><AuditLogsPage /></AuthGuard> },
-      { path: "/profile",       element: <AuthGuard><ProfilePage /></AuthGuard> },
+      { path: "/",                   element: <AuthGuard requiredModule="Dashboard"><DashboardPage /></AuthGuard> },
+      { path: "/access-denied",      element: <AuthGuard><AccessDeniedPage /></AuthGuard> },
+      { path: "/users",              element: <AuthGuard requiredModule="Users"><UsersPage /></AuthGuard> },
+      { path: "/analytics",          element: <AuthGuard requiredModule="Analytics"><AnalyticsPage /></AuthGuard> },
+      { path: "/inventory",          element: <AuthGuard requiredModule="Inventory"><InventoryPage /></AuthGuard> },
+      { path: "/payments",           element: <AuthGuard requiredModule="Payments"><PaymentsPage /></AuthGuard> },
+      { path: "/sales",              element: <AuthGuard requiredModule="Sales"><PaymentsPage /></AuthGuard> },
+      { path: "/customers",          element: <AuthGuard requiredModule="Customers"><CustomersPage /></AuthGuard> },
+      { path: "/repairs",            element: <AuthGuard requiredModule="Repairs"><RepairsPage /></AuthGuard> },
+      { path: "/tickets",            element: <AuthGuard requiredModule="Tickets"><TicketsPage /></AuthGuard> },
+      { path: "/tickets/new",        element: <AuthGuard requiredModule="Tickets"><TicketsPage /></AuthGuard> },
+      { path: "/technicians",        element: <AuthGuard requiredModule="Technicians"><TechniciansPage /></AuthGuard> },
+      { path: "/invoices",           element: <AuthGuard requiredModule="Invoices"><InvoicesPage /></AuthGuard> },
+      { path: "/portal",             element: <AuthGuard requiredModule="Portal"><CustomerPortalPage /></AuthGuard> },
+      { path: "/tech-portal",        element: <AuthGuard requiredModule="Portal"><TechPortalPage /></AuthGuard> },
+      { path: "/inventory-portal",   element: <AuthGuard requiredModule="Portal"><InventoryPortalPage /></AuthGuard> },
+      { path: "/reception",          element: <AuthGuard requiredModule="Portal"><ReceptionPortalPage /></AuthGuard> },
+      { path: "/activity",           element: <AuthGuard requiredModule="Activity"><ActivityPage /></AuthGuard> },
+      { path: "/ai-studio",          element: <AuthGuard requiredModule="AI Studio"><AIStudioPage /></AuthGuard> },
+      { path: "/team",               element: <AuthGuard requiredModule="Team"><TeamPage /></AuthGuard> },
+      { path: "/settings",           element: <AuthGuard requiredModule="Settings"><SettingsPage /></AuthGuard> },
+      { path: "/authentication",     element: <AuthGuard requiredModule="Authentication"><AuthenticationPage /></AuthGuard> },
+      { path: "/delivery",           element: <AuthGuard requiredModule="Delivery"><DeliveryPage /></AuthGuard> },
+      { path: "/loyalty",            element: <AuthGuard requiredModule="Loyalty"><LoyaltyPage /></AuthGuard> },
+      { path: "/expenses",           element: <AuthGuard requiredModule="Expenses"><ExpensesPage /></AuthGuard> },
+      { path: "/warranty",           element: <AuthGuard requiredModule="Warranty"><WarrantyPage /></AuthGuard> },
+      { path: "/reports",            element: <AuthGuard requiredModule="Reports"><ReportsPage /></AuthGuard> },
+      { path: "/audit-logs",         element: <AuthGuard requiredModule="Audit Logs"><AuditLogsPage /></AuthGuard> },
+      { path: "/profile",            element: <AuthGuard><ProfilePage /></AuthGuard> },
     ],
   },
   { path: "*", element: <NotFound /> },

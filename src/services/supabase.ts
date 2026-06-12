@@ -8,7 +8,6 @@ const supabaseAnonKey =
 
 export const isSupabaseConfigured = !!supabaseUrl && !!supabaseAnonKey;
 
-// Keep a client instance available so the app can compile even before env vars are set.
 export const supabase = createClient(
   supabaseUrl || 'https://placeholder.supabase.co',
   supabaseAnonKey || 'placeholder-anon-key',
@@ -20,3 +19,6 @@ export const supabase = createClient(
     },
   },
 );
+
+// Scoped client for the wireless schema — use this for all WIRELESS data
+export const db = supabase.schema('wireless');

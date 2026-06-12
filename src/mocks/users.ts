@@ -14,11 +14,11 @@ export interface SystemUser {
 }
 
 export const rolePermissions: Record<UserRole, string[]> = {
-  admin:             ['Dashboard', 'Analytics', 'Audit Logs', 'Inventory', 'Payments', 'Customers', 'Repairs', 'Warranty', 'Delivery', 'Expenses', 'Reports', 'Loyalty', 'Team', 'Settings', 'Authentication', 'AI Studio', 'Users'],
-  sales_manager:     ['Dashboard', 'Analytics', 'Audit Logs', 'Inventory', 'Payments', 'Customers', 'Repairs', 'Reports', 'Loyalty', 'Team'],
-  sales_rep:         ['Dashboard', 'Audit Logs', 'Repairs', 'Customers', 'Inventory'],
-  technician:        ['Dashboard', 'Audit Logs', 'Repairs', 'Warranty', 'Inventory', 'Customers'],
-  inventory_manager: ['Dashboard', 'Analytics', 'Audit Logs', 'Inventory', 'Delivery', 'Reports'],
+  admin:             ['Dashboard', 'Analytics', 'Audit Logs', 'Inventory', 'Payments', 'Customers', 'Repairs', 'Tickets', 'Technicians', 'Invoices', 'Sales', 'Activity', 'Portal', 'Warranty', 'Delivery', 'Expenses', 'Reports', 'Loyalty', 'Team', 'Settings', 'Authentication', 'AI Studio', 'Users'],
+  sales_manager:     ['Dashboard', 'Analytics', 'Audit Logs', 'Inventory', 'Payments', 'Customers', 'Repairs', 'Tickets', 'Invoices', 'Sales', 'Activity', 'Reports', 'Loyalty', 'Team'],
+  sales_rep:         ['Dashboard', 'Audit Logs', 'Repairs', 'Tickets', 'Customers', 'Inventory', 'Activity'],
+  technician:        ['Dashboard', 'Audit Logs', 'Repairs', 'Tickets', 'Warranty', 'Inventory', 'Customers', 'Activity'],
+  inventory_manager: ['Dashboard', 'Analytics', 'Audit Logs', 'Inventory', 'Delivery', 'Reports', 'Activity'],
 };
 
 export const roleLabels: Record<UserRole, string> = {
