@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import AdminLayout from '@/components/feature/AdminLayout';
 import { getStoreSettings, saveStoreSettings } from '@/services/settings';
+import { useAuth } from '@/hooks/useAuth';
 import SettingsSidebar from './components/SettingsSidebar';
 import BrandingSection from './components/BrandingSection';
 import OperationsSection from './components/OperationsSection';
@@ -9,16 +10,20 @@ import TeamRolesSection from './components/TeamRolesSection';
 import AutomationSection from './components/AutomationSection';
 import IntegrationsSection from './components/IntegrationsSection';
 import SecuritySection from './components/SecuritySection';
+import UsersSection from './components/UsersSection';
+import ChangePasswordSection from './components/ChangePasswordSection';
 import AddRoleModal from './components/AddRoleModal';
 
-const sections = [
-  { id: 'branding', label: 'Branding', icon: 'ri-palette-line' },
-  { id: 'operations', label: 'Operations', icon: 'ri-settings-4-line' },
-  { id: 'templates', label: 'Templates', icon: 'ri-file-text-line' },
-  { id: 'team', label: 'Team & Roles', icon: 'ri-team-line' },
-  { id: 'automation', label: 'Automation', icon: 'ri-robot-line' },
-  { id: 'integrations', label: 'Integrations', icon: 'ri-plug-line' },
-  { id: 'security', label: 'Security', icon: 'ri-shield-keyhole-line' },
+const allSections = [
+  { id: 'branding', label: 'Branding', icon: 'ri-palette-line', adminOnly: false },
+  { id: 'operations', label: 'Operations', icon: 'ri-settings-4-line', adminOnly: false },
+  { id: 'templates', label: 'Templates', icon: 'ri-file-text-line', adminOnly: false },
+  { id: 'team', label: 'Team & Roles', icon: 'ri-team-line', adminOnly: false },
+  { id: 'users', label: 'Users', icon: 'ri-user-settings-line', adminOnly: true },
+  { id: 'automation', label: 'Automation', icon: 'ri-robot-line', adminOnly: false },
+  { id: 'integrations', label: 'Integrations', icon: 'ri-plug-line', adminOnly: false },
+  { id: 'security', label: 'Security', icon: 'ri-shield-keyhole-line', adminOnly: false },
+  { id: 'password', label: 'Change Password', icon: 'ri-lock-password-line', adminOnly: false },
 ];
 
 const messageTemplates = [
@@ -63,6 +68,8 @@ const integrations = [
 ];
 
 export default function SettingsPage() {
+  const { isAdmin } = useAuth();
+  const sections = allSections.filter(s => !s.adminOnly || isAdmin);
   const [activeSection, setActiveSection] = useState('branding');
   const [saved, setSaved] = useState(false);
   const [businessName, setBusinessName] = useState('Wireless');
@@ -151,6 +158,10 @@ export default function SettingsPage() {
           )}
 
           {activeSection === 'security' && <SecuritySection />}
+
+          {activeSection === 'users' && isAdmin && <UsersSection />}
+
+          {activeSection === 'password' && <ChangePasswordSection />}
 
           {/* Save bar */}
           <div className="sticky bottom-0 bg-white border border-slate-100 rounded-2xl px-5 py-3 flex items-center justify-between">
