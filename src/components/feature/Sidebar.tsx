@@ -1,276 +1,194 @@
-import { useState, useRef, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { useDarkMode } from '@/hooks/useDarkMode';
-import { roleLabels } from '@/mocks/users';
-import { canAccessModule } from '@/utils/access';
-import { navGroups, publicItems } from './navigation';
+import { useLocation, Link } from 'react-router-dom';
+import {
+  LayoutDashboard,
+  ClipboardList,
+  Users,
+  HardHat,
+  ShoppingBag,
+  Package,
+  FileText,
+  ExternalLink,
+  Wrench,
+  Boxes,
+  ConciergeBell,
+  Activity,
+  Settings,
+} from 'lucide-react';
 
-function WirelessLogoMark({ size = 32 }: { size?: number }) {
+const mainNav = [
+  { label: 'Dashboard',         icon: LayoutDashboard, path: '/' },
+  { label: 'Tickets',           icon: ClipboardList,   path: '/tickets' },
+  { label: 'Customers',         icon: Users,           path: '/customers' },
+  { label: 'Technicians',       icon: HardHat,         path: '/technicians' },
+  { label: 'Accessories Sales', icon: ShoppingBag,     path: '/sales' },
+  { label: 'Inventory',         icon: Package,         path: '/inventory' },
+  { label: 'Invoices',          icon: FileText,        path: '/invoices' },
+];
+
+const portalNav = [
+  { label: 'Customer Portal',  icon: ExternalLink,   path: '/portal' },
+  { label: 'Tech Portal',      icon: Wrench,         path: '/tech-portal' },
+  { label: 'Inventory Portal', icon: Boxes,          path: '/inventory-portal' },
+  { label: 'Reception Portal', icon: ConciergeBell,  path: '/reception' },
+];
+
+const bottomNav = [
+  { label: 'Activity Log', icon: Activity, path: '/activity' },
+  { label: 'Settings',     icon: Settings,  path: '/settings' },
+];
+
+function NavLink({
+  item,
+  active,
+}: {
+  item: { label: string; icon: React.ElementType; path: string };
+  active: boolean;
+}) {
+  const Icon = item.icon;
   return (
-    <img
-      src="/wireless-logo.png"
-      alt="Wireless"
-      width={size}
-      height={size}
-      style={{ width: size, height: size, objectFit: 'contain', display: 'block' }}
-    />
+    <Link
+      to={item.path}
+      className={[
+        'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+        active
+          ? 'text-white border'
+          : 'border border-transparent hover:text-white',
+      ].join(' ')}
+      style={
+        active
+          ? {
+              background: 'hsl(0 80% 12%)',
+              borderColor: 'hsl(0 90% 35% / 0.4)',
+              boxShadow: 'rgba(242,13,13,0.08) 0px 0px 12px inset',
+              color: 'white',
+            }
+          : {
+              color: 'hsl(var(--sidebar-foreground))',
+            }
+      }
+      onMouseEnter={(e) => {
+        if (!active) {
+          (e.currentTarget as HTMLElement).style.background = 'hsl(var(--sidebar-accent))';
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!active) {
+          (e.currentTarget as HTMLElement).style.background = '';
+        }
+      }}
+    >
+      <Icon
+        className="w-4 h-4 flex-shrink-0"
+        style={{ color: active ? 'hsl(0,90%,55%)' : undefined }}
+        aria-hidden="true"
+      />
+      {item.label}
+      {active && (
+        <span
+          className="ml-auto w-1 h-1 rounded-full"
+          style={{
+            background: 'hsl(0,90%,55%)',
+            boxShadow: 'rgba(244,37,37,0.8) 0px 0px 4px',
+          }}
+        />
+      )}
+    </Link>
   );
 }
 
-function WirelessWordmark({ isDark }: { isDark: boolean }) {
-  return (
-    <div className="flex items-center gap-2.5">
-      <div
-        className="flex-shrink-0 flex items-center justify-center rounded-lg overflow-hidden"
-        style={{ width: 30, height: 30, background: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(220,31,31,0.08)' }}
-      >
-        <WirelessLogoMark size={24} />
-      </div>
-      <span
-        className="text-[18px] font-bold tracking-tight lowercase"
-        style={{
-          color: isDark ? 'white' : '#0F172A',
-          letterSpacing: '-0.03em',
-          fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-        }}
-      >
-        wireless
-      </span>
-    </div>
-  );
-}
-
-const roleGradients: Record<string, string> = {
-  admin:             'linear-gradient(135deg, #991B1B, #DC1F1F)',
-  sales_manager:     'linear-gradient(135deg, #D97706, #F59E0B)',
-  sales_rep:         'linear-gradient(135deg, #059669, #10B981)',
-  technician:        'linear-gradient(135deg, #0E7490, #06B6D4)',
-  inventory_manager: 'linear-gradient(135deg, #475569, #64748b)',
-};
-
-interface SidebarProps {
-  onWidthChange?: (width: number) => void;
-}
-
-export default function Sidebar({ onWidthChange }: SidebarProps) {
-  const navigate = useNavigate();
+export default function Sidebar() {
   const location = useLocation();
-  const { user, logout } = useAuth();
-  const { isDark } = useDarkMode();
-  const [collapsed, setCollapsed] = useState(false);
-  const navRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    onWidthChange?.(collapsed ? 72 : 260);
-  }, [collapsed, onWidthChange]);
-
-  const visibleGroups = navGroups
-    .map((group) => ({
-      ...group,
-      items: group.items.filter((item) => canAccessModule(user?.role, item.module)),
-    }))
-    .filter((group) => group.items.length > 0);
 
   const isActive = (path: string) =>
     path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
 
-  const handleLogout = () => { logout(); navigate('/signin'); };
-
-  const avatarGradient = user?.role ? roleGradients[user.role] : roleGradients.admin;
-
-  const dividerColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.07)';
-  const inactiveIcon  = isDark ? 'rgba(255,255,255,0.32)' : '#94a3b8';
-  const inactiveLabel = isDark ? 'rgba(255,255,255,0.45)' : '#64748b';
-  const hoverBg       = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(15,23,42,0.05)';
-  const groupLabelColor = isDark ? 'rgba(200,64,21,0.65)' : 'rgba(220,31,31,0.55)';
-  const actionBase    = isDark ? 'rgba(255,255,255,0.28)' : '#94a3b8';
-
   return (
     <aside
-      className={`fixed left-0 top-0 h-full flex flex-col z-40 transition-[width] duration-300 select-none`}
+      className="w-60 flex-shrink-0 h-full flex flex-col border-r"
       style={{
-        width: collapsed ? 72 : 260,
-        background: isDark
-          ? 'linear-gradient(170deg, #160403 0%, #240807 55%, #160403 100%)'
-          : 'white',
-        borderRight: isDark ? 'none' : '1px solid rgba(15,23,42,0.07)',
-        boxShadow: isDark ? 'none' : '4px 0 20px rgba(15,23,42,0.04)',
+        background: 'hsl(var(--sidebar-background))',
+        borderColor: 'hsl(var(--sidebar-border))',
       }}
     >
-      {/* Top shimmer — dark only */}
-      {isDark && (
-        <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(200,64,21,0.7), rgba(200,64,21,0.3), transparent)' }} />
-      )}
-
       {/* Logo */}
       <div
-        className={`flex items-center flex-shrink-0 ${collapsed ? 'justify-center px-3 py-4' : 'px-5 py-4'}`}
-        style={{ borderBottom: `1px solid ${dividerColor}` }}
+        className="px-6 py-5 border-b"
+        style={{ borderColor: 'hsl(var(--sidebar-border))' }}
       >
-        {collapsed ? (
+        <div className="flex items-center gap-3">
           <div
-            className="flex items-center justify-center rounded-lg overflow-hidden"
-            style={{ width: 34, height: 34, background: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(220,31,31,0.08)' }}
+            className="rounded-xl flex-shrink-0 overflow-hidden"
+            style={{
+              width: 40,
+              height: 40,
+              background: 'rgb(15,15,15)',
+              boxShadow:
+                'rgba(255,0,0,0.7) 0px 0px 12px 3px, rgba(255,0,0,0.4) 0px 0px 28px 6px, rgba(255,0,0,0.2) 0px 0px 50px 10px',
+            }}
           >
-            <WirelessLogoMark size={26} />
+            <img
+              src="/wireless-logo.png"
+              alt="WIRELESS logo"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                objectPosition: '63% 70%',
+                filter: 'invert(1) hue-rotate(180deg)',
+              }}
+            />
           </div>
-        ) : <WirelessWordmark isDark={isDark} />}
+          <div>
+            <p className="text-sm font-black tracking-[0.12em] text-white uppercase">
+              WIRELESS
+            </p>
+            <p
+              className="text-[9px] leading-tight tracking-widest uppercase"
+              style={{ color: 'hsl(var(--sidebar-foreground))' }}
+            >
+              Repair &amp; Service
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Nav */}
-      <nav ref={navRef} className="sidebar-nav flex-1 overflow-y-auto py-3 px-2">
-        {visibleGroups.map((group, gi) => (
-          <div key={group.label} className={gi > 0 ? 'mt-1' : ''}>
-            {!collapsed && (
-              <div className="flex items-center gap-2 px-3 pt-4 pb-1.5">
-                <span
-                  className="text-[9px] font-bold uppercase tracking-[0.14em]"
-                  style={{ color: groupLabelColor }}
-                >
-                  {group.label}
-                </span>
-                <div className="flex-1 h-px" style={{ background: dividerColor }} />
-              </div>
-            )}
-            {collapsed && gi > 0 && (
-              <div className="mx-3 my-2 h-px" style={{ background: dividerColor }} />
-            )}
-            <div className="space-y-0.5">
-              {group.items.map((item) => {
-                const active = isActive(item.path);
-                return (
-                  <button
-                    key={item.path}
-                    onClick={() => navigate(item.path)}
-                    title={collapsed ? item.label : undefined}
-                    className={`w-full flex items-center gap-3 rounded-xl transition-all duration-150 cursor-pointer group relative overflow-hidden ${
-                      collapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2'
-                    }`}
-                    style={active ? { background: '#DC1F1F', boxShadow: '0 4px 16px rgba(220,31,31,0.30)' } : undefined}
-                    onMouseEnter={(e) => {
-                      if (!active) (e.currentTarget as HTMLElement).style.background = hoverBg;
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!active) (e.currentTarget as HTMLElement).style.background = '';
-                    }}
-                  >
-                    <div className="w-7 h-7 flex items-center justify-center rounded-lg flex-shrink-0">
-                      <i
-                        className={`${item.icon} text-[15px]`}
-                        style={{ color: active ? 'white' : inactiveIcon }}
-                      />
-                    </div>
-                    {!collapsed && (
-                      <span
-                        className="text-[13px] font-semibold flex-1 text-left leading-none"
-                        style={{ color: active ? 'white' : inactiveLabel }}
-                      >
-                        {item.label}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+      {/* Main nav */}
+      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+        <p
+          className="px-3 py-2 text-[9px] font-bold uppercase tracking-[0.15em] opacity-50"
+          style={{ color: 'hsl(var(--sidebar-foreground))' }}
+        >
+          Main Menu
+        </p>
+        {mainNav.map((item) => (
+          <NavLink key={item.path} item={item} active={isActive(item.path)} />
         ))}
-
-        {/* Public */}
-        <div className="mt-1">
-          {!collapsed && (
-            <div className="flex items-center gap-2 px-3 pt-4 pb-1.5">
-              <span className="text-[9px] font-bold uppercase tracking-[0.14em]" style={{ color: groupLabelColor }}>Public</span>
-              <div className="flex-1 h-px" style={{ background: dividerColor }} />
-            </div>
-          )}
-          {collapsed && <div className="mx-3 my-2 h-px" style={{ background: dividerColor }} />}
-          {publicItems.map((item) => {
-            const active = isActive(item.path);
-            return (
-              <button
-                key={item.path}
-                onClick={() => navigate(item.path)}
-                title={collapsed ? item.label : undefined}
-                className={`w-full flex items-center gap-3 rounded-xl transition-all duration-150 cursor-pointer group relative overflow-hidden ${
-                  collapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2'
-                }`}
-                style={active ? { background: '#DC1F1F', boxShadow: '0 4px 16px rgba(220,31,31,0.30)' } : undefined}
-                onMouseEnter={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = hoverBg; }}
-                onMouseLeave={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = ''; }}
-              >
-                <div className="w-7 h-7 flex items-center justify-center rounded-lg flex-shrink-0">
-                  <i className={`${item.icon} text-[15px]`} style={{ color: active ? 'white' : inactiveIcon }} />
-                </div>
-                {!collapsed && (
-                  <span className="text-[13px] font-semibold flex-1 text-left" style={{ color: active ? 'white' : inactiveLabel }}>
-                    {item.label}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
       </nav>
 
-      {/* Bottom — user + actions */}
-      <div className="flex-shrink-0 p-3" style={{ borderTop: `1px solid ${dividerColor}` }}>
-        {/* Avatar row (expanded only) */}
-        {!collapsed && (
-          <div className="flex items-center gap-2.5 px-2 py-2 mb-1 rounded-xl">
-            <div
-              className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
-              style={{ background: avatarGradient }}
-            >
-              {user?.avatar ?? 'U'}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-bold leading-tight truncate" style={{ color: isDark ? 'rgba(255,255,255,0.85)' : '#0F172A' }}>{user?.name ?? 'User'}</p>
-              <p className="text-[10px] leading-tight mt-0.5 truncate" style={{ color: isDark ? 'rgba(255,255,255,0.35)' : '#94a3b8' }}>
-                {user?.role ? roleLabels[user.role] : ''}
-              </p>
-            </div>
-          </div>
-        )}
+      {/* Bottom section */}
+      <div
+        className="px-3 py-4 border-t space-y-0.5"
+        style={{ borderColor: 'hsl(var(--sidebar-border))' }}
+      >
+        {portalNav.map((item) => (
+          <NavLink key={item.path} item={item} active={isActive(item.path)} />
+        ))}
 
-        {/* Action row */}
-        <div className={`flex ${collapsed ? 'flex-col items-center gap-1' : 'items-center gap-1'}`}>
-          <button
-            onClick={handleLogout}
-            title="Sign Out"
-            className={`flex items-center justify-center gap-1.5 rounded-xl transition-all cursor-pointer ${collapsed ? 'w-10 h-9' : 'flex-1 py-2'}`}
-            style={{ color: actionBase }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.08)';
-              (e.currentTarget as HTMLElement).style.color = '#EF4444';
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.background = '';
-              (e.currentTarget as HTMLElement).style.color = actionBase;
-            }}
-          >
-            <i className="ri-logout-box-line text-sm" />
-            {!collapsed && <span className="text-[11px] font-medium">Sign Out</span>}
-          </button>
+        <div
+          className="my-1"
+          style={{ height: 1, background: 'hsl(var(--sidebar-border))' }}
+        />
 
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            className={`flex items-center justify-center gap-1.5 rounded-xl transition-all cursor-pointer ${collapsed ? 'w-10 h-9' : 'flex-1 py-2'}`}
-            style={{ color: actionBase }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.background = hoverBg;
-              (e.currentTarget as HTMLElement).style.color = isDark ? 'rgba(255,255,255,0.7)' : '#475569';
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.background = '';
-              (e.currentTarget as HTMLElement).style.color = actionBase;
-            }}
-          >
-            <i className={`${collapsed ? 'ri-arrow-right-double-line' : 'ri-arrow-left-double-line'} text-sm`} />
-            {!collapsed && <span className="text-[11px] font-medium">Collapse</span>}
-          </button>
-        </div>
+        {bottomNav.map((item) => (
+          <NavLink key={item.path} item={item} active={isActive(item.path)} />
+        ))}
+
+        <p
+          className="px-3 pt-2 text-[9px] tracking-widest uppercase opacity-30"
+          style={{ color: 'hsl(var(--sidebar-foreground))' }}
+        >
+          v1.0.0 · WIRELESS
+        </p>
       </div>
     </aside>
   );
