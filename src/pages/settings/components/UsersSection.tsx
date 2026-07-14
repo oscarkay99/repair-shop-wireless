@@ -5,7 +5,6 @@ import { isSupabaseConfigured } from '@/services/supabase';
 const ROLE_LABELS: Record<string, string> = {
   admin: 'Admin',
   sales_manager: 'Sales Manager',
-  sales_rep: 'Sales Rep',
   technician: 'Technician',
   inventory_manager: 'Inventory Manager',
 };
@@ -13,7 +12,6 @@ const ROLE_LABELS: Record<string, string> = {
 const ROLE_COLORS: Record<string, string> = {
   admin: 'bg-red-500/20 text-red-400',
   sales_manager: 'bg-blue-500/20 text-blue-400',
-  sales_rep: 'bg-cyan-500/20 text-cyan-400',
   technician: 'bg-amber-500/20 text-amber-400',
   inventory_manager: 'bg-purple-500/20 text-purple-400',
 };

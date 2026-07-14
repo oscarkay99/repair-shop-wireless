@@ -10,7 +10,6 @@ export type AppModule =
   | 'Payments'
   | 'Customers'
   | 'Repairs'
-  | 'Tickets'
   | 'Technicians'
   | 'Invoices'
   | 'Sales'

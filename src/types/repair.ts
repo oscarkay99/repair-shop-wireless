@@ -56,6 +56,7 @@ export interface RepairMediaUploadInput {
 
 export interface Repair {
   id: string;
+  createdAt?: string;
   customerId?: string;
   customer: string;
   customerEmail?: string;

@@ -2,12 +2,13 @@ import { isSupabaseConfigured, db } from '@/services/supabase';
 import type { Part } from '@/types/wireless';
 
 const SEED: Part[] = [
-  { id: 'p1', name: 'iPhone 14 Pro Screen', sku: 'SCR-IP14P', category: 'Screen',  unit_cost: 280, selling_price: 380, stock: 3,  min_stock: 5,  supplier: 'iFixit GH',   created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-  { id: 'p2', name: 'Samsung S23 Battery',  sku: 'BAT-SS23',  category: 'Battery', unit_cost: 45,  selling_price: 80,  stock: 8,  min_stock: 5,  supplier: 'TechParts GH', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-  { id: 'p3', name: 'iPhone 13 Battery',    sku: 'BAT-IP13',  category: 'Battery', unit_cost: 38,  selling_price: 70,  stock: 12, min_stock: 5,  supplier: 'TechParts GH', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-  { id: 'p4', name: 'USB-C Charging Port',  sku: 'PORT-USBC', category: 'Port',    unit_cost: 15,  selling_price: 35,  stock: 2,  min_stock: 10, supplier: 'iFixit GH',    created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-  { id: 'p5', name: 'Lightning Port',       sku: 'PORT-LTN',  category: 'Port',    unit_cost: 18,  selling_price: 38,  stock: 6,  min_stock: 5,  supplier: 'iFixit GH',    created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-  { id: 'p6', name: 'iPhone 15 Screen',     sku: 'SCR-IP15',  category: 'Screen',  unit_cost: 320, selling_price: 420, stock: 1,  min_stock: 5,  supplier: 'iFixit GH',    created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+  { id: 'p1', name: 'iPhone 15 Pro Screen (OLED)', sku: 'SCR-IP15P',    category: 'Screens',    unit_cost: 189.99, selling_price: 280, stock: 8,  min_stock: 5, supplier: 'iFixit GH',    created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+  { id: 'p2', name: 'iPhone 14 Battery',           sku: 'BAT-IP14',     category: 'Batteries',  unit_cost: 39.99,  selling_price: 80,  stock: 2,  min_stock: 5, supplier: 'TechParts GH', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+  { id: 'p3', name: 'MacBook Air M2 Keyboard',     sku: 'KB-MBA-M2',    category: 'Keyboards',  unit_cost: 129.99, selling_price: 200, stock: 4,  min_stock: 3, supplier: 'MacParts GH',  created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+  { id: 'p4', name: 'iPad Pro 12.9 Screen',        sku: 'SCR-IPADP129', category: 'Screens',    unit_cost: 249.99, selling_price: 380, stock: 3,  min_stock: 3, supplier: 'iFixit GH',    created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+  { id: 'p5', name: 'Apple Watch S8 Battery',      sku: 'BAT-AWS8',     category: 'Batteries',  unit_cost: 29.99,  selling_price: 60,  stock: 1,  min_stock: 5, supplier: 'TechParts GH', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+  { id: 'p6', name: 'iPhone 15 Charging Port',     sku: 'PORT-IP15',    category: 'Connectors', unit_cost: 19.99,  selling_price: 50,  stock: 12, min_stock: 5, supplier: 'iFixit GH',    created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+  { id: 'p7', name: 'MacBook Pro 14" Trackpad',    sku: 'TP-MBP14',     category: 'Trackpads',  unit_cost: 89.99,  selling_price: 150, stock: 2,  min_stock: 5, supplier: 'MacParts GH',  created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
 ];
 let localStore = [...SEED];
 

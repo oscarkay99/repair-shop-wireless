@@ -40,7 +40,6 @@ const messageTemplates = [
 const teamRoles = [
   { id: 'r1', name: 'Admin', members: 0, permissions: ['All access', 'Settings', 'Financial reports', 'Team management', 'Delete records'] },
   { id: 'r2', name: 'Sales Manager', members: 0, permissions: ['Sales', 'Leads', 'Customers', 'Inventory view', 'Reports view', 'Team view'] },
-  { id: 'r3', name: 'Sales Rep', members: 0, permissions: ['Sales', 'Leads', 'Customers', 'Inventory view'] },
   { id: 'r4', name: 'Technician', members: 0, permissions: ['Repairs', 'Inventory view', 'Customers view'] },
   { id: 'r5', name: 'Inventory Manager', members: 0, permissions: ['Inventory', 'Purchase Orders', 'Suppliers', 'Reports view'] },
 ];
@@ -164,11 +163,25 @@ export default function SettingsPage() {
           {activeSection === 'password' && <ChangePasswordSection />}
 
           {/* Save bar */}
-          <div className="sticky bottom-0 bg-white border border-slate-100 rounded-2xl px-5 py-3 flex items-center justify-between">
-            <span className="text-xs text-slate-400">{saved ? '✓ Changes saved successfully' : 'Unsaved changes'}</span>
+          <div className="sticky bottom-0 rounded-2xl px-5 py-3 flex items-center justify-between"
+            style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
+            <span className="text-xs font-medium" style={{ color: saved ? '#22c55e' : 'hsl(var(--muted-foreground))' }}>
+              {saved ? '✓ Changes saved' : 'Unsaved changes'}
+            </span>
             <div className="flex items-center gap-3">
-              <button className="text-sm text-slate-500 hover:text-slate-700 cursor-pointer">Discard</button>
-              <button onClick={handleSave} className="px-5 py-2 bg-[#DC1F1F] hover:bg-[#B81616] text-white text-sm font-semibold rounded-xl cursor-pointer whitespace-nowrap transition-colors duration-150">
+              <button
+                onClick={() => window.location.reload()}
+                className="text-xs font-semibold px-3 h-8 rounded-lg"
+                style={{ color: 'hsl(var(--muted-foreground))', border: '1px solid hsl(var(--border))' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
+                Discard
+              </button>
+              <button onClick={handleSave}
+                className="px-5 h-8 text-white text-xs font-bold rounded-lg whitespace-nowrap transition-colors"
+                style={{ background: 'hsl(var(--primary))' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.85'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}>
                 Save Changes
               </button>
             </div>

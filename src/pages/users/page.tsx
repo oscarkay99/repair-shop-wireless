@@ -13,8 +13,8 @@ import DeleteConfirmModal from './components/DeleteConfirmModal';
 import { systemUsers as seedUsers } from '@/mocks/users';
 
 const emptyUser: Omit<SystemUser, 'id' | 'createdAt' | 'lastLogin'> = {
-  name: '', email: '', role: 'sales_rep', avatar: '', status: 'active', phone: '',
-  permissions: rolePermissions.sales_rep,
+  name: '', email: '', role: 'receptionist', avatar: '', status: 'active', phone: '',
+  permissions: rolePermissions.receptionist,
 };
 
 export default function UsersPage() {

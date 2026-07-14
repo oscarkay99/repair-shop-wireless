@@ -21,10 +21,10 @@ class PageErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundary
     if (this.state.error) {
       return (
         <div className="flex flex-col items-center justify-center flex-1 p-10 text-center">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'rgba(220,31,31,0.1)' }}>
-            <span className="text-2xl" style={{ color: '#DC1F1F' }}>!</span>
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'hsl(350 60% 95%)' }}>
+            <span className="text-2xl" style={{ color: 'hsl(350 60% 35%)' }}>!</span>
           </div>
-          <p className="text-sm font-semibold text-white mb-1">Something went wrong</p>
+          <p className="text-sm font-semibold mb-1" style={{ color: 'hsl(var(--foreground))' }}>Something went wrong</p>
           <p className="text-xs mb-4 max-w-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>{this.state.error.message}</p>
           <button
             onClick={() => this.setState({ error: null })}

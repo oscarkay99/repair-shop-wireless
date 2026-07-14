@@ -11,7 +11,7 @@ export default function UserStatsStrip({ users }: UserStatsStripProps) {
         { label: 'Total Users', value: `${users.length}`, color: '#DC1F1F' },
         { label: 'Active', value: `${users.filter(u => u.status === 'active').length}`, color: '#25D366' },
         { label: 'Admins', value: `${users.filter(u => u.role === 'admin').length}`, color: '#DC1F1F' },
-        { label: 'Sales Team', value: `${users.filter(u => u.role === 'sales_rep' || u.role === 'sales_manager').length}`, color: '#F59E0B' },
+        { label: 'Sales Team', value: `${users.filter(u => u.role === 'sales_manager').length}`, color: '#F59E0B' },
         { label: 'Technicians', value: `${users.filter(u => u.role === 'technician').length}`, color: '#E05A2B' },
       ].map(s => (
         <div key={s.label} className="bg-white rounded-2xl p-4 border border-slate-100">

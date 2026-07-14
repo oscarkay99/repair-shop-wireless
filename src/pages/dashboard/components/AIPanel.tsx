@@ -154,7 +154,7 @@ export default function AIPanel() {
         `## Sales Performance`,
         `- Total transactions: **${monthSales.length}**\n- Voided/refunded: **${sales.filter(s => s.status === 'cancelled' || s.status === 'refunded').length}**\n- Top products: ${topProductsList || 'No sales recorded'}`,
         `## Inventory & Leads`,
-        `- Stock alerts (≤2 units): **${products.filter(p => p.stock <= 2).length}** SKUs\n- Out of stock: **${products.filter(p => p.stock === 0).length}** SKUs\n- Active leads: **${leads.filter(l => l.status === 'hot' || l.status === 'warm').length}** (${leads.filter(l => l.status === 'hot').length} hot)`,
+        `- Stock alerts (≤2 units): **${products.filter(p => p.stock <= 2).length}** products\n- Out of stock: **${products.filter(p => p.stock === 0).length}** products\n- Active leads: **${leads.filter(l => l.status === 'hot' || l.status === 'warm').length}** (${leads.filter(l => l.status === 'hot').length} hot)`,
         `## Payments`,
         `- Pending / under review: **${fmt(pendingAmt)}**`,
         `## Year-to-Date`,
@@ -164,7 +164,7 @@ export default function AIPanel() {
           ? `- Net margin is below 10%. Review operating expenses and renegotiate supplier costs.`
           : `- Margin is healthy. Focus on growing top-line revenue through leads conversion.`,
         products.filter(p => p.stock === 0).length > 0
-          ? `- Restock ${products.filter(p => p.stock === 0).length} out-of-stock SKU(s) to avoid lost sales.`
+          ? `- Restock ${products.filter(p => p.stock === 0).length} out-of-stock product(s) to avoid lost sales.`
           : `- Inventory levels are adequate.`,
         leads.filter(l => l.status === 'hot').length > 0
           ? `- Follow up on ${leads.filter(l => l.status === 'hot').length} hot lead(s) this week to close deals.`

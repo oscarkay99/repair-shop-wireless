@@ -1,416 +1,638 @@
-import { useState, useMemo } from 'react';
-import { usePagination } from '@/hooks/usePagination';
-import Pagination from '@/components/shared/Pagination';
-import AdminLayout from '@/components/feature/AdminLayout';
-import { expenseCategories } from '@/mocks/expenses';
-import AddExpenseModal from './components/AddExpenseModal';
+import { useState, useMemo, useEffect } from 'react';
+import { usePageTitle } from '@/context/PageTitleContext';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useSales } from '@/hooks/useSales';
 import { useBudgets } from '@/hooks/useBudgets';
+import { expenseCategories } from '@/mocks/expenses';
+import AddExpenseModal from './components/AddExpenseModal';
+import Pagination from '@/components/shared/Pagination';
+import { TrendingUp, TrendingDown, Plus, Pencil, Trash2, X } from 'lucide-react';
 import type { Expense } from '@/services/expenses';
 
-const tabs = ['Overview', 'Transactions', 'Budgets'];
+const PAGE_SIZE = 15;
 
-export default function ExpensesPage() {
-  const { expenses, loading, add: addExpense, update: updateExpense, remove: removeExpense } = useExpenses();
-  const { sales } = useSales();
-  const { budgetMap, setBudget } = useBudgets();
-  const [activeTab, setActiveTab] = useState('Overview');
-  const [editingBudgetId, setEditingBudgetId] = useState<string | null>(null);
-  const [budgetInput, setBudgetInput] = useState('');
-  const [showAddExpense, setShowAddExpense] = useState(false);
-  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const { paginated: pagedExpenses, page: expPage, setPage: setExpPage, totalPages: expTotalPages, total: expTotal, from: expFrom, to: expTo } = usePagination(expenses, 20);
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
+function parseAmt(s: string | number): number {
+  return typeof s === 'number' ? s : parseFloat(String(s).replace(/[^0-9.]/g, '')) || 0;
+}
+
+function fmt(n: number) {
+  return `GH₵ ${Math.round(Math.abs(n)).toLocaleString()}`;
+}
+
+function fmtFull(n: number) {
+  return `GH₵ ${Math.abs(n).toLocaleString('en-GH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+// Parse loose date strings like "Apr 22, 2026" or ISO strings
+function parseDate(s: string): Date {
+  return new Date(s);
+}
+
+// Period filter bounds
+type Period = '1m' | '3m' | '6m' | 'ytd';
+
+function periodBounds(p: Period): { from: Date; to: Date } {
   const now = new Date();
-  const parseAmt = (s: string | number) => typeof s === 'number' ? s : parseFloat(String(s).replace(/[^0-9.]/g, '')) || 0;
+  const to = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+  switch (p) {
+    case '1m': return { from: new Date(now.getFullYear(), now.getMonth(), 1), to };
+    case '3m': return { from: new Date(now.getFullYear(), now.getMonth() - 2, 1), to };
+    case '6m': return { from: new Date(now.getFullYear(), now.getMonth() - 5, 1), to };
+    case 'ytd': return { from: new Date(now.getFullYear(), 0, 1), to };
+  }
+}
 
-  const thisMonth = now.toLocaleDateString('en-GH', { month: 'short' });
-  const thisYear = String(now.getFullYear());
+const PERIOD_LABELS: Record<Period, string> = {
+  '1m': 'This Month',
+  '3m': 'Last 3 Months',
+  '6m': 'Last 6 Months',
+  'ytd': 'Year to Date',
+};
 
-  const activeSales = sales.filter(s => s.status !== 'cancelled' && s.status !== 'refunded');
-  const monthlySales = activeSales.filter(s => s.date?.includes(thisMonth) && s.date?.includes(thisYear));
-  const monthlyRevenue = monthlySales.reduce((sum, s) => sum + parseAmt(s.total), 0);
-  const monthlyCogs = monthlySales.reduce((sum, s) => sum + (s.cogs ?? 0), 0);
-  const monthlyOpEx = expenses
-    .filter(e => e.type === 'expense' && e.date?.includes(thisMonth) && e.date?.includes(thisYear))
-    .reduce((sum, e) => sum + parseAmt(e.amount), 0);
-  const grossProfit = monthlyRevenue - monthlyCogs;
-  const netProfit = grossProfit - monthlyOpEx;
-  const netMargin = monthlyRevenue > 0 ? Math.round((netProfit / monthlyRevenue) * 100) : 0;
-  const hasCogs = monthlySales.some(s => (s.cogs ?? 0) > 0);
+// ─── Stat Card ───────────────────────────────────────────────────────────────
 
-  const ytdRevenue = activeSales.filter(s => s.date?.includes(String(now.getFullYear()))).reduce((sum, s) => sum + parseAmt(s.total), 0);
-  const ytdCogs = activeSales.filter(s => s.date?.includes(String(now.getFullYear()))).reduce((sum, s) => sum + (s.cogs ?? 0), 0);
-  const ytdOpEx = expenses.filter(e => e.type === 'expense').reduce((sum, e) => sum + parseAmt(e.amount), 0);
-  const ytdGrossProfit = ytdRevenue - ytdCogs;
-  const ytdNetProfit = ytdGrossProfit - ytdOpEx;
-
-  const chartData = useMemo(() => {
-    return Array.from({ length: 6 }, (_, i) => {
-      const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
-      const month = d.toLocaleDateString('en-GH', { month: 'short' });
-      const year = String(d.getFullYear());
-      const mSales = activeSales.filter(s => s.date?.includes(month) && s.date?.includes(year));
-      const rev = mSales.reduce((sum, s) => sum + parseAmt(s.total), 0);
-      const cogs = mSales.reduce((sum, s) => sum + (s.cogs ?? 0), 0);
-      const opex = expenses
-        .filter(e => e.type === 'expense' && e.date?.includes(month) && e.date?.includes(year))
-        .reduce((sum, e) => sum + parseAmt(e.amount), 0);
-      return { month, revenue: rev, expenses: opex, cogs, profit: rev - cogs - opex };
-    });
-  }, [sales, expenses]);
-
-  const handleSave = async (data: Omit<Expense, 'id'>, id?: string) => {
-    if (id) {
-      await updateExpense(id, data);
-    } else {
-      await addExpense(data);
-      setActiveTab('Transactions');
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    await removeExpense(id);
-    setConfirmDeleteId(null);
-  };
-
+function KpiCard({ label, value, sub, color, positive }: {
+  label: string;
+  value: string;
+  sub?: string;
+  color: string;
+  positive?: boolean;
+}) {
   return (
-    <AdminLayout title="Expenses & Profit" subtitle="Track spending · Monitor margins · Budget control">
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
-        {[
-          { label: 'Monthly Revenue',    value: `GHS ${Math.round(monthlyRevenue).toLocaleString()}`,  icon: 'ri-money-dollar-circle-line', color: '#DC1F1F', sub: null },
-          { label: 'COGS',               value: `GHS ${Math.round(monthlyCogs).toLocaleString()}`,     icon: 'ri-shopping-cart-line',        color: '#E05A2B', sub: hasCogs ? null : 'Add cost prices to inventory' },
-          { label: 'Gross Profit',       value: `GHS ${Math.round(grossProfit).toLocaleString()}`,     icon: 'ri-arrow-up-circle-line',      color: '#25D366', sub: 'Revenue − COGS' },
-          { label: 'Net Profit',         value: `GHS ${Math.round(netProfit).toLocaleString()}`,       icon: 'ri-percent-line',              color: netProfit >= 0 ? '#25D366' : '#E05A2B', sub: `${netMargin}% margin` },
-        ].map((s) => (
-          <div key={s.label} className="bg-white rounded-2xl p-4 border border-slate-100">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${s.color}15` }}>
-                <i className={`${s.icon} text-sm`} style={{ color: s.color }} />
-              </div>
-              <span className="text-xs text-slate-400">{s.label}</span>
-            </div>
-            <p className="text-xl font-bold text-slate-800">{s.value}</p>
-            {s.sub && <p className="text-[10px] text-slate-400 mt-0.5">{s.sub}</p>}
-          </div>
-        ))}
+    <div className="rounded-xl p-5 flex flex-col gap-2"
+      style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
+      <span className="text-xs font-medium" style={{ color: 'hsl(var(--muted-foreground))' }}>{label}</span>
+      <span className="text-2xl font-bold tracking-tight" style={{ color: positive === undefined ? 'hsl(var(--foreground))' : positive ? '#22c55e' : '#ef4444' }}>
+        {value}
+      </span>
+      {sub && <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>{sub}</span>}
+      <div className="mt-auto pt-2" style={{ borderTop: '1px solid hsl(var(--border))' }}>
+        <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color }}>{label}</span>
       </div>
+    </div>
+  );
+}
 
-      {/* YTD Banner */}
-      <div className="rounded-2xl p-5 mb-5 flex items-center justify-between overflow-hidden relative" style={{ background: 'linear-gradient(135deg, #0F172A 0%, #DC1F1F 100%)' }}>
-        <div className="relative">
-          <p className="text-white/50 text-xs font-medium uppercase tracking-widest mb-1">Year to Date</p>
-          <h2 className="text-white text-xl font-bold tracking-tight">GHS {Math.round(ytdRevenue).toLocaleString()} revenue · GHS {Math.round(ytdNetProfit).toLocaleString()} net profit</h2>
-          <p className="text-white/50 text-xs mt-1.5">Jan – {now.toLocaleDateString('en-GH', { month: 'short' })} {now.getFullYear()} · Gross: GHS {Math.round(ytdGrossProfit).toLocaleString()} · OpEx: GHS {Math.round(ytdOpEx).toLocaleString()}{ytdRevenue > 0 ? ` · ${Math.round((ytdNetProfit / ytdRevenue) * 100)}% net margin` : ''}</p>
-        </div>
-        <div className="relative hidden md:flex items-center gap-3">
-          <div className="text-right">
-            <p className="text-white/40 text-[10px] uppercase tracking-wider">YTD Net Profit</p>
-            <p className="text-white text-lg font-bold">GHS {Math.round(ytdNetProfit).toLocaleString()}</p>
-            <p className="text-white/50 text-xs">{expenses.filter(e => e.status === 'Pending').length} pending expenses</p>
-          </div>
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(245,158,11,0.2)' }}>
-            <i className="ri-file-list-3-line text-2xl" style={{ color: '#F59E0B' }} />
-          </div>
-        </div>
-      </div>
+// ─── Bar chart (inline, no dependency) ───────────────────────────────────────
 
-      {/* Tabs */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex border border-slate-200 rounded-xl p-1 bg-white">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${
-                activeTab === tab ? 'text-white' : 'text-slate-500 hover:text-slate-700'
-              }`}
-              style={activeTab === tab ? { background: '#DC1F1F' } : {}}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-        <button
-          onClick={() => setShowAddExpense(true)}
-          className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer whitespace-nowrap"
-          style={{ background: '#E05A2B' }}
-        >
-          <i className="ri-add-line mr-1" /> Add Expense
-        </button>
-      </div>
-
-      {/* Overview Tab */}
-      {activeTab === 'Overview' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {/* Monthly Chart */}
-          <div className="bg-white rounded-2xl p-5 border border-slate-100">
-            <h3 className="text-sm font-bold text-slate-800 mb-4">Revenue vs Expenses (Last 6 Months)</h3>
-            {chartData.every(m => m.revenue === 0 && m.expenses === 0) ? (
-              <div className="h-48 flex flex-col items-center justify-center text-center">
-                <i className="ri-bar-chart-2-line text-3xl text-slate-200 block mb-2" />
-                <p className="text-sm text-slate-400">No data yet. Sales and expenses will appear here.</p>
-              </div>
-            ) : (() => {
-              const maxVal = Math.max(...chartData.map(m => Math.max(m.revenue, m.expenses)), 1);
-              return (
-                <div className="flex items-end gap-3 h-48 px-2">
-                  {chartData.map((month) => (
-                    <div key={month.month} className="flex-1 flex flex-col items-center gap-1">
-                      <div className="w-full flex flex-col gap-0.5">
-                        <div className="w-full rounded-t-md relative group" style={{ height: `${Math.max((month.revenue / maxVal) * 150, month.revenue > 0 ? 4 : 0)}px`, background: '#DC1F1F' }}>
-                          {month.revenue > 0 && (
-                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                              GHS {month.revenue.toLocaleString()}
-                            </div>
-                          )}
-                        </div>
-                        <div className="w-full rounded-b-md relative group" style={{ height: `${Math.max((month.expenses / maxVal) * 150, month.expenses > 0 ? 4 : 0)}px`, background: '#E05A2B' }}>
-                          {month.expenses > 0 && (
-                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                              GHS {month.expenses.toLocaleString()}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <span className="text-[10px] text-slate-400">{month.month}</span>
-                      {(month.revenue > 0 || month.expenses > 0) && (
-                        <span className="text-[10px] font-semibold" style={{ color: month.profit >= 0 ? '#25D366' : '#E05A2B' }}>
-                          {month.profit >= 0 ? '+' : ''}GHS {Math.round(month.profit).toLocaleString()}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              );
-            })()}
-            <div className="flex items-center justify-center gap-4 mt-4 text-xs">
-              <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded" style={{ background: '#DC1F1F' }} />
-                <span className="text-slate-500">Revenue</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded" style={{ background: '#E05A2B' }} />
-                <span className="text-slate-500">Expenses</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Category Breakdown */}
-          <div className="bg-white rounded-2xl p-5 border border-slate-100">
-            <h3 className="text-sm font-bold text-slate-800 mb-4">Expense by Category</h3>
-            <div className="space-y-3">
-              {expenseCategories.map((cat) => {
-                const budget = budgetMap[cat.id] ?? 0;
-                const spent = expenses
-                  .filter(e => e.type === 'expense' && e.category === cat.id)
-                  .reduce((sum, e) => sum + parseAmt(e.amount), 0);
-                const percent = budget > 0 ? (spent / budget) * 100 : 0;
-                const isOver = budget > 0 && spent > budget;
-                return (
-                  <div key={cat.id}>
-                    <div className="flex items-center justify-between text-xs mb-1">
-                      <div className="flex items-center gap-2">
-                        <span className="w-3 h-3 rounded" style={{ background: cat.color }} />
-                        <span className="text-slate-700">{cat.name}</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {budget > 0 ? (
-                          <>
-                            <span className="text-slate-500">GHS {Math.round(spent).toLocaleString()} / GHS {Math.round(budget).toLocaleString()}</span>
-                            <span className={`font-semibold ${isOver ? 'text-red-500' : 'text-slate-700'}`}>{Math.round(percent)}%</span>
-                          </>
-                        ) : (
-                          <span className="text-slate-500">GHS {Math.round(spent).toLocaleString()} <span className="text-slate-300">— no budget set</span></span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all"
-                        style={{
-                          width: budget > 0 ? `${Math.min(percent, 100)}%` : spent > 0 ? '100%' : '0%',
-                          background: isOver ? '#E05A2B' : cat.color,
-                          opacity: budget > 0 ? 1 : 0.35,
-                        }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Transactions Tab */}
-      {activeTab === 'Transactions' && (
-        <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-          <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-800">All Transactions</h3>
-            <span className="text-xs text-slate-400">{expenses.length} entries</span>
-          </div>
-          {loading ? (
-            <div className="py-16 text-center">
-              <i className="ri-loader-4-line text-3xl text-slate-200 block mb-2 animate-spin" />
-              <p className="text-sm text-slate-400">Loading expenses…</p>
-            </div>
-          ) : expenses.length === 0 ? (
-            <div className="py-16 text-center">
-              <i className="ri-receipt-line text-3xl text-slate-200 block mb-2" />
-              <p className="text-sm text-slate-400">No expenses yet. Add your first one.</p>
-            </div>
-          ) : null}
-          <div className="divide-y divide-slate-100">
-            {pagedExpenses.map((tx) => (
-              <div key={tx.id} className={`transition-colors ${confirmDeleteId === tx.id ? 'bg-red-50' : 'hover:bg-slate-50/50'}`}>
-                {confirmDeleteId === tx.id ? (
-                  /* Inline delete confirmation */
-                  <div className="p-4 flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-red-100">
-                      <i className="ri-delete-bin-line text-lg text-red-500" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-red-700">Delete "{tx.description}"?</p>
-                      <p className="text-xs text-red-400 mt-0.5">This cannot be undone.</p>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <button
-                        onClick={() => setConfirmDeleteId(null)}
-                        className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 cursor-pointer"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={() => handleDelete(tx.id)}
-                        className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-red-500 hover:bg-red-600 cursor-pointer"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-4 flex items-center gap-4 group">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: tx.type === 'expense' ? '#E05A2B15' : '#25D36615' }}>
-                      <i className={`${tx.type === 'expense' ? 'ri-arrow-down-line' : 'ri-arrow-up-line'} text-lg`} style={{ color: tx.type === 'expense' ? '#E05A2B' : '#25D366' }} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-800">{tx.description}</p>
-                      <div className="flex items-center gap-3 mt-0.5 text-[10px] text-slate-500">
-                        <span>{tx.category}</span>
-                        <span>{tx.date}</span>
-                        <span className={`px-1.5 py-0.5 rounded-full ${tx.status === 'Paid' ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'}`}>{tx.status}</span>
-                      </div>
-                    </div>
-                    <p className={`text-sm font-bold flex-shrink-0 ${tx.type === 'expense' ? 'text-red-500' : 'text-green-500'}`}>
-                      {tx.type === 'expense' ? '-' : '+'}GHS {parseAmt(tx.amount).toLocaleString()}
-                    </p>
-                    {/* Action buttons — visible on hover */}
-                    <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => setEditingExpense(tx)}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 cursor-pointer transition-colors"
-                        title="Edit"
-                      >
-                        <i className="ri-pencil-line text-sm" />
-                      </button>
-                      <button
-                        onClick={() => setConfirmDeleteId(tx.id)}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 cursor-pointer transition-colors"
-                        title="Delete"
-                      >
-                        <i className="ri-delete-bin-line text-sm" />
-                      </button>
-                    </div>
+function BarChart({ data }: { data: { month: string; revenue: number; expenses: number; profit: number }[] }) {
+  const maxVal = Math.max(...data.map(m => Math.max(m.revenue, m.expenses)), 1);
+  return (
+    <div className="space-y-1">
+      <div className="flex items-end gap-2" style={{ height: 160 }}>
+        {data.map(m => (
+          <div key={m.month} className="flex-1 flex flex-col items-center gap-0.5 h-full justify-end">
+            <div className="w-full flex flex-col gap-0.5 justify-end" style={{ height: '100%' }}>
+              {/* Revenue bar */}
+              <div className="relative group w-full"
+                style={{ height: `${Math.max((m.revenue / maxVal) * 140, m.revenue > 0 ? 3 : 0)}px`, background: 'hsl(var(--primary))', borderRadius: '3px 3px 0 0' }}>
+                {m.revenue > 0 && (
+                  <div className="absolute -top-7 left-1/2 -translate-x-1/2 text-[10px] font-semibold rounded-md px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10"
+                    style={{ background: 'hsl(var(--foreground))', color: 'hsl(var(--background))' }}>
+                    {fmt(m.revenue)}
                   </div>
                 )}
               </div>
-            ))}
+              {/* Expenses bar */}
+              <div className="relative group w-full"
+                style={{ height: `${Math.max((m.expenses / maxVal) * 140, m.expenses > 0 ? 3 : 0)}px`, background: '#f59e0b', borderRadius: '0 0 3px 3px' }}>
+                {m.expenses > 0 && (
+                  <div className="absolute -top-7 left-1/2 -translate-x-1/2 text-[10px] font-semibold rounded-md px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10"
+                    style={{ background: 'hsl(var(--foreground))', color: 'hsl(var(--background))' }}>
+                    {fmt(m.expenses)}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-          <Pagination page={expPage} totalPages={expTotalPages} total={expTotal} from={expFrom} to={expTo} onPageChange={setExpPage} />
+        ))}
+      </div>
+      {/* Month labels + profit */}
+      <div className="flex gap-2">
+        {data.map(m => (
+          <div key={m.month} className="flex-1 text-center">
+            <div className="text-[10px]" style={{ color: 'hsl(var(--muted-foreground))' }}>{m.month}</div>
+            {(m.revenue > 0 || m.expenses > 0) && (
+              <div className="text-[10px] font-bold mt-0.5" style={{ color: m.profit >= 0 ? '#22c55e' : '#ef4444' }}>
+                {m.profit >= 0 ? '+' : '-'}{fmt(m.profit)}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      {/* Legend */}
+      <div className="flex items-center justify-center gap-5 pt-1">
+        {[['hsl(var(--primary))', 'Revenue'], ['#f59e0b', 'Expenses']].map(([color, label]) => (
+          <div key={label} className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-sm" style={{ background: color }} />
+            <span className="text-[10px]" style={{ color: 'hsl(var(--muted-foreground))' }}>{label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── P&L Statement ───────────────────────────────────────────────────────────
+
+function PnLRow({ label, value, indent, bold, separator, color }: {
+  label: string; value: number | null; indent?: boolean; bold?: boolean; separator?: boolean; color?: string;
+}) {
+  return (
+    <div className={`flex items-center justify-between py-2.5 ${separator ? 'border-t' : ''}`}
+      style={separator ? { borderColor: 'hsl(var(--border))' } : {}}>
+      <span className={`text-sm ${indent ? 'pl-4' : ''} ${bold ? 'font-bold' : ''}`}
+        style={{ color: bold ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))' }}>
+        {label}
+      </span>
+      {value !== null && (
+        <span className={`text-sm ${bold ? 'font-bold' : 'font-medium'} tabular-nums`}
+          style={{ color: color ?? (bold ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))') }}>
+          {value < 0 ? `(${fmtFull(-value)})` : fmtFull(value)}
+        </span>
+      )}
+    </div>
+  );
+}
+
+// ─── Main Page ───────────────────────────────────────────────────────────────
+
+export default function ExpensesPage() {
+  const { setPageTitle } = usePageTitle();
+  const { expenses, loading, add, update, remove } = useExpenses();
+  const { sales } = useSales();
+  const { budgetMap, setBudget } = useBudgets();
+
+  const [period, setPeriod] = useState<Period>('1m');
+  const [activeTab, setActiveTab] = useState<'overview' | 'transactions' | 'budgets'>('overview');
+  const [showAdd, setShowAdd] = useState(false);
+  const [editing, setEditing] = useState<Expense | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [editingBudgetId, setEditingBudgetId] = useState<string | null>(null);
+  const [budgetInput, setBudgetInput] = useState('');
+  const [txPage, setTxPage] = useState(1);
+
+  useEffect(() => {
+    setPageTitle({
+      title: 'Expenses & P&L',
+      subtitle: 'Track spending · Monitor profit & loss',
+      hideDefaultAction: true,
+      action: { label: 'Add Expense', onClick: () => setShowAdd(true) },
+    });
+    return () => setPageTitle({ title: 'Dashboard' });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setPageTitle]);
+
+  const { from, to } = periodBounds(period);
+
+  // Filter sales and expenses to the selected period
+  const activeSales = useMemo(() =>
+    sales.filter(s => {
+      if (s.status === 'cancelled' || s.status === 'refunded') return false;
+      const d = parseDate(s.date);
+      return d >= from && d <= to;
+    }),
+  [sales, period]);
+
+  const periodExpenses = useMemo(() =>
+    expenses.filter(e => {
+      if (e.type !== 'expense') return false;
+      const d = parseDate(e.date);
+      return d >= from && d <= to;
+    }),
+  [expenses, period]);
+
+  // P&L calculations
+  const revenue   = useMemo(() => activeSales.reduce((s, sale) => s + parseAmt(sale.total), 0), [activeSales]);
+  const cogs      = useMemo(() => activeSales.reduce((s, sale) => s + (sale.cogs ?? 0), 0), [activeSales]);
+  const opex      = useMemo(() => periodExpenses.reduce((s, e) => s + parseAmt(e.amount), 0), [periodExpenses]);
+  const grossProfit = revenue - cogs;
+  const netProfit   = grossProfit - opex;
+  const margin      = revenue > 0 ? Math.round((netProfit / revenue) * 100) : 0;
+
+  // 6-month chart data (always last 6 months regardless of period filter)
+  const chartData = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 6 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
+      const nextMonth = new Date(now.getFullYear(), now.getMonth() - 5 + i + 1, 1);
+      const monthLabel = d.toLocaleDateString('en-GH', { month: 'short' });
+      const mSales = sales.filter(s => {
+        if (s.status === 'cancelled' || s.status === 'refunded') return false;
+        const sd = parseDate(s.date);
+        return sd >= d && sd < nextMonth;
+      });
+      const mExpenses = expenses.filter(e => {
+        if (e.type !== 'expense') return false;
+        const ed = parseDate(e.date);
+        return ed >= d && ed < nextMonth;
+      });
+      const rev  = mSales.reduce((s, sale) => s + parseAmt(sale.total), 0);
+      const exp  = mExpenses.reduce((s, e) => s + parseAmt(e.amount), 0);
+      return { month: monthLabel, revenue: rev, expenses: exp, profit: rev - exp };
+    });
+  }, [sales, expenses]);
+
+  // Category breakdown for period
+  const categoryBreakdown = useMemo(() =>
+    expenseCategories.map(cat => ({
+      ...cat,
+      spent: periodExpenses.filter(e => e.category === cat.id || e.category === cat.name)
+        .reduce((s, e) => s + parseAmt(e.amount), 0),
+    })).filter(c => c.spent > 0).sort((a, b) => b.spent - a.spent),
+  [periodExpenses]);
+
+  // Paginated transactions
+  const allTx = useMemo(() => [...expenses].sort((a, b) =>
+    parseDate(b.date).getTime() - parseDate(a.date).getTime()
+  ), [expenses]);
+  const txPageCount = Math.ceil(allTx.length / PAGE_SIZE);
+  const pagedTx = useMemo(() =>
+    allTx.slice((txPage - 1) * PAGE_SIZE, txPage * PAGE_SIZE),
+  [allTx, txPage]);
+
+  const handleSave = async (data: Omit<Expense, 'id'>, id?: string) => {
+    if (id) update(id, data as Partial<Expense>);
+    else await add(data);
+  };
+
+  const handleDelete = (id: string) => {
+    remove(id);
+    setConfirmDeleteId(null);
+  };
+
+  const tabs = [
+    { key: 'overview',     label: 'Overview' },
+    { key: 'transactions', label: `Transactions (${expenses.length})` },
+    { key: 'budgets',      label: 'Budgets' },
+  ] as const;
+
+  return (
+    <div className="space-y-5">
+
+      {/* Period filter */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {(Object.keys(PERIOD_LABELS) as Period[]).map(p => (
+          <button key={p} onClick={() => setPeriod(p)}
+            className="h-8 px-3 rounded-lg text-xs font-semibold transition-colors"
+            style={period === p
+              ? { background: 'hsl(var(--primary))', color: '#fff' }
+              : { background: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))', border: '1px solid hsl(var(--border))' }}>
+            {PERIOD_LABELS[p]}
+          </button>
+        ))}
+      </div>
+
+      {/* KPI cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <KpiCard label="Revenue" value={fmt(revenue)}
+          sub={`${activeSales.length} sales in period`}
+          color="hsl(var(--primary))" />
+        <KpiCard label="Total Costs" value={fmt(opex)}
+          sub={`${periodExpenses.length} expenses`}
+          color="#f59e0b" />
+        <KpiCard label="Gross Profit" value={fmt(grossProfit)}
+          sub="Revenue − COGS"
+          color={grossProfit >= 0 ? '#22c55e' : '#ef4444'}
+          positive={grossProfit >= 0} />
+        <KpiCard label="Net Profit / Loss" value={fmt(netProfit)}
+          sub={`${Math.abs(margin)}% ${netProfit >= 0 ? 'margin' : 'loss margin'}`}
+          color={netProfit >= 0 ? '#22c55e' : '#ef4444'}
+          positive={netProfit >= 0} />
+      </div>
+
+      {/* Tabs */}
+      <div className="flex items-center gap-1 rounded-xl p-1 w-fit"
+        style={{ background: 'hsl(var(--muted))' }}>
+        {tabs.map(t => (
+          <button key={t.key} onClick={() => setActiveTab(t.key)}
+            className="h-8 px-4 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap"
+            style={activeTab === t.key
+              ? { background: 'hsl(var(--card))', color: 'hsl(var(--foreground))', boxShadow: '0 1px 4px rgba(0,0,0,0.12)' }
+              : { color: 'hsl(var(--muted-foreground))' }}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── OVERVIEW ─────────────────────────────────────────────────────────── */}
+      {activeTab === 'overview' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+          {/* Revenue vs Expenses Chart */}
+          <div className="rounded-xl p-5"
+            style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
+            <h3 className="text-sm font-bold mb-5" style={{ color: 'hsl(var(--foreground))' }}>
+              Revenue vs Expenses — Last 6 Months
+            </h3>
+            {chartData.every(m => m.revenue === 0 && m.expenses === 0) ? (
+              <div className="h-48 flex flex-col items-center justify-center gap-2">
+                <TrendingUp className="w-8 h-8 opacity-20" style={{ color: 'hsl(var(--muted-foreground))' }} />
+                <p className="text-xs text-center" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                  No data yet. Sales and expenses will appear here.
+                </p>
+              </div>
+            ) : (
+              <BarChart data={chartData} />
+            )}
+          </div>
+
+          {/* P&L Statement */}
+          <div className="rounded-xl p-5"
+            style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>
+                Profit & Loss Statement
+              </h3>
+              <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded-full"
+                style={{ background: netProfit >= 0 ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)', color: netProfit >= 0 ? '#22c55e' : '#ef4444' }}>
+                {netProfit >= 0 ? 'Profitable' : 'At a Loss'}
+              </span>
+            </div>
+
+            <div className="divide-y" style={{ borderColor: 'hsl(var(--border))' }}>
+              <PnLRow label="Revenue" value={revenue} bold />
+              <PnLRow label="Cost of Goods Sold (COGS)" value={-cogs} indent color={cogs > 0 ? '#f59e0b' : undefined} />
+              <PnLRow label="Gross Profit" value={grossProfit} bold separator
+                color={grossProfit >= 0 ? '#22c55e' : '#ef4444'} />
+              <PnLRow label="Operating Expenses" value={null} />
+
+              {/* Category rows */}
+              {categoryBreakdown.slice(0, 5).map(cat => (
+                <PnLRow key={cat.id} label={cat.name} value={-cat.spent} indent color="#f59e0b" />
+              ))}
+              {categoryBreakdown.length === 0 && (
+                <PnLRow label="No expenses in period" value={0} indent />
+              )}
+
+              <PnLRow label="Total Operating Expenses" value={-opex} bold separator color="#f59e0b" />
+              <div className="flex items-center justify-between py-4 rounded-lg px-3 mt-2"
+                style={{ background: netProfit >= 0 ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)' }}>
+                <span className="text-sm font-bold" style={{ color: netProfit >= 0 ? '#22c55e' : '#ef4444' }}>
+                  Net {netProfit >= 0 ? 'Profit' : 'Loss'}
+                </span>
+                <div className="flex items-center gap-2">
+                  {netProfit >= 0
+                    ? <TrendingUp className="w-4 h-4 text-[#22c55e]" />
+                    : <TrendingDown className="w-4 h-4 text-[#ef4444]" />}
+                  <span className="text-base font-bold" style={{ color: netProfit >= 0 ? '#22c55e' : '#ef4444' }}>
+                    {netProfit < 0 ? `(${fmtFull(-netProfit)})` : fmtFull(netProfit)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Expense by Category */}
+          <div className="rounded-xl p-5 lg:col-span-2"
+            style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
+            <h3 className="text-sm font-bold mb-4" style={{ color: 'hsl(var(--foreground))' }}>
+              Expense Breakdown by Category
+            </h3>
+            {categoryBreakdown.length === 0 ? (
+              <p className="text-xs text-center py-8" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                No expenses in this period.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+                {expenseCategories.map(cat => {
+                  const budget = budgetMap[cat.id] ?? 0;
+                  const spent  = periodExpenses
+                    .filter(e => e.category === cat.id || e.category === cat.name)
+                    .reduce((s, e) => s + parseAmt(e.amount), 0);
+                  if (spent === 0 && budget === 0) return null;
+                  const pct    = budget > 0 ? (spent / budget) * 100 : 0;
+                  const isOver = budget > 0 && spent > budget;
+                  return (
+                    <div key={cat.id}>
+                      <div className="flex items-center justify-between text-xs mb-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full" style={{ background: cat.color }} />
+                          <span style={{ color: 'hsl(var(--foreground))' }}>{cat.name}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span style={{ color: 'hsl(var(--muted-foreground))' }}>{fmt(spent)}</span>
+                          {budget > 0 && (
+                            <span className="font-semibold" style={{ color: isOver ? '#ef4444' : '#22c55e' }}>
+                              {Math.round(pct)}%
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'hsl(var(--muted))' }}>
+                        <div className="h-full rounded-full transition-all"
+                          style={{
+                            width: budget > 0 ? `${Math.min(pct, 100)}%` : spent > 0 ? '100%' : '0%',
+                            background: isOver ? '#ef4444' : cat.color,
+                            opacity: budget > 0 ? 1 : 0.5,
+                          }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
-      {/* Budgets Tab */}
-      {activeTab === 'Budgets' && (
+      {/* ── TRANSACTIONS ─────────────────────────────────────────────────────── */}
+      {activeTab === 'transactions' && (
+        <div className="rounded-xl overflow-hidden"
+          style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
+          <div className="flex items-center justify-between px-5 py-3.5"
+            style={{ borderBottom: '1px solid hsl(var(--border))' }}>
+            <h3 className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>All Transactions</h3>
+            <button onClick={() => setShowAdd(true)}
+              className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold text-white"
+              style={{ background: 'hsl(var(--primary))' }}>
+              <Plus className="w-3.5 h-3.5" />
+              Add Expense
+            </button>
+          </div>
+
+          {loading ? (
+            <div className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Loading…</div>
+          ) : allTx.length === 0 ? (
+            <div className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>
+              No expenses yet. Add your first one.
+            </div>
+          ) : (
+            <div>
+              {pagedTx.map((tx, i) => (
+                <div key={tx.id}
+                  style={{ borderBottom: i < pagedTx.length - 1 ? '1px solid hsl(var(--border))' : 'none' }}>
+                  {confirmDeleteId === tx.id ? (
+                    <div className="flex items-center gap-4 px-5 py-3.5"
+                      style={{ background: 'rgba(239,68,68,0.06)' }}>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold" style={{ color: '#ef4444' }}>
+                          Delete "{tx.description}"?
+                        </p>
+                        <p className="text-xs mt-0.5" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                          This cannot be undone.
+                        </p>
+                      </div>
+                      <button onClick={() => setConfirmDeleteId(null)}
+                        className="h-7 px-3 rounded-lg text-xs font-semibold"
+                        style={{ background: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' }}>
+                        Cancel
+                      </button>
+                      <button onClick={() => handleDelete(tx.id)}
+                        className="h-7 px-3 rounded-lg text-xs font-semibold text-white"
+                        style={{ background: '#ef4444' }}>
+                        Delete
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-4 px-5 py-3.5 group transition-colors"
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted)/0.4)'; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}>
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                        style={{ background: tx.type === 'expense' ? 'rgba(239,68,68,0.12)' : 'rgba(34,197,94,0.12)' }}>
+                        {tx.type === 'expense'
+                          ? <TrendingDown className="w-4 h-4" style={{ color: '#ef4444' }} />
+                          : <TrendingUp   className="w-4 h-4" style={{ color: '#22c55e' }} />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold truncate" style={{ color: 'hsl(var(--foreground))' }}>
+                          {tx.description}
+                        </p>
+                        <div className="flex items-center gap-3 mt-0.5">
+                          <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>{tx.category}</span>
+                          <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>{tx.date}</span>
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                            style={tx.status === 'Paid'
+                              ? { background: 'rgba(34,197,94,0.12)', color: '#22c55e' }
+                              : { background: 'rgba(245,158,11,0.12)', color: '#f59e0b' }}>
+                            {tx.status}
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-sm font-bold flex-shrink-0"
+                        style={{ color: tx.type === 'expense' ? '#ef4444' : '#22c55e' }}>
+                        {tx.type === 'expense' ? '-' : '+'}GH₵ {parseAmt(tx.amount).toLocaleString()}
+                      </p>
+                      <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => setEditing(tx)}
+                          className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors"
+                          style={{ color: 'hsl(var(--muted-foreground))' }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}>
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => setConfirmDeleteId(tx.id)}
+                          className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors"
+                          style={{ color: 'hsl(var(--muted-foreground))' }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.12)'; (e.currentTarget as HTMLElement).style.color = '#ef4444'; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.color = 'hsl(var(--muted-foreground))'; }}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="px-5 py-3">
+            <Pagination page={txPage} pageCount={txPageCount} total={allTx.length} pageSize={PAGE_SIZE} onPageChange={setTxPage} />
+          </div>
+        </div>
+      )}
+
+      {/* ── BUDGETS ──────────────────────────────────────────────────────────── */}
+      {activeTab === 'budgets' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {expenseCategories.map((cat) => {
-            const budget = budgetMap[cat.id] ?? 0;
-            const spent = expenses
-              .filter(e => e.type === 'expense' && e.category === cat.id)
-              .reduce((sum, e) => sum + parseAmt(e.amount), 0);
-            const percent = budget > 0 ? (spent / budget) * 100 : 0;
-            const isOver = budget > 0 && spent > budget;
+          {expenseCategories.map(cat => {
+            const budget  = budgetMap[cat.id] ?? 0;
+            const spent   = expenses
+              .filter(e => e.type === 'expense' && (e.category === cat.id || e.category === cat.name))
+              .reduce((s, e) => s + parseAmt(e.amount), 0);
+            const pct     = budget > 0 ? (spent / budget) * 100 : 0;
+            const isOver  = budget > 0 && spent > budget;
             const isEditing = editingBudgetId === cat.id;
 
             return (
-              <div key={cat.id} className="bg-white rounded-2xl p-5 border border-slate-100">
+              <div key={cat.id} className="rounded-xl p-5"
+                style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${cat.color}15` }}>
-                      <i className="ri-folder-line text-sm" style={{ color: cat.color }} />
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                      style={{ background: `${cat.color}20` }}>
+                      <span className="w-2.5 h-2.5 rounded-full" style={{ background: cat.color }} />
                     </div>
-                    <p className="text-sm font-semibold text-slate-800">{cat.name}</p>
+                    <span className="text-sm font-semibold" style={{ color: 'hsl(var(--foreground))' }}>{cat.name}</span>
                   </div>
                   {budget > 0 && (
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isOver ? 'bg-red-50 text-red-500' : percent > 80 ? 'bg-amber-50 text-amber-600' : 'bg-green-50 text-green-600'}`}>
-                      {isOver ? 'Over Budget' : percent > 80 ? 'Near Limit' : 'On Track'}
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                      style={isOver
+                        ? { background: 'rgba(239,68,68,0.12)', color: '#ef4444' }
+                        : pct > 80
+                          ? { background: 'rgba(245,158,11,0.12)', color: '#f59e0b' }
+                          : { background: 'rgba(34,197,94,0.12)', color: '#22c55e' }}>
+                      {isOver ? 'Over Budget' : pct > 80 ? 'Near Limit' : 'On Track'}
                     </span>
                   )}
                 </div>
 
                 <div className="flex items-baseline gap-1.5 mb-2">
-                  <span className="text-2xl font-bold text-slate-800">GHS {Math.round(spent).toLocaleString()}</span>
-                  {budget > 0 && <span className="text-xs text-slate-400">/ GHS {Math.round(budget).toLocaleString()}</span>}
+                  <span className="text-xl font-bold" style={{ color: 'hsl(var(--foreground))' }}>
+                    GH₵ {Math.round(spent).toLocaleString()}
+                  </span>
+                  {budget > 0 && (
+                    <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                      / GH₵ {Math.round(budget).toLocaleString()}
+                    </span>
+                  )}
                 </div>
 
                 {budget > 0 && (
                   <>
-                    <div className="h-2 rounded-full bg-slate-100 overflow-hidden mb-2">
-                      <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(percent, 100)}%`, background: isOver ? '#E05A2B' : cat.color }} />
+                    <div className="h-1.5 rounded-full overflow-hidden mb-2"
+                      style={{ background: 'hsl(var(--muted))' }}>
+                      <div className="h-full rounded-full transition-all"
+                        style={{ width: `${Math.min(pct, 100)}%`, background: isOver ? '#ef4444' : cat.color }} />
                     </div>
-                    <p className="text-xs text-slate-400 mb-3">
+                    <p className="text-xs mb-3" style={{ color: 'hsl(var(--muted-foreground))' }}>
                       {isOver
-                        ? `GHS ${Math.round(spent - budget).toLocaleString()} over budget`
-                        : `GHS ${Math.round(budget - spent).toLocaleString()} remaining`}
+                        ? `GH₵ ${Math.round(spent - budget).toLocaleString()} over budget`
+                        : `GH₵ ${Math.round(budget - spent).toLocaleString()} remaining`}
                     </p>
                   </>
                 )}
 
-                {/* Budget editor */}
                 {isEditing ? (
-                  <form onSubmit={e => { e.preventDefault(); setBudget(cat.id, parseFloat(budgetInput) || 0); setEditingBudgetId(null); }}
-                    className="flex items-center gap-2 mt-2">
-                    <div className="flex items-center gap-1 flex-1 rounded-xl px-3 py-2 text-sm" style={{ border: '1px solid rgba(7,16,31,0.12)', background: 'rgba(7,16,31,0.02)' }}>
-                      <span className="text-slate-400 text-xs">GHS</span>
-                      <input
-                        autoFocus
-                        type="number"
-                        value={budgetInput}
+                  <form onSubmit={e => {
+                    e.preventDefault();
+                    setBudget(cat.id, parseFloat(budgetInput) || 0);
+                    setEditingBudgetId(null);
+                  }} className="flex items-center gap-2 mt-2">
+                    <div className="flex items-center gap-1.5 flex-1 h-9 px-3 rounded-lg"
+                      style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))' }}>
+                      <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>GH₵</span>
+                      <input autoFocus type="number" value={budgetInput}
                         onChange={e => setBudgetInput(e.target.value)}
-                        placeholder="0"
-                        min="0"
-                        className="flex-1 outline-none bg-transparent text-slate-800 text-sm"
-                      />
+                        placeholder="0" min="0"
+                        className="flex-1 bg-transparent outline-none text-sm"
+                        style={{ color: 'hsl(var(--foreground))' }} />
                     </div>
-                    <button type="submit" className="px-3 py-2 rounded-xl text-xs font-semibold text-white cursor-pointer whitespace-nowrap" style={{ background: cat.color }}>
-                      Save
-                    </button>
+                    <button type="submit" className="h-9 px-3 rounded-lg text-xs font-semibold text-white"
+                      style={{ background: cat.color }}>Save</button>
                     <button type="button" onClick={() => setEditingBudgetId(null)}
-                      className="px-3 py-2 rounded-xl text-xs font-semibold text-slate-500 bg-slate-100 cursor-pointer whitespace-nowrap">
-                      Cancel
+                      className="w-9 h-9 flex items-center justify-center rounded-lg"
+                      style={{ background: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' }}>
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   </form>
                 ) : (
                   <button
                     onClick={() => { setEditingBudgetId(cat.id); setBudgetInput(budget > 0 ? String(budget) : ''); }}
-                    className="w-full py-2 rounded-xl text-xs font-semibold cursor-pointer whitespace-nowrap transition-colors hover:opacity-90"
-                    style={{ background: `${cat.color}15`, color: cat.color }}
-                  >
-                    <i className="ri-pencil-line mr-1" />
+                    className="w-full h-8 rounded-lg text-xs font-semibold transition-opacity hover:opacity-80"
+                    style={{ background: `${cat.color}18`, color: cat.color }}>
                     {budget > 0 ? 'Edit Budget' : 'Set Budget'}
                   </button>
                 )}
@@ -420,14 +642,15 @@ export default function ExpensesPage() {
         </div>
       )}
 
-      {(showAddExpense || editingExpense) && (
+      {/* Modals */}
+      {(showAdd || editing) && (
         <AddExpenseModal
           categories={expenseCategories}
-          expense={editingExpense ?? undefined}
+          expense={editing ?? undefined}
           onSave={handleSave}
-          onClose={() => { setShowAddExpense(false); setEditingExpense(null); }}
+          onClose={() => { setShowAdd(false); setEditing(null); }}
         />
       )}
-    </AdminLayout>
+    </div>
   );
 }

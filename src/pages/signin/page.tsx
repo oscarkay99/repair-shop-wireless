@@ -1,18 +1,39 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import {
+  Mail, Lock, Eye, EyeOff, ArrowRight, Loader2,
+  ArrowLeft, KeyRound, MailCheck, AlertCircle, CheckCircle2,
+  LogIn,
+} from 'lucide-react';
 
-function WirelessLogoMark({ size = 40 }: { size?: number }) {
-  return (
-    <img
-      src="/wireless-logo.png"
-      alt="Wireless"
-      width={size}
-      height={size}
-      style={{ width: size, height: size, objectFit: 'contain', display: 'block' }}
-    />
-  );
-}
+const DEMO_ACCOUNTS = [
+  {
+    name: 'Kwame Asante', role: 'Admin', email: 'admin@wireless.com', password: 'admin123', avatar: 'KA',
+    color: '#DC1F1F', badgeBg: 'hsl(350 60% 95%)', hoverBg: 'hsl(350 60% 96%)', hoverBorder: 'hsl(350 60% 85%)',
+    access: ['Dashboard', 'Repairs', 'Inventory', 'Sales', 'Analytics', 'Team', 'Settings', '+ more'],
+  },
+  {
+    name: 'Efua Boateng', role: 'Receptionist', email: 'efua@wireless.com', password: 'efua123', avatar: 'EB',
+    color: '#8B5CF6', badgeBg: 'hsl(262 60% 95%)', hoverBg: 'hsl(262 60% 96%)', hoverBorder: 'hsl(262 60% 85%)',
+    access: ['Dashboard', 'Repairs', 'Customers', 'Payments', 'Invoices'],
+  },
+  {
+    name: 'Ama Owusu', role: 'Technician', email: 'ama@wireless.com', password: 'ama123', avatar: 'AO',
+    color: '#06B6D4', badgeBg: 'hsl(190 80% 93%)', hoverBg: 'hsl(190 80% 95%)', hoverBorder: 'hsl(190 60% 80%)',
+    access: ['Dashboard', 'Repairs', 'Warranty', 'Inventory', 'Customers'],
+  },
+  {
+    name: 'Kofi Mensah', role: 'Sales Manager', email: 'kofi@wireless.com', password: 'kofi123', avatar: 'KM',
+    color: '#F59E0B', badgeBg: 'hsl(38 90% 93%)', hoverBg: 'hsl(38 90% 95%)', hoverBorder: 'hsl(38 70% 80%)',
+    access: ['Dashboard', 'Sales', 'Customers', 'Inventory', 'Repairs', 'Analytics', 'Reports'],
+  },
+  {
+    name: 'Yaw Darko', role: 'Inventory Manager', email: 'yaw@wireless.com', password: 'yaw123', avatar: 'YD',
+    color: '#64748B', badgeBg: 'hsl(215 20% 93%)', hoverBg: 'hsl(215 20% 95%)', hoverBorder: 'hsl(215 20% 80%)',
+    access: ['Dashboard', 'Analytics', 'Inventory', 'Delivery', 'Reports'],
+  },
+];
 
 const modules = [
   { icon: 'ri-store-3-line', label: 'POS' },
@@ -35,8 +56,6 @@ export default function SignInPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [emailFocused, setEmailFocused] = useState(false);
-  const [passwordFocused, setPasswordFocused] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
 
   const [view, setView] = useState<'signin' | 'forgot' | 'reset_sent'>('signin');
@@ -72,241 +91,264 @@ export default function SignInPage() {
     setForgotError(result.error || 'Unable to send reset link');
   };
 
-  const quickLogin = (userEmail: string, userPassword: string) => {
+  const quickLogin = async (userEmail: string, userPassword: string) => {
     setEmail(userEmail);
     setPassword(userPassword);
     setError('');
+    setLoading(true);
+    const result = await login(userEmail, userPassword);
+    setLoading(false);
+    if (result.success) {
+      setLoginSuccess(true);
+      await new Promise(r => setTimeout(r, 600));
+      navigate('/');
+    } else {
+      setError(result.error || 'Invalid credentials');
+    }
+  };
+
+  const inputBase: React.CSSProperties = {
+    background: 'hsl(220 20% 97%)',
+    border: '1.5px solid hsl(220 13% 90%)',
+    color: 'hsl(220 20% 12%)',
+    borderRadius: 10,
+    width: '100%',
+    fontSize: 14,
+    outline: 'none',
+    boxShadow: 'inset 0 1px 2px hsl(220 20% 12% / 0.03)',
+    transition: 'border-color 0.15s, box-shadow 0.15s',
+  };
+
+  const inputFocus: React.CSSProperties = {
+    border: '1.5px solid hsl(350 60% 55%)',
+    boxShadow: '0 0 0 3px hsl(350 60% 55% / 0.12)',
   };
 
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[1.08fr_0.92fr] overflow-hidden" style={{ background: '#0D0303' }}>
-
-      {/* ── LEFT PANEL ── */}
-      <div className="hidden lg:flex relative min-h-screen overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src="https://readdy.ai/api/search-image?query=modern%20premium%20phone%20repair%20shop%20interior%20with%20technician%20workstation%2C%20tools%20and%20devices%2C%20dark%20navy%20and%20gold%20ambient%20lighting%2C%20high-end%20professional%20atmosphere%2C%20bokeh%20background%2C%20cinematic%20photography%2C%20ultra%20wide%20angle%2C%20deep%20shadows%20and%20warm%20accent%20lights&width=1100&height=900&seq=fixhub-signin-bg-01&orientation=landscape"
-            alt="Wireless"
-            className="w-full h-full object-cover object-center"
-          />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(13,3,3,0.90) 0%, rgba(36,8,7,0.78) 50%, rgba(13,3,3,0.93) 100%)' }} />
-          <div className="absolute bottom-0 left-0 right-0 h-40" style={{ background: 'linear-gradient(to top, #0D0303, transparent)' }} />
-        </div>
-
-        <div className="absolute inset-0 pointer-events-none opacity-10">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="absolute top-0 bottom-0 border-l border-white/20" style={{ left: `${(i + 1) * 16.66}%` }} />
-          ))}
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="absolute left-0 right-0 border-t border-white/20" style={{ top: `${(i + 1) * 20}%` }} />
-          ))}
-        </div>
-
-        <div className="absolute top-1/4 left-1/4 w-72 h-72 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(200,64,21,0.14) 0%, transparent 70%)' }} />
-        <div className="absolute bottom-1/3 right-1/4 w-56 h-56 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(153,27,27,0.20) 0%, transparent 70%)' }} />
+    <div
+      className="min-h-screen lg:grid lg:grid-cols-[1.1fr_0.9fr] overflow-hidden"
+      style={{ background: 'hsl(220 14% 95%)' }}
+    >
+      {/* ── LEFT PANEL (dark wine brand side) ── */}
+      <div className="hidden lg:flex relative min-h-screen overflow-hidden" style={{ background: 'hsl(350 38% 10%)' }}>
+        {/* Single soft glow, off-center */}
+        <div className="absolute top-[10%] right-[-10%] w-[480px] h-[480px] rounded-full pointer-events-none blur-3xl"
+          style={{ background: 'radial-gradient(circle, hsl(350 55% 22% / 0.35) 0%, transparent 72%)' }} />
+        <div className="absolute bottom-0 left-0 right-0 h-56 pointer-events-none"
+          style={{ background: 'linear-gradient(to top, hsl(350 40% 7%), transparent)' }} />
 
         <div className="relative z-10 flex min-h-screen flex-col px-12 py-10">
+          {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center rounded-xl overflow-hidden bg-white/10" style={{ width: 42, height: 42 }}>
-              <WirelessLogoMark size={32} />
+            <div
+              className="flex items-center justify-center rounded-xl"
+              style={{
+                width: 40, height: 40,
+                background: '#0F0F0F',
+                boxShadow: 'rgba(220,60,40,0.80) 0px 0px 14px 3px, rgba(220,60,40,0.45) 0px 0px 32px 8px, rgba(220,60,40,0.20) 0px 0px 56px 14px',
+              }}
+            >
+              <span className="text-white font-black text-[15px] tracking-tighter" style={{ fontFamily: 'ui-sans-serif, system-ui, sans-serif' }}>W</span>
             </div>
             <div className="leading-none">
-              <p
-                className="text-[22px] font-bold lowercase text-white"
-                style={{ letterSpacing: '-0.03em', fontFamily: 'ui-sans-serif, system-ui, sans-serif' }}
-              >
+              <p className="text-[22px] font-bold lowercase text-white" style={{ letterSpacing: '-0.03em', fontFamily: 'ui-sans-serif, system-ui, sans-serif' }}>
                 wireless
               </p>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/55 mt-0.5">Command Center</p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mt-0.5" style={{ color: 'hsl(350 40% 65%)' }}>Command Center</p>
             </div>
           </div>
 
+          {/* Hero */}
           <div className="flex flex-1 flex-col justify-center">
             <div className="max-w-xl">
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-white/80 backdrop-blur-sm">
-                <span className="h-2 w-2 rounded-full" style={{ background: '#C84015' }} />
-                Phone Repair Shop Command Center
-              </div>
-              <h1 className="text-5xl font-black text-white leading-[1.02] tracking-tight">
+              <h1 className="text-5xl font-black text-white leading-[1.04] tracking-tight">
                 Run your entire
                 <br />
                 repair business
                 <br />
-                <span style={{ color: '#C84015' }}>from one place.</span>
+                <span style={{ color: 'hsl(350 65% 62%)' }}>from one place.</span>
               </h1>
-              <p className="mt-5 max-w-md text-sm leading-relaxed text-white/80">
-                Wireless brings repairs, sales, inventory, customer follow-up and analytics into one secure command center built for fast-moving phone repair shops.
+              <p className="mt-5 max-w-md text-sm leading-relaxed" style={{ color: 'hsl(350 15% 65%)' }}>
+                Wireless brings repairs, sales, inventory, customer follow-up and analytics into one secure command center built for fast-moving gadget repair shops.
               </p>
             </div>
           </div>
 
-          <div>
-            <div className="flex flex-wrap gap-2">
-              {modules.map(m => (
-                <div key={m.label} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)' }}>
-                  <i className={`${m.icon} text-xs text-white/75`} />
-                  <span className="text-white/75 text-[10px] font-medium">{m.label}</span>
+          {/* Capability strip */}
+          <div className="pt-8" style={{ borderTop: '1px solid hsl(350 30% 16%)' }}>
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+              {modules.map((m, i) => (
+                <div key={m.label} className="flex items-center gap-4">
+                  <div className="flex items-center gap-1.5">
+                    <i className={`${m.icon} text-[13px]`} style={{ color: 'hsl(350 45% 55%)' }} />
+                    <span className="text-[11px] font-medium tracking-wide" style={{ color: 'hsl(350 12% 60%)' }}>{m.label}</span>
+                  </div>
+                  {i < modules.length - 1 && <span className="h-3 w-px" style={{ background: 'hsl(350 25% 18%)' }} />}
                 </div>
               ))}
             </div>
-            <p className="text-white/50 text-[10px] mt-8">&copy; 2026 Wireless · All rights reserved</p>
+            <p className="text-[10px] mt-7" style={{ color: 'hsl(350 15% 34%)' }}>&copy; 2026 Wireless · All rights reserved</p>
           </div>
         </div>
       </div>
 
-      {/* ── RIGHT PANEL ── */}
-      <div className="relative flex min-h-screen items-stretch justify-center px-6 py-8 lg:px-10 lg:py-10">
-        <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 60% 40%, rgba(153,27,27,0.08) 0%, transparent 60%)' }} />
-
-        <div className="relative z-10 flex w-full max-w-[440px] flex-col justify-center">
-          <div className="rounded-[32px] border border-white/10 bg-white/[0.035] p-6 shadow-[0_30px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl lg:p-8">
-            <div className="mb-7 flex items-center gap-3 lg:hidden">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/8 ring-1 ring-white/10">
-                <WirelessLogoMark size={32} />
-              </div>
-              <div>
-                <p
-                  className="text-2xl font-bold lowercase leading-none text-white"
-                  style={{ letterSpacing: '-0.03em', fontFamily: 'ui-sans-serif, system-ui, sans-serif' }}
-                >
-                  wireless
-                </p>
-                <p className="mt-0.5 text-xs font-semibold uppercase tracking-[0.24em] text-white/70">Command Center</p>
-              </div>
+      {/* ── RIGHT PANEL (light form side) ── */}
+      <div
+        className="relative flex min-h-screen items-stretch justify-center px-6 py-8 lg:px-10 lg:py-10"
+        style={{ background: 'hsl(220 14% 95%)' }}
+      >
+        <div className="relative z-10 flex w-full max-w-[420px] flex-col justify-center">
+          {/* Mobile logo */}
+          <div className="flex items-center gap-3 mb-8 lg:hidden">
+            <div
+              className="flex items-center justify-center rounded-xl"
+              style={{
+                width: 36, height: 36,
+                background: '#0F0F0F',
+                boxShadow: 'rgba(220,60,40,0.70) 0px 0px 10px 2px',
+              }}
+            >
+              <span className="text-white font-black text-[13px]" style={{ fontFamily: 'ui-sans-serif, system-ui, sans-serif' }}>W</span>
             </div>
+            <div>
+              <p className="text-xl font-bold lowercase leading-none" style={{ letterSpacing: '-0.03em', color: 'hsl(350 60% 22%)' }}>wireless</p>
+              <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: 'hsl(var(--muted-foreground))' }}>Command Center</p>
+            </div>
+          </div>
 
+          <div
+            className="relative rounded-2xl p-7"
+            style={{
+              background: 'hsl(0 0% 99%)',
+              border: '1px solid hsl(220 13% 90%)',
+              boxShadow: '0 1px 2px hsl(220 20% 12% / 0.04), 0 8px 20px -8px hsl(220 20% 12% / 0.08)',
+            }}
+          >
             {/* ── SIGN IN VIEW ── */}
             {view === 'signin' && (
               <div className={`transition-all duration-500 ${loginSuccess ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}>
-                <div className="mb-7">
-                  <h2 className="text-2xl font-black text-white mb-1 tracking-tight">Welcome back</h2>
-                  <p className="text-white/65 text-sm">Sign in to your Command Center</p>
+                <div className="mb-5 flex items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-xl font-black tracking-tight mb-1" style={{ color: 'hsl(220 20% 12%)' }}>Welcome back</h2>
+                    <p className="text-sm" style={{ color: 'hsl(var(--muted-foreground))' }}>Sign in to your Command Center</p>
+                  </div>
+                  {/* Live / Demo badge */}
+                  <div
+                    className="flex items-center gap-1.5 px-2 py-[3px] rounded-md text-[9.5px] font-semibold uppercase tracking-wider flex-shrink-0 mt-1"
+                    style={isSupabaseAuth
+                      ? { background: 'hsl(142 45% 95%)', color: 'hsl(142 55% 26%)' }
+                      : { background: 'hsl(38 80% 95%)', color: 'hsl(38 75% 32%)' }
+                    }
+                  >
+                    <span className="w-[5px] h-[5px] rounded-full" style={{ background: isSupabaseAuth ? 'hsl(142 55% 40%)' : 'hsl(38 80% 50%)' }} />
+                    {isSupabaseAuth ? 'Live System' : 'Demo Mode'}
+                  </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label className="text-xs font-semibold text-white/70 block mb-2">Email Address</label>
-                    <div className="relative">
-                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center">
-                        <i className={`ri-mail-line text-sm transition-colors ${emailFocused ? '' : 'text-white/30'}`} style={emailFocused ? { color: '#C84015' } : {}} />
-                      </div>
-                      <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        onFocus={() => setEmailFocused(true)}
-                        onBlur={() => setEmailFocused(false)}
-                        placeholder="you@wireless.com"
-                        className="w-full pl-10 pr-4 py-3.5 rounded-xl text-sm text-white placeholder:text-white/25 focus:outline-none transition-all"
-                        style={{
-                          background: emailFocused ? 'rgba(153,27,27,0.12)' : 'rgba(255,255,255,0.06)',
-                          border: emailFocused ? '1px solid rgba(153,27,27,0.6)' : '1px solid rgba(255,255,255,0.1)',
-                        }}
-                      />
-                    </div>
-                  </div>
+                  <FocusInput
+                    icon={<Mail className="w-4 h-4" />}
+                    type="email"
+                    value={email}
+                    onChange={setEmail}
+                    placeholder={isSupabaseAuth ? 'your@email.com' : 'you@wireless.com'}
+                    label="Email Address"
+                    inputBase={inputBase}
+                    inputFocus={inputFocus}
+                  />
 
                   <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="text-xs font-semibold text-white/70">Password</label>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>Password</label>
                       <button
                         type="button"
                         onClick={() => { setView('forgot'); setForgotEmail(email); setForgotError(''); }}
                         className="text-xs font-semibold cursor-pointer hover:opacity-80 transition-opacity"
-                        style={{ color: '#C84015' }}
+                        style={{ color: 'hsl(350 60% 35%)' }}
                       >
                         Forgot password?
                       </button>
                     </div>
-                    <div className="relative">
-                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center">
-                        <i className={`ri-lock-line text-sm transition-colors ${passwordFocused ? '' : 'text-white/30'}`} style={passwordFocused ? { color: '#C84015' } : {}} />
-                      </div>
-                      <input
-                        type={showPassword ? 'text' : 'password'}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        onFocus={() => setPasswordFocused(true)}
-                        onBlur={() => setPasswordFocused(false)}
-                        placeholder="Enter your password"
-                        className="w-full pl-10 pr-12 py-3.5 rounded-xl text-sm text-white placeholder:text-white/25 focus:outline-none transition-all"
-                        style={{
-                          background: passwordFocused ? 'rgba(153,27,27,0.12)' : 'rgba(255,255,255,0.06)',
-                          border: passwordFocused ? '1px solid rgba(153,27,27,0.6)' : '1px solid rgba(255,255,255,0.1)',
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center text-white/30 hover:text-white/60 cursor-pointer transition-colors"
-                      >
-                        <i className={`${showPassword ? 'ri-eye-off-line' : 'ri-eye-line'} text-sm`} />
-                      </button>
-                    </div>
+                    <PasswordInput
+                      value={password}
+                      onChange={setPassword}
+                      show={showPassword}
+                      onToggle={() => setShowPassword(s => !s)}
+                      inputBase={inputBase}
+                      inputFocus={inputFocus}
+                    />
                   </div>
 
                   {error && (
-                    <div className="flex items-center gap-2.5 p-3 rounded-xl" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)' }}>
-                      <i className="ri-error-warning-line text-red-400 text-sm flex-shrink-0" />
-                      <p className="text-xs text-red-300">{error}</p>
+                    <div className="flex items-center gap-2 p-3 rounded-lg text-xs"
+                      style={{ background: 'hsl(0 80% 97%)', border: '1px solid hsl(0 70% 88%)', color: 'hsl(0 65% 40%)' }}>
+                      <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                      {error}
                     </div>
                   )}
 
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-3.5 rounded-xl text-sm font-bold text-white transition-all cursor-pointer whitespace-nowrap relative overflow-hidden group"
-                    style={{ background: loading ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, #DC1F1F 0%, #991010 100%)', border: '1px solid rgba(220,31,31,0.4)' }}
+                    className="w-full py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer hover:opacity-90"
+                    style={{
+                      background: 'hsl(350 58% 34%)',
+                      boxShadow: '0 2px 6px hsl(350 50% 30% / 0.25)',
+                      opacity: loading ? 0.7 : 1,
+                    }}
                   >
-                    <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: 'linear-gradient(135deg, #F22828 0%, #DC1F1F 100%)' }} />
-                    <span className="relative flex items-center justify-center gap-2">
-                      {loading ? (
-                        <><i className="ri-loader-4-line animate-spin" /> Signing in...</>
-                      ) : (
-                        <><i className="ri-login-box-line" /> Sign In to Command Center</>
-                      )}
-                    </span>
+                    {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Signing in…</> : <><LogIn className="w-4 h-4" /> Sign In</>}
                   </button>
                 </form>
 
                 <div className="flex items-center gap-3 my-5">
-                  <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
-                  <span className="text-[10px] text-white/25 uppercase tracking-wider">Demo Accounts</span>
-                  <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
+                  <div className="flex-1 h-px" style={{ background: 'hsl(220 13% 91%)' }} />
+                  <span className="text-[10px] uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>Quick Login</span>
+                  <div className="flex-1 h-px" style={{ background: 'hsl(220 13% 91%)' }} />
                 </div>
 
-                <div className="space-y-2">
-                  {[
-                    { name: 'Kwame Asante', role: 'Admin', email: 'admin@wireless.com', password: 'admin123', avatar: 'KA', color: '#DC1F1F' },
-                    { name: 'Kofi Mensah', role: 'Sales Manager', email: 'kofi@wireless.com', password: 'kofi123', avatar: 'KM', color: '#C84015' },
-                    { name: 'Ama Owusu', role: 'Technician', email: 'ama@wireless.com', password: 'ama123', avatar: 'AO', color: '#E05A2B' },
-                  ].map(u => (
-                    <button
-                      key={u.email}
-                      type="button"
-                      onClick={() => quickLogin(u.email, u.password)}
-                      className="w-full flex items-center gap-3 p-3 rounded-xl transition-all cursor-pointer text-left group"
-                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
-                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
-                    >
-                      <div className="w-8 h-8 rounded-xl flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0" style={{ background: u.color }}>
-                        {u.avatar}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-white/80">{u.name} <span className="text-white/35 font-normal">· {u.role}</span></p>
-                        <p className="text-[10px] text-white/45 font-mono mt-0.5">{u.email}</p>
-                        <p className="text-[10px] mt-0.5">
-                          <span className="text-white/30">pw: </span>
-                          <span className="text-white/60 font-mono">{u.password}</span>
-                        </p>
-                      </div>
-                      <i className="ri-arrow-right-line text-white/20 text-sm group-hover:text-white/50 transition-colors flex-shrink-0" />
-                    </button>
-                  ))}
+                <div className="space-y-1.5 max-h-[280px] overflow-y-auto pr-0.5 -mr-0.5">
+                  {DEMO_ACCOUNTS.map(u => {
+                    const shown = u.access.slice(0, 3);
+                    const rest = u.access.length - shown.length;
+                    return (
+                      <button
+                        key={u.email}
+                        type="button"
+                        onClick={() => quickLogin(u.email, u.password)}
+                        className="w-full flex items-center gap-3 p-2.5 rounded-xl text-left cursor-pointer group"
+                        style={{ background: 'hsl(220 14% 97%)', border: '1px solid hsl(220 13% 92%)', boxShadow: '0 1px 1px hsl(220 20% 12% / 0.02)', transition: 'background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s' }}
+                        onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = u.hoverBg; el.style.borderColor = u.hoverBorder; el.style.boxShadow = '0 4px 12px hsl(220 20% 12% / 0.06)'; }}
+                        onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'hsl(220 14% 97%)'; el.style.borderColor = 'hsl(220 13% 92%)'; el.style.boxShadow = '0 1px 1px hsl(220 20% 12% / 0.02)'; }}
+                      >
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0"
+                          style={{ background: u.color }}>
+                          {u.avatar}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className="text-xs font-semibold" style={{ color: 'hsl(220 20% 12%)' }}>{u.name}</p>
+                            <span className="text-[9.5px] font-semibold px-1.5 py-[1px] rounded-full" style={{ background: u.badgeBg, color: u.color }}>{u.role}</span>
+                          </div>
+                          <p className="text-[10px] font-mono mt-0.5 truncate" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                            {u.email} · pw: <span style={{ color: 'hsl(220 20% 35%)' }}>{u.password}</span>
+                          </p>
+                          <div className="flex items-center gap-1 mt-1 flex-wrap">
+                            {shown.map(a => (
+                              <span key={a} className="text-[9px] font-medium px-1.5 py-[1px] rounded" style={{ background: 'hsl(220 13% 92%)', color: 'hsl(220 10% 44%)' }}>{a}</span>
+                            ))}
+                            {rest > 0 && (
+                              <span className="text-[9px] font-medium" style={{ color: 'hsl(220 10% 60%)' }}>+{rest} more</span>
+                            )}
+                          </div>
+                        </div>
+                        <ArrowRight className="w-3.5 h-3.5 flex-shrink-0 opacity-0 group-hover:opacity-60 transition-opacity" style={{ color: u.color }} />
+                      </button>
+                    );
+                  })}
                 </div>
 
-                <p className="text-center text-[11px] text-white/45 mt-6">
+                <p className="text-center text-[11px] mt-5" style={{ color: 'hsl(var(--muted-foreground))' }}>
                   Having trouble? Contact your system administrator.
                 </p>
               </div>
@@ -317,47 +359,44 @@ export default function SignInPage() {
               <div>
                 <button
                   onClick={() => setView('signin')}
-                  className="flex items-center gap-1.5 text-xs text-white/60 hover:text-white/90 cursor-pointer mb-7 transition-colors"
+                  className="flex items-center gap-1.5 text-xs font-medium mb-6 cursor-pointer transition-opacity hover:opacity-70"
+                  style={{ color: 'hsl(var(--muted-foreground))' }}
                 >
-                  <i className="ri-arrow-left-line" /> Back to Sign In
+                  <ArrowLeft className="w-3.5 h-3.5" /> Back to Sign In
                 </button>
-                <div className="mb-7">
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'rgba(245,166,35,0.15)', border: '1px solid rgba(245,166,35,0.25)' }}>
-                    <i className="ri-lock-password-line text-xl" style={{ color: '#C84015' }} />
+                <div className="mb-6">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
+                    style={{ background: 'hsl(350 60% 96%)', border: '1px solid hsl(350 60% 85%)' }}>
+                    <KeyRound className="w-5 h-5" style={{ color: 'hsl(350 60% 35%)' }} />
                   </div>
-                  <h2 className="text-2xl font-black text-white mb-1 tracking-tight">Forgot Password?</h2>
-                  <p className="text-white/65 text-sm">Enter your email and we&apos;ll send you a reset link.</p>
+                  <h2 className="text-xl font-black tracking-tight mb-1" style={{ color: 'hsl(220 20% 12%)' }}>Forgot Password?</h2>
+                  <p className="text-sm" style={{ color: 'hsl(var(--muted-foreground))' }}>Enter your email and we'll send you a reset link.</p>
                 </div>
                 <form onSubmit={handleForgotPassword} className="space-y-4">
-                  <div>
-                    <label className="text-xs font-semibold text-white/70 block mb-2">Email Address</label>
-                    <div className="relative">
-                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2">
-                        <i className="ri-mail-line text-white/30 text-sm" />
-                      </div>
-                      <input
-                        type="email"
-                        value={forgotEmail}
-                        onChange={(e) => setForgotEmail(e.target.value)}
-                        placeholder="you@wireless.com"
-                        className="w-full pl-10 pr-4 py-3.5 rounded-xl text-sm text-white placeholder:text-white/25 focus:outline-none transition-all"
-                        style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
-                      />
-                    </div>
-                  </div>
+                  <FocusInput
+                    icon={<Mail className="w-4 h-4" />}
+                    type="email"
+                    value={forgotEmail}
+                    onChange={setForgotEmail}
+                    placeholder="you@wireless.com"
+                    label="Email Address"
+                    inputBase={inputBase}
+                    inputFocus={inputFocus}
+                  />
                   {forgotError && (
-                    <div className="flex items-center gap-2.5 p-3 rounded-xl" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)' }}>
-                      <i className="ri-error-warning-line text-red-400 text-sm" />
-                      <p className="text-xs text-red-300">{forgotError}</p>
+                    <div className="flex items-center gap-2 p-3 rounded-lg text-xs"
+                      style={{ background: 'hsl(0 80% 97%)', border: '1px solid hsl(0 70% 88%)', color: 'hsl(0 65% 40%)' }}>
+                      <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                      {forgotError}
                     </div>
                   )}
                   <button
                     type="submit"
                     disabled={forgotLoading}
-                    className="w-full py-3.5 rounded-xl text-sm font-bold text-white transition-all cursor-pointer whitespace-nowrap"
-                    style={{ background: forgotLoading ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, #DC1F1F 0%, #991010 100%)', border: '1px solid rgba(220,31,31,0.4)' }}
+                    className="w-full py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 cursor-pointer"
+                    style={{ background: 'hsl(350 60% 35%)', opacity: forgotLoading ? 0.7 : 1 }}
                   >
-                    {forgotLoading ? <span className="flex items-center justify-center gap-2"><i className="ri-loader-4-line animate-spin" /> Sending...</span> : 'Send Reset Link'}
+                    {forgotLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Sending…</> : 'Send Reset Link'}
                   </button>
                 </form>
               </div>
@@ -366,18 +405,22 @@ export default function SignInPage() {
             {/* ── RESET SENT VIEW ── */}
             {view === 'reset_sent' && (
               <div className="text-center">
-                <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ background: 'rgba(37,211,102,0.15)', border: '1px solid rgba(37,211,102,0.25)' }}>
-                  <i className="ri-mail-check-line text-3xl" style={{ color: '#25D366' }} />
+                <div className="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-5"
+                  style={{ background: 'hsl(142 55% 91%)', border: '1px solid hsl(142 50% 78%)' }}>
+                  <MailCheck className="w-7 h-7" style={{ color: 'hsl(142 55% 28%)' }} />
                 </div>
-                <h2 className="text-2xl font-black text-white mb-2 tracking-tight">Check your email</h2>
-                <p className="text-white/65 text-sm mb-2">We&apos;ve sent a password reset link to</p>
-                <p className="text-sm font-bold mb-6" style={{ color: '#C84015' }}>{forgotEmail}</p>
-                <div className="p-4 rounded-xl mb-6 text-left" style={{ background: 'rgba(153,27,27,0.08)', border: '1px solid rgba(200,64,21,0.2)' }}>
+                <h2 className="text-xl font-black tracking-tight mb-2" style={{ color: 'hsl(220 20% 12%)' }}>Check your email</h2>
+                <p className="text-sm mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>We've sent a reset link to</p>
+                <p className="text-sm font-bold mb-5" style={{ color: 'hsl(350 60% 35%)' }}>{forgotEmail}</p>
+                <div className="p-3 rounded-lg mb-5 text-left"
+                  style={{ background: 'hsl(350 60% 97%)', border: '1px solid hsl(350 60% 88%)' }}>
                   <div className="flex items-start gap-2">
-                    <i className="ri-information-line text-sm mt-0.5" style={{ color: '#C84015' }} />
+                    <AlertCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: 'hsl(350 60% 42%)' }} />
                     <div>
-                      <p className="text-xs font-semibold mb-0.5" style={{ color: '#C84015' }}>{isSupabaseAuth ? 'Supabase Connected' : 'Demo Mode'}</p>
-                      <p className="text-xs text-white/65">
+                      <p className="text-xs font-semibold mb-0.5" style={{ color: 'hsl(350 60% 35%)' }}>
+                        {isSupabaseAuth ? 'Supabase Connected' : 'Demo Mode'}
+                      </p>
+                      <p className="text-xs" style={{ color: 'hsl(350 30% 42%)' }}>
                         {isSupabaseAuth
                           ? 'If your Supabase project is configured to send auth emails, the reset link has been dispatched.'
                           : 'This is a simulated reset. Contact your system administrator to reset your password.'}
@@ -387,26 +430,104 @@ export default function SignInPage() {
                 </div>
                 <button
                   onClick={() => setView('signin')}
-                  className="w-full py-3.5 rounded-xl text-sm font-bold text-white cursor-pointer whitespace-nowrap"
-                  style={{ background: 'linear-gradient(135deg, #DC1F1F 0%, #991010 100%)', border: '1px solid rgba(220,31,31,0.4)' }}
+                  className="w-full py-3 rounded-xl text-sm font-bold text-white cursor-pointer"
+                  style={{ background: 'hsl(350 60% 35%)' }}
                 >
                   Back to Sign In
                 </button>
               </div>
             )}
 
+            {/* ── SUCCESS OVERLAY ── */}
             {loginSuccess && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
-                <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'rgba(37,211,102,0.2)', border: '1px solid rgba(37,211,102,0.4)' }}>
-                  <i className="ri-check-double-line text-3xl" style={{ color: '#25D366' }} />
+              <div className="absolute inset-0 flex flex-col items-center justify-center z-20 rounded-2xl"
+                style={{ background: 'hsl(0 0% 100% / 0.95)' }}>
+                <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-4"
+                  style={{ background: 'hsl(142 55% 91%)', border: '1px solid hsl(142 50% 78%)' }}>
+                  <CheckCircle2 className="w-7 h-7" style={{ color: 'hsl(142 55% 28%)' }} />
                 </div>
-                <p className="text-white font-bold text-lg">Welcome back!</p>
-                <p className="text-white/65 text-sm mt-1">Redirecting to Command Center...</p>
+                <p className="font-bold text-lg" style={{ color: 'hsl(220 20% 12%)' }}>Welcome back!</p>
+                <p className="text-sm mt-1" style={{ color: 'hsl(var(--muted-foreground))' }}>Redirecting to Command Center…</p>
               </div>
             )}
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ── Helper components ──────────────────────────────────────────
+
+interface FocusInputProps {
+  icon: React.ReactNode;
+  type: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  label: string;
+  inputBase: React.CSSProperties;
+  inputFocus: React.CSSProperties;
+}
+
+function FocusInput({ icon, type, value, onChange, placeholder, label, inputBase, inputFocus }: FocusInputProps) {
+  const [focused, setFocused] = useState(false);
+  return (
+    <div>
+      <label className="text-[11px] font-semibold uppercase tracking-wider mb-1.5 block" style={{ color: 'hsl(var(--muted-foreground))' }}>{label}</label>
+      <div className="relative">
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center"
+          style={{ color: focused ? 'hsl(350 60% 45%)' : 'hsl(var(--muted-foreground))' }}>
+          {icon}
+        </div>
+        <input
+          type={type}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          placeholder={placeholder}
+          style={{ ...inputBase, paddingLeft: 36, paddingRight: 12, paddingTop: 10, paddingBottom: 10, ...(focused ? inputFocus : {}) }}
+        />
+      </div>
+    </div>
+  );
+}
+
+interface PasswordInputProps {
+  value: string;
+  onChange: (v: string) => void;
+  show: boolean;
+  onToggle: () => void;
+  inputBase: React.CSSProperties;
+  inputFocus: React.CSSProperties;
+}
+
+function PasswordInput({ value, onChange, show, onToggle, inputBase, inputFocus }: PasswordInputProps) {
+  const [focused, setFocused] = useState(false);
+  return (
+    <div className="relative">
+      <div className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center"
+        style={{ color: focused ? 'hsl(350 60% 45%)' : 'hsl(var(--muted-foreground))' }}>
+        <Lock className="w-4 h-4" />
+      </div>
+      <input
+        type={show ? 'text' : 'password'}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        placeholder="Enter your password"
+        style={{ ...inputBase, paddingLeft: 36, paddingRight: 40, paddingTop: 10, paddingBottom: 10, ...(focused ? inputFocus : {}) }}
+      />
+      <button
+        type="button"
+        onClick={onToggle}
+        className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
+        style={{ color: 'hsl(var(--muted-foreground))' }}
+      >
+        {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+      </button>
     </div>
   );
 }

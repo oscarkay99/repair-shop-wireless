@@ -146,6 +146,7 @@ function normalizeMediaRow(row: RepairMediaRow): RepairMedia {
 function normalizeRepairRow(row: RepairRow, media: RepairMedia[]): Repair {
   return {
     id: row.id,
+    createdAt: row.created_at ?? undefined,
     customerId: row.customer_id ?? undefined,
     customer: row.customer,
     customerEmail: row.customer_email ?? undefined,
@@ -374,6 +375,18 @@ export async function updateRepair(id: string, patch: Partial<Repair>): Promise<
       }).eq('id', id);
     } catch (error) {
       console.warn('Unable to sync repair update to Supabase.', error);
+    }
+  }
+}
+
+export async function deleteRepair(id: string): Promise<void> {
+  store = store.filter((repair) => repair.id !== id);
+
+  if (isSupabaseConfigured) {
+    try {
+      await supabase.from('repairs').delete().eq('id', id);
+    } catch (error) {
+      console.warn('Unable to delete repair from Supabase.', error);
     }
   }
 }

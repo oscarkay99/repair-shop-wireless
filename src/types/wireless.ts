@@ -1,7 +1,5 @@
 // ── TypeScript types for the wireless schema ──────────────────
 
-export type TicketStatus = 'pending' | 'in_progress' | 'waiting_parts' | 'ready' | 'completed' | 'cancelled';
-export type TicketPriority = 'low' | 'normal' | 'high' | 'urgent';
 export type TechnicianStatus = 'available' | 'busy' | 'off_duty';
 export type InvoiceStatus = 'unpaid' | 'partial' | 'paid' | 'overdue' | 'cancelled';
 export type PaymentStatus = 'paid' | 'partial' | 'unpaid';
@@ -48,54 +46,6 @@ export interface Part {
   updated_at: string;
 }
 
-export interface Ticket {
-  id: string;
-  ticket_number: string;
-  customer_id: string;
-  customer?: WCustomer;
-  device: string;
-  brand: string;
-  model: string;
-  serial_imei?: string;
-  color?: string;
-  issue: string;
-  diagnosis?: string;
-  status: TicketStatus;
-  priority: TicketPriority;
-  technician_id?: string;
-  technician?: Technician;
-  estimated_cost?: number;
-  final_cost?: number;
-  deposit_paid: number;
-  warranty_days: number;
-  received_at: string;
-  completed_at?: string;
-  created_by?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface TicketComment {
-  id: string;
-  ticket_id: string;
-  author_id?: string;
-  author_name: string;
-  body: string;
-  is_internal: boolean;
-  created_at: string;
-}
-
-export interface TicketPart {
-  id: string;
-  ticket_id: string;
-  part_id?: string;
-  part?: Part;
-  part_name: string;
-  quantity: number;
-  unit_cost: number;
-  created_at: string;
-}
-
 export interface AccessorySale {
   id: string;
   sale_number: string;
@@ -126,8 +76,6 @@ export interface SaleItem {
 export interface Invoice {
   id: string;
   invoice_number: string;
-  ticket_id?: string;
-  ticket?: Pick<Ticket, 'ticket_number' | 'device' | 'issue'>;
   customer_id: string;
   customer?: WCustomer;
   subtotal: number;
