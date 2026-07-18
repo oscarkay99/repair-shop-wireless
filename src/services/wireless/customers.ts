@@ -18,7 +18,10 @@ export async function getCustomers(): Promise<WCustomer[]> {
       .select('*')
       .order('created_at', { ascending: false });
     if (error) throw error;
-    if (data?.length) { localStore = data as WCustomer[]; }
+    // Once Supabase answers successfully, trust it completely — even an empty
+    // result — rather than keep showing seed data that isn't real and would
+    // break any write that tries to link to it (invalid/non-existent id).
+    localStore = (data as WCustomer[] | null) ?? [];
     return localStore;
   } catch (e) {
     console.warn('[wireless/customers] falling back to local store', e);

@@ -5,6 +5,12 @@
 
 CREATE SCHEMA IF NOT EXISTS wireless;
 
+-- LANGUAGE sql functions are validated eagerly at CREATE time, but several
+-- helper functions below (current_user_role, is_admin, has_any_role) are
+-- defined before the tables they reference (profiles) exist yet in this
+-- file. Same fix pg_dump itself applies for forward references.
+SET check_function_bodies = false;
+
 -- ── Grant PostgREST / anon / authenticated access ───────────
 GRANT USAGE ON SCHEMA wireless TO anon, authenticated, service_role;
 ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA wireless

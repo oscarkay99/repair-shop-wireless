@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -11,22 +11,22 @@ const DEMO_ACCOUNTS = [
   {
     name: 'Kwame Asante', role: 'Admin', email: 'admin@wireless.com', password: 'admin123', avatar: 'KA',
     color: '#DC1F1F', badgeBg: 'hsl(350 60% 95%)', hoverBg: 'hsl(350 60% 96%)', hoverBorder: 'hsl(350 60% 85%)',
-    access: ['Dashboard', 'Repairs', 'Inventory', 'Sales', 'Analytics', 'Team', 'Settings', '+ more'],
+    access: ['Dashboard', 'Tickets', 'Inventory', 'Sales', 'Analytics', 'Team', 'Settings', '+ more'],
   },
   {
     name: 'Efua Boateng', role: 'Receptionist', email: 'efua@wireless.com', password: 'efua123', avatar: 'EB',
     color: '#8B5CF6', badgeBg: 'hsl(262 60% 95%)', hoverBg: 'hsl(262 60% 96%)', hoverBorder: 'hsl(262 60% 85%)',
-    access: ['Dashboard', 'Repairs', 'Customers', 'Payments', 'Invoices'],
+    access: ['Dashboard', 'Tickets', 'Customers', 'Payments', 'Invoices'],
   },
   {
     name: 'Ama Owusu', role: 'Technician', email: 'ama@wireless.com', password: 'ama123', avatar: 'AO',
     color: '#06B6D4', badgeBg: 'hsl(190 80% 93%)', hoverBg: 'hsl(190 80% 95%)', hoverBorder: 'hsl(190 60% 80%)',
-    access: ['Dashboard', 'Repairs', 'Warranty', 'Inventory', 'Customers'],
+    access: ['Dashboard', 'Tickets', 'Warranty', 'Inventory', 'Customers'],
   },
   {
     name: 'Kofi Mensah', role: 'Sales Manager', email: 'kofi@wireless.com', password: 'kofi123', avatar: 'KM',
     color: '#F59E0B', badgeBg: 'hsl(38 90% 93%)', hoverBg: 'hsl(38 90% 95%)', hoverBorder: 'hsl(38 70% 80%)',
-    access: ['Dashboard', 'Sales', 'Customers', 'Inventory', 'Repairs', 'Analytics', 'Reports'],
+    access: ['Dashboard', 'Sales', 'Customers', 'Inventory', 'Tickets', 'Analytics', 'Reports'],
   },
   {
     name: 'Yaw Darko', role: 'Inventory Manager', email: 'yaw@wireless.com', password: 'yaw123', avatar: 'YD',
@@ -37,7 +37,7 @@ const DEMO_ACCOUNTS = [
 
 const modules = [
   { icon: 'ri-store-3-line', label: 'POS' },
-  { icon: 'ri-tools-line', label: 'Repairs' },
+  { icon: 'ri-tools-line', label: 'Tickets' },
   { icon: 'ri-bar-chart-2-line', label: 'Analytics' },
   { icon: 'ri-vip-crown-line', label: 'Loyalty' },
   { icon: 'ri-archive-line', label: 'Inventory' },
@@ -50,18 +50,48 @@ const modules = [
 
 export default function SignInPage() {
   const navigate = useNavigate();
-  const { login, resetPassword, isSupabaseAuth } = useAuth();
+  const { login, loginWithGoogle, resetPassword, deniedMessage, clearDeniedMessage, isSupabaseAuth, isAuthenticated } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
+
+  // Google sign-in leaves and comes back as a fresh page load, and the
+  // rejection (if any) only resolves asynchronously after the redirect —
+  // so this has to watch reactive state rather than checking once on mount.
+  useEffect(() => {
+    if (deniedMessage) {
+      setError(deniedMessage);
+      setGoogleLoading(false);
+      clearDeniedMessage();
+    }
+  }, [deniedMessage, clearDeniedMessage]);
+
+  // Password/demo login navigate immediately after `login()` resolves, but
+  // Google sign-in leaves and comes back as a fresh page load — the session
+  // only finishes establishing asynchronously afterward, so this is the only
+  // reliable place to catch "we're now authenticated" and enter the app.
+  useEffect(() => {
+    if (isAuthenticated) navigate('/', { replace: true });
+  }, [isAuthenticated, navigate]);
 
   const [view, setView] = useState<'signin' | 'forgot' | 'reset_sent'>('signin');
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotError, setForgotError] = useState('');
   const [forgotLoading, setForgotLoading] = useState(false);
+
+  // Sign-in is always day mode, regardless of the app-wide theme preference —
+  // this only touches the DOM class for as long as the page is mounted, it
+  // doesn't change or persist the user's actual saved theme choice.
+  useEffect(() => {
+    const root = document.documentElement;
+    const wasDark = root.classList.contains('dark');
+    root.classList.remove('dark');
+    return () => { if (wasDark) root.classList.add('dark'); };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,6 +107,17 @@ export default function SignInPage() {
     } else {
       setError(result.error || 'Invalid credentials');
     }
+  };
+
+  const handleGoogle = async () => {
+    setError('');
+    setGoogleLoading(true);
+    const result = await loginWithGoogle();
+    if (!result.success) {
+      setError(result.error || 'Unable to sign in with Google');
+      setGoogleLoading(false);
+    }
+    // On success the page redirects to Google, then back — nothing else to do here.
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -108,14 +149,14 @@ export default function SignInPage() {
   };
 
   const inputBase: React.CSSProperties = {
-    background: 'hsl(220 20% 97%)',
-    border: '1.5px solid hsl(220 13% 90%)',
-    color: 'hsl(220 20% 12%)',
+    background: 'hsl(var(--muted))',
+    border: '1.5px solid hsl(var(--border))',
+    color: 'hsl(var(--foreground))',
     borderRadius: 10,
     width: '100%',
     fontSize: 14,
     outline: 'none',
-    boxShadow: 'inset 0 1px 2px hsl(220 20% 12% / 0.03)',
+    boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.03)',
     transition: 'border-color 0.15s, box-shadow 0.15s',
   };
 
@@ -127,7 +168,7 @@ export default function SignInPage() {
   return (
     <div
       className="min-h-screen lg:grid lg:grid-cols-[1.1fr_0.9fr] overflow-hidden"
-      style={{ background: 'hsl(220 14% 95%)' }}
+      style={{ background: 'hsl(var(--background))' }}
     >
       {/* ── LEFT PANEL (dark wine brand side) ── */}
       <div className="hidden lg:flex relative min-h-screen overflow-hidden" style={{ background: 'hsl(350 38% 10%)' }}>
@@ -195,7 +236,7 @@ export default function SignInPage() {
       {/* ── RIGHT PANEL (light form side) ── */}
       <div
         className="relative flex min-h-screen items-stretch justify-center px-6 py-8 lg:px-10 lg:py-10"
-        style={{ background: 'hsl(220 14% 95%)' }}
+        style={{ background: 'hsl(var(--background))' }}
       >
         <div className="relative z-10 flex w-full max-w-[420px] flex-col justify-center">
           {/* Mobile logo */}
@@ -211,7 +252,7 @@ export default function SignInPage() {
               <span className="text-white font-black text-[13px]" style={{ fontFamily: 'ui-sans-serif, system-ui, sans-serif' }}>W</span>
             </div>
             <div>
-              <p className="text-xl font-bold lowercase leading-none" style={{ letterSpacing: '-0.03em', color: 'hsl(350 60% 22%)' }}>wireless</p>
+              <p className="text-xl font-bold lowercase leading-none" style={{ letterSpacing: '-0.03em', color: 'hsl(var(--primary))' }}>wireless</p>
               <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: 'hsl(var(--muted-foreground))' }}>Command Center</p>
             </div>
           </div>
@@ -219,9 +260,9 @@ export default function SignInPage() {
           <div
             className="relative rounded-2xl p-7"
             style={{
-              background: 'hsl(0 0% 99%)',
-              border: '1px solid hsl(220 13% 90%)',
-              boxShadow: '0 1px 2px hsl(220 20% 12% / 0.04), 0 8px 20px -8px hsl(220 20% 12% / 0.08)',
+              background: 'hsl(var(--card))',
+              border: '1px solid hsl(var(--border))',
+              boxShadow: 'var(--shadow-md)',
             }}
           >
             {/* ── SIGN IN VIEW ── */}
@@ -229,7 +270,7 @@ export default function SignInPage() {
               <div className={`transition-all duration-500 ${loginSuccess ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}>
                 <div className="mb-5 flex items-start justify-between gap-3">
                   <div>
-                    <h2 className="text-xl font-black tracking-tight mb-1" style={{ color: 'hsl(220 20% 12%)' }}>Welcome back</h2>
+                    <h2 className="text-xl font-black tracking-tight mb-1" style={{ color: 'hsl(var(--foreground))' }}>Welcome back</h2>
                     <p className="text-sm" style={{ color: 'hsl(var(--muted-foreground))' }}>Sign in to your Command Center</p>
                   </div>
                   {/* Live / Demo badge */}
@@ -301,10 +342,38 @@ export default function SignInPage() {
                   </button>
                 </form>
 
+                <div className="flex items-center gap-3 my-4">
+                  <div className="flex-1 h-px" style={{ background: 'hsl(var(--border))' }} />
+                  <span className="text-[10px] uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>Or</span>
+                  <div className="flex-1 h-px" style={{ background: 'hsl(var(--border))' }} />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleGoogle}
+                  disabled={googleLoading}
+                  className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2.5 transition-colors cursor-pointer disabled:opacity-60"
+                  style={{ background: 'hsl(var(--card))', border: '1.5px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
+                  onMouseEnter={e => { if (!googleLoading) (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--card))'; }}
+                >
+                  {googleLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <svg className="w-4 h-4" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M23.52 12.27c0-.85-.08-1.67-.22-2.45H12v4.64h6.47a5.53 5.53 0 01-2.4 3.63v3h3.87c2.27-2.09 3.58-5.17 3.58-8.82z"/>
+                      <path fill="#34A853" d="M12 24c3.24 0 5.96-1.07 7.95-2.9l-3.87-3.01c-1.08.72-2.46 1.15-4.08 1.15-3.13 0-5.79-2.12-6.74-4.96H1.27v3.11A11.998 11.998 0 0012 24z"/>
+                      <path fill="#FBBC05" d="M5.26 14.28A7.2 7.2 0 014.87 12c0-.79.14-1.56.39-2.28V6.61H1.27A11.998 11.998 0 000 12c0 1.94.46 3.77 1.27 5.39l3.99-3.11z"/>
+                      <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.69 1.27 6.61l3.99 3.11C6.21 6.87 8.87 4.75 12 4.75z"/>
+                    </svg>
+                  )}
+                  {googleLoading ? 'Redirecting…' : 'Continue with Google'}
+                </button>
+
                 <div className="flex items-center gap-3 my-5">
-                  <div className="flex-1 h-px" style={{ background: 'hsl(220 13% 91%)' }} />
+                  <div className="flex-1 h-px" style={{ background: 'hsl(var(--border))' }} />
                   <span className="text-[10px] uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>Quick Login</span>
-                  <div className="flex-1 h-px" style={{ background: 'hsl(220 13% 91%)' }} />
+                  <div className="flex-1 h-px" style={{ background: 'hsl(var(--border))' }} />
                 </div>
 
                 <div className="space-y-1.5 max-h-[280px] overflow-y-auto pr-0.5 -mr-0.5">
@@ -317,9 +386,9 @@ export default function SignInPage() {
                         type="button"
                         onClick={() => quickLogin(u.email, u.password)}
                         className="w-full flex items-center gap-3 p-2.5 rounded-xl text-left cursor-pointer group"
-                        style={{ background: 'hsl(220 14% 97%)', border: '1px solid hsl(220 13% 92%)', boxShadow: '0 1px 1px hsl(220 20% 12% / 0.02)', transition: 'background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s' }}
+                        style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', boxShadow: '0 1px 1px rgba(0,0,0,0.02)', transition: 'background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s' }}
                         onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = u.hoverBg; el.style.borderColor = u.hoverBorder; el.style.boxShadow = '0 4px 12px hsl(220 20% 12% / 0.06)'; }}
-                        onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'hsl(220 14% 97%)'; el.style.borderColor = 'hsl(220 13% 92%)'; el.style.boxShadow = '0 1px 1px hsl(220 20% 12% / 0.02)'; }}
+                        onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'hsl(var(--muted))'; el.style.borderColor = 'hsl(var(--border))'; el.style.boxShadow = '0 1px 1px rgba(0,0,0,0.02)'; }}
                       >
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0"
                           style={{ background: u.color }}>
@@ -327,18 +396,18 @@ export default function SignInPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <p className="text-xs font-semibold" style={{ color: 'hsl(220 20% 12%)' }}>{u.name}</p>
+                            <p className="text-xs font-semibold" style={{ color: 'hsl(var(--foreground))' }}>{u.name}</p>
                             <span className="text-[9.5px] font-semibold px-1.5 py-[1px] rounded-full" style={{ background: u.badgeBg, color: u.color }}>{u.role}</span>
                           </div>
                           <p className="text-[10px] font-mono mt-0.5 truncate" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                            {u.email} · pw: <span style={{ color: 'hsl(220 20% 35%)' }}>{u.password}</span>
+                            {u.email} · pw: <span style={{ color: 'hsl(var(--foreground))' }}>{u.password}</span>
                           </p>
                           <div className="flex items-center gap-1 mt-1 flex-wrap">
                             {shown.map(a => (
-                              <span key={a} className="text-[9px] font-medium px-1.5 py-[1px] rounded" style={{ background: 'hsl(220 13% 92%)', color: 'hsl(220 10% 44%)' }}>{a}</span>
+                              <span key={a} className="text-[9px] font-medium px-1.5 py-[1px] rounded" style={{ background: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' }}>{a}</span>
                             ))}
                             {rest > 0 && (
-                              <span className="text-[9px] font-medium" style={{ color: 'hsl(220 10% 60%)' }}>+{rest} more</span>
+                              <span className="text-[9px] font-medium" style={{ color: 'hsl(var(--muted-foreground))' }}>+{rest} more</span>
                             )}
                           </div>
                         </div>
@@ -369,7 +438,7 @@ export default function SignInPage() {
                     style={{ background: 'hsl(350 60% 96%)', border: '1px solid hsl(350 60% 85%)' }}>
                     <KeyRound className="w-5 h-5" style={{ color: 'hsl(350 60% 35%)' }} />
                   </div>
-                  <h2 className="text-xl font-black tracking-tight mb-1" style={{ color: 'hsl(220 20% 12%)' }}>Forgot Password?</h2>
+                  <h2 className="text-xl font-black tracking-tight mb-1" style={{ color: 'hsl(var(--foreground))' }}>Forgot Password?</h2>
                   <p className="text-sm" style={{ color: 'hsl(var(--muted-foreground))' }}>Enter your email and we'll send you a reset link.</p>
                 </div>
                 <form onSubmit={handleForgotPassword} className="space-y-4">
@@ -409,7 +478,7 @@ export default function SignInPage() {
                   style={{ background: 'hsl(142 55% 91%)', border: '1px solid hsl(142 50% 78%)' }}>
                   <MailCheck className="w-7 h-7" style={{ color: 'hsl(142 55% 28%)' }} />
                 </div>
-                <h2 className="text-xl font-black tracking-tight mb-2" style={{ color: 'hsl(220 20% 12%)' }}>Check your email</h2>
+                <h2 className="text-xl font-black tracking-tight mb-2" style={{ color: 'hsl(var(--foreground))' }}>Check your email</h2>
                 <p className="text-sm mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>We've sent a reset link to</p>
                 <p className="text-sm font-bold mb-5" style={{ color: 'hsl(350 60% 35%)' }}>{forgotEmail}</p>
                 <div className="p-3 rounded-lg mb-5 text-left"
@@ -441,12 +510,12 @@ export default function SignInPage() {
             {/* ── SUCCESS OVERLAY ── */}
             {loginSuccess && (
               <div className="absolute inset-0 flex flex-col items-center justify-center z-20 rounded-2xl"
-                style={{ background: 'hsl(0 0% 100% / 0.95)' }}>
+                style={{ background: 'hsl(var(--card) / 0.95)' }}>
                 <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-4"
                   style={{ background: 'hsl(142 55% 91%)', border: '1px solid hsl(142 50% 78%)' }}>
                   <CheckCircle2 className="w-7 h-7" style={{ color: 'hsl(142 55% 28%)' }} />
                 </div>
-                <p className="font-bold text-lg" style={{ color: 'hsl(220 20% 12%)' }}>Welcome back!</p>
+                <p className="font-bold text-lg" style={{ color: 'hsl(var(--foreground))' }}>Welcome back!</p>
                 <p className="text-sm mt-1" style={{ color: 'hsl(var(--muted-foreground))' }}>Redirecting to Command Center…</p>
               </div>
             )}

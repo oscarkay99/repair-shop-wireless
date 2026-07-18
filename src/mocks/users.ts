@@ -11,14 +11,16 @@ export interface SystemUser {
   createdAt: string;
   phone: string;
   permissions: string[];
+  /** Recurring birthday, month-day only (no birth year tracked) — format 'MM-DD'. */
+  birthday?: string;
 }
 
 export const rolePermissions: Record<UserRole, string[]> = {
-  admin:             ['Dashboard', 'Analytics', 'Audit Logs', 'Inventory', 'Payments', 'Customers', 'Repairs', 'Technicians', 'Invoices', 'Sales', 'Activity', 'Portal', 'Warranty', 'Delivery', 'Expenses', 'Reports', 'Loyalty', 'Team', 'Settings', 'Authentication', 'AI Studio', 'Users'],
-  sales_manager:     ['Dashboard', 'Analytics', 'Inventory', 'Payments', 'Customers', 'Repairs', 'Invoices', 'Sales', 'Reports', 'Loyalty', 'Team'],
-  technician:        ['Dashboard', 'Repairs', 'Warranty', 'Inventory', 'Customers'],
+  admin:             ['Dashboard', 'Analytics', 'Audit Logs', 'Inventory', 'Payments', 'Customers', 'Tickets', 'Technicians', 'Invoices', 'Sales', 'Activity', 'Portal', 'Warranty', 'Delivery', 'Expenses', 'Reports', 'Loyalty', 'Team', 'Settings', 'Authentication', 'AI Studio', 'Users'],
+  sales_manager:     ['Dashboard', 'Analytics', 'Inventory', 'Payments', 'Customers', 'Tickets', 'Invoices', 'Sales', 'Reports', 'Loyalty', 'Team'],
+  technician:        ['Dashboard', 'Tickets', 'Warranty', 'Inventory', 'Customers'],
   inventory_manager: ['Dashboard', 'Analytics', 'Inventory', 'Delivery', 'Reports'],
-  receptionist:      ['Dashboard', 'Repairs', 'Customers', 'Payments', 'Invoices'],
+  receptionist:      ['Dashboard', 'Tickets', 'Customers', 'Payments', 'Invoices'],
 };
 
 export const roleLabels: Record<UserRole, string> = {
@@ -49,6 +51,7 @@ export const systemUsers: SystemUser[] = [
     createdAt: 'Jan 1, 2026',
     phone: '+233 24 000 0001',
     permissions: rolePermissions.admin,
+    birthday: '03-12',
   },
   {
     id: 'U002',
@@ -61,6 +64,7 @@ export const systemUsers: SystemUser[] = [
     createdAt: 'Jan 5, 2026',
     phone: '+233 24 000 0002',
     permissions: rolePermissions.sales_manager,
+    birthday: '07-18',
   },
   {
     id: 'U004',
@@ -73,6 +77,7 @@ export const systemUsers: SystemUser[] = [
     createdAt: 'Feb 10, 2026',
     phone: '+233 24 000 0004',
     permissions: rolePermissions.technician,
+    birthday: '07-25',
   },
   {
     id: 'U005',
@@ -85,6 +90,7 @@ export const systemUsers: SystemUser[] = [
     createdAt: 'Mar 1, 2026',
     phone: '+233 24 000 0005',
     permissions: rolePermissions.inventory_manager,
+    birthday: '11-02',
   },
   {
     id: 'U006',
@@ -97,5 +103,6 @@ export const systemUsers: SystemUser[] = [
     createdAt: 'Mar 15, 2026',
     phone: '+233 24 000 0006',
     permissions: rolePermissions.receptionist,
+    birthday: '09-30',
   },
 ];

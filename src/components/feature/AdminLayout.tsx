@@ -11,7 +11,7 @@ export default function AdminLayout({ children, title, subtitle }: AdminLayoutPr
   const { setPageTitle } = usePageTitle();
 
   useEffect(() => {
-    setPageTitle({ title, subtitle });
+    setPageTitle({ title, subtitle, hideDefaultAction: true });
   }, [title, subtitle, setPageTitle]);
 
   return <>{children}</>;

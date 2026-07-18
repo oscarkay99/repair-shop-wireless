@@ -1,4 +1,4 @@
-import type { Repair, RepairStatus } from '@/types/repair';
+import type { Repair, RepairStatus, RepairMediaStage, RepairJobType } from '@/types/repair';
 
 export interface RepairStatusMeta {
   label: string;
@@ -21,52 +21,65 @@ export const REPAIR_STATUS_META: Record<RepairStatus, RepairStatusMeta> = {
   cancelled:             { label: 'Cancelled',     dot: '#ef4444', bg: 'rgba(239,68,68,0.15)',   color: '#ef4444', filterKey: 'completed' },
 };
 
-export const PIPELINE_FULL = ['Received', 'Diagnosed', 'Parts Pending', 'In Progress', 'Quality Check', 'Ready'];
-export const PIPELINE_DX   = ['Received', 'Diagnosed', 'Report Sent', 'Closed'];
+export const PIPELINE_FULL   = ['Received', 'Diagnosed', 'Parts Pending', 'In Progress', 'Quality Check', 'Ready'];
+export const PIPELINE_CLOSED = ['Received', 'Diagnosed', 'Closed'];
 
-const PIPELINE_FULL_STEP: Partial<Record<RepairStatus, number>> = {
-  received: 0, diagnosis_paid: 0,
-  diagnosing: 1, awaiting_approval: 1,
-  parts_pending: 2,
-  in_progress: 3,
-  ready: 5,
-  completed: 5,
-  diagnosis_only_closed: 5,
-};
-
-export function pipelineStep(status: RepairStatus, isDxOnly: boolean): number {
-  if (!isDxOnly) return PIPELINE_FULL_STEP[status] ?? 0;
-  if (['received', 'diagnosis_paid'].includes(status))         return 0;
-  if (status === 'diagnosing')                                 return 1;
-  if (status === 'awaiting_approval')                          return 2;
-  if (['diagnosis_only_closed', 'completed'].includes(status)) return 3;
-  return 0;
+/**
+ * A ticket's status transitions are unified (the decision to close or continue to repair
+ * happens at `awaiting_approval`, not at intake) — but the pipeline *preview* shown to staff
+ * should still reflect the job's declared intent: a "Diagnosis Only" ticket shows the short
+ * Received → Diagnosed → Closed path, not the full 6-step repair pipeline, until it's actually
+ * converted to a repair (at which point jobType flips to 'diagnosis_to_repair').
+ */
+export function activePipeline(status: RepairStatus, jobType?: RepairJobType): string[] {
+  if (status === 'diagnosis_only_closed' || jobType === 'diagnosis_only') return PIPELINE_CLOSED;
+  return PIPELINE_FULL;
 }
 
-export function nextAction(status: RepairStatus, isDxOnly: boolean): string {
-  if (['received', 'diagnosis_paid'].includes(status))      return 'Mark Diagnosed';
-  if (isDxOnly) {
-    if (status === 'diagnosing')        return 'Send Report to Customer';
-    if (status === 'awaiting_approval') return 'Close Diagnosis';
-    return 'Close';
+export function pipelineStep(status: RepairStatus, jobType?: RepairJobType): number {
+  if (status === 'diagnosis_only_closed' || jobType === 'diagnosis_only') {
+    switch (status) {
+      case 'received':
+      case 'diagnosis_paid':        return 0;
+      case 'diagnosing':
+      case 'awaiting_approval':     return 1;
+      case 'diagnosis_only_closed': return 2;
+      default:                      return 1;
+    }
   }
-  if (['diagnosing', 'awaiting_approval'].includes(status)) return 'Mark Parts Pending';
-  if (status === 'parts_pending')                           return 'Mark In Progress';
-  if (status === 'in_progress')                             return 'Mark Ready';
-  if (status === 'ready')                                   return 'Mark Collected';
+  switch (status) {
+    case 'received':
+    case 'diagnosis_paid':       return 0;
+    case 'diagnosing':
+    case 'awaiting_approval':    return 1;
+    case 'parts_pending':        return 2;
+    case 'in_progress':          return 3;
+    case 'ready':
+    case 'completed':            return 5;
+    default:                     return 0;
+  }
+}
+
+/**
+ * Status advance for the single-button "next step" flow. `awaiting_approval` is deliberately
+ * excluded — that's a decision point with two explicit outcomes (proceed to repair or close),
+ * handled separately in the UI rather than as a single "next" action.
+ */
+export function nextAction(status: RepairStatus): string {
+  if (['received', 'diagnosis_paid'].includes(status)) return 'Mark Diagnosed';
+  if (status === 'diagnosing')                         return 'Send Quote to Customer';
+  if (status === 'parts_pending')                      return 'Mark In Progress';
+  if (status === 'in_progress')                        return 'Mark Ready';
+  if (status === 'ready')                              return 'Mark Collected';
   return 'Close';
 }
 
-export function nextStatus(status: RepairStatus, isDxOnly: boolean): RepairStatus {
-  if (['received', 'diagnosis_paid'].includes(status))      return 'diagnosing';
-  if (isDxOnly) {
-    if (status === 'diagnosing')        return 'awaiting_approval';
-    if (status === 'awaiting_approval') return 'diagnosis_only_closed';
-    return 'diagnosis_only_closed';
-  }
-  if (['diagnosing', 'awaiting_approval'].includes(status)) return 'parts_pending';
-  if (status === 'parts_pending')                           return 'in_progress';
-  if (status === 'in_progress')                             return 'ready';
+export function nextStatus(status: RepairStatus): RepairStatus {
+  if (['received', 'diagnosis_paid'].includes(status)) return 'diagnosing';
+  if (status === 'diagnosing')                         return 'awaiting_approval';
+  if (status === 'parts_pending')                      return 'in_progress';
+  if (status === 'in_progress')                        return 'ready';
+  if (status === 'ready')                              return 'completed';
   return 'completed';
 }
 
@@ -87,4 +100,42 @@ const DIAGNOSIS_STAGE_STATUSES = new Set<RepairStatus>([
 export function isDiagnosisStage(repair: Pick<Repair, 'status' | 'jobType'>): boolean {
   if (repair.status === 'cancelled') return repair.jobType === 'diagnosis_only';
   return DIAGNOSIS_STAGE_STATUSES.has(repair.status);
+}
+
+/** Maps the current repair status to the photo-log stage a new upload should be tagged with. */
+export function statusToMediaStage(status: RepairStatus): RepairMediaStage {
+  switch (status) {
+    case 'received':
+    case 'diagnosis_paid':       return 'received';
+    case 'diagnosing':
+    case 'awaiting_approval':    return 'diagnosed';
+    case 'parts_pending':        return 'parts_pending';
+    case 'in_progress':          return 'in_progress';
+    case 'ready':                return 'ready';
+    default:                     return 'completed';
+  }
+}
+
+/**
+ * Stages where a technician must attach at least one photo before the ticket can move on —
+ * condition on arrival, proof of the diagnosed fault, a mid-repair progress shot, and proof
+ * of the finished work.
+ */
+export const REQUIRED_MEDIA_STAGES: RepairMediaStage[] = ['received', 'diagnosed', 'in_progress', 'completed'];
+
+/** Human-readable description of each required stage, used in the "attach a photo" prompt. */
+export const REQUIRED_MEDIA_STAGE_LABEL: Partial<Record<RepairMediaStage, string>> = {
+  received:    'condition-on-arrival',
+  diagnosed:   'diagnosis proof',
+  in_progress: 'work-in-progress',
+  completed:   'finished-work',
+};
+
+/** The media stage that must have a photo before `status` can advance to `next`, if any. */
+export function requiredMediaStageForAdvance(status: RepairStatus, next: RepairStatus): RepairMediaStage | null {
+  if (['received', 'diagnosis_paid'].includes(status) && REQUIRED_MEDIA_STAGES.includes('received'))       return 'received';
+  if (status === 'diagnosing' && next === 'awaiting_approval' && REQUIRED_MEDIA_STAGES.includes('diagnosed')) return 'diagnosed';
+  if (status === 'in_progress' && next === 'ready' && REQUIRED_MEDIA_STAGES.includes('in_progress'))         return 'in_progress';
+  if (next === 'completed' && REQUIRED_MEDIA_STAGES.includes('completed'))                                   return 'completed';
+  return null;
 }

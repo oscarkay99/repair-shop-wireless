@@ -1,5 +1,6 @@
 import { isSupabaseConfigured, db } from '@/services/supabase';
 import type { Part } from '@/types/wireless';
+import { ACCESSORY_CATEGORIES } from './accessoryStore';
 
 const SEED: Part[] = [
   { id: 'p1', name: 'iPhone 15 Pro Screen (OLED)', sku: 'SCR-IP15P',    category: 'Screens',    unit_cost: 189.99, selling_price: 280, stock: 8,  min_stock: 5, supplier: 'iFixit GH',    created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
@@ -12,6 +13,13 @@ const SEED: Part[] = [
 ];
 let localStore = [...SEED];
 
+// wireless.parts is a single shared catalog table for both repair parts and
+// sellable accessories (see services/wireless/accessoryStore.ts) — filter out
+// accessory categories here so this repair-parts view stays separate.
+function isRepairPart(p: Part) {
+  return !ACCESSORY_CATEGORIES.includes(p.category);
+}
+
 export async function getParts(): Promise<Part[]> {
   if (!isSupabaseConfigured) return [...localStore];
   try {
@@ -20,7 +28,10 @@ export async function getParts(): Promise<Part[]> {
       .select('*')
       .order('name');
     if (error) throw error;
-    if (data?.length) { localStore = data as Part[]; }
+    // Trust a successful (even empty) response completely — don't keep showing
+    // seed parts that aren't real rows, since selling/using one would try to
+    // reference a non-existent id and fail.
+    localStore = (data as Part[] | null)?.filter(isRepairPart) ?? [];
     return localStore;
   } catch (e) {
     console.warn('[wireless/parts] falling back to local store', e);

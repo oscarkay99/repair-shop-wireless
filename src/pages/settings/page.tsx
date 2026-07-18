@@ -1,69 +1,31 @@
 import { useState, useEffect } from 'react';
 import AdminLayout from '@/components/feature/AdminLayout';
-import { getStoreSettings, saveStoreSettings } from '@/services/settings';
+import { useWirelessSettings } from '@/hooks/useWirelessSettings';
 import { useAuth } from '@/hooks/useAuth';
 import SettingsSidebar from './components/SettingsSidebar';
 import BrandingSection from './components/BrandingSection';
 import OperationsSection from './components/OperationsSection';
-import TemplatesSection from './components/TemplatesSection';
 import TeamRolesSection from './components/TeamRolesSection';
-import AutomationSection from './components/AutomationSection';
-import IntegrationsSection from './components/IntegrationsSection';
 import SecuritySection from './components/SecuritySection';
 import UsersSection from './components/UsersSection';
 import ChangePasswordSection from './components/ChangePasswordSection';
 import AddRoleModal from './components/AddRoleModal';
+import InviteUserModal from './components/InviteUserModal';
 
 const allSections = [
   { id: 'branding', label: 'Branding', icon: 'ri-palette-line', adminOnly: false },
   { id: 'operations', label: 'Operations', icon: 'ri-settings-4-line', adminOnly: false },
-  { id: 'templates', label: 'Templates', icon: 'ri-file-text-line', adminOnly: false },
   { id: 'team', label: 'Team & Roles', icon: 'ri-team-line', adminOnly: false },
   { id: 'users', label: 'Users', icon: 'ri-user-settings-line', adminOnly: true },
-  { id: 'automation', label: 'Automation', icon: 'ri-robot-line', adminOnly: false },
-  { id: 'integrations', label: 'Integrations', icon: 'ri-plug-line', adminOnly: false },
   { id: 'security', label: 'Security', icon: 'ri-shield-keyhole-line', adminOnly: false },
   { id: 'password', label: 'Change Password', icon: 'ri-lock-password-line', adminOnly: false },
-];
-
-const messageTemplates = [
-  { id: 'mt1', name: 'Quote Ready', channel: 'WhatsApp', message: 'Hi {name}, your quote for {product} is ready! Total: GHS {amount}. Valid until {date}. Reply YES to confirm. — Wireless' },
-  { id: 'mt2', name: 'Repair Complete', channel: 'SMS', message: 'Hi {name}, your {device} repair is complete! Total: GHS {amount}. Pick up at Wireless. Open till 7PM today.' },
-  { id: 'mt3', name: 'Payment Reminder', channel: 'WhatsApp', message: 'Hi {name}, friendly reminder that your payment of GHS {amount} is due {date}. Pay via MTN Momo: 0244-XXX-XXX. Thank you!' },
-  { id: 'mt4', name: 'Delivery Update', channel: 'SMS', message: 'Your order #{order} has been dispatched! Expected delivery: {date}. Track: {link}. Wireless' },
-  { id: 'mt5', name: 'Trade-In Valuation', channel: 'WhatsApp', message: 'Hi {name}, your {device} trade-in is valued at GHS {value}. Ready to upgrade? Visit us or reply to confirm. — Wireless' },
-  { id: 'mt6', name: 'Birthday Offer', channel: 'SMS', message: 'Happy Birthday {name}! Enjoy 10% OFF any purchase today. Show this SMS at checkout. Valid today only. Wireless' },
-  { id: 'mt7', name: 'Warranty Expiry', channel: 'WhatsApp', message: 'Hi {name}, your warranty for {device} expires on {date}. Extend for GHS {price}. Reply EXTEND to proceed. — Wireless' },
-  { id: 'mt8', name: 'New Arrival Alert', channel: 'SMS', message: 'NEW ARRIVAL! {product} now in stock at Wireless. Limited units. Call 0244-XXX-XXX or visit us today!' },
 ];
 
 const teamRoles = [
   { id: 'r1', name: 'Admin', members: 0, permissions: ['All access', 'Settings', 'Financial reports', 'Team management', 'Delete records'] },
   { id: 'r2', name: 'Sales Manager', members: 0, permissions: ['Sales', 'Leads', 'Customers', 'Inventory view', 'Reports view', 'Team view'] },
-  { id: 'r4', name: 'Technician', members: 0, permissions: ['Repairs', 'Inventory view', 'Customers view'] },
+  { id: 'r4', name: 'Technician', members: 0, permissions: ['Tickets', 'Inventory view', 'Customers view'] },
   { id: 'r5', name: 'Inventory Manager', members: 0, permissions: ['Inventory', 'Purchase Orders', 'Suppliers', 'Reports view'] },
-];
-
-const automationRules = [
-  { id: 'ar1', name: 'Lead Follow-up Reminder', trigger: 'Lead not contacted in 48 hours', action: 'Send push notification to assigned rep', status: false, runs: 0 },
-  { id: 'ar2', name: 'Low Stock Alert', trigger: 'Product stock drops below threshold', action: 'Notify inventory manager + create restock task', status: false, runs: 0 },
-  { id: 'ar3', name: 'Payment Overdue', trigger: 'Payment due date passed by 3 days', action: 'Send WhatsApp reminder to customer', status: false, runs: 0 },
-  { id: 'ar4', name: 'Repair Status Update', trigger: 'Repair status changes to Ready', action: 'Send SMS to customer automatically', status: false, runs: 0 },
-  { id: 'ar5', name: 'Birthday Greeting', trigger: 'Customer birthday (8:00 AM)', action: 'Send birthday SMS with 10% discount code', status: false, runs: 0 },
-  { id: 'ar6', name: 'Warranty Expiry Warning', trigger: '30 days before warranty expires', action: 'Send WhatsApp message with renewal offer', status: false, runs: 0 },
-  { id: 'ar7', name: 'New Lead Assignment', trigger: 'New lead created from any channel', action: 'Auto-assign to least-busy sales rep', status: false, runs: 0 },
-  { id: 'ar8', name: 'Quote Expiry Reminder', trigger: 'Quote expires in 24 hours', action: 'Send WhatsApp reminder to customer', status: false, runs: 0 },
-];
-
-const integrations = [
-  { id: 'i1', name: 'WhatsApp Business API', icon: 'ri-whatsapp-line', color: '#25D366', status: 'connected', description: 'Send automated messages and manage DMs', lastSync: '2 min ago' },
-  { id: 'i2', name: 'Instagram Graph API', icon: 'ri-instagram-line', color: '#E1306C', status: 'connected', description: 'Manage DMs, comments, and ad campaigns', lastSync: '5 min ago' },
-  { id: 'i3', name: 'TikTok for Business', icon: 'ri-tiktok-line', color: '#FE2C55', status: 'connected', description: 'Manage DMs, videos, and ad campaigns', lastSync: '10 min ago' },
-  { id: 'i4', name: 'MTN Mobile Money', icon: 'ri-smartphone-line', color: '#FFCC00', status: 'connected', description: 'Accept MoMo payments and auto-reconcile', lastSync: '1 min ago' },
-  { id: 'i5', name: 'DHL Express API', icon: 'ri-truck-line', color: '#D40511', status: 'connected', description: 'Auto-create shipments and track deliveries', lastSync: '15 min ago' },
-  { id: 'i6', name: 'Google Analytics', icon: 'ri-bar-chart-2-line', color: '#F4B400', status: 'disconnected', description: 'Track storefront traffic and conversions', lastSync: 'Never' },
-  { id: 'i7', name: 'Mailchimp', icon: 'ri-mail-line', color: '#FFE01B', status: 'disconnected', description: 'Email marketing campaigns and automation', lastSync: 'Never' },
-  { id: 'i8', name: 'QuickBooks', icon: 'ri-book-2-line', color: '#2CA01C', status: 'disconnected', description: 'Sync sales and expenses to accounting', lastSync: 'Never' },
 ];
 
 export default function SettingsPage() {
@@ -71,32 +33,39 @@ export default function SettingsPage() {
   const sections = allSections.filter(s => !s.adminOnly || isAdmin);
   const [activeSection, setActiveSection] = useState('branding');
   const [saved, setSaved] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const { settings, save } = useWirelessSettings();
   const [businessName, setBusinessName] = useState('Wireless');
   const [tagline, setTagline] = useState('Premium Gadgets in Accra');
   const [phone, setPhone] = useState('+233 24 000 0000');
   const [whatsapp, setWhatsapp] = useState('+233 24 000 0000');
   const [address, setAddress] = useState('Accra Mall, Accra, Ghana');
   const [primaryColor, setPrimaryColor] = useState('#DC1F1F');
-  const [editingTemplate, setEditingTemplate] = useState<string | null>(null);
-  const [automations, setAutomations] = useState(automationRules);
   const [showAddRole, setShowAddRole] = useState(false);
   const [editingRole, setEditingRole] = useState<{ id: string; name: string; permissions: string[] } | null>(null);
+  const [showInvite, setShowInvite] = useState(false);
 
-  useEffect(() => {
-    getStoreSettings().then((s) => {
-      if (!s) return;
-      if (s.business_name) setBusinessName(s.business_name);
-      if (s.tagline) setTagline(s.tagline);
-      if (s.phone) setPhone(s.phone);
-      if (s.whatsapp) setWhatsapp(s.whatsapp);
-      if (s.address) setAddress(s.address);
-      if (s.primary_color) setPrimaryColor(s.primary_color);
-    }).catch(() => {});
-  }, []);
+  const applySettings = () => {
+    if (!settings) return;
+    setBusinessName(settings.business_name);
+    setTagline(settings.tagline);
+    setPhone(settings.phone);
+    setWhatsapp(settings.whatsapp);
+    setAddress(settings.address);
+    setPrimaryColor(settings.primary_color);
+    setDirty(false);
+  };
+
+  useEffect(applySettings, [settings]);
+
+  // Every branding field routes through this one `dirty` flag, so the save
+  // bar (which only ever persists branding fields) never appears on other
+  // tabs claiming there are unsaved changes there.
+  const markDirty = <T,>(setter: (v: T) => void) => (v: T) => { setter(v); setDirty(true); };
 
   const handleSave = async () => {
     try {
-      await saveStoreSettings({
+      await save({
         business_name: businessName,
         tagline,
         phone,
@@ -104,13 +73,10 @@ export default function SettingsPage() {
         address,
         primary_color: primaryColor,
       });
-    } catch { /* fallback: show saved anyway for mock mode */ }
+      setDirty(false);
+    } catch { /* keep local values even if the save call itself errored */ }
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
-  };
-
-  const toggleAutomation = (id: string) => {
-    setAutomations(prev => prev.map(a => a.id === id ? { ...a, status: !a.status } : a));
   };
 
   return (
@@ -121,39 +87,24 @@ export default function SettingsPage() {
         <div className="flex-1 min-w-0 space-y-5">
           {activeSection === 'branding' && (
             <BrandingSection
-              businessName={businessName} setBusinessName={setBusinessName}
-              tagline={tagline} setTagline={setTagline}
-              phone={phone} setPhone={setPhone}
-              whatsapp={whatsapp} setWhatsapp={setWhatsapp}
-              address={address} setAddress={setAddress}
-              primaryColor={primaryColor} setPrimaryColor={setPrimaryColor}
+              businessName={businessName} setBusinessName={markDirty(setBusinessName)}
+              tagline={tagline} setTagline={markDirty(setTagline)}
+              phone={phone} setPhone={markDirty(setPhone)}
+              whatsapp={whatsapp} setWhatsapp={markDirty(setWhatsapp)}
+              address={address} setAddress={markDirty(setAddress)}
+              primaryColor={primaryColor} setPrimaryColor={markDirty(setPrimaryColor)}
             />
           )}
 
           {activeSection === 'operations' && <OperationsSection />}
-
-          {activeSection === 'templates' && (
-            <TemplatesSection
-              templates={messageTemplates}
-              editingTemplate={editingTemplate}
-              onEditToggle={(id) => setEditingTemplate(editingTemplate === id ? null : id)}
-            />
-          )}
 
           {activeSection === 'team' && (
             <TeamRolesSection
               roles={teamRoles}
               onAddRole={() => { setEditingRole(null); setShowAddRole(true); }}
               onEditRole={(role) => { setEditingRole(role); setShowAddRole(true); }}
+              onInviteMember={() => setShowInvite(true)}
             />
-          )}
-
-          {activeSection === 'automation' && (
-            <AutomationSection automations={automations} onToggle={toggleAutomation} onNewRule={() => {}} />
-          )}
-
-          {activeSection === 'integrations' && (
-            <IntegrationsSection />
           )}
 
           {activeSection === 'security' && <SecuritySection />}
@@ -162,34 +113,42 @@ export default function SettingsPage() {
 
           {activeSection === 'password' && <ChangePasswordSection />}
 
-          {/* Save bar */}
-          <div className="sticky bottom-0 rounded-2xl px-5 py-3 flex items-center justify-between"
-            style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
-            <span className="text-xs font-medium" style={{ color: saved ? '#22c55e' : 'hsl(var(--muted-foreground))' }}>
-              {saved ? '✓ Changes saved' : 'Unsaved changes'}
-            </span>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => window.location.reload()}
-                className="text-xs font-semibold px-3 h-8 rounded-lg"
-                style={{ color: 'hsl(var(--muted-foreground))', border: '1px solid hsl(var(--border))' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
-                Discard
-              </button>
-              <button onClick={handleSave}
-                className="px-5 h-8 text-white text-xs font-bold rounded-lg whitespace-nowrap transition-colors"
-                style={{ background: 'hsl(var(--primary))' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.85'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}>
-                Save Changes
-              </button>
+          {/* Save bar — Branding is the only tab whose fields route through this;
+              every other section (Operations, Users, Password) saves itself
+              immediately, so showing this bar there would be misleading and
+              its Save button would silently persist stale branding fields. */}
+          {activeSection === 'branding' && (
+            <div className="sticky bottom-0 rounded-2xl px-5 py-3 flex items-center justify-between"
+              style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
+              <span className="text-xs font-medium" style={{ color: saved ? '#22c55e' : 'hsl(var(--muted-foreground))' }}>
+                {saved ? '✓ Changes saved' : dirty ? 'Unsaved changes' : 'No changes'}
+              </span>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={applySettings}
+                  disabled={!dirty}
+                  className="text-xs font-semibold px-3 h-8 rounded-lg disabled:opacity-50"
+                  style={{ color: 'hsl(var(--muted-foreground))', border: '1px solid hsl(var(--border))' }}
+                  onMouseEnter={e => { if (dirty) (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
+                  Discard
+                </button>
+                <button onClick={handleSave}
+                  disabled={!dirty}
+                  className="px-5 h-8 text-white text-xs font-bold rounded-lg whitespace-nowrap transition-colors disabled:opacity-50"
+                  style={{ background: 'hsl(var(--primary))' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.85'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}>
+                  Save Changes
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
       <AddRoleModal open={showAddRole} onClose={() => { setShowAddRole(false); setEditingRole(null); }} editRole={editingRole} />
+      <InviteUserModal open={showInvite} onClose={() => setShowInvite(false)} />
     </AdminLayout>
   );
 }

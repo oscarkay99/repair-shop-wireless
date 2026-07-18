@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import AdminLayout from '@/components/feature/AdminLayout';
-import { getAuditLogs, type AuditLogRecord } from '@/services/audit';
+import { getAuditLogs, type AuditLogRecord } from '@/services/wireless/auditLogs';
 import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/shared/Pagination';
 
@@ -111,14 +111,14 @@ export default function AuditLogsPage() {
     <AdminLayout title="Audit Logs" subtitle="Review frontend and backend activity across the workspace">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
         {summaryStats.map((stat) => (
-          <div key={stat.label} className="bg-white rounded-2xl p-5 border border-slate-100 relative overflow-hidden">
+          <div key={stat.label} className="bg-[hsl(var(--card))] rounded-2xl p-5 border border-[hsl(var(--border))] relative overflow-hidden">
             <div className={`absolute left-0 top-0 bottom-0 w-1 ${stat.accent} rounded-l-2xl`} />
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">{stat.label}</p>
-                <p className="text-2xl font-bold text-slate-800 mt-1">{stat.value}</p>
+                <p className="text-xs text-[hsl(var(--muted-foreground))] font-medium uppercase tracking-wider">{stat.label}</p>
+                <p className="text-2xl font-bold text-[hsl(var(--foreground))] mt-1">{stat.value}</p>
               </div>
-              <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400">
+              <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]">
                 <i className={`${stat.icon} text-lg`} />
               </div>
             </div>
@@ -126,21 +126,21 @@ export default function AuditLogsPage() {
         ))}
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-100 p-4 mb-5">
+      <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-4 mb-5">
         <div className="flex flex-col xl:flex-row xl:items-center gap-3">
-          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 flex-1">
-            <i className="ri-search-line text-sm text-slate-400" />
+          <div className="flex items-center gap-2 bg-[hsl(var(--muted))] border border-[hsl(var(--border))] rounded-xl px-3 py-2 flex-1">
+            <i className="ri-search-line text-sm text-[hsl(var(--muted-foreground))]" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search action, entity, actor or summary..."
-              className="bg-transparent text-sm text-slate-600 outline-none w-full"
+              className="bg-transparent text-sm text-[hsl(var(--muted-foreground))] outline-none w-full"
             />
           </div>
 
           <div className="flex gap-2 flex-wrap">
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-600 outline-none cursor-pointer">
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 rounded-xl bg-[hsl(var(--muted))] border border-[hsl(var(--border))] text-sm text-[hsl(var(--muted-foreground))] outline-none cursor-pointer">
               <option value="all">All Statuses</option>
               <option value="success">Success</option>
               <option value="failure">Failure</option>
@@ -148,13 +148,13 @@ export default function AuditLogsPage() {
               <option value="info">Info</option>
             </select>
 
-            <select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-600 outline-none cursor-pointer">
+            <select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} className="px-3 py-2 rounded-xl bg-[hsl(var(--muted))] border border-[hsl(var(--border))] text-sm text-[hsl(var(--muted-foreground))] outline-none cursor-pointer">
               <option value="all">All Sources</option>
               <option value="frontend">Frontend</option>
               <option value="backend">Backend</option>
             </select>
 
-            <select value={layerFilter} onChange={(e) => setLayerFilter(e.target.value)} className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-600 outline-none cursor-pointer">
+            <select value={layerFilter} onChange={(e) => setLayerFilter(e.target.value)} className="px-3 py-2 rounded-xl bg-[hsl(var(--muted))] border border-[hsl(var(--border))] text-sm text-[hsl(var(--muted-foreground))] outline-none cursor-pointer">
               <option value="all">All Layers</option>
               <option value="auth">Auth</option>
               <option value="ui">UI</option>
@@ -167,16 +167,16 @@ export default function AuditLogsPage() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-[1.3fr_0.9fr] gap-5">
-        <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] overflow-hidden">
+          <div className="px-5 py-4 border-b border-[hsl(var(--border))] flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-bold text-slate-800">Recent Audit Trail</h3>
-              <p className="text-xs text-slate-400 mt-0.5">{filteredLogs.length} matching events</p>
+              <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">Recent Audit Trail</h3>
+              <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">{filteredLogs.length} matching events</p>
             </div>
           </div>
 
           {loading ? (
-            <div className="px-5 py-20 text-center text-sm text-slate-400">
+            <div className="px-5 py-20 text-center text-sm text-[hsl(var(--muted-foreground))]">
               <i className="ri-loader-4-line text-2xl animate-spin block mb-3" />
               Loading audit logs...
             </div>
@@ -186,15 +186,15 @@ export default function AuditLogsPage() {
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3 bg-red-50 text-red-500">
                 <i className="ri-error-warning-line text-xl" />
               </div>
-              <p className="text-sm font-semibold text-slate-700 mb-1">Unable to load audit logs</p>
-              <p className="text-xs text-slate-400">{error}</p>
+              <p className="text-sm font-semibold text-[hsl(var(--foreground))] mb-1">Unable to load audit logs</p>
+              <p className="text-xs text-[hsl(var(--muted-foreground))]">{error}</p>
             </div>
           ) : (
             <>
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-[hsl(var(--border))]">
               {pagedLogs.length === 0 ? (
-                <div className="px-5 py-16 text-center text-sm text-slate-400">
-                  <i className="ri-inbox-archive-line text-3xl block mb-2 text-slate-200" />
+                <div className="px-5 py-16 text-center text-sm text-[hsl(var(--muted-foreground))]">
+                  <i className="ri-inbox-archive-line text-3xl block mb-2 text-[hsl(var(--muted-foreground))]" />
                   No audit logs matched the current filters.
                 </div>
               ) : null}
@@ -205,7 +205,7 @@ export default function AuditLogsPage() {
                   <button
                     key={log.id}
                     onClick={() => setSelectedLogId(log.id)}
-                    className={`w-full px-5 py-4 text-left transition-colors cursor-pointer ${active ? 'bg-slate-50' : 'hover:bg-slate-50/70'}`}
+                    className={`w-full px-5 py-4 text-left transition-colors cursor-pointer ${active ? 'bg-[hsl(var(--muted))]' : 'hover:bg-[hsl(var(--muted))]/70'}`}
                   >
                     <div className="flex items-start gap-3">
                       <div className={`mt-0.5 w-10 h-10 rounded-xl flex items-center justify-center ${log.source === 'backend' ? 'bg-amber-50 text-amber-600' : 'bg-[#DC1F1F]/8 text-[#DC1F1F]'}`}>
@@ -219,84 +219,84 @@ export default function AuditLogsPage() {
                           <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold ${sourceTone[log.source] ?? sourceTone.frontend}`}>
                             {log.source}
                           </span>
-                          <span className="text-[10px] uppercase tracking-wider text-slate-400">{log.layer}</span>
+                          <span className="text-[10px] uppercase tracking-wider text-[hsl(var(--muted-foreground))]">{log.layer}</span>
                         </div>
-                        <p className="text-sm font-semibold text-slate-800">{log.summary || `${log.action} ${log.entityType || 'event'}`}</p>
-                        <p className="text-xs text-slate-500 mt-1 truncate">
+                        <p className="text-sm font-semibold text-[hsl(var(--foreground))]">{log.summary || `${log.action} ${log.entityType || 'event'}`}</p>
+                        <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1 truncate">
                           {log.action} · {log.entityType || 'unknown entity'}{log.entityId ? ` · ${log.entityId}` : ''}{log.actorEmail ? ` · ${log.actorEmail}` : ''}
                         </p>
                       </div>
-                      <span className="text-[11px] text-slate-400 whitespace-nowrap">{formatDate(log.createdAt)}</span>
+                      <span className="text-[11px] text-[hsl(var(--muted-foreground))] whitespace-nowrap">{formatDate(log.createdAt)}</span>
                     </div>
                   </button>
                 );
               })}
             </div>
-            <Pagination page={page} totalPages={totalPages} total={total} from={from} to={to} onPageChange={setPage} />
+            <Pagination page={page} pageCount={totalPages} total={total} pageSize={25} onPageChange={setPage} />
             </>
           )}
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100">
-            <h3 className="text-sm font-bold text-slate-800">Event Detail</h3>
-            <p className="text-xs text-slate-400 mt-0.5">Inspect actor, metadata and row snapshots</p>
+        <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] overflow-hidden">
+          <div className="px-5 py-4 border-b border-[hsl(var(--border))]">
+            <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">Event Detail</h3>
+            <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">Inspect actor, metadata and row snapshots</p>
           </div>
 
           {!selectedLog ? (
-            <div className="px-5 py-16 text-center text-sm text-slate-400">
+            <div className="px-5 py-16 text-center text-sm text-[hsl(var(--muted-foreground))]">
               Select an audit entry to inspect it here.
             </div>
           ) : (
             <div className="p-5 space-y-4 max-h-[760px] overflow-y-auto">
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-xl bg-slate-50 p-3">
-                  <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Action</p>
-                  <p className="text-sm font-semibold text-slate-800">{selectedLog.action}</p>
+                <div className="rounded-xl bg-[hsl(var(--muted))] p-3">
+                  <p className="text-[10px] uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-1">Action</p>
+                  <p className="text-sm font-semibold text-[hsl(var(--foreground))]">{selectedLog.action}</p>
                 </div>
-                <div className="rounded-xl bg-slate-50 p-3">
-                  <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Created</p>
-                  <p className="text-sm font-semibold text-slate-800">{formatDate(selectedLog.createdAt)}</p>
+                <div className="rounded-xl bg-[hsl(var(--muted))] p-3">
+                  <p className="text-[10px] uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-1">Created</p>
+                  <p className="text-sm font-semibold text-[hsl(var(--foreground))]">{formatDate(selectedLog.createdAt)}</p>
                 </div>
-                <div className="rounded-xl bg-slate-50 p-3">
-                  <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Entity</p>
-                  <p className="text-sm font-semibold text-slate-800">{selectedLog.entityType || 'N/A'}</p>
-                  <p className="text-xs text-slate-400 mt-1">{selectedLog.entityId || 'No entity id'}</p>
+                <div className="rounded-xl bg-[hsl(var(--muted))] p-3">
+                  <p className="text-[10px] uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-1">Entity</p>
+                  <p className="text-sm font-semibold text-[hsl(var(--foreground))]">{selectedLog.entityType || 'N/A'}</p>
+                  <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">{selectedLog.entityId || 'No entity id'}</p>
                 </div>
-                <div className="rounded-xl bg-slate-50 p-3">
-                  <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Actor</p>
-                  <p className="text-sm font-semibold text-slate-800">{selectedLog.actorName || 'Unknown user'}</p>
-                  <p className="text-xs text-slate-400 mt-1">{selectedLog.actorEmail || 'No actor email'}</p>
+                <div className="rounded-xl bg-[hsl(var(--muted))] p-3">
+                  <p className="text-[10px] uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-1">Actor</p>
+                  <p className="text-sm font-semibold text-[hsl(var(--foreground))]">{selectedLog.actorName || 'Unknown user'}</p>
+                  <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">{selectedLog.actorEmail || 'No actor email'}</p>
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-100 p-4">
+              <div className="rounded-2xl border border-[hsl(var(--border))] p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Summary</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Summary</p>
                   <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold border ${statusTone[selectedLog.status] ?? statusTone.info}`}>
                     {selectedLog.status}
                   </span>
                 </div>
-                <p className="text-sm text-slate-700 leading-relaxed">{selectedLog.summary || 'No summary provided for this event.'}</p>
+                <p className="text-sm text-[hsl(var(--foreground))] leading-relaxed">{selectedLog.summary || 'No summary provided for this event.'}</p>
               </div>
 
-              <div className="rounded-2xl border border-slate-100 p-4">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Metadata</p>
-                <pre className="text-[11px] leading-relaxed text-slate-700 whitespace-pre-wrap break-words bg-slate-50 rounded-xl p-3 overflow-x-auto">
+              <div className="rounded-2xl border border-[hsl(var(--border))] p-4">
+                <p className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-2">Metadata</p>
+                <pre className="text-[11px] leading-relaxed text-[hsl(var(--foreground))] whitespace-pre-wrap break-words bg-[hsl(var(--muted))] rounded-xl p-3 overflow-x-auto">
                   {previewJson(selectedLog.metadata)}
                 </pre>
               </div>
 
-              <div className="rounded-2xl border border-slate-100 p-4">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Before</p>
-                <pre className="text-[11px] leading-relaxed text-slate-700 whitespace-pre-wrap break-words bg-slate-50 rounded-xl p-3 overflow-x-auto">
+              <div className="rounded-2xl border border-[hsl(var(--border))] p-4">
+                <p className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-2">Before</p>
+                <pre className="text-[11px] leading-relaxed text-[hsl(var(--foreground))] whitespace-pre-wrap break-words bg-[hsl(var(--muted))] rounded-xl p-3 overflow-x-auto">
                   {previewJson(selectedLog.beforeData)}
                 </pre>
               </div>
 
-              <div className="rounded-2xl border border-slate-100 p-4">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">After</p>
-                <pre className="text-[11px] leading-relaxed text-slate-700 whitespace-pre-wrap break-words bg-slate-50 rounded-xl p-3 overflow-x-auto">
+              <div className="rounded-2xl border border-[hsl(var(--border))] p-4">
+                <p className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-2">After</p>
+                <pre className="text-[11px] leading-relaxed text-[hsl(var(--foreground))] whitespace-pre-wrap break-words bg-[hsl(var(--muted))] rounded-xl p-3 overflow-x-auto">
                   {previewJson(selectedLog.afterData)}
                 </pre>
               </div>

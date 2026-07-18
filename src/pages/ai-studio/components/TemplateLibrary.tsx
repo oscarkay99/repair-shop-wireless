@@ -18,7 +18,7 @@ export default function TemplateLibrary({ selected, onSelect }: TemplateLibraryP
   return (
     <div className="h-full flex flex-col">
       <div className="mb-4">
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Templates</p>
+        <p className="text-[10px] font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-widest mb-3">Templates</p>
         <div className="space-y-0.5">
           {categories.map((cat) => (
             <button
@@ -28,10 +28,10 @@ export default function TemplateLibrary({ selected, onSelect }: TemplateLibraryP
               style={
                 activeCategory === cat
                   ? { background: 'rgba(220,31,31,0.08)', color: '#DC1F1F', borderLeft: '2px solid #DC1F1F' }
-                  : { color: '#64748b' }
+                  : { color: 'hsl(var(--muted-foreground))' }
               }
               onMouseEnter={(e) => {
-                if (activeCategory !== cat) (e.currentTarget as HTMLElement).style.background = '#f8fafc';
+                if (activeCategory !== cat) (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))';
               }}
               onMouseLeave={(e) => {
                 if (activeCategory !== cat) (e.currentTarget as HTMLElement).style.background = '';
@@ -55,17 +55,17 @@ export default function TemplateLibrary({ selected, onSelect }: TemplateLibraryP
                 : { borderColor: 'transparent' }
             }
             onMouseEnter={(e) => {
-              if (selected !== t.id) (e.currentTarget as HTMLElement).style.background = '#f8fafc';
+              if (selected !== t.id) (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))';
             }}
             onMouseLeave={(e) => {
               if (selected !== t.id) (e.currentTarget as HTMLElement).style.background = '';
             }}
           >
             <div className="flex items-center gap-2 mb-1">
-              <i className={`${t.icon} text-xs`} style={{ color: selected === t.id ? '#DC1F1F' : '#94a3b8' }} />
-              <span className="text-xs font-medium text-slate-700">{t.name}</span>
+              <i className={`${t.icon} text-xs`} style={{ color: selected === t.id ? '#DC1F1F' : 'hsl(var(--muted-foreground))' }} />
+              <span className="text-xs font-medium text-[hsl(var(--foreground))]">{t.name}</span>
             </div>
-            <p className="text-[10px] text-slate-400 leading-relaxed">{t.description}</p>
+            <p className="text-[10px] text-[hsl(var(--muted-foreground))] leading-relaxed">{t.description}</p>
           </button>
         ))}
       </div>

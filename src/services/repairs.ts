@@ -1,6 +1,6 @@
 import { repairs as seedData } from '@/mocks/repairs';
 import type { Repair, RepairMedia, RepairMediaType, RepairStatus, RepairMediaUploadInput } from '@/types/repair';
-import { isSupabaseConfigured, supabase } from './supabase';
+import { isSupabaseConfigured, supabase, db } from './supabase';
 
 export const MAX_REPAIR_MEDIA_BYTES = 5 * 1024 * 1024;
 export const MAX_REPAIR_VIDEO_DURATION_SECONDS = 30;
@@ -8,42 +8,46 @@ export const REPAIR_MEDIA_BUCKET = 'repair-media';
 
 const DIAGNOSIS_PAYMENT_TYPES = new Set(['diagnosis_fee']);
 
-type RepairRow = {
-  id: string;
+// `ticket_number` (e.g. "TK-0001") is what the frontend treats as the repair's id —
+// it's DB-generated and unique, so every read/write below filters on it directly
+// instead of the internal uuid primary key.
+type TicketRow = {
+  ticket_number: string;
   customer_id?: string | null;
-  customer: string;
+  customer_name: string;
   customer_email?: string | null;
   customer_phone?: string | null;
   website_auth_user_id?: string | null;
   device: string;
+  device_type?: string | null;
   issue: string;
   status: string;
   job_type?: string | null;
   service_stage?: string | null;
   quote_status?: string | null;
-  diagnosis_summary?: string | null;
+  diagnosis?: string | null;
   diagnosis_fee?: number | null;
   diagnosis_paid_at?: string | null;
   quote_amount?: number | null;
   quote_sent_at?: string | null;
   approval_decision_at?: string | null;
   repair_started_at?: string | null;
-  technician: string;
+  technician_name: string;
   eta: string;
-  cost: string;
-  started: string;
-  cost_num?: number | null;
-  completed_date?: string | null;
+  cost_label: string;
+  received_at: string;
+  estimated_cost?: number | null;
+  completed_at?: string | null;
   warranty: boolean;
-  parts: unknown;
-  notes: unknown;
-  payments?: unknown;
+  parts_json: unknown;
+  notes_json: unknown;
+  payments_json?: unknown;
   created_at?: string | null;
 };
 
-type RepairMediaRow = {
+type TicketMediaRow = {
   id: string;
-  repair_id: string;
+  ticket_number: string;
   stage: string;
   media_type: string;
   file_url: string;
@@ -125,10 +129,10 @@ function toMediaType(file: File): RepairMediaType {
   return file.type.startsWith('video/') ? 'video' : 'image';
 }
 
-function normalizeMediaRow(row: RepairMediaRow): RepairMedia {
+function normalizeMediaRow(row: TicketMediaRow): RepairMedia {
   return {
     id: row.id,
-    repairId: row.repair_id,
+    repairId: row.ticket_number,
     stage: row.stage as RepairMedia['stage'],
     type: row.media_type as RepairMediaType,
     url: row.file_url,
@@ -143,45 +147,85 @@ function normalizeMediaRow(row: RepairMediaRow): RepairMedia {
   };
 }
 
-function normalizeRepairRow(row: RepairRow, media: RepairMedia[]): Repair {
+function normalizeTicketRow(row: TicketRow, media: RepairMedia[]): Repair {
   return {
-    id: row.id,
+    id: row.ticket_number,
     createdAt: row.created_at ?? undefined,
     customerId: row.customer_id ?? undefined,
-    customer: row.customer,
+    customer: row.customer_name,
     customerEmail: row.customer_email ?? undefined,
     customerPhone: row.customer_phone ?? undefined,
     websiteAuthUserId: row.website_auth_user_id ?? undefined,
     device: row.device,
+    deviceType: row.device_type ?? undefined,
     issue: row.issue,
     status: row.status as RepairStatus,
     jobType: (row.job_type as Repair['jobType']) ?? 'diagnosis_to_repair',
     serviceStage: (row.service_stage as Repair['serviceStage']) ?? 'diagnosis',
     quoteStatus: (row.quote_status as Repair['quoteStatus']) ?? 'not_sent',
-    diagnosisSummary: row.diagnosis_summary ?? undefined,
+    diagnosisSummary: row.diagnosis ?? undefined,
     diagnosisFee: row.diagnosis_fee ?? 200,
     diagnosisPaidAt: row.diagnosis_paid_at ?? undefined,
     quoteAmount: row.quote_amount ?? undefined,
     quoteSentAt: row.quote_sent_at ?? undefined,
     approvalDecisionAt: row.approval_decision_at ?? undefined,
     repairStartedAt: row.repair_started_at ?? undefined,
-    technician: row.technician,
+    technician: row.technician_name,
     eta: row.eta,
-    cost: row.cost,
-    costNum: row.cost_num ?? undefined,
-    started: row.started,
-    completedDate: row.completed_date ?? undefined,
+    cost: row.cost_label,
+    costNum: row.estimated_cost ?? undefined,
+    started: row.received_at,
+    completedDate: row.completed_at ?? undefined,
     warranty: Boolean(row.warranty),
-    parts: parseParts(row.parts),
-    notes: parseNotes(row.notes),
+    parts: parseParts(row.parts_json),
+    notes: parseNotes(row.notes_json),
     media,
-    payments: parsePayments(row.payments),
+    payments: parsePayments(row.payments_json),
   };
 }
 
-function buildStoragePath(repairId: string, file: File, stage: RepairMedia['stage']) {
+function toTicketPatch(item: Partial<Repair>) {
+  const patch: Record<string, unknown> = {};
+  if ('customerId' in item) patch.customer_id = item.customerId ?? null;
+  if ('customer' in item) patch.customer_name = item.customer;
+  if ('customerEmail' in item) patch.customer_email = item.customerEmail ?? null;
+  if ('customerPhone' in item) patch.customer_phone = item.customerPhone ?? null;
+  if ('websiteAuthUserId' in item) patch.website_auth_user_id = item.websiteAuthUserId ?? null;
+  if ('device' in item) patch.device = item.device;
+  if ('deviceType' in item) patch.device_type = item.deviceType ?? null;
+  if ('issue' in item) patch.issue = item.issue;
+  if ('status' in item) patch.status = item.status;
+  if ('jobType' in item) patch.job_type = item.jobType ?? null;
+  if ('serviceStage' in item) patch.service_stage = item.serviceStage ?? null;
+  if ('quoteStatus' in item) patch.quote_status = item.quoteStatus ?? null;
+  if ('diagnosisSummary' in item) patch.diagnosis = item.diagnosisSummary ?? null;
+  if ('diagnosisFee' in item) patch.diagnosis_fee = item.diagnosisFee ?? null;
+  if ('diagnosisPaidAt' in item) patch.diagnosis_paid_at = item.diagnosisPaidAt ?? null;
+  if ('quoteAmount' in item) patch.quote_amount = item.quoteAmount ?? null;
+  if ('quoteSentAt' in item) patch.quote_sent_at = item.quoteSentAt ?? null;
+  if ('approvalDecisionAt' in item) patch.approval_decision_at = item.approvalDecisionAt ?? null;
+  if ('repairStartedAt' in item) patch.repair_started_at = item.repairStartedAt ?? null;
+  if ('technician' in item) patch.technician_name = item.technician;
+  if ('eta' in item) patch.eta = item.eta;
+  if ('cost' in item) patch.cost_label = item.cost;
+  if ('costNum' in item) patch.estimated_cost = item.costNum ?? null;
+  if ('completedDate' in item) patch.completed_at = item.completedDate ?? null;
+  if ('warranty' in item) patch.warranty = item.warranty;
+  if ('parts' in item) patch.parts_json = item.parts;
+  if ('notes' in item) patch.notes_json = item.notes;
+  if ('payments' in item) patch.payments_json = item.payments;
+  return patch;
+}
+
+function buildStoragePath(ticketNumber: string, file: File, stage: RepairMedia['stage']) {
   const extension = file.name.includes('.') ? file.name.split('.').pop() : 'bin';
-  return `repairs/${repairId}/${stage}/${crypto.randomUUID()}.${extension}`;
+  return `repairs/${ticketNumber}/${stage}/${crypto.randomUUID()}.${extension}`;
+}
+
+async function currentUserId(): Promise<string | null> {
+  if (!isSupabaseConfigured) return null;
+  const { data } = await supabase.auth.getSession();
+  return data.session?.user?.id ?? null;
 }
 
 export function hasConfirmedDiagnosisPayment(repair: Repair): boolean {
@@ -221,29 +265,27 @@ export async function getRepairs(): Promise<Repair[]> {
   }
 
   try {
-    const [{ data: repairs, error: repairsError }, { data: mediaRows, error: mediaError }] = await Promise.all([
-      supabase.from('repairs').select('*').order('created_at', { ascending: false }),
-      supabase.from('repair_media').select('*').order('created_at', { ascending: false }),
+    const [{ data: tickets, error: ticketsError }, { data: mediaRows, error: mediaError }] = await Promise.all([
+      db.from('tickets').select('*').order('created_at', { ascending: false }),
+      db.from('ticket_media').select('*').order('created_at', { ascending: false }),
     ]);
 
-    if (repairsError) throw repairsError;
+    if (ticketsError) throw ticketsError;
     if (mediaError) throw mediaError;
 
-    if (!repairs || repairs.length === 0) {
-      return store.map(normalizeRepair);
-    }
-
-    const mediaByRepairId = new Map<string, RepairMedia[]>();
+    const mediaByTicketNumber = new Map<string, RepairMedia[]>();
     (mediaRows ?? []).forEach((row) => {
-      const item = normalizeMediaRow(row as RepairMediaRow);
-      const existing = mediaByRepairId.get(item.repairId) ?? [];
+      const item = normalizeMediaRow(row as TicketMediaRow);
+      const existing = mediaByTicketNumber.get(item.repairId) ?? [];
       existing.push(item);
-      mediaByRepairId.set(item.repairId, existing);
+      mediaByTicketNumber.set(item.repairId, existing);
     });
 
-    store = repairs.map((row) =>
+    // Trust a successful (even empty) response completely — don't keep
+    // showing seed tickets once the real table is reachable.
+    store = (tickets ?? []).map((row) =>
       normalizeRepair(
-        normalizeRepairRow(row as RepairRow, mediaByRepairId.get((row as RepairRow).id) ?? []),
+        normalizeTicketRow(row as TicketRow, mediaByTicketNumber.get((row as TicketRow).ticket_number) ?? []),
       ),
     );
   } catch (error) {
@@ -254,52 +296,57 @@ export async function getRepairs(): Promise<Repair[]> {
 }
 
 export async function createRepair(r: Omit<Repair, 'id'>): Promise<Repair> {
-  const item = normalizeRepair({
-    ...r,
-    id: `R-${String(store.length + 1).padStart(4, '0')}`,
-    media: r.media ?? [],
-  } as Repair);
-
-  store = [item, ...store];
+  const localId = `R-${String(store.length + 1).padStart(4, '0')}`;
+  let item = normalizeRepair({ ...r, id: localId, media: r.media ?? [] } as Repair);
 
   if (isSupabaseConfigured) {
     try {
-      await supabase.from('repairs').upsert({
-        id: item.id,
+      const { data: inserted, error } = await db.from('tickets').insert({
         customer_id: item.customerId ?? null,
-        customer: item.customer,
+        customer_name: item.customer,
         customer_email: item.customerEmail ?? null,
         customer_phone: item.customerPhone ?? null,
         website_auth_user_id: item.websiteAuthUserId ?? null,
         device: item.device,
+        device_type: item.deviceType ?? null,
         issue: item.issue,
         status: item.status,
         job_type: item.jobType ?? null,
         service_stage: item.serviceStage ?? null,
         quote_status: item.quoteStatus ?? null,
-        diagnosis_summary: item.diagnosisSummary ?? null,
+        diagnosis: item.diagnosisSummary ?? null,
         diagnosis_fee: item.diagnosisFee ?? null,
         diagnosis_paid_at: item.diagnosisPaidAt ?? null,
         quote_amount: item.quoteAmount ?? null,
         quote_sent_at: item.quoteSentAt ?? null,
         approval_decision_at: item.approvalDecisionAt ?? null,
         repair_started_at: item.repairStartedAt ?? null,
-        technician: item.technician,
+        technician_name: item.technician,
         eta: item.eta,
-        cost: item.cost,
-        started: item.started,
-        cost_num: item.costNum ?? null,
-        completed_date: item.completedDate ?? null,
+        cost_label: item.cost,
+        estimated_cost: item.costNum ?? null,
+        completed_at: item.completedDate ?? null,
         warranty: item.warranty,
-        parts: item.parts,
-        notes: item.notes,
-        payments: item.payments ?? [],
-      });
+        parts_json: item.parts,
+        notes_json: item.notes,
+        payments_json: item.payments ?? [],
+      }).select('ticket_number, received_at, created_at').single();
+
+      if (error) throw error;
+      if (inserted) {
+        item = normalizeRepair({
+          ...item,
+          id: inserted.ticket_number,
+          started: inserted.received_at,
+          createdAt: inserted.created_at ?? undefined,
+        });
+      }
     } catch (error) {
-      console.warn('Unable to sync new repair to Supabase.', error);
+      console.warn('Unable to sync new repair to Supabase. Keeping it local-only.', error);
     }
   }
 
+  store = [item, ...store];
   return normalizeRepair(item);
 }
 
@@ -314,7 +361,7 @@ export async function updateRepairStatus(id: string, status: RepairStatus): Prom
 
   if (isSupabaseConfigured) {
     try {
-      await supabase.from('repairs').update({ status }).eq('id', id);
+      await db.from('tickets').update({ status }).eq('ticket_number', id);
     } catch (error) {
       console.warn('Unable to sync repair status to Supabase.', error);
     }
@@ -326,7 +373,7 @@ export async function updateRepairNotes(id: string, notes: string[]): Promise<vo
 
   if (isSupabaseConfigured) {
     try {
-      await supabase.from('repairs').update({ notes }).eq('id', id);
+      await db.from('tickets').update({ notes_json: notes }).eq('ticket_number', id);
     } catch (error) {
       console.warn('Unable to sync repair notes to Supabase.', error);
     }
@@ -348,31 +395,7 @@ export async function updateRepair(id: string, patch: Partial<Repair>): Promise<
 
   if (isSupabaseConfigured) {
     try {
-      await supabase.from('repairs').update({
-        customer_id: patch.customerId,
-        customer: patch.customer,
-        customer_email: patch.customerEmail,
-        customer_phone: patch.customerPhone,
-        website_auth_user_id: patch.websiteAuthUserId,
-        status: patch.status,
-        job_type: patch.jobType,
-        service_stage: patch.serviceStage,
-        quote_status: patch.quoteStatus,
-        diagnosis_summary: patch.diagnosisSummary,
-        diagnosis_fee: patch.diagnosisFee,
-        diagnosis_paid_at: patch.diagnosisPaidAt,
-        quote_amount: patch.quoteAmount,
-        quote_sent_at: patch.quoteSentAt,
-        approval_decision_at: patch.approvalDecisionAt,
-        repair_started_at: patch.repairStartedAt,
-        eta: patch.eta,
-        cost: patch.cost,
-        cost_num: patch.costNum,
-        completed_date: patch.completedDate,
-        parts: patch.parts,
-        notes: patch.notes,
-        payments: patch.payments,
-      }).eq('id', id);
+      await db.from('tickets').update(toTicketPatch(patch)).eq('ticket_number', id);
     } catch (error) {
       console.warn('Unable to sync repair update to Supabase.', error);
     }
@@ -384,7 +407,7 @@ export async function deleteRepair(id: string): Promise<void> {
 
   if (isSupabaseConfigured) {
     try {
-      await supabase.from('repairs').delete().eq('id', id);
+      await db.from('tickets').delete().eq('ticket_number', id);
     } catch (error) {
       console.warn('Unable to delete repair from Supabase.', error);
     }
@@ -400,12 +423,11 @@ export async function addRepairMedia(repairId: string, input: RepairMediaUploadI
   const createdAt = new Date().toISOString();
   const localPreviewUrl = URL.createObjectURL(input.file);
   let resolvedUrl = localPreviewUrl;
-  let filePath: string | undefined;
   let savedId = crypto.randomUUID();
 
   if (isSupabaseConfigured) {
     try {
-      filePath = buildStoragePath(repairId, input.file, input.stage);
+      const filePath = buildStoragePath(repairId, input.file, input.stage);
       const { error: uploadError } = await supabase.storage
         .from(REPAIR_MEDIA_BUCKET)
         .upload(filePath, input.file, {
@@ -419,10 +441,11 @@ export async function addRepairMedia(repairId: string, input: RepairMediaUploadI
       const { data: publicUrlData } = supabase.storage.from(REPAIR_MEDIA_BUCKET).getPublicUrl(filePath);
       resolvedUrl = publicUrlData.publicUrl;
 
-      const { data: inserted, error: insertError } = await supabase
-        .from('repair_media')
+      const uploaderId = await currentUserId();
+      const { data: inserted, error: insertError } = await db
+        .from('ticket_media')
         .insert({
-          repair_id: repairId,
+          ticket_number: repairId,
           stage: input.stage,
           media_type: mediaType,
           file_path: filePath,
@@ -433,12 +456,13 @@ export async function addRepairMedia(repairId: string, input: RepairMediaUploadI
           duration_seconds: input.durationSeconds,
           caption: input.caption?.trim() || null,
           uploaded_by: input.uploadedBy ?? null,
+          uploaded_by_id: uploaderId,
         })
         .select()
         .single();
 
       if (!insertError && inserted) {
-        savedId = (inserted as RepairMediaRow).id;
+        savedId = (inserted as TicketMediaRow).id;
       }
     } catch (error) {
       console.warn('Unable to sync repair media to Supabase. Keeping a local preview.', error);
@@ -466,4 +490,19 @@ export async function addRepairMedia(repairId: string, input: RepairMediaUploadI
   }));
 
   return { ...media };
+}
+
+export async function deleteRepairMedia(repairId: string, mediaId: string): Promise<void> {
+  updateLocalRepair(repairId, (repair) => ({
+    ...repair,
+    media: (repair.media ?? []).filter((item) => item.id !== mediaId),
+  }));
+
+  if (isSupabaseConfigured) {
+    try {
+      await db.from('ticket_media').delete().eq('id', mediaId);
+    } catch (error) {
+      console.warn('Unable to delete repair media from Supabase.', error);
+    }
+  }
 }

@@ -25,6 +25,8 @@ export interface Technician {
   email: string;
   specialty: string;
   status: TechnicianStatus;
+  /** Return date while status is 'off_duty', ISO 'YYYY-MM-DD'. Null/undefined once available again. */
+  leave_until?: string | null;
   rating: number;
   total_completed: number;
   created_at: string;
@@ -111,5 +113,7 @@ export interface WirelessSettings {
   vat_rate: number;
   currency: string;
   warranty_days: number;
+  primary_color: string;
+  tax_enabled: boolean;
   updated_at: string;
 }

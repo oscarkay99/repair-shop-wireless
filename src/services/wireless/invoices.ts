@@ -95,7 +95,10 @@ export async function getInvoices(): Promise<Invoice[]> {
       .select('*, customer:customers(id,name,phone,email,address,ticket_count,total_spent,created_at,updated_at)')
       .order('created_at', { ascending: false });
     if (error) throw error;
-    if (data?.length) { localStore = data as Invoice[]; }
+    // Trust a successful (even empty) response completely — don't keep showing
+    // seed invoices (which reference a seed customer that isn't real) once the
+    // real table is reachable.
+    localStore = (data as Invoice[] | null) ?? [];
     return localStore;
   } catch (e) {
     console.warn('[wireless/invoices] falling back to local store', e);

@@ -4,7 +4,7 @@ import type { UserRole } from '@/hooks/useAuth';
 
 const statusConfig = {
   active: { label: 'Active', color: '#25D366', bg: '#25D36615' },
-  inactive: { label: 'Inactive', color: '#94A3B8', bg: '#F1F5F9' },
+  inactive: { label: 'Inactive', color: '#94A3B8', bg: '#94A3B815' },
   suspended: { label: 'Suspended', color: '#E05A2B', bg: '#E05A2B15' },
 };
 
@@ -38,20 +38,20 @@ export default function UserTable({
   return (
     <div className="lg:col-span-2">
       <div className="flex items-center gap-3 mb-4">
-        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2.5 flex-1">
-          <i className="ri-search-line text-slate-400 text-sm" />
+        <div className="flex items-center gap-2 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl px-3 py-2.5 flex-1">
+          <i className="ri-search-line text-[hsl(var(--muted-foreground))] text-sm" />
           <input
             type="text"
             placeholder="Search users..."
             value={search}
             onChange={(e) => onSearch(e.target.value)}
-            className="bg-transparent text-sm text-slate-600 outline-none w-full"
+            className="bg-transparent text-sm text-[hsl(var(--muted-foreground))] outline-none w-full"
           />
         </div>
         <select
           value={filterRole}
           onChange={(e) => onFilterRole(e.target.value)}
-          className="px-3 py-2.5 rounded-xl bg-white border border-slate-200 text-sm text-slate-700 focus:outline-none"
+          className="px-3 py-2.5 rounded-xl bg-[hsl(var(--card))] border border-[hsl(var(--border))] text-sm text-[hsl(var(--foreground))] focus:outline-none"
         >
           <option value="all">All Roles</option>
           {(Object.keys(roleLabels) as UserRole[]).map(r => (
@@ -67,8 +67,8 @@ export default function UserTable({
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-        <div className="divide-y divide-slate-100">
+      <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] overflow-hidden">
+        <div className="divide-y divide-[hsl(var(--border))]">
           {filtered.map(user => {
             const st = statusConfig[user.status];
             const rc = roleColors[user.role];
@@ -76,19 +76,19 @@ export default function UserTable({
               <div
                 key={user.id}
                 onClick={() => onSelect(user.id)}
-                className={`flex items-center gap-4 p-4 cursor-pointer transition-colors hover:bg-slate-50/50 ${selectedUser === user.id ? 'bg-[rgba(220,31,31,0.04)]' : ''}`}
+                className={`flex items-center gap-4 p-4 cursor-pointer transition-colors hover:bg-[hsl(var(--muted))]/50 ${selectedUser === user.id ? 'bg-[rgba(220,31,31,0.04)]' : ''}`}
               >
                 <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0" style={{ background: rc }}>
                   {user.avatar}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold text-slate-800">{user.name}</p>
+                    <p className="text-sm font-semibold text-[hsl(var(--foreground))]">{user.name}</p>
                     {user.role === 'admin' && (
                       <i className="ri-shield-star-line text-xs" style={{ color: '#DC1F1F' }} />
                     )}
                   </div>
-                  <p className="text-xs text-slate-400">{user.email}</p>
+                  <p className="text-xs text-[hsl(var(--muted-foreground))]">{user.email}</p>
                 </div>
                 <span className="text-[10px] px-2.5 py-1 rounded-full font-semibold text-white flex-shrink-0" style={{ background: rc }}>
                   {roleLabels[user.role]}
@@ -96,17 +96,17 @@ export default function UserTable({
                 <span className="text-[10px] px-2.5 py-1 rounded-full font-semibold flex-shrink-0" style={{ color: st.color, background: st.bg }}>
                   {st.label}
                 </span>
-                <p className="text-[10px] text-slate-400 flex-shrink-0 hidden lg:block w-32 text-right">{user.lastLogin}</p>
+                <p className="text-[10px] text-[hsl(var(--muted-foreground))] flex-shrink-0 hidden lg:block w-32 text-right">{user.lastLogin}</p>
                 <div className="flex items-center gap-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
                   <button
                     onClick={() => onEdit(user)}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-slate-100 cursor-pointer"
+                    className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[hsl(var(--muted))] cursor-pointer"
                   >
-                    <i className="ri-edit-line text-slate-400 text-sm" />
+                    <i className="ri-edit-line text-[hsl(var(--muted-foreground))] text-sm" />
                   </button>
                   <button
                     onClick={() => onToggleStatus(user.id)}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-slate-100 cursor-pointer"
+                    className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[hsl(var(--muted))] cursor-pointer"
                     title={user.status === 'active' ? 'Deactivate' : 'Activate'}
                   >
                     <i className={`${user.status === 'active' ? 'ri-pause-circle-line text-amber-400' : 'ri-play-circle-line text-green-500'} text-sm`} />

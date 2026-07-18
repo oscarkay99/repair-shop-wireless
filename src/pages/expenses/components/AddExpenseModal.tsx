@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
-import type { Expense } from '@/services/expenses';
+import type { Expense } from '@/services/wireless/expenses';
 
 interface ExpenseCategory { id: string; name: string }
 

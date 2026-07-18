@@ -7,7 +7,7 @@ import { expenseCategories } from '@/mocks/expenses';
 import AddExpenseModal from './components/AddExpenseModal';
 import Pagination from '@/components/shared/Pagination';
 import { TrendingUp, TrendingDown, Plus, Pencil, Trash2, X } from 'lucide-react';
-import type { Expense } from '@/services/expenses';
+import type { Expense } from '@/services/wireless/expenses';
 
 const PAGE_SIZE = 15;
 

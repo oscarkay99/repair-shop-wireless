@@ -35,14 +35,24 @@ function writeStoredUser(user: AuthUser | null) {
 }
 
 // ── Shared state ─────────────────────────────────────────────
-interface State { user: AuthUser | null; loading: boolean }
+interface State { user: AuthUser | null; loading: boolean; deniedMessage: string | null }
 type Listener = () => void;
 const listeners = new Set<Listener>();
-let state: State = { user: readStoredUser(), loading: false };
+let state: State = { user: readStoredUser(), loading: false, deniedMessage: null };
 
 function setState(next: Partial<State>) {
   state = { ...state, ...next };
   listeners.forEach(l => l());
+}
+
+// Reactive, not a one-shot sessionStorage flag — the rejection happens
+// asynchronously (after the profile check resolves), well after any
+// mount-time effect on the sign-in page would have already looked and found
+// nothing. Consumers of useAuth() see this update live instead.
+async function handleUnrecognizedSession() {
+  await supabase.auth.signOut();
+  writeStoredUser(null);
+  setState({ user: null, loading: false, deniedMessage: "This account isn't registered as a Wireless user. Contact your administrator." });
 }
 
 // ── Supabase session bootstrap ───────────────────────────────
@@ -52,7 +62,7 @@ if (isSupabaseConfigured) {
     if (session?.user) {
       loadProfileFromSession(session.user.id, session.user.email ?? '').then(user => {
         if (user) { writeStoredUser(user); setState({ user, loading: false }); }
-        else { setState({ loading: false }); }
+        else { handleUnrecognizedSession(); }
       });
     } else {
       setState({ loading: false });
@@ -64,6 +74,7 @@ if (isSupabaseConfigured) {
     if (session?.user) {
       loadProfileFromSession(session.user.id, session.user.email ?? '').then(user => {
         if (user) { writeStoredUser(user); setState({ user }); }
+        else { handleUnrecognizedSession(); }
       });
     } else {
       // Don't clear mock-fallback users — they have no Supabase session
@@ -76,39 +87,56 @@ if (isSupabaseConfigured) {
 }
 
 async function loadProfileFromSession(userId: string, email: string): Promise<AuthUser | null> {
-  // If this email matches a known demo account, use its defined role/name
+  // Demo account defaults are only ever used to provision a brand-new profile
+  // (first login, no row yet) — never to overwrite a real, already-existing
+  // profile. Several demo emails (admin@, kofi@, ama@wireless.com) now belong
+  // to real accounts, and force-syncing them back to hardcoded values on every
+  // login would silently undo any real edit made via Settings.
   const demo = mockUsers.find(u => u.email === email);
 
   try {
     const { data } = await supabase
       .schema('wireless')
       .from('profiles')
-      .select('id, name, role, avatar, last_login')
+      .select('id, name, role, avatar, last_login, status')
       .eq('id', userId)
       .single();
 
-    const name   = demo?.name   ?? (data?.name   ?? email.split('@')[0]);
-    const role   = demo?.role   ?? (data?.role   as UserRole ?? 'receptionist');
-    const avatar = demo?.avatar ?? (data?.avatar ?? name[0].toUpperCase());
-
-    if (!data) {
-      // Profile doesn't exist — create it with correct role
-      await supabase.schema('wireless').from('profiles').upsert({
-        id: userId, email, name, role, avatar, last_login: new Date().toISOString(),
-      });
-      return { id: userId, email, name, role, avatar, lastLogin: '' };
+    if (data) {
+      // A profile row existing is not enough — the on_auth_user_created
+      // trigger creates one for *any* new auth signup (password or OAuth),
+      // defaulting it to 'pending'. Only 'active' profiles (provisioned
+      // through the admin invite flow) may actually sign in.
+      if (data.status !== 'active') return null;
+      await supabase.schema('wireless').from('profiles').update({ last_login: new Date().toISOString() }).eq('id', userId);
+      return { id: userId, email, name: data.name, role: data.role as UserRole, avatar: data.avatar, lastLogin: data.last_login ?? '' };
     }
 
-    // Update last_login and correct role/name if this is a demo account
-    const updates: Record<string, string> = { last_login: new Date().toISOString() };
-    if (demo) {
-      if (data.role !== demo.role)   updates.role   = demo.role;
-      if (data.name !== demo.name)   updates.name   = demo.name;
-      if (data.avatar !== demo.avatar) updates.avatar = demo.avatar;
-    }
-    await supabase.schema('wireless').from('profiles').update(updates).eq('id', userId);
+    // No profile row under this exact auth id — this happens the first time
+    // someone signs in via a new method (e.g. Google) that Supabase treats as
+    // a distinct identity. Only provision a profile if this email is already
+    // known as staff (an existing ACTIVE profile row, under any id, or a
+    // recognized demo account) — an unrecognized email must NOT silently get
+    // a new receptionist-level account just by completing a Google consent
+    // screen.
+    const { data: byEmail } = await supabase
+      .schema('wireless')
+      .from('profiles')
+      .select('name, role, avatar, status')
+      .eq('email', email)
+      .eq('status', 'active')
+      .limit(1)
+      .maybeSingle();
 
-    return { id: userId, email, name, role, avatar, lastLogin: data.last_login ?? '' };
+    if (!byEmail && !demo) return null;
+
+    const name   = byEmail?.name   ?? demo!.name;
+    const role   = (byEmail?.role  ?? demo!.role) as UserRole;
+    const avatar = byEmail?.avatar ?? demo!.avatar;
+    await supabase.schema('wireless').from('profiles').upsert({
+      id: userId, email, name, role, avatar, status: 'active', last_login: new Date().toISOString(),
+    });
+    return { id: userId, email, name, role, avatar, lastLogin: '' };
   } catch (e) {
     console.warn('[useAuth] failed to load profile', e);
     return null;
@@ -129,6 +157,7 @@ export function useAuth() {
     setState({ loading: true });
 
     const demoMatch = mockUsers.find(u => u.email === email && u.password === password);
+    setState({ deniedMessage: null });
 
     // Admin tries Supabase first (needs real session for RLS), others skip straight to mock
     if (isSupabaseConfigured && demoMatch?.role === 'admin') {
@@ -187,11 +216,26 @@ export function useAuth() {
     return exists ? { success: true } : { success: false, error: 'No account found' };
   };
 
+  const loginWithGoogle = async (): Promise<AuthResult> => {
+    if (!isSupabaseConfigured) return { success: false, error: 'Google sign-in requires a live Supabase connection.' };
+    setState({ deniedMessage: null });
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + '/signin' },
+    });
+    return error ? { success: false, error: error.message } : { success: true };
+  };
+
+  const clearDeniedMessage = () => setState({ deniedMessage: null });
+
   return {
     user: snap.user,
     login,
+    loginWithGoogle,
     logout,
     resetPassword,
+    deniedMessage: snap.deniedMessage,
+    clearDeniedMessage,
     isAdmin: snap.user?.role === 'admin',
     isAuthenticated: !!snap.user,
     isLoading: snap.loading,

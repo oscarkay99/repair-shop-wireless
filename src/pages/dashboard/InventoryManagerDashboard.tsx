@@ -14,18 +14,18 @@ function KPICard({ label, value, sub, icon: Icon, color }: {
   return (
     <div
       className="rounded-2xl p-5 flex flex-col gap-3"
-      style={{ background: 'white', border: '1px solid rgba(7,16,31,0.07)', boxShadow: '0 1px 3px rgba(7,16,31,0.04)' }}
+      style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', boxShadow: 'var(--shadow-card)' }}
     >
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.12em] mb-2" style={{ color: 'rgba(10,31,74,0.38)' }}>{label}</p>
-          <p className="text-[28px] font-bold leading-none" style={{ color: '#0F172A', letterSpacing: '-0.03em' }}>{value}</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.12em] mb-2" style={{ color: 'hsl(var(--muted-foreground))' }}>{label}</p>
+          <p className="text-[28px] font-bold leading-none" style={{ color: 'hsl(var(--foreground))', letterSpacing: '-0.03em' }}>{value}</p>
         </div>
         <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${color}18`, border: `1px solid ${color}22` }}>
           <Icon className="w-4.5 h-4.5" style={{ color, width: 18, height: 18 }} />
         </div>
       </div>
-      <p className="text-[11px]" style={{ color: 'rgba(10,31,74,0.45)' }}>{sub}</p>
+      <p className="text-[11px]" style={{ color: 'hsl(var(--muted-foreground))' }}>{sub}</p>
     </div>
   );
 }
@@ -121,20 +121,20 @@ export default function InventoryManagerDashboard() {
       {/* Two-column layout */}
       <div className="grid grid-cols-2 gap-4">
         {/* Urgent: out of stock + low stock */}
-        <div className="rounded-2xl overflow-hidden" style={{ background: 'white', border: '1px solid rgba(7,16,31,0.07)', boxShadow: '0 1px 3px rgba(7,16,31,0.04)' }}>
+        <div className="rounded-2xl overflow-hidden" style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', boxShadow: 'var(--shadow-card)' }}>
           <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: 'hsl(var(--border))' }}>
             <div>
               <p className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>Needs Restocking</p>
               <p className="text-[11px] mt-0.5" style={{ color: 'hsl(var(--muted-foreground))' }}>Out of stock &amp; low stock items</p>
             </div>
-            <Link to="/inventory" className="text-[11px] font-semibold hover:opacity-70" style={{ color: 'hsl(350 60% 40%)' }}>
+            <Link to="/inventory" className="text-[11px] font-semibold hover:opacity-70" style={{ color: 'hsl(var(--primary))' }}>
               Inventory →
             </Link>
           </div>
 
           {loading ? (
             <div className="flex items-center justify-center py-10">
-              <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: 'hsl(350 60% 40%) transparent transparent' }} />
+              <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: 'hsl(var(--primary)) transparent transparent' }} />
             </div>
           ) : urgentItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 gap-2">
@@ -178,7 +178,7 @@ export default function InventoryManagerDashboard() {
         </div>
 
         {/* Fast movers */}
-        <div className="rounded-2xl overflow-hidden" style={{ background: 'white', border: '1px solid rgba(7,16,31,0.07)', boxShadow: '0 1px 3px rgba(7,16,31,0.04)' }}>
+        <div className="rounded-2xl overflow-hidden" style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', boxShadow: 'var(--shadow-card)' }}>
           <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: 'hsl(var(--border))' }}>
             <div>
               <p className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>Fast Movers</p>
@@ -188,13 +188,13 @@ export default function InventoryManagerDashboard() {
 
           {loading ? (
             <div className="flex items-center justify-center py-10">
-              <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: 'hsl(350 60% 40%) transparent transparent' }} />
+              <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: 'hsl(var(--primary)) transparent transparent' }} />
             </div>
           ) : fastMovers.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 gap-2">
               <Package className="w-8 h-8 opacity-20" style={{ color: 'hsl(var(--foreground))' }} />
               <p className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No fast movers tagged yet</p>
-              <Link to="/inventory" className="text-xs font-semibold" style={{ color: 'hsl(350 60% 40%)' }}>
+              <Link to="/inventory" className="text-xs font-semibold" style={{ color: 'hsl(var(--primary))' }}>
                 Mark items as fast mover →
               </Link>
             </div>

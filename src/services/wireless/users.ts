@@ -1,6 +1,6 @@
 import { isSupabaseConfigured, supabase, db } from '@/services/supabase';
 
-const API = 'https://rogernortconsult.com/api/wireless';
+const API = 'https://api.wirelesscares.com/wireless-admin/v1';
 
 async function getToken(): Promise<string | null> {
   if (!isSupabaseConfigured) return null;
@@ -51,6 +51,14 @@ export async function createWirelessUser(payload: {
   }
 }
 
+// Admins can update any profile's name/role directly — RLS (profiles_update)
+// already allows this for the admin role, no service-role backend call needed.
+export async function updateWirelessUser(userId: string, patch: { name?: string; role?: string }): Promise<void> {
+  if (!isSupabaseConfigured) throw new Error('Not connected to Supabase');
+  const { error } = await db.from('profiles').update(patch).eq('id', userId);
+  if (error) throw error;
+}
+
 export async function deleteWirelessUser(userId: string): Promise<void> {
   const token = await getToken();
   if (!token) throw new Error('Not authenticated');
@@ -68,4 +76,52 @@ export async function changePassword(newPassword: string): Promise<void> {
   if (!isSupabaseConfigured) throw new Error('Not connected to Supabase');
   const { error } = await supabase.auth.updateUser({ password: newPassword });
   if (error) throw error;
+}
+
+export interface MyProfile {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  bio: string;
+  birthday: string | null;
+  created_at: string;
+}
+
+export async function getMyProfile(): Promise<MyProfile | null> {
+  if (!isSupabaseConfigured) return null;
+  const { data: session } = await supabase.auth.getSession();
+  const userId = session.session?.user?.id;
+  if (!userId) return null;
+  const { data, error } = await db
+    .from('profiles')
+    .select('id, name, email, phone, bio, birthday, created_at')
+    .eq('id', userId)
+    .single();
+  if (error) throw error;
+  return data as MyProfile;
+}
+
+export async function updateMyProfile(patch: Partial<Pick<MyProfile, 'name' | 'phone' | 'bio' | 'birthday'>>): Promise<void> {
+  if (!isSupabaseConfigured) throw new Error('Not connected to Supabase');
+  const { data: session } = await supabase.auth.getSession();
+  const userId = session.session?.user?.id;
+  if (!userId) throw new Error('Not authenticated');
+  const { error } = await db.from('profiles').update(patch).eq('id', userId);
+  if (error) throw error;
+}
+
+export interface UpcomingBirthdayRow {
+  id: string;
+  name: string;
+  avatar: string;
+  role: string;
+  birthday: string;
+}
+
+export async function getUpcomingBirthdays(): Promise<UpcomingBirthdayRow[]> {
+  if (!isSupabaseConfigured) return [];
+  const { data, error } = await db.rpc('get_upcoming_birthdays');
+  if (error) throw error;
+  return ((data as UpcomingBirthdayRow[] | null) ?? []).filter(r => r.birthday);
 }

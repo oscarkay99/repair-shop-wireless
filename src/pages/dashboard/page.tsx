@@ -6,9 +6,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { useWirelessCustomers } from '@/hooks/useWirelessCustomers';
 import { useParts } from '@/hooks/useParts';
 import { useExpenses } from '@/hooks/useExpenses';
-import { useSales } from '@/hooks/useSales';
+import { useInvoices } from '@/hooks/useInvoices';
 import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/shared/Pagination';
+import BirthdayBanner from '@/components/shared/BirthdayBanner';
 import TechnicianDashboard from './TechnicianDashboard';
 import ReceptionistDashboard from './ReceptionistDashboard';
 import SalesManagerDashboard from './SalesManagerDashboard';
@@ -124,7 +125,7 @@ function PnLBanner({
 
   return (
     <div className="rounded-2xl overflow-hidden"
-      style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
+      style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', boxShadow: 'var(--shadow-card)' }}>
 
       {/* Banner header */}
       <div className="flex items-center justify-between px-6 py-4"
@@ -175,7 +176,7 @@ function PnLBanner({
           <p className="text-2xl font-black tracking-tight" style={{ color: '#22c55e' }}>
             {formatGHS(revenue)}
           </p>
-          <p className="text-xs mt-1.5" style={{ color: 'hsl(var(--muted-foreground))' }}>from completed sales</p>
+          <p className="text-xs mt-1.5" style={{ color: 'hsl(var(--muted-foreground))' }}>from paid invoices</p>
         </div>
 
         {/* Expenses */}
@@ -219,7 +220,7 @@ function PnLBanner({
           <p className="text-2xl font-black tracking-tight" style={{ color: 'hsl(var(--foreground))' }}>
             {activeRepairs}
           </p>
-          <Link to="/repairs">
+          <Link to="/tickets">
             <p className="text-xs mt-1.5 hover:underline" style={{ color: 'hsl(var(--primary))' }}>View repairs →</p>
           </Link>
         </div>
@@ -303,7 +304,7 @@ function AdminDashboard() {
   const { lowStock } = useParts();
   const { user } = useAuth();
   const { expenses } = useExpenses();
-  const { sales } = useSales();
+  const { invoices } = useInvoices();
 
   const [pnlPeriod, setPnlPeriod] = useState<PnLPeriod>('1m');
   const [revFilter, setRevFilter] = useState<RevFilter>('14d');
@@ -392,14 +393,17 @@ function AdminDashboard() {
   // ── P&L calculations ──────────────────────────────────────────────────────
   const { from: pnlFrom } = pnlBounds(pnlPeriod);
 
+  // Invoices are the canonical "money received" ledger — amount_paid on paid
+  // invoices, not ticket/accessory-sale totals directly, to avoid double-counting
+  // the same job/sale across both its record and its invoice.
   const pnlRevenue = useMemo(() => {
-    const src = sales.filter(s => {
-      if (s.status === 'cancelled' || s.status === 'refunded') return false;
+    const src = invoices.filter(i => {
+      if (i.status !== 'paid') return false;
       if (!pnlFrom) return true;
-      return new Date(s.date) >= pnlFrom;
+      return new Date(i.updated_at) >= pnlFrom;
     });
-    return src.reduce((s, sale) => s + parseAmt(sale.total), 0);
-  }, [sales, pnlPeriod]);
+    return src.reduce((s, i) => s + i.amount_paid, 0);
+  }, [invoices, pnlPeriod]);
 
   const pnlExpenses = useMemo(() => {
     return expenses.filter(e => {
@@ -418,10 +422,10 @@ function AdminDashboard() {
       const d    = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
       const next = new Date(now.getFullYear(), now.getMonth() - 5 + i + 1, 1);
       const label = d.toLocaleDateString('en-GH', { month: 'short' });
-      const rev  = sales.filter(s => {
-        if (s.status === 'cancelled' || s.status === 'refunded') return false;
-        const sd = new Date(s.date); return sd >= d && sd < next;
-      }).reduce((s, sale) => s + parseAmt(sale.total), 0);
+      const rev  = invoices.filter(inv => {
+        if (inv.status !== 'paid') return false;
+        const pd = new Date(inv.updated_at); return pd >= d && pd < next;
+      }).reduce((s, inv) => s + inv.amount_paid, 0);
       const exp  = expenses.filter(e => {
         if (e.type !== 'expense') return false;
         const ed = new Date(e.date); return ed >= d && ed < next;
@@ -429,7 +433,7 @@ function AdminDashboard() {
       return { month: label, revenue: rev, expenses: exp, profit: rev - exp };
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sales, expenses]);
+  }, [invoices, expenses]);
 
   // ── KPI cards ─────────────────────────────────────────────────────────────
   const kpiCards = [
@@ -437,13 +441,13 @@ function AdminDashboard() {
       label: 'Active Repairs',     value: repairsLoading   ? '…' : String(activeRepairs.length),
       sub: `${readyRepairs.length} ready for pickup`,
       icon: Wrench,       iconColor: 'hsl(var(--status-in-progress))', iconBg: 'hsl(var(--status-in-progress-bg))',
-      border: 'hsl(var(--status-in-progress))', link: '/repairs',
+      border: 'hsl(var(--status-in-progress))', link: '/tickets',
     },
     {
       label: 'Completed Today',    value: repairsLoading   ? '…' : String(completedToday.length),
       sub: `${completedMonth.length} this month`,
       icon: CheckCircle2, iconColor: 'hsl(var(--status-ready))',       iconBg: 'hsl(var(--status-ready-bg))',
-      border: 'hsl(var(--status-ready))', link: '/repairs',
+      border: 'hsl(var(--status-ready))', link: '/tickets',
     },
     {
       label: 'Total Customers',    value: customersLoading ? '…' : String(customers.length),
@@ -475,10 +479,10 @@ function AdminDashboard() {
           </h1>
           <p className="text-xs mt-0.5" style={{ color: 'hsl(var(--muted-foreground))' }}>{dateStr}</p>
         </div>
-        <Link to="/repairs">
+        <Link to="/tickets">
           <button className="flex items-center gap-2 px-4 h-9 rounded-xl text-xs font-bold"
             style={{ background: 'hsl(var(--foreground))', color: 'hsl(var(--background))' }}>
-            <Plus className="w-3.5 h-3.5" /> New Repair
+            <Plus className="w-3.5 h-3.5" /> New Ticket
           </button>
         </Link>
       </div>
@@ -498,8 +502,8 @@ function AdminDashboard() {
       {/* Revenue Chart + Device Types + Tech Workload */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        <div className="lg:col-span-2 rounded-xl border p-5"
-          style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
+        <div className="lg:col-span-2 rounded-2xl border p-5"
+          style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', boxShadow: 'var(--shadow-card)' }}>
           <div className="flex items-start justify-between mb-4">
             <div>
               <p className="text-sm font-semibold" style={{ color: 'hsl(var(--foreground))' }}>Repair Revenue</p>
@@ -553,8 +557,8 @@ function AdminDashboard() {
 
         <div className="space-y-4">
           {/* Device Types */}
-          <div className="rounded-xl border p-5"
-            style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
+          <div className="rounded-2xl border p-5"
+            style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', boxShadow: 'var(--shadow-card)' }}>
             <p className="text-sm font-semibold mb-4" style={{ color: 'hsl(var(--foreground))' }}>Device Mix</p>
             {deviceTypes.length === 0 ? (
               <p className="text-xs text-center py-4" style={{ color: 'hsl(var(--muted-foreground))' }}>No data</p>
@@ -584,8 +588,8 @@ function AdminDashboard() {
 
           {/* Technician Workload */}
           {techWorkload.length > 0 && (
-            <div className="rounded-xl border p-5"
-              style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
+            <div className="rounded-2xl border p-5"
+              style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', boxShadow: 'var(--shadow-card)' }}>
               <p className="text-sm font-semibold mb-4" style={{ color: 'hsl(var(--foreground))' }}>Tech Workload</p>
               <div className="space-y-3">
                 {techWorkload.map(t => (
@@ -609,10 +613,20 @@ function AdminDashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {kpiCards.map(card => (
           <Link key={card.label} to={card.link} className="block group">
-            <div className="rounded-xl border p-4 relative overflow-hidden transition-colors"
-              style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = card.border + '66'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'hsl(var(--border))'; }}>
+            <div className="rounded-2xl border p-4 relative overflow-hidden"
+              style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', boxShadow: 'var(--shadow-card)', transition: 'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease' }}
+              onMouseEnter={e => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.borderColor = card.border + '66';
+                el.style.boxShadow = 'var(--shadow-md)';
+                el.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={e => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.borderColor = 'hsl(var(--border))';
+                el.style.boxShadow = 'var(--shadow-card)';
+                el.style.transform = 'translateY(0)';
+              }}>
               <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-l-xl" style={{ background: card.border }} />
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 pl-2">
@@ -621,8 +635,8 @@ function AdminDashboard() {
                   <p className="text-3xl font-bold leading-tight" style={{ color: 'hsl(var(--foreground))' }}>{card.value}</p>
                   <p className="text-[10px] mt-1" style={{ color: 'hsl(var(--muted-foreground))' }}>{card.sub}</p>
                 </div>
-                <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ background: card.iconBg }}>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: card.iconBg, boxShadow: `0 2px 8px ${card.border}33` }}>
                   <card.icon className="w-4.5 h-4.5" style={{ color: card.iconColor }} />
                 </div>
               </div>
@@ -656,15 +670,15 @@ function AdminDashboard() {
       {/* Recent Repairs + Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        <div className="lg:col-span-2 rounded-xl border overflow-hidden"
-          style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
+        <div className="lg:col-span-2 rounded-2xl border overflow-hidden"
+          style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', boxShadow: 'var(--shadow-card)' }}>
           <div className="px-5 py-3.5 border-b flex items-center justify-between"
             style={{ borderColor: 'hsl(var(--border))' }}>
             <div className="flex items-center gap-2">
               <ClipboardList className="w-4 h-4" style={{ color: 'hsl(var(--primary))' }} />
               <span className="text-sm font-semibold" style={{ color: 'hsl(var(--foreground))' }}>Recent Repairs</span>
             </div>
-            <Link to="/repairs">
+            <Link to="/tickets">
               <button className="flex items-center gap-1 text-xs font-medium" style={{ color: 'hsl(var(--primary))' }}>
                 View all <ArrowRight className="w-3 h-3" />
               </button>
@@ -719,14 +733,14 @@ function AdminDashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="rounded-xl border p-5 space-y-4"
-          style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
+        <div className="rounded-2xl border p-5 space-y-4"
+          style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', boxShadow: 'var(--shadow-card)' }}>
           <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'hsl(var(--muted-foreground))' }}>
             Quick Actions
           </p>
           <div className="space-y-2">
             {[
-              { label: 'New Repair',    desc: 'Create a repair job',      icon: Plus,      to: '/repairs',      primary: true },
+              { label: 'New Ticket',    desc: 'Create a repair job',      icon: Plus,      to: '/tickets',      primary: true },
               { label: 'Add Customer',  desc: 'Register a new customer',  icon: UserPlus,  to: '/customers' },
               { label: 'Add Part',      desc: 'Update inventory stock',   icon: Package,   to: '/inventory' },
               { label: 'Log Expense',   desc: 'Record a business cost',   icon: Receipt,   to: '/expenses' },
@@ -760,8 +774,8 @@ function AdminDashboard() {
       {/* Repair Pipeline + Active Jobs */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        <div className="lg:col-span-2 rounded-xl border p-5"
-          style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
+        <div className="lg:col-span-2 rounded-2xl border p-5"
+          style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', boxShadow: 'var(--shadow-card)' }}>
           <div className="flex items-start justify-between mb-5">
             <div>
               <p className="text-sm font-semibold" style={{ color: 'hsl(var(--foreground))' }}>Repair Pipeline</p>
@@ -808,12 +822,12 @@ function AdminDashboard() {
         </div>
 
         {/* Active Jobs */}
-        <div className="rounded-xl border overflow-hidden"
-          style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
+        <div className="rounded-2xl border overflow-hidden"
+          style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', boxShadow: 'var(--shadow-card)' }}>
           <div className="px-4 py-3.5 border-b flex items-center justify-between"
             style={{ borderColor: 'hsl(var(--border))' }}>
             <p className="text-sm font-semibold" style={{ color: 'hsl(var(--foreground))' }}>Active Jobs</p>
-            <Link to="/repairs">
+            <Link to="/tickets">
               <button className="flex items-center gap-1 text-xs font-medium" style={{ color: 'hsl(var(--primary))' }}>
                 View all <ArrowRight className="w-3 h-3" />
               </button>
@@ -835,7 +849,10 @@ function AdminDashboard() {
                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}>
                     <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-[11px] font-bold text-white"
-                      style={{ background: avatarColor(name) }}>
+                      style={{
+                        background: `linear-gradient(135deg, ${avatarColor(name)}, ${avatarColor(name)}cc)`,
+                        boxShadow: `0 0 0 2px hsl(var(--card)), 0 2px 6px ${avatarColor(name)}55`,
+                      }}>
                       {initials(name)}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -867,11 +884,18 @@ function AdminDashboard() {
 export default function DashboardPage() {
   const { user } = useAuth();
   if (!user) return null;
-  switch (user.role) {
-    case 'technician':        return <TechnicianDashboard />;
-    case 'receptionist':      return <ReceptionistDashboard />;
-    case 'sales_manager':     return <SalesManagerDashboard />;
-    case 'inventory_manager': return <InventoryManagerDashboard />;
-    default:                  return <AdminDashboard />;
-  }
+  return (
+    <>
+      <BirthdayBanner />
+      {(() => {
+        switch (user.role) {
+          case 'technician':        return <TechnicianDashboard />;
+          case 'receptionist':      return <ReceptionistDashboard />;
+          case 'sales_manager':     return <SalesManagerDashboard />;
+          case 'inventory_manager': return <InventoryManagerDashboard />;
+          default:                  return <AdminDashboard />;
+        }
+      })()}
+    </>
+  );
 }

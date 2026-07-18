@@ -1,40 +1,34 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { usePageTitle } from '@/context/PageTitleContext';
 import { useRepairs } from '@/hooks/useRepairs';
+import { useAuth } from '@/hooks/useAuth';
 import AddRepairModal from './components/AddRepairModal';
 import SearchDropdown from '@/components/shared/SearchDropdown';
 import Pagination from '@/components/shared/Pagination';
 import DateRangePicker, { type DateRange } from '@/components/shared/DateRangePicker';
 import {
-  X, Clock, Shield, Plus, Check, Pencil, Trash2,
-  CreditCard, CheckCircle2, AlarmClock, DollarSign, Scissors, Stethoscope, ArrowRightCircle,
+  X, Clock, Shield, Plus, Check, Pencil, Trash2, Camera, Video, AlertCircle, Loader2,
+  CreditCard, CheckCircle2, Scissors, Stethoscope, ArrowRightCircle, UserX, XCircle,
 } from 'lucide-react';
-import type { Repair, RepairStatus } from '@/types/repair';
+import type { Repair, RepairStatus, RepairMediaStage, RepairMediaUploadInput } from '@/types/repair';
 import {
-  REPAIR_STATUS_META as STATUS, PIPELINE_FULL, PIPELINE_DX, pipelineStep,
+  REPAIR_STATUS_META as STATUS, activePipeline, pipelineStep,
   nextAction, nextStatus, isActiveRepairStatus, isDiagnosisStage,
+  statusToMediaStage, requiredMediaStageForAdvance, REQUIRED_MEDIA_STAGE_LABEL,
 } from '@/utils/repairStatus';
 
 const PAGE_SIZE = 12;
 
-type Scope = 'diagnosis' | 'repair';
-
-const FILTER_TABS: Record<Scope, { key: string; label: string }[]> = {
-  diagnosis: [
-    { key: 'all',           label: 'All' },
-    { key: 'dx_only',       label: 'Diagnosis Only' },
-    { key: 'received',      label: 'Received' },
-    { key: 'diagnosed',     label: 'Diagnosed' },
-    { key: 'completed',     label: 'Closed' },
-  ],
-  repair: [
-    { key: 'all',           label: 'All' },
-    { key: 'parts_pending', label: 'Parts Pending' },
-    { key: 'in_progress',   label: 'In Progress' },
-    { key: 'ready',         label: 'Ready' },
-    { key: 'completed',     label: 'Completed' },
-  ],
-};
+const FILTER_TABS: { key: string; label: string }[] = [
+  { key: 'all',           label: 'All' },
+  { key: 'unassigned',    label: 'Unassigned' },
+  { key: 'received',      label: 'Received' },
+  { key: 'diagnosed',     label: 'Diagnosed' },
+  { key: 'parts_pending', label: 'Parts Pending' },
+  { key: 'in_progress',   label: 'In Progress' },
+  { key: 'ready',         label: 'Ready' },
+  { key: 'completed',     label: 'Completed' },
+];
 
 // ── Repair Card ───────────────────────────────────────────────────────────
 
@@ -68,8 +62,12 @@ function RepairCard({ repair, onClick, selected }: {
 
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>{repair.customer}</span>
-        {repair.technician && (
+        {repair.technician ? (
           <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Tech: {repair.technician}</span>
+        ) : (
+          <span className="inline-flex items-center gap-1 text-[10px] font-semibold" style={{ color: '#f59e0b' }}>
+            <UserX className="w-3 h-3" /> Unassigned
+          </span>
         )}
       </div>
 
@@ -103,29 +101,72 @@ function RepairCard({ repair, onClick, selected }: {
 
 // ── Detail Panel ──────────────────────────────────────────────────────────
 
-function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, onConvertToRepair, onEdit, onDelete }: {
+function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, onAddMedia, onRemoveMedia, uploaderName, canManageTickets, onProceedToRepair, onCloseDiagnosisOnly, onEdit, onDelete }: {
   repair: Repair;
   onClose: () => void;
   onUpdateStatus: (id: string, s: RepairStatus) => void;
   onAddNote: (id: string, note: string) => void;
-  onConvertToRepair: (id: string) => void;
+  onAddMedia: (id: string, input: RepairMediaUploadInput) => Promise<unknown>;
+  onRemoveMedia: (id: string, mediaId: string) => Promise<unknown>;
+  uploaderName?: string;
+  canManageTickets: boolean;
+  onProceedToRepair: (id: string) => void;
+  onCloseDiagnosisOnly: (id: string) => void;
   onEdit: () => void;
   onDelete: () => void;
 }) {
   const [addingNote, setAddingNote] = useState(false);
   const [noteText, setNoteText] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const [promptStage, setPromptStage] = useState<RepairMediaStage | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const s = STATUS[repair.status] ?? STATUS.received;
   const isDxOnly = repair.jobType === 'diagnosis_only';
-  const pipeline = isDxOnly ? PIPELINE_DX : PIPELINE_FULL;
-  const currentStep = pipelineStep(repair.status, isDxOnly);
+  const pipeline = activePipeline(repair.status, repair.jobType);
+  const currentStep = pipelineStep(repair.status, repair.jobType);
   const isDone = ['completed', 'cancelled'].includes(repair.status);
-  const canConvert = isDxOnly && repair.status === 'diagnosis_only_closed';
+  const isAwaitingDecision = repair.status === 'awaiting_approval';
+  const isClosedDiagnosis = repair.status === 'diagnosis_only_closed';
+  const media = repair.media ?? [];
+
+  const upcomingStatus = nextStatus(repair.status);
+  const requiredStage = requiredMediaStageForAdvance(repair.status, upcomingStatus);
+  const hasRequiredPhoto = !requiredStage || media.some(m => m.stage === requiredStage);
 
   const handleAddNote = () => {
     if (!noteText.trim()) return;
     onAddNote(repair.id, noteText.trim());
     setNoteText('');
     setAddingNote(false);
+  };
+
+  const openPhotoPicker = (stage: RepairMediaStage) => {
+    setUploadError('');
+    setPromptStage(stage);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const stage = promptStage ?? statusToMediaStage(repair.status);
+    e.target.value = '';
+    if (!file) return;
+    setUploading(true);
+    setUploadError('');
+    try {
+      await onAddMedia(repair.id, { file, stage, uploadedBy: uploaderName });
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Upload failed. Try again.');
+    } finally {
+      setUploading(false);
+      setPromptStage(null);
+    }
+  };
+
+  const handleAdvanceClick = () => {
+    if (requiredStage && !hasRequiredPhoto) { openPhotoPicker(requiredStage); return; }
+    onUpdateStatus(repair.id, upcomingStatus);
   };
 
   const PART_COLORS: Record<string, { bg: string; color: string }> = {
@@ -141,15 +182,17 @@ function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, onConve
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-4 pb-3 shrink-0"
         style={{ borderBottom: '1px solid hsl(var(--border))' }}>
-        <span className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>Repair Details</span>
+        <span className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>Ticket Details</span>
         <div className="flex items-center gap-1.5">
-          <button onClick={onEdit} className="w-7 h-7 flex items-center justify-center rounded-lg"
-            style={{ color: 'hsl(var(--muted-foreground))' }}
-            title="Edit"
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}>
-            <Pencil className="w-3.5 h-3.5" />
-          </button>
+          {canManageTickets && (
+            <button onClick={onEdit} className="w-7 h-7 flex items-center justify-center rounded-lg"
+              style={{ color: 'hsl(var(--muted-foreground))' }}
+              title="Edit"
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}>
+              <Pencil className="w-3.5 h-3.5" />
+            </button>
+          )}
           <button onClick={onDelete} className="w-7 h-7 flex items-center justify-center rounded-lg"
             style={{ color: 'hsl(var(--muted-foreground))' }}
             title="Delete"
@@ -261,6 +304,93 @@ function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, onConve
           </div>
         )}
 
+        {/* Photos */}
+        <div className="pt-3" style={{ borderTop: '1px solid hsl(var(--border))' }}>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-bold" style={{ color: 'hsl(var(--foreground))' }}>Photos</p>
+            {!isDone && (
+              <button
+                onClick={() => openPhotoPicker(statusToMediaStage(repair.status))}
+                disabled={uploading}
+                className="text-xs font-medium flex items-center gap-1 disabled:opacity-50"
+                style={{ color: 'hsl(var(--primary))' }}>
+                {uploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Camera className="w-3 h-3" />}
+                {uploading ? 'Uploading…' : 'Add Photo'}
+              </button>
+            )}
+          </div>
+
+          {requiredStage && !hasRequiredPhoto && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3"
+              style={{ background: 'rgba(245,158,11,0.1)', color: '#b45309' }}>
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              <span className="text-[11px] font-medium">
+                Attach a {(requiredStage && REQUIRED_MEDIA_STAGE_LABEL[requiredStage]) || 'required'} photo before you can {nextAction(repair.status).toLowerCase()}.
+              </span>
+            </div>
+          )}
+
+          {uploadError && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3"
+              style={{ background: 'rgba(239,68,68,0.1)', color: '#dc2626' }}>
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              <span className="text-[11px] font-medium">{uploadError}</span>
+            </div>
+          )}
+
+          {media.length > 0 ? (
+            <div className="grid grid-cols-3 gap-2">
+              {media.map(m => {
+                const canDelete = canManageTickets || (!!uploaderName && m.uploadedBy === uploaderName);
+                return (
+                  <a key={m.id} href={m.url} target="_blank" rel="noreferrer"
+                    className="relative aspect-square rounded-lg overflow-hidden block group/photo"
+                    style={{ background: 'hsl(var(--muted))' }}
+                    title={m.caption || m.fileName}>
+                    {m.type === 'video' ? (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Video className="w-5 h-5" style={{ color: 'hsl(var(--muted-foreground))' }} />
+                      </div>
+                    ) : (
+                      <img src={m.url} alt={m.caption || m.fileName} className="w-full h-full object-cover" />
+                    )}
+                    <span className="absolute bottom-0 left-0 right-0 px-1 py-0.5 text-[8px] font-semibold text-center text-white capitalize truncate"
+                      style={{ background: 'rgba(0,0,0,0.55)' }}>
+                      {m.stage.replace('_', ' ')}
+                    </span>
+                    {canDelete && (
+                      <button
+                        type="button"
+                        onClick={e => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (window.confirm('Delete this photo?')) onRemoveMedia(repair.id, m.id);
+                        }}
+                        className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover/photo:opacity-100 transition-opacity"
+                        style={{ background: 'rgba(0,0,0,0.6)' }}
+                        title="Delete photo"
+                      >
+                        <Trash2 className="w-3 h-3 text-white" />
+                      </button>
+                    )}
+                  </a>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No photos yet.</p>
+          )}
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+        </div>
+
         {/* Notes */}
         <div className="pt-3" style={{ borderTop: '1px solid hsl(var(--border))' }}>
           <div className="flex items-center justify-between mb-3">
@@ -302,26 +432,52 @@ function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, onConve
       </div>
 
       {/* Footer */}
-      {canConvert ? (
+      {isClosedDiagnosis ? (
         <div className="px-5 py-4 space-y-2 shrink-0" style={{ borderTop: '1px solid hsl(var(--border))' }}>
           <button
-            onClick={() => onConvertToRepair(repair.id)}
+            onClick={() => onProceedToRepair(repair.id)}
             className="w-full h-10 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2"
             style={{ background: '#0ea5e9' }}>
             <ArrowRightCircle className="w-4 h-4" />
-            Convert to Repair
+            Reopen for Repair
           </button>
           <p className="text-[10px] text-center" style={{ color: 'hsl(var(--muted-foreground))' }}>
-            Customer decided to go ahead with the repair after diagnosis.
+            Customer changed their mind and wants to go ahead with the repair.
           </p>
+        </div>
+      ) : isAwaitingDecision ? (
+        <div className="px-5 py-4 space-y-2 shrink-0" style={{ borderTop: '1px solid hsl(var(--border))' }}>
+          <p className="text-[11px] text-center mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>
+            Diagnosis complete — what's next?
+          </p>
+          <button
+            onClick={() => onProceedToRepair(repair.id)}
+            className="w-full h-10 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2"
+            style={{ background: 'hsl(var(--primary))' }}>
+            <ArrowRightCircle className="w-4 h-4" />
+            Proceed to Repair
+          </button>
+          <button
+            onClick={() => onCloseDiagnosisOnly(repair.id)}
+            className="w-full h-9 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5"
+            style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}>
+            <XCircle className="w-3.5 h-3.5" />
+            Close — Diagnosis Only
+          </button>
         </div>
       ) : !isDone && (
         <div className="px-5 py-4 space-y-2 shrink-0" style={{ borderTop: '1px solid hsl(var(--border))' }}>
           <button
-            onClick={() => onUpdateStatus(repair.id, nextStatus(repair.status, isDxOnly))}
-            className="w-full h-10 rounded-xl text-sm font-bold"
-            style={{ background: 'hsl(var(--foreground))', color: 'hsl(var(--background))' }}>
-            {nextAction(repair.status, isDxOnly)}
+            onClick={handleAdvanceClick}
+            disabled={uploading}
+            className="w-full h-10 rounded-xl text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-60"
+            style={requiredStage && !hasRequiredPhoto
+              ? { background: 'rgba(245,158,11,0.15)', color: '#b45309' }
+              : { background: 'hsl(var(--foreground))', color: 'hsl(var(--background))' }}>
+            {requiredStage && !hasRequiredPhoto ? <Camera className="w-4 h-4" /> : null}
+            {requiredStage && !hasRequiredPhoto ? 'Add Photo to Continue' : nextAction(repair.status)}
           </button>
           <div className="flex gap-2">
             <button onClick={() => setAddingNote(true)}
@@ -346,9 +502,11 @@ function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, onConve
 
 // ── Board ─────────────────────────────────────────────────────────────────
 
-export default function RepairsBoard({ scope }: { scope: Scope }) {
+export default function RepairsBoard() {
   const { setPageTitle } = usePageTitle();
-  const { repairs: allRepairs, loading, add, updateStatus, addNote, patchRepair, remove } = useRepairs();
+  const { repairs, loading, add, updateStatus, addNote, addMedia, removeMedia, patchRepair, remove } = useRepairs();
+  const { user } = useAuth();
+  const canManageTickets = user?.role === 'admin' || user?.role === 'receptionist';
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all');
   const [dateRange, setDateRange] = useState<DateRange>({ from: '', to: '' });
@@ -357,43 +515,33 @@ export default function RepairsBoard({ scope }: { scope: Scope }) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingRepair, setEditingRepair] = useState<Repair | null>(null);
 
-  const repairs = useMemo(() =>
-    allRepairs.filter(r => isDiagnosisStage(r) === (scope === 'diagnosis')),
-  [allRepairs, scope]);
-
   const selected = selectedId ? (repairs.find(r => r.id === selectedId) ?? null) : null;
 
-  useEffect(() => { setPage(1); setFilter('all'); setSelectedId(null); }, [scope]);
   useEffect(() => { setPage(1); }, [query, filter, dateRange]);
 
   useEffect(() => {
     setPageTitle({
-      title: scope === 'diagnosis' ? 'Diagnosis' : 'Repairs',
-      subtitle: scope === 'diagnosis'
-        ? 'Intake, diagnosis, and pending customer decisions'
-        : 'Approved jobs — parts, progress, and pickup',
+      title: 'Tickets',
+      subtitle: 'Available jobs — assign technicians and track diagnosis & repair progress',
       hideDefaultAction: true,
     });
     return () => setPageTitle({ title: 'Dashboard' });
-  }, [setPageTitle, scope]);
+  }, [setPageTitle]);
 
-  const active       = useMemo(() => repairs.filter(r => isActiveRepairStatus(r.status)), [repairs]);
+  const unassigned   = useMemo(() => repairs.filter(r => isActiveRepairStatus(r.status) && !r.technician), [repairs]);
+  const inDiagnosis  = useMemo(() => repairs.filter(r => isActiveRepairStatus(r.status) && isDiagnosisStage(r)), [repairs]);
+  const inRepair     = useMemo(() => repairs.filter(r => isActiveRepairStatus(r.status) && !isDiagnosisStage(r)), [repairs]);
   const ready        = useMemo(() => repairs.filter(r => r.status === 'ready'), [repairs]);
-  const partsPending = useMemo(() => repairs.filter(r => r.status === 'parts_pending'), [repairs]);
-  const awaiting     = useMemo(() => repairs.filter(r => r.status === 'awaiting_approval'), [repairs]);
-  const dxOnly        = useMemo(() => repairs.filter(r => r.jobType === 'diagnosis_only'), [repairs]);
-  const closed        = useMemo(() => repairs.filter(r => r.status === 'diagnosis_only_closed'), [repairs]);
-  const totalRevenue = useMemo(() => repairs.filter(r => r.status === 'completed').reduce((s, r) => s + (r.costNum ?? 0), 0), [repairs]);
 
-  const filterTabs = FILTER_TABS[scope];
+  const filterTabs = FILTER_TABS;
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
     const from = dateRange.from ? new Date(dateRange.from + 'T00:00') : null;
     const to   = dateRange.to   ? new Date(dateRange.to   + 'T23:59:59') : null;
     return repairs.filter(r => {
-      if (filter === 'dx_only') {
-        if (r.jobType !== 'diagnosis_only') return false;
+      if (filter === 'unassigned') {
+        if (r.technician) return false;
       } else {
         const matchFilter = filter === 'all' || STATUS[r.status]?.filterKey === filter;
         if (!matchFilter) return false;
@@ -420,8 +568,12 @@ export default function RepairsBoard({ scope }: { scope: Scope }) {
     if (status === 'completed') setSelectedId(null);
   };
 
-  const handleConvertToRepair = (id: string) => {
-    patchRepair(id, { jobType: 'diagnosis_to_repair', status: 'awaiting_approval' });
+  const handleProceedToRepair = (id: string) => {
+    patchRepair(id, { jobType: 'diagnosis_to_repair', status: 'parts_pending' });
+  };
+
+  const handleCloseDiagnosisOnly = (id: string) => {
+    patchRepair(id, { jobType: 'diagnosis_only', status: 'diagnosis_only_closed' });
   };
 
   const handleDelete = (repair: Repair) => {
@@ -430,19 +582,12 @@ export default function RepairsBoard({ scope }: { scope: Scope }) {
     setSelectedId(null);
   };
 
-  const STATS = scope === 'diagnosis'
-    ? [
-        { label: 'IN DIAGNOSIS',      value: String(active.length - awaiting.length), icon: Stethoscope,  border: '#0ea5e9' },
-        { label: 'AWAITING DECISION', value: String(awaiting.length),                 icon: AlarmClock,   border: '#f59e0b' },
-        { label: 'DIAGNOSIS ONLY',    value: String(dxOnly.length),                   icon: Scissors,     border: '#7c3aed' },
-        { label: 'CLOSED',            value: String(closed.length),                   icon: CheckCircle2, border: '#64748b' },
-      ] as const
-    : [
-        { label: 'ACTIVE REPAIRS',       value: String(active.length),                  icon: Scissors,     border: '#7c3aed' },
-        { label: 'READY FOR PICKUP',     value: String(ready.length),                   icon: CheckCircle2, border: '#22c55e' },
-        { label: 'PARTS PENDING',        value: String(partsPending.length),            icon: AlarmClock,   border: '#f59e0b' },
-        { label: 'TOTAL REPAIR REVENUE', value: `GHS ${totalRevenue.toLocaleString()}`, icon: DollarSign,   border: '#6366f1', large: true },
-      ] as const;
+  const STATS = [
+    { label: 'UNASSIGNED',     value: String(unassigned.length),  icon: UserX,        border: '#f59e0b' },
+    { label: 'IN DIAGNOSIS',   value: String(inDiagnosis.length),  icon: Stethoscope,  border: '#0ea5e9' },
+    { label: 'IN REPAIR',      value: String(inRepair.length),     icon: Scissors,     border: '#7c3aed' },
+    { label: 'READY FOR PICKUP', value: String(ready.length),      icon: CheckCircle2, border: '#22c55e' },
+  ] as const;
 
   const cols = selected ? 'grid-cols-2' : 'grid-cols-3';
 
@@ -485,7 +630,7 @@ export default function RepairsBoard({ scope }: { scope: Scope }) {
               badge: { label: STATUS[r.status]?.label ?? r.status, bg: STATUS[r.status]?.bg ?? '', color: STATUS[r.status]?.color ?? '' },
             })) : []}
             onSelect={item => setQuery(item.id)}
-            placeholder={scope === 'diagnosis' ? 'Search diagnosis jobs…' : 'Search repairs…'}
+            placeholder="Search tickets…"
             width={220}
           />
 
@@ -504,12 +649,14 @@ export default function RepairsBoard({ scope }: { scope: Scope }) {
             <DateRangePicker value={dateRange} onChange={setDateRange} label="Received date" />
           </div>
 
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="ml-auto flex items-center gap-1.5 px-4 h-9 rounded-xl text-xs font-bold"
-            style={{ background: 'hsl(var(--foreground))', color: 'hsl(var(--background))' }}>
-            <Plus className="w-3.5 h-3.5" /> {scope === 'diagnosis' ? 'New Diagnosis' : 'New Repair'}
-          </button>
+          {canManageTickets && (
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="ml-auto flex items-center gap-1.5 px-4 h-9 rounded-xl text-xs font-bold"
+              style={{ background: 'hsl(var(--foreground))', color: 'hsl(var(--background))' }}>
+              <Plus className="w-3.5 h-3.5" /> New Ticket
+            </button>
+          )}
         </div>
 
         {/* Grid */}
@@ -517,7 +664,7 @@ export default function RepairsBoard({ scope }: { scope: Scope }) {
           <p className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Loading…</p>
         ) : filtered.length === 0 ? (
           <p className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>
-            {scope === 'diagnosis' ? 'No diagnosis jobs match.' : 'No repairs match.'}
+            No tickets match.
           </p>
         ) : (
           <>
@@ -551,7 +698,12 @@ export default function RepairsBoard({ scope }: { scope: Scope }) {
             onClose={() => setSelectedId(null)}
             onUpdateStatus={handleUpdateStatus}
             onAddNote={addNote}
-            onConvertToRepair={handleConvertToRepair}
+            onAddMedia={addMedia}
+            onRemoveMedia={removeMedia}
+            uploaderName={user?.name}
+            canManageTickets={canManageTickets}
+            onProceedToRepair={handleProceedToRepair}
+            onCloseDiagnosisOnly={handleCloseDiagnosisOnly}
             onEdit={() => setEditingRepair(selected)}
             onDelete={() => handleDelete(selected)}
           />
@@ -562,8 +714,7 @@ export default function RepairsBoard({ scope }: { scope: Scope }) {
         <AddRepairModal
           onSave={async (r) => { await add(r); }}
           onClose={() => setShowAddModal(false)}
-          repairs={allRepairs}
-          defaultJobType={scope === 'diagnosis' ? 'diagnosis_only' : 'diagnosis_to_repair'}
+          repairs={repairs}
         />
       )}
 
@@ -573,7 +724,7 @@ export default function RepairsBoard({ scope }: { scope: Scope }) {
           onUpdate={patchRepair}
           initial={editingRepair}
           onClose={() => setEditingRepair(null)}
-          repairs={allRepairs}
+          repairs={repairs}
         />
       )}
     </div>

@@ -27,36 +27,36 @@ export default function SecuritySection() {
 
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-2xl border border-slate-100 p-6">
-        <h3 className="text-sm font-bold text-slate-800 mb-4">Security Settings</h3>
+      <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-6">
+        <h3 className="text-sm font-bold text-[hsl(var(--foreground))] mb-4">Security Settings</h3>
         <div className="space-y-4">
           {settings.map((item) => (
-            <div key={item.label} className="flex items-center justify-between py-3 border-b border-slate-50">
+            <div key={item.label} className="flex items-center justify-between py-3 border-b border-[hsl(var(--border))]">
               <div>
-                <p className="text-sm font-medium text-slate-800">{item.label}</p>
-                <p className="text-xs text-slate-400 mt-0.5">{item.desc}</p>
+                <p className="text-sm font-medium text-[hsl(var(--foreground))]">{item.label}</p>
+                <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">{item.desc}</p>
               </div>
               <button
                 onClick={() => toggleSetting(item.label)}
-                className={`relative w-11 h-6 rounded-full transition-all cursor-pointer flex-shrink-0 ${item.enabled ? 'bg-[#DC1F1F]' : 'bg-slate-200'}`}
+                className={`relative w-11 h-6 rounded-full transition-all cursor-pointer flex-shrink-0 ${item.enabled ? 'bg-[#DC1F1F]' : 'bg-[hsl(var(--muted))]'}`}
               >
-                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${item.enabled ? 'left-6' : 'left-1'}`} />
+                <div className={`absolute top-1 w-4 h-4 bg-[hsl(var(--card))] rounded-full shadow transition-all ${item.enabled ? 'left-6' : 'left-1'}`} />
               </button>
             </div>
           ))}
         </div>
       </div>
-      <div className="bg-white rounded-2xl border border-slate-100 p-6">
-        <h3 className="text-sm font-bold text-slate-800 mb-4">Recent Login Activity</h3>
+      <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-6">
+        <h3 className="text-sm font-bold text-[hsl(var(--foreground))] mb-4">Recent Login Activity</h3>
         <div className="space-y-3">
           {sessions.map((session, i) => (
-            <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50">
+            <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-[hsl(var(--muted))]">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(220,31,31,0.08)' }}>
                 <i className="ri-computer-line text-sm" style={{ color: '#DC1F1F' }} />
               </div>
               <div className="flex-1">
-                <p className="text-xs font-semibold text-slate-800">{session.device}</p>
-                <p className="text-[10px] text-slate-400">{session.location} · {session.time}</p>
+                <p className="text-xs font-semibold text-[hsl(var(--foreground))]">{session.device}</p>
+                <p className="text-[10px] text-[hsl(var(--muted-foreground))]">{session.location} · {session.time}</p>
               </div>
               {session.current ? (
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-50 text-green-600 font-semibold">Current</span>
@@ -66,7 +66,7 @@ export default function SecuritySection() {
             </div>
           ))}
           {sessions.length === 1 && (
-            <p className="text-xs text-slate-400 text-center py-2">No other active sessions</p>
+            <p className="text-xs text-[hsl(var(--muted-foreground))] text-center py-2">No other active sessions</p>
           )}
         </div>
       </div>

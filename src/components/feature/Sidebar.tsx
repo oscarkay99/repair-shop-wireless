@@ -11,7 +11,6 @@ import {
   Hammer,
   LogOut,
   Receipt,
-  Stethoscope,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { roleLabels, roleColors } from '@/mocks/users';
@@ -21,8 +20,7 @@ type NavItem = { label: string; icon: React.ElementType; path: string; module: A
 
 const mainNav: NavItem[] = [
   { label: 'Dashboard',         icon: LayoutDashboard, path: '/',            module: 'Dashboard' },
-  { label: 'Diagnosis',         icon: Stethoscope,     path: '/diagnosis',   module: 'Repairs' },
-  { label: 'Repairs',           icon: Hammer,          path: '/repairs',     module: 'Repairs' },
+  { label: 'Tickets',           icon: Hammer,          path: '/tickets',     module: 'Tickets' },
   { label: 'Customers',         icon: Users,           path: '/customers',   module: 'Customers' },
   { label: 'Technicians',       icon: HardHat,         path: '/technicians', module: 'Technicians' },
   { label: 'Accessories Sales', icon: ShoppingBag,     path: '/sales',       module: 'Sales' },

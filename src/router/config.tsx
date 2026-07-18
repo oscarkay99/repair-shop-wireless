@@ -12,7 +12,6 @@ import InventoryPage from "../pages/inventory/page";
 import CustomersPage from "../pages/customers/page";
 import TeamPage from "../pages/team/page";
 import RepairsPage from "../pages/repairs/page";
-import DiagnosisPage from "../pages/diagnosis/page";
 import AnalyticsPage from "../pages/analytics/page";
 import AuthenticationPage from "../pages/authentication/page";
 import DeliveryPage from "../pages/delivery/page";
@@ -26,20 +25,13 @@ import AuditLogsPage from "../pages/audit-logs/page";
 import TechniciansPage from "../pages/technicians/page";
 import AccessoriesSalesPage from "../pages/sales/page";
 import InvoicesPage from "../pages/invoices/page";
-import CustomerPortalPage from "../pages/portal/page";
 import TechPortalPage from "../pages/tech-portal/page";
 import InventoryPortalPage from "../pages/inventory-portal/page";
 import ReceptionPortalPage from "../pages/reception/page";
 import ActivityPage from "../pages/activity/page";
-import CustomerLoginPage from "../pages/customer/login";
-import CustomerDashboard from "../pages/customer/dashboard";
 
 const routes: RouteObject[] = [
   { path: "/signin", element: <SignInPage /> },
-
-  // ── Customer portal (no staff AppShell) ─────────────────────
-  { path: "/customer/login",   element: <CustomerLoginPage /> },
-  { path: "/customer/repairs", element: <CustomerDashboard /> },
 
   {
     element: <AppShell />,
@@ -52,11 +44,9 @@ const routes: RouteObject[] = [
       { path: "/payments",           element: <AuthGuard requiredModule="Payments"><PaymentsPage /></AuthGuard> },
       { path: "/sales",              element: <AuthGuard requiredModule="Sales"><AccessoriesSalesPage /></AuthGuard> },
       { path: "/customers",          element: <AuthGuard requiredModule="Customers"><CustomersPage /></AuthGuard> },
-      { path: "/diagnosis",          element: <AuthGuard requiredModule="Repairs"><DiagnosisPage /></AuthGuard> },
-      { path: "/repairs",            element: <AuthGuard requiredModule="Repairs"><RepairsPage /></AuthGuard> },
+      { path: "/tickets",            element: <AuthGuard requiredModule="Tickets"><RepairsPage /></AuthGuard> },
       { path: "/technicians",        element: <AuthGuard requiredModule="Technicians"><TechniciansPage /></AuthGuard> },
       { path: "/invoices",           element: <AuthGuard requiredModule="Invoices"><InvoicesPage /></AuthGuard> },
-      { path: "/portal",             element: <AuthGuard requiredModule="Portal"><CustomerPortalPage /></AuthGuard> },
       { path: "/tech-portal",        element: <AuthGuard requiredModule="Portal"><TechPortalPage /></AuthGuard> },
       { path: "/inventory-portal",   element: <AuthGuard requiredModule="Portal"><InventoryPortalPage /></AuthGuard> },
       { path: "/reception",          element: <AuthGuard requiredModule="Portal"><ReceptionPortalPage /></AuthGuard> },

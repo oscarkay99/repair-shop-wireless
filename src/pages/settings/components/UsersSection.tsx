@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { getWirelessUsers, createWirelessUser, deleteWirelessUser, type WirelessProfile } from '@/services/wireless/users';
+import { getWirelessUsers, updateWirelessUser, deleteWirelessUser, type WirelessProfile } from '@/services/wireless/users';
 import { isSupabaseConfigured } from '@/services/supabase';
+import InviteUserModal from './InviteUserModal';
 
 const ROLE_LABELS: Record<string, string> = {
   admin: 'Admin',
   sales_manager: 'Sales Manager',
   technician: 'Technician',
   inventory_manager: 'Inventory Manager',
+  receptionist: 'Receptionist',
 };
 
 const ROLE_COLORS: Record<string, string> = {
@@ -14,25 +16,82 @@ const ROLE_COLORS: Record<string, string> = {
   sales_manager: 'bg-blue-500/20 text-blue-400',
   technician: 'bg-amber-500/20 text-amber-400',
   inventory_manager: 'bg-purple-500/20 text-purple-400',
+  receptionist: 'bg-cyan-500/20 text-cyan-400',
 };
 
-interface AddUserForm {
-  name: string;
-  email: string;
-  role: string;
-  password: string;
-  confirmPassword: string;
-}
+function EditUserModal({ user, onClose, onSaved }: { user: WirelessProfile; onClose: () => void; onSaved: () => void }) {
+  const [name, setName] = useState(user.name);
+  const [role, setRole] = useState(user.role);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
-const EMPTY_FORM: AddUserForm = { name: '', email: '', role: 'technician', password: '', confirmPassword: '' };
+  const handleSave = async () => {
+    if (!name.trim()) { setError('Name is required'); return; }
+    setSaving(true);
+    setError('');
+    try {
+      await updateWirelessUser(user.id, { name: name.trim(), role });
+      onSaved();
+      onClose();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to save changes');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl" onClick={e => e.stopPropagation()}>
+        <h3 className="text-base font-semibold text-foreground mb-5">Edit User</h3>
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Full Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Email</label>
+            <p className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-muted-foreground">{user.email}</p>
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Role</label>
+            <select
+              value={role}
+              onChange={e => setRole(e.target.value)}
+              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
+            >
+              {Object.entries(ROLE_LABELS).map(([val, label]) => (
+                <option key={val} value={val}>{label}</option>
+              ))}
+            </select>
+          </div>
+
+          {error && <p className="text-xs text-red-400 bg-red-500/10 rounded-lg px-3 py-2">{error}</p>}
+
+          <div className="flex gap-3 pt-2">
+            <button onClick={onClose} className="flex-1 px-4 py-2 border border-border text-sm text-muted-foreground rounded-lg hover:bg-background transition-colors">
+              Cancel
+            </button>
+            <button onClick={handleSave} disabled={saving} className="flex-1 px-4 py-2 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50">
+              {saving ? 'Saving…' : 'Save Changes'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function UsersSection() {
   const [users, setUsers] = useState<WirelessProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState<AddUserForm>(EMPTY_FORM);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
+  const [editingUser, setEditingUser] = useState<WirelessProfile | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const load = () => {
@@ -44,24 +103,6 @@ export default function UsersSection() {
   };
 
   useEffect(() => { load(); }, []);
-
-  const handleAdd = async () => {
-    setError('');
-    if (!form.name || !form.email || !form.password) { setError('All fields are required'); return; }
-    if (form.password !== form.confirmPassword) { setError('Passwords do not match'); return; }
-    if (form.password.length < 6) { setError('Password must be at least 6 characters'); return; }
-    setSaving(true);
-    try {
-      await createWirelessUser({ name: form.name, email: form.email, role: form.role, password: form.password });
-      setShowAdd(false);
-      setForm(EMPTY_FORM);
-      load();
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to create user');
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const handleDelete = async (user: WirelessProfile) => {
     if (!confirm(`Delete ${user.name}? This cannot be undone.`)) return;
@@ -93,7 +134,7 @@ export default function UsersSection() {
             <p className="text-xs text-muted-foreground mt-0.5">Manage who can access the Wireless system</p>
           </div>
           <button
-            onClick={() => { setShowAdd(true); setForm(EMPTY_FORM); setError(''); }}
+            onClick={() => setShowAdd(true)}
             className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -125,6 +166,13 @@ export default function UsersSection() {
                   {u.last_login ? new Date(u.last_login).toLocaleDateString() : 'Never'}
                 </p>
                 <button
+                  onClick={() => setEditingUser(u)}
+                  className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  title="Edit user"
+                >
+                  <i className="ri-edit-line" />
+                </button>
+                <button
                   onClick={() => handleDelete(u)}
                   disabled={deletingId === u.id}
                   className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-40"
@@ -140,86 +188,9 @@ export default function UsersSection() {
         )}
       </div>
 
-      {/* Add User Modal */}
-      {showAdd && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
-            <h3 className="text-base font-semibold text-foreground mb-5">Add New User</h3>
-
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Full Name</label>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                  placeholder="e.g. Kwame Asante"
-                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Email</label>
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                  placeholder="name@wireless.com"
-                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Role</label>
-                <select
-                  value={form.role}
-                  onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
-                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
-                >
-                  {Object.entries(ROLE_LABELS).map(([val, label]) => (
-                    <option key={val} value={val}>{label}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Temporary Password</label>
-                <input
-                  type="password"
-                  value={form.password}
-                  onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                  placeholder="Min 6 characters"
-                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Confirm Password</label>
-                <input
-                  type="password"
-                  value={form.confirmPassword}
-                  onChange={e => setForm(f => ({ ...f, confirmPassword: e.target.value }))}
-                  placeholder="Repeat password"
-                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
-                />
-              </div>
-
-              {error && <p className="text-xs text-red-400 bg-red-500/10 rounded-lg px-3 py-2">{error}</p>}
-
-              <div className="flex gap-3 pt-2">
-                <button
-                  onClick={() => { setShowAdd(false); setError(''); }}
-                  className="flex-1 px-4 py-2 border border-border text-sm text-muted-foreground rounded-lg hover:bg-background transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleAdd}
-                  disabled={saving}
-                  className="flex-1 px-4 py-2 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
-                >
-                  {saving ? 'Creating…' : 'Create User'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      <InviteUserModal open={showAdd} onClose={() => setShowAdd(false)} onCreated={load} />
+      {editingUser && (
+        <EditUserModal user={editingUser} onClose={() => setEditingUser(null)} onSaved={load} />
       )}
     </div>
   );

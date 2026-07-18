@@ -8,6 +8,14 @@ export default {
     theme: {
       extend: {
         colors: {
+          // Theme tokens — lets `bg-primary`, `hover:bg-primary/90`,
+          // `focus:border-primary`, `text-primary` etc. resolve to the
+          // CSS custom properties defined in index.css (previously only
+          // wired up as hand-written .bg-background/.bg-card/etc classes,
+          // which never covered "primary" — leaving buttons using the
+          // Tailwind utility silently unstyled/invisible).
+          primary: 'hsl(var(--primary) / <alpha-value>)',
+          'primary-foreground': 'hsl(var(--primary-foreground) / <alpha-value>)',
           // Wireless brand — crimson red
           brand: {
             50:  '#FFF0F0',

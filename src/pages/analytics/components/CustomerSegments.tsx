@@ -3,7 +3,7 @@ import { customerSegmentData } from '@/mocks/analytics';
 
 const segmentColors: Record<string, { bg: string; text: string; dot: string }> = {
   VIP:      { bg: 'bg-amber-50',   text: 'text-amber-700',   dot: 'bg-amber-400'   },
-  Repeat:   { bg: 'bg-slate-50',   text: 'text-slate-700',   dot: 'bg-slate-400'   },
+  Repeat:   { bg: 'bg-[hsl(var(--muted))]',   text: 'text-[hsl(var(--foreground))]',   dot: 'bg-slate-400'   },
   New:      { bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500' },
   'At-Risk':{ bg: 'bg-red-50',     text: 'text-red-600',     dot: 'bg-red-400'     },
 };
@@ -13,11 +13,11 @@ export default function CustomerSegments() {
   const total = customerSegmentData.reduce((s, c) => s + c.count, 0);
 
   return (
-    <div className="bg-white rounded-2xl p-6 border border-slate-100">
+    <div className="bg-[hsl(var(--card))] rounded-2xl p-6 border border-[hsl(var(--border))]">
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h3 className="text-sm font-bold text-slate-800">Customer Segments</h3>
-          <p className="text-xs text-slate-400 mt-0.5">{total} total customers</p>
+          <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">Customer Segments</h3>
+          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">{total} total customers</p>
         </div>
         <button onClick={() => navigate('/customers')} className="text-xs text-emerald-600 hover:text-emerald-700 cursor-pointer font-medium">View all</button>
       </div>
@@ -42,11 +42,11 @@ export default function CustomerSegments() {
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <span className={`text-xs font-bold ${cfg.text}`}>{seg.segment}</span>
-                  <span className="text-xs font-bold text-slate-800">{seg.revenue}</span>
+                  <span className="text-xs font-bold text-[hsl(var(--foreground))]">{seg.revenue}</span>
                 </div>
                 <div className="flex items-center justify-between mt-0.5">
-                  <span className="text-[10px] text-slate-400">{seg.count} customers · {seg.pct}%</span>
-                  <span className="text-[10px] text-slate-500">Avg LTV: {seg.avgLTV}</span>
+                  <span className="text-[10px] text-[hsl(var(--muted-foreground))]">{seg.count} customers · {seg.pct}%</span>
+                  <span className="text-[10px] text-[hsl(var(--muted-foreground))]">Avg LTV: {seg.avgLTV}</span>
                 </div>
               </div>
             </div>
@@ -54,7 +54,7 @@ export default function CustomerSegments() {
         })}
       </div>
 
-      <div className="mt-4 pt-4 border-t border-slate-50 bg-amber-50 rounded-xl p-3">
+      <div className="mt-4 pt-4 border-t border-[hsl(var(--border))] bg-amber-50 rounded-xl p-3">
         <div className="flex items-start gap-2">
           <div className="w-4 h-4 flex items-center justify-center text-amber-500 flex-shrink-0 mt-0.5">
             <i className="ri-lightbulb-line text-xs" />

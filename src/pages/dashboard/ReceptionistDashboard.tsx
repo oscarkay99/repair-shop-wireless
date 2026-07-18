@@ -16,18 +16,18 @@ function KPICard({ label, value, sub, icon: Icon, color }: {
   return (
     <div
       className="rounded-2xl p-5 flex flex-col gap-3"
-      style={{ background: 'white', border: '1px solid rgba(7,16,31,0.07)', boxShadow: '0 1px 3px rgba(7,16,31,0.04)' }}
+      style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', boxShadow: 'var(--shadow-card)' }}
     >
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.12em] mb-2" style={{ color: 'rgba(10,31,74,0.38)' }}>{label}</p>
-          <p className="text-[28px] font-bold leading-none" style={{ color: '#0F172A', letterSpacing: '-0.03em' }}>{value}</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.12em] mb-2" style={{ color: 'hsl(var(--muted-foreground))' }}>{label}</p>
+          <p className="text-[28px] font-bold leading-none" style={{ color: 'hsl(var(--foreground))', letterSpacing: '-0.03em' }}>{value}</p>
         </div>
         <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${color}18`, border: `1px solid ${color}22` }}>
           <Icon className="w-4.5 h-4.5" style={{ color, width: 18, height: 18 }} />
         </div>
       </div>
-      <p className="text-[11px]" style={{ color: 'rgba(10,31,74,0.45)' }}>{sub}</p>
+      <p className="text-[11px]" style={{ color: 'hsl(var(--muted-foreground))' }}>{sub}</p>
     </div>
   );
 }
@@ -39,14 +39,14 @@ function RepairRow({ r }: { r: Repair }) {
     : '—';
   return (
     <Link
-      to="/repairs"
+      to="/tickets"
       className="flex items-center gap-4 px-5 py-3.5 transition-colors group"
       style={{ borderBottom: '1px solid hsl(var(--border))' }}
       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}
     >
       <div className="w-24 flex-shrink-0">
-        <span className="text-[11px] font-bold" style={{ color: 'hsl(350 60% 40%)' }}>{r.id}</span>
+        <span className="text-[11px] font-bold" style={{ color: 'hsl(var(--primary))' }}>{r.id}</span>
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-xs font-semibold truncate" style={{ color: 'hsl(var(--foreground))' }}>
@@ -120,7 +120,7 @@ export default function ReceptionistDashboard() {
             Customers
           </Link>
           <Link
-            to="/repairs"
+            to="/tickets"
             className="px-4 h-8 flex items-center gap-1.5 rounded-lg text-xs font-semibold text-white"
             style={{ background: 'hsl(var(--primary))' }}
           >
@@ -139,7 +139,7 @@ export default function ReceptionistDashboard() {
       </div>
 
       {/* Repair list */}
-      <div className="rounded-2xl overflow-hidden" style={{ background: 'white', border: '1px solid rgba(7,16,31,0.07)', boxShadow: '0 1px 3px rgba(7,16,31,0.04)' }}>
+      <div className="rounded-2xl overflow-hidden" style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', boxShadow: 'var(--shadow-card)' }}>
         <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: 'hsl(var(--border))' }}>
           <div>
             <p className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>Today's Activity</p>
@@ -147,7 +147,7 @@ export default function ReceptionistDashboard() {
               Check-ins &amp; ready for collection
             </p>
           </div>
-          <Link to="/repairs" className="text-[11px] font-semibold transition-opacity hover:opacity-70" style={{ color: 'hsl(350 60% 40%)' }}>
+          <Link to="/tickets" className="text-[11px] font-semibold transition-opacity hover:opacity-70" style={{ color: 'hsl(var(--primary))' }}>
             All repairs →
           </Link>
         </div>
@@ -163,13 +163,13 @@ export default function ReceptionistDashboard() {
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: 'hsl(350 60% 40%) transparent transparent' }} />
+            <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: 'hsl(var(--primary)) transparent transparent' }} />
           </div>
         ) : listRepairs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 gap-2">
             <ClipboardList className="w-8 h-8 opacity-20" style={{ color: 'hsl(var(--foreground))' }} />
             <p className="text-sm font-semibold" style={{ color: 'hsl(var(--foreground))' }}>No check-ins yet today</p>
-            <Link to="/repairs" className="text-xs font-semibold" style={{ color: 'hsl(350 60% 40%)' }}>
+            <Link to="/tickets" className="text-xs font-semibold" style={{ color: 'hsl(var(--primary))' }}>
               Create the first repair →
             </Link>
           </div>

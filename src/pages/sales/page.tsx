@@ -2,11 +2,14 @@ import { useEffect, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { usePageTitle } from '@/context/PageTitleContext';
 import { useAccessoryStore } from '@/hooks/useAccessoryStore';
+import { useTaxSettings } from '@/hooks/useTaxSettings';
 import SearchDropdown from '@/components/shared/SearchDropdown';
 import Pagination from '@/components/shared/Pagination';
 import DateRangePicker, { type DateRange } from '@/components/shared/DateRangePicker';
 import { Pencil, Trash2, X, ShoppingCart, TrendingUp, ShoppingBag, AlertTriangle } from 'lucide-react';
 import type { AccessoryProduct, AccessorySaleRecord } from '@/services/wireless/accessoryStore';
+import CustomerPicker from '@/components/shared/CustomerPicker';
+import type { WCustomer } from '@/types/wireless';
 
 const PAGE_SIZE = 10;
 
@@ -137,13 +140,27 @@ function RecordSaleModal({ products, onSave, onClose }: {
   const [qty, setQty]               = useState('1');
   const [payment, setPayment]       = useState<'Cash' | 'Card' | 'Transfer'>('Cash');
   const [saving, setSaving]         = useState(false);
+  const [customerName, setCustomerName]   = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [selectedCustomer, setSelectedCustomer] = useState<WCustomer | null>(null);
+  const [customerError, setCustomerError] = useState('');
 
-  const product = products.find(p => p.id === productId);
-  const total   = product ? product.price * Number(qty) : 0;
+  const { taxEnabled, vatRate } = useTaxSettings();
+  const product  = products.find(p => p.id === productId);
+  const subtotal = product ? product.price * Number(qty) : 0;
+  const tax      = taxEnabled ? Math.round(subtotal * (vatRate / 100) * 100) / 100 : 0;
+  const total    = subtotal + tax;
 
   const handle = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!product) return;
+    // A typed customer name must be linked to a real customer record — either
+    // picked from the dropdown or created inline through it.
+    if (customerName.trim() && !selectedCustomer) {
+      setCustomerError('Select an existing customer or create a new one from the dropdown.');
+      return;
+    }
+    setCustomerError('');
     setSaving(true);
     try {
       await onSave({
@@ -154,6 +171,8 @@ function RecordSaleModal({ products, onSave, onClose }: {
         unit_price:     product.price,
         total,
         payment_method: payment,
+        customer_id:    selectedCustomer?.id ?? null,
+        customer_name:  customerName || 'Walk-in Customer',
       });
       onClose();
     } finally { setSaving(false); }
@@ -173,6 +192,30 @@ function RecordSaleModal({ products, onSave, onClose }: {
           </button>
         </div>
         <form onSubmit={handle} className="px-5 py-4 space-y-3">
+          <CustomerPicker
+            value={customerName}
+            phone={customerPhone}
+            required={false}
+            label="Customer"
+            placeholder="Search by name or phone… (optional)"
+            onChange={(name, phone, customer) => {
+              setCustomerName(name);
+              setCustomerPhone(phone);
+              setSelectedCustomer(customer ?? null);
+            }}
+          />
+          {customerName.trim() && !selectedCustomer && (
+            <div>
+              <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>Customer Phone *</label>
+              <input value={customerPhone} onChange={e => setCustomerPhone(e.target.value)}
+                className="w-full h-9 px-3 rounded-lg text-sm outline-none"
+                style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
+                placeholder="+233…" />
+            </div>
+          )}
+          {customerError && (
+            <p className="text-xs" style={{ color: '#dc2626' }}>{customerError}</p>
+          )}
           <div>
             <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>Product *</label>
             <select value={productId} onChange={e => setProductId(e.target.value)}
@@ -198,9 +241,23 @@ function RecordSaleModal({ products, onSave, onClose }: {
             </div>
           </div>
           {product && (
-            <div className="flex items-center justify-between py-2 px-3 rounded-lg" style={{ background: 'hsl(var(--muted))' }}>
-              <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Total</span>
-              <span className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>{fmt(total)}</span>
+            <div className="space-y-1 py-2 px-3 rounded-lg" style={{ background: 'hsl(var(--muted))' }}>
+              {taxEnabled && (
+                <>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Subtotal</span>
+                    <span className="text-xs" style={{ color: 'hsl(var(--foreground))' }}>{fmt(subtotal)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>VAT ({vatRate}%)</span>
+                    <span className="text-xs" style={{ color: 'hsl(var(--foreground))' }}>{fmt(tax)}</span>
+                  </div>
+                </>
+              )}
+              <div className="flex items-center justify-between">
+                <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Total</span>
+                <span className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>{fmt(total)}</span>
+              </div>
             </div>
           )}
           <div className="flex gap-2 pt-1">

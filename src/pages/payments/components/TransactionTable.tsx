@@ -1,5 +1,9 @@
 import { useState } from 'react';
 import { useTransactions } from '@/hooks/useTransactions';
+import { usePagination } from '@/hooks/usePagination';
+import Pagination from '@/components/shared/Pagination';
+
+const PAGE_SIZE = 10;
 
 const statusConfig: Record<string, { label: string; dot: string; badge: string; text: string }> = {
   verified:     { label: 'Verified',     dot: '#10B981', badge: 'rgba(16,185,129,0.1)',  text: '#059669' },
@@ -30,6 +34,8 @@ export default function TransactionTable() {
     const matchSearch = !search || t.customer.toLowerCase().includes(search.toLowerCase()) || t.reference.toLowerCase().includes(search.toLowerCase());
     return matchStatus && matchSearch;
   });
+
+  const { paginated: pagedTxns, page, setPage, totalPages, total } = usePagination(filtered, PAGE_SIZE, `${filter}|${search}`);
 
   const selected = transactions.find(t => t.id === selectedId) ?? transactions[0];
   const items = selected ? (itemsByProduct[selected.product] ?? [{ name: selected.product, qty: 1, price: selected.amount }]) : [];
@@ -80,7 +86,7 @@ export default function TransactionTable() {
 
         {/* List */}
         <div className="flex-1 overflow-y-auto">
-          {filtered.map((txn) => {
+          {pagedTxns.map((txn) => {
             const s = statusConfig[txn.status];
             const isSelected = txn.id === selectedId;
             return (
@@ -123,6 +129,12 @@ export default function TransactionTable() {
             </div>
           )}
         </div>
+
+        {filtered.length > 0 && (
+          <div className="px-3 py-1.5" style={{ borderTop: '1px solid rgba(7,16,31,0.07)' }}>
+            <Pagination page={page} pageCount={totalPages} total={total} pageSize={PAGE_SIZE} onPageChange={setPage} />
+          </div>
+        )}
 
         {/* Search */}
         <div className="px-4 py-3" style={{ borderTop: '1px solid rgba(220,31,31,0.08)' }}>

@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bell, Plus, ShoppingBag, Wrench, CreditCard, TriangleAlert, Zap, X, CheckCheck } from 'lucide-react';
+import { Bell, Plus, ShoppingBag, Wrench, CreditCard, TriangleAlert, Zap, X, CheckCheck, Cake, Sun, Moon } from 'lucide-react';
 import { usePageTitle } from '@/context/PageTitleContext';
+import { useTheme } from '@/context/ThemeContext';
 import { useNotifications, type Notification } from '@/hooks/useNotifications';
+import { useUpcomingBirthdays, type UpcomingBirthday } from '@/hooks/useUpcomingBirthdays';
 import { useAuth } from '@/hooks/useAuth';
 import { useRepairs } from '@/hooks/useRepairs';
 import { useWirelessCustomers } from '@/hooks/useWirelessCustomers';
@@ -95,6 +97,25 @@ function NotifRow({ n }: { n: Notification }) {
   );
 }
 
+function BirthdayRow({ b }: { b: UpcomingBirthday }) {
+  return (
+    <div className="flex items-center gap-3 px-4 py-3 transition-colors"
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}
+    >
+      <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-white text-[10px] font-bold"
+        style={{ background: 'hsl(38 85% 55%)' }}>
+        {b.avatar}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-semibold truncate" style={{ color: 'hsl(var(--foreground))' }}>{b.name}</p>
+        <p className="text-[11px] mt-0.5" style={{ color: 'hsl(var(--muted-foreground))' }}>Birthday · {b.label}</p>
+      </div>
+      <Cake className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'hsl(38 85% 45%)' }} />
+    </div>
+  );
+}
+
 function NotifToast({ n, onDismiss }: { n: Notification; onDismiss: () => void }) {
   return (
     <div
@@ -142,6 +163,8 @@ export default function TopBar({ title = 'Dashboard', subtitle }: TopBarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const bellRef = useRef<HTMLDivElement>(null);
   const { notifications, toasts, unreadCount, markAllRead, dismissToast } = useNotifications();
+  const upcomingBirthdays = useUpcomingBirthdays();
+  const { theme, toggleTheme } = useTheme();
 
   const { repairs } = useRepairs();
   const { customers } = useWirelessCustomers();
@@ -173,15 +196,15 @@ export default function TopBar({ title = 'Dashboard', subtitle }: TopBarProps) {
     const role = user?.role;
     const results: NavItem[] = [];
 
-    if (canAccessModule(role, 'Repairs')) {
+    if (canAccessModule(role, 'Tickets')) {
       for (const r of repairs) {
         if (`${r.id} ${r.customer} ${r.device} ${r.issue}`.toLowerCase().includes(q)) {
           results.push({
-            id: `repair:${r.id}`, to: '/repairs',
+            id: `repair:${r.id}`, to: '/tickets',
             primary: `${r.device} — ${r.customer || 'Unknown'}`,
             secondary: r.issue,
             meta: r.id,
-            badge: { label: 'Repair', bg: 'hsl(190 80% 93%)', color: 'hsl(190 80% 35%)' },
+            badge: { label: 'Ticket', bg: 'hsl(190 80% 93%)', color: 'hsl(190 80% 35%)' },
           });
         }
       }
@@ -300,13 +323,13 @@ export default function TopBar({ title = 'Dashboard', subtitle }: TopBarProps) {
               {pageTitle.action.label}
             </button>
           ) : !pageTitle.hideDefaultAction ? (
-            <Link to="/repairs">
+            <Link to="/tickets">
               <button
                 className="flex items-center gap-1.5 px-3 h-8 rounded-lg text-xs font-semibold text-white transition-opacity hover:opacity-90"
                 style={{ background: 'hsl(var(--primary))' }}
               >
                 <Plus className="w-3.5 h-3.5" />
-                New Repair
+                New Ticket
               </button>
             </Link>
           ) : null}
@@ -324,6 +347,18 @@ export default function TopBar({ title = 'Dashboard', subtitle }: TopBarProps) {
             />
           </div>
 
+          {/* Theme toggle */}
+          <button
+            onClick={toggleTheme}
+            className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
+            style={{ color: 'hsl(var(--muted-foreground))' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+
           {/* Bell */}
           <div ref={bellRef} className="relative">
             <button
@@ -335,12 +370,12 @@ export default function TopBar({ title = 'Dashboard', subtitle }: TopBarProps) {
               title="Notifications"
             >
               <Bell className="w-4 h-4" />
-              {unreadCount > 0 && (
+              {(unreadCount + upcomingBirthdays.length) > 0 && (
                 <span
                   className="absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 flex items-center justify-center rounded-full text-[9px] font-bold text-white px-0.5"
-                  style={{ background: 'hsl(350 60% 40%)' }}
+                  style={{ background: upcomingBirthdays.length > 0 && unreadCount === 0 ? 'hsl(38 85% 48%)' : 'hsl(350 60% 40%)' }}
                 >
-                  {unreadCount > 9 ? '9+' : unreadCount}
+                  {(unreadCount + upcomingBirthdays.length) > 9 ? '9+' : unreadCount + upcomingBirthdays.length}
                 </span>
               )}
             </button>
@@ -378,6 +413,17 @@ export default function TopBar({ title = 'Dashboard', subtitle }: TopBarProps) {
 
                 {/* List */}
                 <div className="overflow-y-auto" style={{ maxHeight: 360 }}>
+                  {upcomingBirthdays.length > 0 && (
+                    <div style={{ borderBottom: '1px solid hsl(var(--border))' }}>
+                      <p className="px-4 pt-3 pb-1.5 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5"
+                        style={{ color: 'hsl(38 80% 40%)' }}>
+                        <Cake className="w-3 h-3" />Upcoming Birthdays
+                      </p>
+                      <div className="divide-y" style={{ borderColor: 'hsl(var(--border))' }}>
+                        {upcomingBirthdays.map(b => <BirthdayRow key={b.id} b={b} />)}
+                      </div>
+                    </div>
+                  )}
                   {notifications.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-10 gap-2">
                       <Bell className="w-6 h-6 opacity-20" style={{ color: 'hsl(var(--foreground))' }} />

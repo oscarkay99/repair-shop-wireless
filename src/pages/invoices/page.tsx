@@ -4,6 +4,7 @@ import { usePageTitle } from '@/context/PageTitleContext';
 import { useInvoices } from '@/hooks/useInvoices';
 import { useWirelessCustomers } from '@/hooks/useWirelessCustomers';
 import { useAuth } from '@/hooks/useAuth';
+import { useTaxSettings } from '@/hooks/useTaxSettings';
 import { getInvoiceItems } from '@/services/wireless/invoices';
 import SearchDropdown from '@/components/shared/SearchDropdown';
 import Pagination from '@/components/shared/Pagination';
@@ -276,11 +277,12 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
   onMarkPaid: (id: string) => void;
   onEdit: () => void;
 }) {
+  const { taxEnabled, vatRate } = useTaxSettings();
   const items = getInvoiceItems(inv.id);
   const subtotal = items.length ? items.reduce((s, i) => s + i.total_price, 0) : inv.subtotal;
-  const vat      = Math.round(subtotal * 0.15 * 100) / 100;
-  const nhil     = Math.round(subtotal * 0.025 * 100) / 100;
-  const getfund  = Math.round(subtotal * 0.025 * 100) / 100;
+  const vat      = taxEnabled ? Math.round(subtotal * (vatRate / 100) * 100) / 100 : 0;
+  const nhil     = taxEnabled ? Math.round(subtotal * 0.025 * 100) / 100 : 0;
+  const getfund  = taxEnabled ? Math.round(subtotal * 0.025 * 100) / 100 : 0;
 
   return (
     <div className="space-y-5">
@@ -396,10 +398,12 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
 
         <div className="ml-auto max-w-xs space-y-1.5 mb-8">
           {[
-            { label: 'Subtotal',       value: subtotal },
-            { label: 'VAT (15%)',      value: vat },
-            { label: 'NHIL (2.5%)',    value: nhil },
-            { label: 'GETFUND (2.5%)', value: getfund },
+            { label: 'Subtotal', value: subtotal },
+            ...(taxEnabled ? [
+              { label: `VAT (${vatRate}%)`,   value: vat },
+              { label: 'NHIL (2.5%)',    value: nhil },
+              { label: 'GETFUND (2.5%)', value: getfund },
+            ] : []),
           ].map(row => (
             <div key={row.label} className="flex items-center justify-between gap-8">
               <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>{row.label}</span>

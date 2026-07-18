@@ -29,16 +29,16 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }
   const { icon, color, bg } = config[toast.type];
   return (
     <div
-      className="pointer-events-auto flex items-center gap-3 bg-white rounded-2xl px-4 py-3 shadow-xl border border-slate-100 min-w-[260px] max-w-[360px]"
+      className="pointer-events-auto flex items-center gap-3 bg-[hsl(var(--card))] rounded-2xl px-4 py-3 shadow-xl border border-[hsl(var(--border))] min-w-[260px] max-w-[360px]"
       style={{ borderLeft: `4px solid ${color}` }}
     >
       <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: bg }}>
         <i className={`${icon} text-base`} style={{ color }} />
       </div>
-      <p className="flex-1 text-sm font-medium text-slate-700 leading-snug">{toast.message}</p>
+      <p className="flex-1 text-sm font-medium text-[hsl(var(--foreground))] leading-snug">{toast.message}</p>
       <button
         onClick={onDismiss}
-        className="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-300 hover:text-slate-500 cursor-pointer transition-colors flex-shrink-0"
+        className="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--muted-foreground))] cursor-pointer transition-colors flex-shrink-0"
       >
         <i className="ri-close-line text-sm" />
       </button>

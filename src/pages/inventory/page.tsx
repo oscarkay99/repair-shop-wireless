@@ -4,10 +4,12 @@ import { usePageTitle } from '@/context/PageTitleContext';
 import { useParts } from '@/hooks/useParts';
 import SearchDropdown from '@/components/shared/SearchDropdown';
 import Pagination from '@/components/shared/Pagination';
+import AccessoriesTab from './components/AccessoriesTab';
 import { AlertTriangle, Pencil, Trash2, X } from 'lucide-react';
 import type { Part } from '@/types/wireless';
 
 const PAGE_SIZE = 10;
+type InventoryTab = 'parts' | 'accessories';
 
 const CATEGORIES = ['Screens', 'Batteries', 'Keyboards', 'Connectors', 'Trackpads', 'Other'];
 
@@ -136,9 +138,11 @@ function AddPartModal({
 export default function InventoryPage() {
   const { setPageTitle } = usePageTitle();
   const { parts, loading, add, patch, remove, lowStock } = useParts();
+  const [tab, setTab] = useState<InventoryTab>('parts');
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [showAdd, setShowAdd] = useState(false);
+  const [showAddAccessory, setShowAddAccessory] = useState(false);
   const [editing, setEditing] = useState<Part | null>(null);
 
   useEffect(() => { setPage(1); }, [query]);
@@ -146,11 +150,13 @@ export default function InventoryPage() {
   useEffect(() => {
     setPageTitle({
       title: 'Inventory',
-      subtitle: `${parts.length} parts · ${lowStock.length} low stock`,
-      action: { label: 'Add Part', onClick: () => setShowAdd(true) },
+      subtitle: tab === 'parts' ? `${parts.length} parts · ${lowStock.length} low stock` : 'Retail accessories stock',
+      action: tab === 'parts'
+        ? { label: 'Add Part', onClick: () => setShowAdd(true) }
+        : { label: 'Add Accessory', onClick: () => setShowAddAccessory(true) },
     });
     return () => setPageTitle({ title: 'Dashboard' });
-  }, [setPageTitle, parts.length, lowStock.length]);
+  }, [setPageTitle, tab, parts.length, lowStock.length]);
 
   const filtered = useMemo(() => {
     if (!query) return parts;
@@ -170,6 +176,26 @@ export default function InventoryPage() {
 
   return (
     <div className="space-y-4">
+      {/* Tab bar */}
+      <div className="flex items-center gap-1 border-b" style={{ borderColor: 'hsl(var(--border))' }}>
+        {([
+          { id: 'parts', label: 'Parts' },
+          { id: 'accessories', label: 'Accessories' },
+        ] as { id: InventoryTab; label: string }[]).map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            className="px-1 py-3 mr-6 text-xs font-semibold uppercase tracking-wider border-b-2 transition-colors"
+            style={tab === t.id
+              ? { borderColor: 'hsl(var(--primary))', color: 'hsl(var(--primary))' }
+              : { borderColor: 'transparent', color: 'hsl(var(--muted-foreground))' }}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'accessories' ? (
+        <AccessoriesTab showAddModal={showAddAccessory} onCloseAddModal={() => setShowAddAccessory(false)} />
+      ) : (
+      <>
       {/* Search */}
       <SearchDropdown
         query={query}
@@ -291,6 +317,8 @@ export default function InventoryPage() {
           onSave={data => patch(editing.id, data)}
           onClose={() => setEditing(null)}
         />
+      )}
+      </>
       )}
     </div>
   );
