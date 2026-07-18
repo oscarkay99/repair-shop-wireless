@@ -4,20 +4,20 @@ export default function RevenueVsTarget() {
   const max = Math.max(...monthlyData.map((d) => Math.max(d.revenue, d.target)), 1);
 
   return (
-    <div className="bg-white rounded-2xl p-6 border border-slate-100">
+    <div className="bg-[hsl(var(--card))] rounded-2xl p-6 border border-[hsl(var(--border))]">
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h3 className="text-sm font-bold text-slate-800">Revenue vs Target</h3>
-          <p className="text-xs text-slate-400 mt-0.5">6-month performance against monthly goals</p>
+          <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">Revenue vs Target</h3>
+          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">6-month performance against monthly goals</p>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-sm bg-emerald-500" />
-            <span className="text-[11px] text-slate-500">Revenue</span>
+            <span className="text-[11px] text-[hsl(var(--muted-foreground))]">Revenue</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm bg-slate-200" />
-            <span className="text-[11px] text-slate-500">Target</span>
+            <div className="w-3 h-3 rounded-sm bg-[hsl(var(--muted))]" />
+            <span className="text-[11px] text-[hsl(var(--muted-foreground))]">Target</span>
           </div>
         </div>
       </div>
@@ -32,7 +32,7 @@ export default function RevenueVsTarget() {
               <div className="relative w-full flex items-end justify-center gap-1" style={{ height: '136px' }}>
                 {/* Target bar */}
                 <div
-                  className="w-[45%] rounded-t-lg bg-slate-100 group-hover:bg-slate-200 transition-all relative"
+                  className="w-[45%] rounded-t-lg bg-[hsl(var(--muted))] group-hover:bg-[hsl(var(--muted))] transition-all relative"
                   style={{ height: `${tarH}%` }}
                 >
                   <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-slate-700 text-white text-[9px] px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-all whitespace-nowrap z-10">
@@ -52,24 +52,24 @@ export default function RevenueVsTarget() {
                   )}
                 </div>
               </div>
-              <span className="text-[10px] text-slate-400 font-medium">{d.month}</span>
+              <span className="text-[10px] text-[hsl(var(--muted-foreground))] font-medium">{d.month}</span>
             </div>
           );
         })}
       </div>
 
-      <div className="grid grid-cols-3 gap-3 mt-5 pt-4 border-t border-slate-50">
+      <div className="grid grid-cols-3 gap-3 mt-5 pt-4 border-t border-[hsl(var(--border))]">
         <div>
-          <p className="text-[10px] text-slate-400 uppercase tracking-wider">6-Month Total</p>
-          <p className="text-base font-bold text-slate-900 mt-0.5">GHS 0</p>
+          <p className="text-[10px] text-[hsl(var(--muted-foreground))] uppercase tracking-wider">6-Month Total</p>
+          <p className="text-base font-bold text-[hsl(var(--foreground))] mt-0.5">GHS 0</p>
         </div>
         <div>
-          <p className="text-[10px] text-slate-400 uppercase tracking-wider">Months Beat Target</p>
+          <p className="text-[10px] text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Months Beat Target</p>
           <p className="text-base font-bold text-emerald-600 mt-0.5">0 / 0</p>
         </div>
         <div>
-          <p className="text-[10px] text-slate-400 uppercase tracking-wider">Best Month</p>
-          <p className="text-base font-bold text-slate-900 mt-0.5">—</p>
+          <p className="text-[10px] text-[hsl(var(--muted-foreground))] uppercase tracking-wider">Best Month</p>
+          <p className="text-base font-bold text-[hsl(var(--foreground))] mt-0.5">—</p>
         </div>
       </div>
     </div>

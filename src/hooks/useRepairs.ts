@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getRepairs, createRepair, updateRepairStatus, updateRepairNotes, addRepairMedia, updateRepair } from '@/services/repairs';
+import { getRepairs, createRepair, updateRepairStatus, updateRepairNotes, addRepairMedia, deleteRepairMedia, updateRepair, deleteRepair } from '@/services/repairs';
 import type { Repair, RepairStatus, RepairMediaUploadInput } from '@/types/repair';
 import { useToast } from '@/contexts/ToastContext';
 
@@ -49,6 +49,16 @@ export function useRepairs() {
     return media;
   };
 
+  const removeMedia = async (id: string, mediaId: string) => {
+    await deleteRepairMedia(id, mediaId);
+    setRepairs(prev => prev.map((repair) => (
+      repair.id === id
+        ? { ...repair, media: (repair.media ?? []).filter((item) => item.id !== mediaId) }
+        : repair
+    )));
+    showToast('Photo removed');
+  };
+
   const patchRepair = async (id: string, patch: Partial<Repair>) => {
     await updateRepair(id, patch);
     setRepairs(prev => prev.map((repair) => (
@@ -57,5 +67,11 @@ export function useRepairs() {
     showToast('Repair updated');
   };
 
-  return { repairs, loading, add, setStatus, setNotes, updateStatus, addNote, addMedia, patchRepair };
+  const remove = async (id: string) => {
+    await deleteRepair(id);
+    setRepairs(prev => prev.filter(r => r.id !== id));
+    showToast('Repair deleted');
+  };
+
+  return { repairs, loading, add, setStatus, setNotes, updateStatus, addNote, addMedia, removeMedia, patchRepair, remove };
 }

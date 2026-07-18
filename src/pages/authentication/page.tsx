@@ -24,23 +24,23 @@ export default function AuthenticationPage() {
         ].map(s => (
           <div key={s.label} className="rounded-2xl p-4 border border-white" style={{ background: s.bg }}>
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 flex items-center justify-center bg-white rounded-xl">
+              <div className="w-8 h-8 flex items-center justify-center bg-[hsl(var(--card))] rounded-xl">
                 <i className={`${s.icon} text-base`} style={{ color: s.iconColor }} />
               </div>
-              <span className="text-xs text-slate-500">{s.label}</span>
+              <span className="text-xs text-[hsl(var(--muted-foreground))]">{s.label}</span>
             </div>
-            <p className="text-2xl font-bold text-slate-800">{s.value}</p>
+            <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{s.value}</p>
           </div>
         ))}
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1 w-fit mb-5">
+      <div className="flex items-center gap-1 bg-[hsl(var(--muted))] rounded-xl p-1 w-fit mb-5">
         {(['certificates', 'imei', 'generate'] as Tab[]).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer whitespace-nowrap ${tab === t ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer whitespace-nowrap ${tab === t ? 'bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-sm' : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'}`}
           >
             {t === 'certificates' && <><i className="ri-shield-check-line mr-1.5" />Certificates</>}
             {t === 'imei' && <><i className="ri-scan-line mr-1.5" />IMEI Checker</>}
@@ -53,17 +53,17 @@ export default function AuthenticationPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <div className="lg:col-span-2 space-y-3">
             {authCertificates.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-slate-100 p-10 flex flex-col items-center text-center">
-                <i className="ri-shield-check-line text-3xl text-slate-200 mb-3" />
-                <p className="text-sm font-semibold text-slate-600 mb-1">No certificates yet</p>
-                <p className="text-xs text-slate-400">Generate your first certificate to verify a device's authenticity.</p>
+              <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-10 flex flex-col items-center text-center">
+                <i className="ri-shield-check-line text-3xl text-[hsl(var(--muted-foreground))] mb-3" />
+                <p className="text-sm font-semibold text-[hsl(var(--muted-foreground))] mb-1">No certificates yet</p>
+                <p className="text-xs text-[hsl(var(--muted-foreground))]">Generate your first certificate to verify a device's authenticity.</p>
               </div>
             ) : authCertificates.map(cert => (
               <button
                 key={cert.id}
                 onClick={() => { setSelectedCert(cert); setCertDetailOpen(true); }}
-                className={`w-full bg-white rounded-2xl border p-4 text-left transition-all cursor-pointer`}
-                style={{ borderColor: selectedCert?.id === cert.id ? '#DC1F1F' : '#f1f5f9' }}
+                className={`w-full bg-[hsl(var(--card))] rounded-2xl border p-4 text-left transition-all cursor-pointer`}
+                style={{ borderColor: selectedCert?.id === cert.id ? '#DC1F1F' : 'hsl(var(--border))' }}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
@@ -71,8 +71,8 @@ export default function AuthenticationPage() {
                       <i className="ri-shield-check-line text-lg" style={{ color: '#DC1F1F' }} />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-slate-800">{cert.device}</p>
-                      <p className="text-xs text-slate-400">{cert.id} · {cert.purchaseDate}</p>
+                      <p className="text-sm font-bold text-[hsl(var(--foreground))]">{cert.device}</p>
+                      <p className="text-xs text-[hsl(var(--muted-foreground))]">{cert.id} · {cert.purchaseDate}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -84,18 +84,18 @@ export default function AuthenticationPage() {
                     </span>
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-3 mt-3 pt-3 border-t border-slate-50">
+                <div className="grid grid-cols-3 gap-3 mt-3 pt-3 border-t border-[hsl(var(--border))]">
                   <div>
-                    <p className="text-[10px] text-slate-400">Customer</p>
-                    <p className="text-xs font-semibold text-slate-700">{cert.customer}</p>
+                    <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Customer</p>
+                    <p className="text-xs font-semibold text-[hsl(var(--foreground))]">{cert.customer}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-slate-400">IMEI Status</p>
+                    <p className="text-[10px] text-[hsl(var(--muted-foreground))]">IMEI Status</p>
                     <p className="text-xs font-semibold" style={{ color: '#DC1F1F' }}><i className="ri-checkbox-circle-fill mr-0.5" />Clean</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-slate-400">Warranty</p>
-                    <p className="text-xs font-semibold text-slate-700">{cert.warrantyExpiry}</p>
+                    <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Warranty</p>
+                    <p className="text-xs font-semibold text-[hsl(var(--foreground))]">{cert.warrantyExpiry}</p>
                   </div>
                 </div>
               </button>

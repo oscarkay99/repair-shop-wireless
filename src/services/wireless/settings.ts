@@ -12,6 +12,8 @@ const DEFAULT: WirelessSettings = {
   vat_rate: 0,
   currency: 'GH₵',
   warranty_days: 30,
+  primary_color: '#DC1F1F',
+  tax_enabled: true,
   updated_at: new Date().toISOString(),
 };
 let localSettings: WirelessSettings = { ...DEFAULT };

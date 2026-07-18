@@ -127,7 +127,7 @@ export default function SuppliersPage() {
                   );
                 })}
               </div>
-              <Pagination page={poPage} totalPages={poTotalPages} total={poTotal} from={poFrom} to={poTo} onPageChange={setPoPage} />
+              <Pagination page={poPage} pageCount={poTotalPages} total={poTotal} pageSize={15} onPageChange={setPoPage} />
               </>
             )}
           </div>
@@ -236,7 +236,7 @@ export default function SuppliersPage() {
               ))}
             </div>
           )}
-          <Pagination page={supPage} totalPages={supTotalPages} total={supTotal} from={supFrom} to={supTo} onPageChange={setSupPage} />
+          <Pagination page={supPage} pageCount={supTotalPages} total={supTotal} pageSize={9} onPageChange={setSupPage} />
         </>
       )}
 

@@ -33,15 +33,15 @@ export default function ImeiChecker({ imeiCheckHistory }: Props) {
 
   return (
     <div className="max-w-2xl">
-      <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-5">
-        <h3 className="text-sm font-bold text-slate-800 mb-1">IMEI Verification</h3>
-        <p className="text-xs text-slate-400 mb-4">Check if a device is clean, blacklisted, or activation-locked before purchase or sale.</p>
+      <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-6 mb-5">
+        <h3 className="text-sm font-bold text-[hsl(var(--foreground))] mb-1">IMEI Verification</h3>
+        <p className="text-xs text-[hsl(var(--muted-foreground))] mb-4">Check if a device is clean, blacklisted, or activation-locked before purchase or sale.</p>
         <div className="flex gap-3">
           <input
             value={imeiInput}
             onChange={e => setImeiInput(e.target.value)}
             placeholder="Enter 15-digit IMEI number..."
-            className="flex-1 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-400 font-mono"
+            className="flex-1 border border-[hsl(var(--border))] rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-400 font-mono"
             maxLength={15}
           />
           <button
@@ -64,7 +64,7 @@ export default function ImeiChecker({ imeiCheckHistory }: Props) {
                 <p className={`text-sm font-bold ${imeiResult.status === 'clean' ? 'text-emerald-700' : 'text-rose-700'}`}>
                   {imeiResult.status === 'clean' ? 'Device is Clean' : 'Device Flagged'}
                 </p>
-                <p className="text-xs text-slate-500">{imeiResult.device} · {imeiResult.network}</p>
+                <p className="text-xs text-[hsl(var(--muted-foreground))]">{imeiResult.device} · {imeiResult.network}</p>
               </div>
               {imeiResult.status === 'clean' && (
                 <div className="ml-auto">
@@ -76,25 +76,25 @@ export default function ImeiChecker({ imeiCheckHistory }: Props) {
         )}
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-100 p-5">
-        <h4 className="text-sm font-bold text-slate-800 mb-3">Recent IMEI Checks</h4>
+      <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-5">
+        <h4 className="text-sm font-bold text-[hsl(var(--foreground))] mb-3">Recent IMEI Checks</h4>
         <div className="space-y-2">
           {imeiCheckHistory.map((h, i) => (
-            <div key={i} className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
+            <div key={i} className="flex items-center justify-between py-2 border-b border-[hsl(var(--border))] last:border-0">
               <div className="flex items-center gap-3">
                 <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${h.status === 'clean' ? 'bg-emerald-50' : 'bg-rose-50'}`}>
                   <i className={`text-sm ${h.status === 'clean' ? 'ri-shield-check-line text-emerald-500' : 'ri-shield-cross-line text-rose-500'}`} />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-slate-700">{h.device}</p>
-                  <p className="text-[10px] text-slate-400 font-mono">{h.imei}</p>
+                  <p className="text-xs font-semibold text-[hsl(var(--foreground))]">{h.device}</p>
+                  <p className="text-[10px] text-[hsl(var(--muted-foreground))] font-mono">{h.imei}</p>
                 </div>
               </div>
               <div className="text-right">
                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${h.status === 'clean' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
                   {h.status === 'clean' ? 'Clean' : 'Flagged'}
                 </span>
-                <p className="text-[10px] text-slate-400 mt-0.5">{h.checkedAt}</p>
+                <p className="text-[10px] text-[hsl(var(--muted-foreground))] mt-0.5">{h.checkedAt}</p>
               </div>
             </div>
           ))}

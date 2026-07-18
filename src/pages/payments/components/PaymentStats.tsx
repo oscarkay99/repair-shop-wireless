@@ -32,52 +32,52 @@ export default function PaymentStats() {
   return (
     <>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl p-5 border border-slate-100">
-          <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Total Collected</p>
-          <p className="text-2xl font-bold text-slate-900">{fmtGHS(totalCollected)}</p>
-          <p className="text-xs text-slate-400 mt-1">{verified.length} verified transactions</p>
+        <div className="bg-[hsl(var(--card))] rounded-2xl p-5 border border-[hsl(var(--border))]">
+          <p className="text-xs text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">Total Collected</p>
+          <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{fmtGHS(totalCollected)}</p>
+          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">{verified.length} verified transactions</p>
         </div>
-        <div className="bg-white rounded-2xl p-5 border border-slate-100">
-          <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Pending Verification</p>
+        <div className="bg-[hsl(var(--card))] rounded-2xl p-5 border border-[hsl(var(--border))]">
+          <p className="text-xs text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">Pending Verification</p>
           <p className="text-2xl font-bold text-amber-600">{fmtGHS(pendingTotal)}</p>
-          <p className="text-xs text-slate-400 mt-1">{pending.length} transactions</p>
+          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">{pending.length} transactions</p>
         </div>
-        <div className="bg-white rounded-2xl p-5 border border-slate-100">
-          <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Outstanding Balance</p>
+        <div className="bg-[hsl(var(--card))] rounded-2xl p-5 border border-[hsl(var(--border))]">
+          <p className="text-xs text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">Outstanding Balance</p>
           <p className="text-2xl font-bold text-red-500">{fmtGHS(0)}</p>
-          <p className="text-xs text-slate-400 mt-1">0 customers</p>
+          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">0 customers</p>
         </div>
-        <div className="bg-white rounded-2xl p-5 border border-slate-100">
-          <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Reconciliation Queue</p>
-          <p className="text-2xl font-bold text-slate-900">{needsReview.length}</p>
-          <p className="text-xs text-slate-400 mt-1">items to review</p>
+        <div className="bg-[hsl(var(--card))] rounded-2xl p-5 border border-[hsl(var(--border))]">
+          <p className="text-xs text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">Reconciliation Queue</p>
+          <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{needsReview.length}</p>
+          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">items to review</p>
         </div>
       </div>
 
       {/* Method breakdown — replaces the mock version in the parent */}
-      <div className="bg-white rounded-2xl p-5 border border-slate-100">
+      <div className="bg-[hsl(var(--card))] rounded-2xl p-5 border border-[hsl(var(--border))]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-amber-50 text-amber-600">
               <i className="ri-smartphone-line text-lg" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-800">Mobile Money Integration</p>
-              <p className="text-xs text-slate-400">MTN MoMo · Vodafone Cash · AirtelTigo</p>
+              <p className="text-sm font-semibold text-[hsl(var(--foreground))]">Mobile Money Integration</p>
+              <p className="text-xs text-[hsl(var(--muted-foreground))]">MTN MoMo · Vodafone Cash · AirtelTigo</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span className="text-xs text-emerald-600 font-medium">Connected</span>
-            <span className="text-xs text-slate-400">· Last sync: 2 min ago</span>
+            <span className="text-xs text-[hsl(var(--muted-foreground))]">· Last sync: 2 min ago</span>
           </div>
         </div>
-        <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-slate-50">
+        <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-[hsl(var(--border))]">
           {breakdown.map((m) => (
             <div key={m.label}>
-              <p className="text-xs text-slate-400">{m.label}</p>
-              <p className="text-sm font-bold text-slate-800">{m.value}</p>
-              <div className="mt-1.5 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <p className="text-xs text-[hsl(var(--muted-foreground))]">{m.label}</p>
+              <p className="text-sm font-bold text-[hsl(var(--foreground))]">{m.value}</p>
+              <div className="mt-1.5 h-1.5 bg-[hsl(var(--muted))] rounded-full overflow-hidden">
                 <div className="h-full bg-emerald-500 rounded-full" style={{ width: m.pct }} />
               </div>
             </div>

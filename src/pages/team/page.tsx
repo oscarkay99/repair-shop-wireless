@@ -16,15 +16,15 @@ export default function TeamPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
         {teamStats.map((s) => (
-          <div key={s.label} className="bg-white rounded-2xl p-5 border border-slate-100 relative overflow-hidden">
+          <div key={s.label} className="bg-[hsl(var(--card))] rounded-2xl p-5 border border-[hsl(var(--border))] relative overflow-hidden">
             <div className={`absolute left-0 top-0 bottom-0 w-1 ${s.accent} rounded-l-2xl`} />
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">{s.label}</p>
-                <p className="text-2xl font-bold text-slate-800 mt-1">{s.value}</p>
+                <p className="text-xs text-[hsl(var(--muted-foreground))] font-medium uppercase tracking-wider">{s.label}</p>
+                <p className="text-2xl font-bold text-[hsl(var(--foreground))] mt-1">{s.value}</p>
                 <p className="text-xs text-emerald-600 font-medium mt-1">{s.change}</p>
               </div>
-              <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400">
+              <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]">
                 <i className={`${s.icon} text-lg`} />
               </div>
             </div>
@@ -40,15 +40,15 @@ export default function TeamPage() {
           <div
             key={m.id}
             onClick={() => setSelected(m.id)}
-            className="bg-white rounded-2xl p-5 border border-slate-100 hover:shadow-md hover:border-slate-200 transition-all cursor-pointer"
+            className="bg-[hsl(var(--card))] rounded-2xl p-5 border border-[hsl(var(--border))] hover:shadow-md hover:border-[hsl(var(--border))] transition-all cursor-pointer"
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 rounded-full bg-emerald-500 flex items-center justify-center text-white text-base font-bold">
                 {m.avatar}
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-800">{m.name}</p>
-                <p className="text-[10px] text-slate-400">{m.role}</p>
+                <p className="text-sm font-semibold text-[hsl(var(--foreground))]">{m.name}</p>
+                <p className="text-[10px] text-[hsl(var(--muted-foreground))]">{m.role}</p>
               </div>
               <div className="ml-auto">
                 <div className={`w-2 h-2 rounded-full ${m.status === 'active' ? 'bg-emerald-500' : 'bg-slate-300'}`} />
@@ -56,33 +56,33 @@ export default function TeamPage() {
             </div>
             <div className="grid grid-cols-2 gap-2">
               {m.sales !== undefined && (
-                <div className="bg-slate-50 rounded-xl p-2.5">
-                  <p className="text-[10px] text-slate-400">Sales</p>
-                  <p className="text-sm font-bold text-slate-800">{m.sales}</p>
+                <div className="bg-[hsl(var(--muted))] rounded-xl p-2.5">
+                  <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Sales</p>
+                  <p className="text-sm font-bold text-[hsl(var(--foreground))]">{m.sales}</p>
                 </div>
               )}
               {m.repairs !== undefined && (
-                <div className="bg-slate-50 rounded-xl p-2.5">
-                  <p className="text-[10px] text-slate-400">Repairs</p>
-                  <p className="text-sm font-bold text-slate-800">{m.repairs}</p>
+                <div className="bg-[hsl(var(--muted))] rounded-xl p-2.5">
+                  <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Repairs</p>
+                  <p className="text-sm font-bold text-[hsl(var(--foreground))]">{m.repairs}</p>
                 </div>
               )}
               {m.tasks !== undefined && (
-                <div className="bg-slate-50 rounded-xl p-2.5">
-                  <p className="text-[10px] text-slate-400">Tasks</p>
-                  <p className="text-sm font-bold text-slate-800">{m.tasks}</p>
+                <div className="bg-[hsl(var(--muted))] rounded-xl p-2.5">
+                  <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Tasks</p>
+                  <p className="text-sm font-bold text-[hsl(var(--foreground))]">{m.tasks}</p>
                 </div>
               )}
-              <div className="bg-slate-50 rounded-xl p-2.5">
-                <p className="text-[10px] text-slate-400">Revenue</p>
-                <p className="text-sm font-bold text-slate-800">{m.revenue}</p>
+              <div className="bg-[hsl(var(--muted))] rounded-xl p-2.5">
+                <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Revenue</p>
+                <p className="text-sm font-bold text-[hsl(var(--foreground))]">{m.revenue}</p>
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      <Pagination page={page} totalPages={totalPages} total={total} from={from} to={to} onPageChange={setPage} />
+      <Pagination page={page} pageCount={totalPages} total={total} pageSize={9} onPageChange={setPage} />
       {member && <MemberModal member={member} onClose={() => setSelected(null)} />}
     </AdminLayout>
   );

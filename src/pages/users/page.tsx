@@ -13,8 +13,8 @@ import DeleteConfirmModal from './components/DeleteConfirmModal';
 import { systemUsers as seedUsers } from '@/mocks/users';
 
 const emptyUser: Omit<SystemUser, 'id' | 'createdAt' | 'lastLogin'> = {
-  name: '', email: '', role: 'sales_rep', avatar: '', status: 'active', phone: '',
-  permissions: rolePermissions.sales_rep,
+  name: '', email: '', role: 'receptionist', avatar: '', status: 'active', phone: '',
+  permissions: rolePermissions.receptionist,
 };
 
 export default function UsersPage() {
@@ -113,7 +113,7 @@ export default function UsersPage() {
       <UserStatsStrip users={users} />
 
       {loading ? (
-        <div className="flex items-center justify-center py-20 text-slate-400 text-sm">
+        <div className="flex items-center justify-center py-20 text-[hsl(var(--muted-foreground))] text-sm">
           <i className="ri-loader-4-line animate-spin mr-2" />Loading users…
         </div>
       ) : (
@@ -135,7 +135,7 @@ export default function UsersPage() {
         </div>
       )}
 
-      <Pagination page={page} totalPages={totalPages} total={total} from={from} to={to} onPageChange={setPage} />
+      <Pagination page={page} pageCount={totalPages} total={total} pageSize={15} onPageChange={setPage} />
 
       <UserFormModal
         open={showModal}

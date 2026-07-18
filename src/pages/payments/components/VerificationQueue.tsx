@@ -9,12 +9,12 @@ export default function VerificationQueue() {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-      <div className="flex items-center gap-2 p-5 border-b border-slate-100">
+    <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] overflow-hidden">
+      <div className="flex items-center gap-2 p-5 border-b border-[hsl(var(--border))]">
         <div className="w-5 h-5 flex items-center justify-center text-amber-500">
           <i className="ri-time-line text-sm" />
         </div>
-        <h3 className="text-sm font-semibold text-slate-800">Verification Queue</h3>
+        <h3 className="text-sm font-semibold text-[hsl(var(--foreground))]">Verification Queue</h3>
         <span className="ml-auto text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
           {items.length} pending
         </span>
@@ -25,22 +25,22 @@ export default function VerificationQueue() {
           <div className="w-10 h-10 flex items-center justify-center rounded-full bg-emerald-50 mx-auto mb-3">
             <i className="ri-checkbox-circle-line text-xl text-emerald-500" />
           </div>
-          <p className="text-sm text-slate-500">All caught up! No pending verifications.</p>
+          <p className="text-sm text-[hsl(var(--muted-foreground))]">All caught up! No pending verifications.</p>
         </div>
       ) : (
-        <div className="divide-y divide-slate-50">
+        <div className="divide-y divide-[hsl(var(--border))]">
           {items.map((item) => (
             <div key={item.id} className="p-5">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-semibold text-slate-800">{item.customer}</span>
-                    <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">{item.method}</span>
+                    <span className="text-sm font-semibold text-[hsl(var(--foreground))]">{item.customer}</span>
+                    <span className="text-xs bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] px-2 py-0.5 rounded-full">{item.method}</span>
                   </div>
-                  <p className="text-xs font-bold text-slate-900">{item.amount}</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">Ref: {item.reference}</p>
+                  <p className="text-xs font-bold text-[hsl(var(--foreground))]">{item.amount}</p>
+                  <p className="text-[10px] text-[hsl(var(--muted-foreground))] mt-0.5">Ref: {item.reference}</p>
                 </div>
-                <span className="text-[10px] text-slate-400 whitespace-nowrap">{item.time}</span>
+                <span className="text-[10px] text-[hsl(var(--muted-foreground))] whitespace-nowrap">{item.time}</span>
               </div>
               <div className="bg-amber-50 rounded-xl px-3 py-2 mb-3">
                 <p className="text-xs text-amber-700">{item.proofNote}</p>

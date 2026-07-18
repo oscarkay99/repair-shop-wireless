@@ -9,7 +9,6 @@ export type AppModule =
   | 'Inventory'
   | 'Payments'
   | 'Customers'
-  | 'Repairs'
   | 'Tickets'
   | 'Technicians'
   | 'Invoices'

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getInvoices, createInvoice, updateInvoiceStatus, deleteInvoice } from '@/services/wireless/invoices';
+import { getInvoices, createInvoice, updateInvoiceStatus, patchInvoice, deleteInvoice } from '@/services/wireless/invoices';
 import type { Invoice, InvoiceStatus } from '@/types/wireless';
 import { useToast } from '@/contexts/ToastContext';
 
@@ -31,6 +31,12 @@ export function useInvoices() {
     showToast(`Invoice marked ${status}`);
   };
 
+  const patch = async (id: string, data: Parameters<typeof patchInvoice>[1]) => {
+    await patchInvoice(id, data);
+    setInvoices(prev => prev.map(i => i.id === id ? { ...i, ...data } : i));
+    showToast('Invoice updated');
+  };
+
   const remove = async (id: string) => {
     await deleteInvoice(id);
     setInvoices(prev => prev.filter(i => i.id !== id));
@@ -44,5 +50,5 @@ export function useInvoices() {
     overdue: invoices.filter(i => i.status === 'overdue').reduce((s, i) => s + i.total, 0),
   };
 
-  return { invoices, loading, reload, add, markStatus, remove, totals };
+  return { invoices, loading, reload, add, markStatus, patch, remove, totals };
 }

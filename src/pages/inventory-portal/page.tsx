@@ -58,7 +58,7 @@ export default function InventoryPortalPage() {
           <table className="w-full text-sm">
             <thead>
               <tr style={{ borderBottom: '1px solid hsl(var(--border))' }}>
-                {['Part', 'SKU', 'Category', 'Stock', 'Min', 'Cost', 'Sell Price', 'Supplier', 'Status'].map(h => (
+                {['Part', 'Product Code', 'Category', 'Stock', 'Min', 'Cost', 'Sell Price', 'Supplier', 'Status'].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>{h}</th>
                 ))}
               </tr>

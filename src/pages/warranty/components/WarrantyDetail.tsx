@@ -1,7 +1,7 @@
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
   active:        { label: 'Active',        color: '#25D366', bg: '#25D36615' },
   expiring_soon: { label: 'Expiring Soon', color: '#F59E0B', bg: '#F59E0B15' },
-  expired:       { label: 'Expired',       color: '#94A3B8', bg: '#F1F5F9'   },
+  expired:       { label: 'Expired',       color: '#94A3B8', bg: '#94A3B815'   },
 };
 
 interface Warranty {
@@ -28,14 +28,14 @@ interface Props {
 
 export default function WarrantyDetail({ warranty, onClose, onNewReturn }: Props) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 p-5">
+    <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-5">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-bold text-slate-800">Warranty Details</h3>
-        <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-slate-100 cursor-pointer">
-          <i className="ri-close-line text-slate-400 text-sm" />
+        <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">Warranty Details</h3>
+        <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-[hsl(var(--muted))] cursor-pointer">
+          <i className="ri-close-line text-[hsl(var(--muted-foreground))] text-sm" />
         </button>
       </div>
-      <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden mb-4">
+      <div className="w-full h-2 rounded-full bg-[hsl(var(--muted))] overflow-hidden mb-4">
         <div
           className="h-full rounded-full transition-all"
           style={{
@@ -57,9 +57,9 @@ export default function WarrantyDetail({ warranty, onClose, onNewReturn }: Props
           { label: 'Sale ID', value: warranty.saleId },
           { label: 'Purchase Price', value: `GHS ${warranty.cost.toLocaleString()}` },
         ].map(item => (
-          <div key={item.label} className="flex justify-between py-1.5 border-b border-slate-50">
-            <span className="text-slate-500">{item.label}</span>
-            <span className="font-semibold text-slate-800 text-right">{item.value}</span>
+          <div key={item.label} className="flex justify-between py-1.5 border-b border-[hsl(var(--border))]">
+            <span className="text-[hsl(var(--muted-foreground))]">{item.label}</span>
+            <span className="font-semibold text-[hsl(var(--foreground))] text-right">{item.value}</span>
           </div>
         ))}
       </div>
@@ -67,7 +67,7 @@ export default function WarrantyDetail({ warranty, onClose, onNewReturn }: Props
         <button onClick={onNewReturn} className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-white cursor-pointer whitespace-nowrap" style={{ background: '#E05A2B' }}>
           Log Return
         </button>
-        <button className="flex-1 py-2.5 rounded-xl text-xs font-semibold border border-slate-200 text-slate-600 cursor-pointer whitespace-nowrap">
+        <button className="flex-1 py-2.5 rounded-xl text-xs font-semibold border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] cursor-pointer whitespace-nowrap">
           Extend Warranty
         </button>
       </div>

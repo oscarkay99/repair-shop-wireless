@@ -1,95 +1,81 @@
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
-  ClipboardList,
   Users,
   HardHat,
   ShoppingBag,
   Package,
   FileText,
-  ExternalLink,
-  Wrench,
-  Boxes,
-  ConciergeBell,
   Activity,
   Settings,
+  Hammer,
+  LogOut,
+  Receipt,
 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { roleLabels, roleColors } from '@/mocks/users';
+import { canAccessModule, type AppModule } from '@/utils/access';
 
-const mainNav = [
-  { label: 'Dashboard',         icon: LayoutDashboard, path: '/' },
-  { label: 'Tickets',           icon: ClipboardList,   path: '/tickets' },
-  { label: 'Customers',         icon: Users,           path: '/customers' },
-  { label: 'Technicians',       icon: HardHat,         path: '/technicians' },
-  { label: 'Accessories Sales', icon: ShoppingBag,     path: '/sales' },
-  { label: 'Inventory',         icon: Package,         path: '/inventory' },
-  { label: 'Invoices',          icon: FileText,        path: '/invoices' },
+type NavItem = { label: string; icon: React.ElementType; path: string; module: AppModule };
+
+const mainNav: NavItem[] = [
+  { label: 'Dashboard',         icon: LayoutDashboard, path: '/',            module: 'Dashboard' },
+  { label: 'Tickets',           icon: Hammer,          path: '/tickets',     module: 'Tickets' },
+  { label: 'Customers',         icon: Users,           path: '/customers',   module: 'Customers' },
+  { label: 'Technicians',       icon: HardHat,         path: '/technicians', module: 'Technicians' },
+  { label: 'Accessories Sales', icon: ShoppingBag,     path: '/sales',       module: 'Sales' },
+  { label: 'Inventory',         icon: Package,         path: '/inventory',   module: 'Inventory' },
+  { label: 'Invoices',          icon: FileText,        path: '/invoices',    module: 'Invoices' },
+  { label: 'Expenses & P&L',   icon: Receipt,         path: '/expenses',    module: 'Expenses' },
 ];
 
-const portalNav = [
-  { label: 'Customer Portal',  icon: ExternalLink,   path: '/portal' },
-  { label: 'Tech Portal',      icon: Wrench,         path: '/tech-portal' },
-  { label: 'Inventory Portal', icon: Boxes,          path: '/inventory-portal' },
-  { label: 'Reception Portal', icon: ConciergeBell,  path: '/reception' },
+const bottomNav: NavItem[] = [
+  { label: 'Activity Log', icon: Activity, path: '/activity', module: 'Activity' },
+  { label: 'Settings',     icon: Settings, path: '/settings', module: 'Settings' },
 ];
 
-const bottomNav = [
-  { label: 'Activity Log', icon: Activity, path: '/activity' },
-  { label: 'Settings',     icon: Settings,  path: '/settings' },
-];
-
-function NavLink({
-  item,
-  active,
-}: {
-  item: { label: string; icon: React.ElementType; path: string };
-  active: boolean;
-}) {
+function NavLink({ item, active }: { item: NavItem; active: boolean }) {
   const Icon = item.icon;
   return (
     <Link
       to={item.path}
       className={[
         'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
-        active
-          ? 'text-white border'
-          : 'border border-transparent hover:text-white',
+        active ? 'border' : 'border border-transparent',
       ].join(' ')}
       style={
         active
           ? {
-              background: 'hsl(0 80% 12%)',
-              borderColor: 'hsl(0 90% 35% / 0.4)',
-              boxShadow: 'rgba(242,13,13,0.08) 0px 0px 12px inset',
-              color: 'white',
+              background: 'hsl(350 60% 94%)',
+              borderColor: 'hsl(350 60% 76%)',
+              boxShadow: 'rgba(142,29,49,0.08) 0px 0px 10px inset',
+              color: 'hsl(350 60% 25%)',
             }
-          : {
-              color: 'hsl(var(--sidebar-foreground))',
-            }
+          : { color: 'hsl(var(--sidebar-foreground))' }
       }
-      onMouseEnter={(e) => {
+      onMouseEnter={e => {
         if (!active) {
           (e.currentTarget as HTMLElement).style.background = 'hsl(var(--sidebar-accent))';
+          (e.currentTarget as HTMLElement).style.color = 'hsl(350 60% 25%)';
         }
       }}
-      onMouseLeave={(e) => {
+      onMouseLeave={e => {
         if (!active) {
           (e.currentTarget as HTMLElement).style.background = '';
+          (e.currentTarget as HTMLElement).style.color = 'hsl(var(--sidebar-foreground))';
         }
       }}
     >
       <Icon
         className="w-4 h-4 flex-shrink-0"
-        style={{ color: active ? 'hsl(0,90%,55%)' : undefined }}
+        style={{ color: active ? 'hsl(350 60% 40%)' : undefined }}
         aria-hidden="true"
       />
       {item.label}
       {active && (
         <span
-          className="ml-auto w-1 h-1 rounded-full"
-          style={{
-            background: 'hsl(0,90%,55%)',
-            boxShadow: 'rgba(244,37,37,0.8) 0px 0px 4px',
-          }}
+          className="ml-auto w-1.5 h-1.5 rounded-full"
+          style={{ background: 'hsl(350 60% 45%)', boxShadow: 'rgba(142,29,49,0.6) 0px 0px 4px' }}
         />
       )}
     </Link>
@@ -98,97 +84,94 @@ function NavLink({
 
 export default function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   const isActive = (path: string) =>
     path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
 
+  const canSee = (module: AppModule) => canAccessModule(user?.role, module);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/signin', { replace: true });
+  };
+
   return (
     <aside
       className="w-60 flex-shrink-0 h-full flex flex-col border-r"
-      style={{
-        background: 'hsl(var(--sidebar-background))',
-        borderColor: 'hsl(var(--sidebar-border))',
-      }}
+      style={{ background: 'hsl(var(--sidebar-background))', borderColor: 'hsl(var(--sidebar-border))' }}
     >
       {/* Logo */}
-      <div
-        className="px-6 py-5 border-b"
-        style={{ borderColor: 'hsl(var(--sidebar-border))' }}
-      >
+      <div className="px-6 py-5 border-b" style={{ borderColor: 'hsl(var(--sidebar-border))' }}>
         <div className="flex items-center gap-3">
           <div
             className="rounded-xl flex-shrink-0 overflow-hidden"
             style={{
-              width: 40,
-              height: 40,
-              background: 'rgb(15,15,15)',
-              boxShadow:
-                'rgba(255,0,0,0.7) 0px 0px 12px 3px, rgba(255,0,0,0.4) 0px 0px 28px 6px, rgba(255,0,0,0.2) 0px 0px 50px 10px',
+              width: 40, height: 40,
+              background: '#0F0F0F',
+              boxShadow: 'rgba(220,60,40,0.80) 0px 0px 14px 3px, rgba(220,60,40,0.45) 0px 0px 32px 8px, rgba(220,60,40,0.20) 0px 0px 56px 14px',
             }}
           >
             <img
               src="/wireless-logo.png"
               alt="WIRELESS logo"
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                objectPosition: '63% 70%',
-                filter: 'invert(1) hue-rotate(180deg)',
-              }}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: '63% 70%', filter: 'invert(1) hue-rotate(180deg)' }}
             />
           </div>
           <div>
-            <p className="text-sm font-black tracking-[0.12em] text-white uppercase">
-              WIRELESS
-            </p>
-            <p
-              className="text-[9px] leading-tight tracking-widest uppercase"
-              style={{ color: 'hsl(var(--sidebar-foreground))' }}
-            >
-              Repair &amp; Service
-            </p>
+            <p className="text-sm font-black tracking-[0.12em] uppercase" style={{ color: 'hsl(350 60% 22%)' }}>WIRELESS</p>
+            <p className="text-[9px] leading-tight tracking-widest uppercase" style={{ color: 'hsl(var(--sidebar-foreground))' }}>Repair &amp; Service</p>
           </div>
         </div>
       </div>
 
       {/* Main nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        <p
-          className="px-3 py-2 text-[9px] font-bold uppercase tracking-[0.15em] opacity-50"
-          style={{ color: 'hsl(var(--sidebar-foreground))' }}
-        >
+        <p className="px-3 py-2 text-[9px] font-bold uppercase tracking-[0.15em] opacity-50" style={{ color: 'hsl(var(--sidebar-foreground))' }}>
           Main Menu
         </p>
-        {mainNav.map((item) => (
+        {mainNav.filter(item => canSee(item.module)).map(item => (
           <NavLink key={item.path} item={item} active={isActive(item.path)} />
         ))}
       </nav>
 
       {/* Bottom section */}
-      <div
-        className="px-3 py-4 border-t space-y-0.5"
-        style={{ borderColor: 'hsl(var(--sidebar-border))' }}
-      >
-        {portalNav.map((item) => (
+      <div className="px-3 py-4 border-t space-y-0.5" style={{ borderColor: 'hsl(var(--sidebar-border))' }}>
+        {bottomNav.filter(item => canSee(item.module)).map(item => (
           <NavLink key={item.path} item={item} active={isActive(item.path)} />
         ))}
 
-        <div
-          className="my-1"
-          style={{ height: 1, background: 'hsl(var(--sidebar-border))' }}
-        />
-
-        {bottomNav.map((item) => (
-          <NavLink key={item.path} item={item} active={isActive(item.path)} />
-        ))}
-
-        <p
-          className="px-3 pt-2 text-[9px] tracking-widest uppercase opacity-30"
-          style={{ color: 'hsl(var(--sidebar-foreground))' }}
-        >
-          v1.0.0 · WIRELESS
-        </p>
+        {/* User card + sign out */}
+        {user && (
+          <div
+            className="mt-3 rounded-xl p-3 flex items-center gap-2.5"
+            style={{ background: 'hsl(220 14% 94%)', border: '1px solid hsl(220 13% 88%)' }}
+          >
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0"
+              style={{ background: user.role ? (roleColors[user.role] ?? 'hsl(350 60% 35%)') : 'hsl(350 60% 35%)' }}
+            >
+              {user.avatar || user.name.slice(0, 2).toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold truncate" style={{ color: 'hsl(220 20% 12%)' }}>{user.name}</p>
+              <p className="text-[10px] truncate" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                {user.role ? (roleLabels[user.role] ?? user.role) : user.role}
+              </p>
+            </div>
+            <button
+              onClick={handleLogout}
+              title="Sign out"
+              className="w-7 h-7 flex items-center justify-center rounded-lg flex-shrink-0 cursor-pointer transition-colors"
+              style={{ color: 'hsl(var(--muted-foreground))' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(0 70% 94%)'; (e.currentTarget as HTMLElement).style.color = 'hsl(0 65% 40%)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.color = 'hsl(var(--muted-foreground))'; }}
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
       </div>
     </aside>
   );

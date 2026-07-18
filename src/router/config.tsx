@@ -22,10 +22,9 @@ import ReportsPage from "../pages/reports/page";
 import ProfilePage from "../pages/profile/page";
 import AccessDeniedPage from "../pages/AccessDenied";
 import AuditLogsPage from "../pages/audit-logs/page";
-import TicketsPage from "../pages/tickets/page";
 import TechniciansPage from "../pages/technicians/page";
+import AccessoriesSalesPage from "../pages/sales/page";
 import InvoicesPage from "../pages/invoices/page";
-import CustomerPortalPage from "../pages/portal/page";
 import TechPortalPage from "../pages/tech-portal/page";
 import InventoryPortalPage from "../pages/inventory-portal/page";
 import ReceptionPortalPage from "../pages/reception/page";
@@ -33,6 +32,7 @@ import ActivityPage from "../pages/activity/page";
 
 const routes: RouteObject[] = [
   { path: "/signin", element: <SignInPage /> },
+
   {
     element: <AppShell />,
     children: [
@@ -42,14 +42,11 @@ const routes: RouteObject[] = [
       { path: "/analytics",          element: <AuthGuard requiredModule="Analytics"><AnalyticsPage /></AuthGuard> },
       { path: "/inventory",          element: <AuthGuard requiredModule="Inventory"><InventoryPage /></AuthGuard> },
       { path: "/payments",           element: <AuthGuard requiredModule="Payments"><PaymentsPage /></AuthGuard> },
-      { path: "/sales",              element: <AuthGuard requiredModule="Sales"><PaymentsPage /></AuthGuard> },
+      { path: "/sales",              element: <AuthGuard requiredModule="Sales"><AccessoriesSalesPage /></AuthGuard> },
       { path: "/customers",          element: <AuthGuard requiredModule="Customers"><CustomersPage /></AuthGuard> },
-      { path: "/repairs",            element: <AuthGuard requiredModule="Repairs"><RepairsPage /></AuthGuard> },
-      { path: "/tickets",            element: <AuthGuard requiredModule="Tickets"><TicketsPage /></AuthGuard> },
-      { path: "/tickets/new",        element: <AuthGuard requiredModule="Tickets"><TicketsPage /></AuthGuard> },
+      { path: "/tickets",            element: <AuthGuard requiredModule="Tickets"><RepairsPage /></AuthGuard> },
       { path: "/technicians",        element: <AuthGuard requiredModule="Technicians"><TechniciansPage /></AuthGuard> },
       { path: "/invoices",           element: <AuthGuard requiredModule="Invoices"><InvoicesPage /></AuthGuard> },
-      { path: "/portal",             element: <AuthGuard requiredModule="Portal"><CustomerPortalPage /></AuthGuard> },
       { path: "/tech-portal",        element: <AuthGuard requiredModule="Portal"><TechPortalPage /></AuthGuard> },
       { path: "/inventory-portal",   element: <AuthGuard requiredModule="Portal"><InventoryPortalPage /></AuthGuard> },
       { path: "/reception",          element: <AuthGuard requiredModule="Portal"><ReceptionPortalPage /></AuthGuard> },
