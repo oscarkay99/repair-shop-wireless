@@ -363,8 +363,8 @@ export default function TopBar({ title = 'Dashboard', subtitle }: TopBarProps) {
           <div ref={bellRef} className="relative">
             <button
               onClick={() => { setBellOpen(o => !o); if (!bellOpen && unreadCount > 0) markAllRead(); }}
-              className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors relative"
-              style={{ color: bellOpen ? 'hsl(350 60% 40%)' : 'hsl(var(--muted-foreground))' }}
+              className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors relative ${bellOpen ? 'text-brand-500' : ''}`}
+              style={!bellOpen ? { color: 'hsl(var(--muted-foreground))' } : undefined}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}
               title="Notifications"
@@ -372,8 +372,8 @@ export default function TopBar({ title = 'Dashboard', subtitle }: TopBarProps) {
               <Bell className="w-4 h-4" />
               {(unreadCount + upcomingBirthdays.length) > 0 && (
                 <span
-                  className="absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 flex items-center justify-center rounded-full text-[9px] font-bold text-white px-0.5"
-                  style={{ background: upcomingBirthdays.length > 0 && unreadCount === 0 ? 'hsl(38 85% 48%)' : 'hsl(350 60% 40%)' }}
+                  className={`absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 flex items-center justify-center rounded-full text-[9px] font-bold text-white px-0.5 ${upcomingBirthdays.length > 0 && unreadCount === 0 ? '' : 'bg-brand-500'}`}
+                  style={upcomingBirthdays.length > 0 && unreadCount === 0 ? { background: 'hsl(38 85% 48%)' } : undefined}
                 >
                   {(unreadCount + upcomingBirthdays.length) > 9 ? '9+' : unreadCount + upcomingBirthdays.length}
                 </span>
@@ -402,8 +402,7 @@ export default function TopBar({ title = 'Dashboard', subtitle }: TopBarProps) {
                   {notifications.length > 0 && (
                     <button
                       onClick={markAllRead}
-                      className="flex items-center gap-1 text-[11px] font-medium transition-opacity hover:opacity-70"
-                      style={{ color: 'hsl(350 60% 40%)' }}
+                      className="flex items-center gap-1 text-[11px] font-medium transition-opacity hover:opacity-70 text-brand-500"
                     >
                       <CheckCheck className="w-3 h-3" />
                       Mark all read

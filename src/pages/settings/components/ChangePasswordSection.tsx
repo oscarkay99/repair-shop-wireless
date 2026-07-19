@@ -69,7 +69,7 @@ export default function ChangePasswordSection() {
         <button
           onClick={handleChange}
           disabled={saving}
-          className="px-5 py-2 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+          className="px-5 py-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
         >
           {saving ? 'Updating…' : 'Update Password'}
         </button>

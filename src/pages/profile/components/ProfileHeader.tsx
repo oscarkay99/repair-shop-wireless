@@ -56,10 +56,10 @@ export default function ProfileHeader({
 
       <button
         onClick={onLogout}
-        className="w-full flex items-center gap-3 p-4 rounded-2xl border border-red-100 bg-white hover:bg-red-50 transition-colors cursor-pointer text-left"
+        className="w-full flex items-center gap-3 p-4 rounded-2xl border border-red-200 bg-white hover:bg-red-50 transition-colors cursor-pointer text-left"
       >
         <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-red-50">
-          <i className="ri-logout-box-line text-sm text-red-400" />
+          <i className="ri-logout-box-line text-sm text-red-500" />
         </div>
         <div>
           <p className="text-sm font-semibold text-red-500">Sign Out</p>

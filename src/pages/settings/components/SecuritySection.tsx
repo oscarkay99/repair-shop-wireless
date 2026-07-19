@@ -61,7 +61,7 @@ export default function SecuritySection() {
               {session.current ? (
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-50 text-green-600 font-semibold">Current</span>
               ) : (
-                <button onClick={() => revokeSession(i)} className="text-[10px] text-red-400 hover:text-red-600 cursor-pointer transition-colors">Revoke</button>
+                <button onClick={() => revokeSession(i)} className="text-[10px] text-red-500 hover:text-red-600 cursor-pointer transition-colors">Revoke</button>
               )}
             </div>
           ))}

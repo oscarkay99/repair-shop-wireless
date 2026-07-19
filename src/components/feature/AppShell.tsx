@@ -28,8 +28,7 @@ class PageErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundary
           <p className="text-xs mb-4 max-w-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>{this.state.error.message}</p>
           <button
             onClick={() => this.setState({ error: null })}
-            className="px-4 py-2 rounded-lg text-xs font-semibold text-white"
-            style={{ background: 'hsl(var(--primary))' }}
+            className="px-4 py-2 rounded-lg text-xs font-semibold text-white bg-brand-500 hover:bg-brand-600 transition-colors cursor-pointer"
           >
             Try again
           </button>
