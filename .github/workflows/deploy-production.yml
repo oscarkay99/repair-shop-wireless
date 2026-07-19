@@ -31,4 +31,12 @@ jobs:
         run: |
           install -m 600 -D /dev/null deploy_key
           echo "$DEPLOY_KEY" > deploy_key
-          tar -czf - -C out . | ssh -i deploy_key -o StrictHostKeyChecking=accept-new root@187.127.233.218
+          for attempt in 1 2 3; do
+            if tar -czf - -C out . | ssh -i deploy_key -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 root@187.127.233.218; then
+              exit 0
+            fi
+            echo "Deploy attempt $attempt failed, retrying in 10s..."
+            sleep 10
+          done
+          echo "Deploy failed after 3 attempts"
+          exit 1
