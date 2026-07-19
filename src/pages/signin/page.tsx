@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import {
   Mail, Lock, Eye, EyeOff, ArrowRight, Loader2,
   AlertCircle, CheckCircle2,
-  Ticket, Users, Boxes, LineChart, Sparkles, Shield, Lock as LockIcon, Headset, Star,
+  Ticket, Users, Boxes, LineChart,
 } from 'lucide-react';
 
 const FEATURES = [
@@ -12,7 +12,6 @@ const FEATURES = [
   { icon: Users,     title: 'Customer Relationship',   desc: 'Build stronger relationships' },
   { icon: Boxes,     title: 'Inventory Control',       desc: 'Real-time stock & parts tracking' },
   { icon: LineChart, title: 'Analytics & Reports',     desc: 'Powerful insights that grow your business' },
-  { icon: Sparkles,  title: 'AI Assistant',            desc: 'Automate tasks and save time' },
 ];
 
 export default function SignInPage() {
@@ -263,29 +262,8 @@ export default function SignInPage() {
             </div>
           </div>
 
-          {/* Trust strip */}
           <div className="pt-6 border-t" style={{ borderColor: 'hsl(350 30% 16%)' }}>
-            <div className="flex flex-wrap items-center gap-x-7 gap-y-3">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-0.5">
-                  {Array.from({ length: 5 }).map((_, i) => <Star key={i} className="w-3 h-3" fill="hsl(350 65% 62%)" style={{ color: 'hsl(350 65% 62%)' }} />)}
-                </div>
-                <span className="text-[11px]" style={{ color: 'hsl(350 12% 60%)' }}>Built for Wireless's own repair operation</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Shield className="w-3.5 h-3.5" style={{ color: 'hsl(350 45% 55%)' }} />
-                <span className="text-[11px] font-medium" style={{ color: 'hsl(350 12% 60%)' }}>Self-hosted &amp; isolated</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <LockIcon className="w-3.5 h-3.5" style={{ color: 'hsl(350 45% 55%)' }} />
-                <span className="text-[11px] font-medium" style={{ color: 'hsl(350 12% 60%)' }}>End-to-End Encrypted</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Headset className="w-3.5 h-3.5" style={{ color: 'hsl(350 45% 55%)' }} />
-                <span className="text-[11px] font-medium" style={{ color: 'hsl(350 12% 60%)' }}>Admin-supported</span>
-              </div>
-            </div>
-            <p className="text-[10px] mt-5" style={{ color: 'hsl(350 15% 34%)' }}>&copy; 2026 Wireless · All rights reserved</p>
+            <p className="text-[10px]" style={{ color: 'hsl(350 15% 34%)' }}>&copy; 2026 Wireless · All rights reserved</p>
           </div>
         </div>
       </div>
