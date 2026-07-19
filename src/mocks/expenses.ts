@@ -1,5 +1,5 @@
 export const expenseCategories = [
-  { id: 'rent', name: 'Rent & Utilities', budget: 8000, spent: 8000, color: '#DC1F1F' },
+  { id: 'rent', name: 'Rent & Utilities', budget: 8000, spent: 8000, color: '#EC0118' },
   { id: 'salaries', name: 'Staff Salaries',      budget: 15000, spent: 15000, color: '#64748b' },
   { id: 'stock',    name: 'Stock Purchases',      budget: 45000, spent: 42300, color: '#F59E0B' },
   { id: 'marketing',name: 'Marketing & Ads',      budget: 5000,  spent: 3870,  color: '#C84015' },

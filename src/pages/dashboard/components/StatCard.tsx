@@ -39,7 +39,7 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
 
 export default function StatCard({ label, value, change, trend, icon, accentColor, sub, sparkline }: StatCardProps) {
   const [hovered, setHovered] = useState(false);
-  const color = accentColor || '#DC1F1F';
+  const color = accentColor || '#EC0118';
   const isPositive = trend === 'up';
   const isNeutral  = trend === 'neutral';
 
@@ -51,7 +51,7 @@ export default function StatCard({ label, value, change, trend, icon, accentColo
         border: '1px solid rgba(7,16,31,0.07)',
         boxShadow: hovered
           ? '0 4px 24px rgba(7,16,31,0.1), 0 1px 4px rgba(7,16,31,0.05)'
-          : '0 1px 3px rgba(7,16,31,0.04), 0 6px 24px rgba(220,31,31,0.08)',
+          : '0 1px 3px rgba(7,16,31,0.04), 0 6px 24px rgba(236,1,24,0.08)',
         transform: hovered ? 'translateY(-2px)' : 'translateY(0)',
       }}
       onMouseEnter={() => setHovered(true)}

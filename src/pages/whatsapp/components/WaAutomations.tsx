@@ -64,7 +64,7 @@ const automationRules = [
 export default function WaAutomations() {
   return (
     <div className="space-y-4">
-      <div className="bg-gradient-to-r from-[#DC1F1F] to-[#B81616] rounded-2xl p-5 text-white">
+      <div className="bg-gradient-to-r from-[#EC0118] to-[#BD0113] rounded-2xl p-5 text-white">
         <div className="flex items-center gap-3 mb-2">
           <div className="w-10 h-10 flex items-center justify-center bg-white/20 rounded-xl">
             <i className="ri-robot-2-line text-xl" />

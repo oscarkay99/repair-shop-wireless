@@ -181,7 +181,7 @@ export default function WhatsAppPage() {
                     <button
                       key={conv.id}
                       onClick={() => setSelectedConvId(conv.id)}
-                      className={`w-full flex items-start gap-3 p-3 border-b border-slate-50 hover:bg-slate-50 transition-all cursor-pointer text-left ${selectedConvId === conv.id ? 'bg-[rgba(220,31,31,0.05)]' : ''}`}
+                      className={`w-full flex items-start gap-3 p-3 border-b border-slate-50 hover:bg-slate-50 transition-all cursor-pointer text-left ${selectedConvId === conv.id ? 'bg-[rgba(236,1,24,0.05)]' : ''}`}
                     >
                       <div className="relative flex-shrink-0">
                         <div className={`w-10 h-10 rounded-full ${avatarColor} flex items-center justify-center text-white text-xs font-bold`}>
@@ -273,7 +273,7 @@ export default function WhatsAppPage() {
                               ? 'bg-white text-slate-700 rounded-tl-sm border border-slate-100'
                               : 'text-white rounded-tr-sm'
                           }`}
-                          style={msg.sender_type !== 'customer' ? { background: msg.ai_generated ? '#DC1F1F' : '#06B6D4' } : {}}
+                          style={msg.sender_type !== 'customer' ? { background: msg.ai_generated ? '#EC0118' : '#06B6D4' } : {}}
                         >
                           {msg.content}
                         </div>
@@ -304,7 +304,7 @@ export default function WhatsAppPage() {
                     <button
                       onClick={sendMessage}
                       className="w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer hover:opacity-90"
-                      style={{ background: '#DC1F1F' }}
+                      style={{ background: '#EC0118' }}
                     >
                       <i className="ri-send-plane-fill text-white text-sm" />
                     </button>
@@ -314,7 +314,7 @@ export default function WhatsAppPage() {
                       onClick={handleGenerateAiReply}
                       disabled={aiGenerating}
                       className="text-xs cursor-pointer flex items-center gap-1 disabled:opacity-50"
-                      style={{ color: '#DC1F1F' }}
+                      style={{ color: '#EC0118' }}
                     >
                       <i className={`${aiGenerating ? 'ri-loader-4-line animate-spin' : 'ri-sparkling-2-line'}`} />
                       {aiGenerating ? 'Generating...' : 'Generate AI Reply'}

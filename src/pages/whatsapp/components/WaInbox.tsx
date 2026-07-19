@@ -79,7 +79,7 @@ export default function WaInbox({
               <button
                 key={contact.id}
                 onClick={() => onSelectContact(contact)}
-                className={`w-full flex items-start gap-3 p-3 border-b border-slate-50 hover:bg-slate-50 transition-all cursor-pointer text-left ${selectedContact.id === contact.id ? 'bg-[rgba(220,31,31,0.05)]' : ''}`}
+                className={`w-full flex items-start gap-3 p-3 border-b border-slate-50 hover:bg-slate-50 transition-all cursor-pointer text-left ${selectedContact.id === contact.id ? 'bg-[rgba(236,1,24,0.05)]' : ''}`}
               >
                 <div className="relative flex-shrink-0">
                   <div className={`w-10 h-10 rounded-full ${contact.avatarColor} flex items-center justify-center text-white text-xs font-bold`}>
@@ -147,7 +147,7 @@ export default function WaInbox({
                   {msg.from !== 'customer' && (
                     <div className="flex items-center gap-1 mb-1 justify-end">
                       {msg.aiGenerated && (
-                        <span className="text-[10px] bg-[rgba(220,31,31,0.08)] text-[#DC1F1F] px-1.5 py-0.5 rounded-full font-medium">
+                        <span className="text-[10px] bg-[rgba(236,1,24,0.08)] text-[#EC0118] px-1.5 py-0.5 rounded-full font-medium">
                           <i className="ri-robot-2-line mr-0.5" />AI
                         </span>
                       )}
@@ -160,7 +160,7 @@ export default function WaInbox({
                         ? 'bg-white text-slate-700 rounded-tl-sm border border-slate-100'
                         : 'text-white rounded-tr-sm'
                     }`}
-                    style={msg.from !== 'customer' ? { background: msg.aiGenerated ? '#DC1F1F' : '#06B6D4' } : {}}
+                    style={msg.from !== 'customer' ? { background: msg.aiGenerated ? '#EC0118' : '#06B6D4' } : {}}
                   >
                     {msg.text}
                   </div>
@@ -189,13 +189,13 @@ export default function WaInbox({
               <button
                 onClick={onSendMessage}
                 className="w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer hover:opacity-90"
-                style={{ background: '#DC1F1F' }}
+                style={{ background: '#EC0118' }}
               >
                 <i className="ri-send-plane-fill text-white text-sm" />
               </button>
             </div>
             <div className="flex items-center gap-3 mt-2">
-              <button className="text-xs cursor-pointer flex items-center gap-1" style={{ color: '#DC1F1F' }}>
+              <button className="text-xs cursor-pointer flex items-center gap-1" style={{ color: '#EC0118' }}>
                 <i className="ri-sparkling-2-line" />Generate AI Reply
               </button>
               <button className="text-xs cursor-pointer flex items-center gap-1" style={{ color: '#F59E0B' }}>

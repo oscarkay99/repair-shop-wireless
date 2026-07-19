@@ -24,7 +24,7 @@ export default function WaBroadcasts({ broadcasts, onNewBroadcast }: WaBroadcast
         <button
           onClick={onNewBroadcast}
           className="flex items-center gap-2 px-4 py-2 text-white rounded-xl text-sm font-medium cursor-pointer whitespace-nowrap hover:opacity-90"
-          style={{ background: '#DC1F1F' }}
+          style={{ background: '#EC0118' }}
         >
           <i className="ri-add-line" />New Broadcast
         </button>

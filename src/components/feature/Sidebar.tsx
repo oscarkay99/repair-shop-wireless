@@ -46,17 +46,17 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
       style={
         active
           ? {
-              background: 'hsl(350 60% 94%)',
-              borderColor: 'hsl(350 60% 76%)',
+              background: 'hsl(354 60% 94%)',
+              borderColor: 'hsl(354 60% 76%)',
               boxShadow: 'rgba(142,29,49,0.08) 0px 0px 10px inset',
-              color: 'hsl(350 60% 25%)',
+              color: 'hsl(354 60% 25%)',
             }
           : { color: 'hsl(var(--sidebar-foreground))' }
       }
       onMouseEnter={e => {
         if (!active) {
           (e.currentTarget as HTMLElement).style.background = 'hsl(var(--sidebar-accent))';
-          (e.currentTarget as HTMLElement).style.color = 'hsl(350 60% 25%)';
+          (e.currentTarget as HTMLElement).style.color = 'hsl(354 60% 25%)';
         }
       }}
       onMouseLeave={e => {
@@ -68,14 +68,14 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
     >
       <Icon
         className="w-4 h-4 flex-shrink-0"
-        style={{ color: active ? 'hsl(350 60% 40%)' : undefined }}
+        style={{ color: active ? 'hsl(354 60% 40%)' : undefined }}
         aria-hidden="true"
       />
       {item.label}
       {active && (
         <span
           className="ml-auto w-1.5 h-1.5 rounded-full"
-          style={{ background: 'hsl(350 60% 45%)', boxShadow: 'rgba(142,29,49,0.6) 0px 0px 4px' }}
+          style={{ background: 'hsl(354 60% 45%)', boxShadow: 'rgba(142,29,49,0.6) 0px 0px 4px' }}
         />
       )}
     </Link>
@@ -106,21 +106,21 @@ export default function Sidebar() {
       <div className="px-6 py-5 border-b" style={{ borderColor: 'hsl(var(--sidebar-border))' }}>
         <div className="flex items-center gap-3">
           <div
-            className="rounded-xl flex-shrink-0 overflow-hidden"
+            className="rounded-xl flex-shrink-0 flex items-center justify-center"
             style={{
               width: 40, height: 40,
               background: '#0F0F0F',
-              boxShadow: 'rgba(220,60,40,0.80) 0px 0px 14px 3px, rgba(220,60,40,0.45) 0px 0px 32px 8px, rgba(220,60,40,0.20) 0px 0px 56px 14px',
+              boxShadow: 'rgba(236,1,24,0.80) 0px 0px 14px 3px, rgba(236,1,24,0.45) 0px 0px 32px 8px, rgba(236,1,24,0.20) 0px 0px 56px 14px',
             }}
           >
             <img
-              src="/wireless-logo.png"
+              src="/wireless-mark.png"
               alt="WIRELESS logo"
-              style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: '63% 70%', filter: 'invert(1) hue-rotate(180deg)' }}
+              style={{ width: '65%', height: '65%', objectFit: 'contain' }}
             />
           </div>
           <div>
-            <p className="text-sm font-black tracking-[0.12em] uppercase" style={{ color: 'hsl(350 60% 22%)' }}>WIRELESS</p>
+            <p className="text-sm font-black tracking-[0.12em] uppercase" style={{ color: 'hsl(354 60% 22%)' }}>WIRELESS</p>
             <p className="text-[9px] leading-tight tracking-widest uppercase" style={{ color: 'hsl(var(--sidebar-foreground))' }}>Repair &amp; Service</p>
           </div>
         </div>
@@ -150,7 +150,7 @@ export default function Sidebar() {
           >
             <div
               className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0"
-              style={{ background: user.role ? (roleColors[user.role] ?? 'hsl(350 60% 35%)') : 'hsl(350 60% 35%)' }}
+              style={{ background: user.role ? (roleColors[user.role] ?? 'hsl(354 60% 35%)') : 'hsl(354 60% 35%)' }}
             >
               {user.avatar || user.name.slice(0, 2).toUpperCase()}
             </div>

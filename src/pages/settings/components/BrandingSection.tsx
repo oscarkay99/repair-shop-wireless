@@ -38,24 +38,24 @@ export default function BrandingSection({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] block mb-1.5">Business Name</label>
-            <input type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} className="w-full border border-[hsl(var(--border))] rounded-xl px-3 py-2.5 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[#DC1F1F] transition-all" />
+            <input type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} className="w-full border border-[hsl(var(--border))] rounded-xl px-3 py-2.5 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[#EC0118] transition-all" />
           </div>
           <div>
             <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] block mb-1.5">Tagline</label>
-            <input type="text" value={tagline} onChange={(e) => setTagline(e.target.value)} className="w-full border border-[hsl(var(--border))] rounded-xl px-3 py-2.5 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[#DC1F1F] transition-all" />
+            <input type="text" value={tagline} onChange={(e) => setTagline(e.target.value)} className="w-full border border-[hsl(var(--border))] rounded-xl px-3 py-2.5 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[#EC0118] transition-all" />
           </div>
           <div>
             <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] block mb-1.5">Phone Number</label>
-            <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full border border-[hsl(var(--border))] rounded-xl px-3 py-2.5 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[#DC1F1F] transition-all" />
+            <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full border border-[hsl(var(--border))] rounded-xl px-3 py-2.5 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[#EC0118] transition-all" />
           </div>
           <div>
             <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] block mb-1.5">WhatsApp Number</label>
-            <input type="text" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} className="w-full border border-[hsl(var(--border))] rounded-xl px-3 py-2.5 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[#DC1F1F] transition-all" />
+            <input type="text" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} className="w-full border border-[hsl(var(--border))] rounded-xl px-3 py-2.5 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[#EC0118] transition-all" />
           </div>
         </div>
         <div>
           <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] block mb-1.5">Business Address</label>
-          <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} className="w-full border border-[hsl(var(--border))] rounded-xl px-3 py-2.5 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[#DC1F1F] transition-all" />
+          <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} className="w-full border border-[hsl(var(--border))] rounded-xl px-3 py-2.5 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[#EC0118] transition-all" />
         </div>
         <div>
           <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] block mb-2">Brand Color</label>

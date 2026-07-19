@@ -27,7 +27,7 @@ export default function TemplateLibrary({ selected, onSelect }: TemplateLibraryP
               className="w-full text-left px-3 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer"
               style={
                 activeCategory === cat
-                  ? { background: 'rgba(220,31,31,0.08)', color: '#DC1F1F', borderLeft: '2px solid #DC1F1F' }
+                  ? { background: 'rgba(236,1,24,0.08)', color: '#EC0118', borderLeft: '2px solid #EC0118' }
                   : { color: 'hsl(var(--muted-foreground))' }
               }
               onMouseEnter={(e) => {
@@ -51,7 +51,7 @@ export default function TemplateLibrary({ selected, onSelect }: TemplateLibraryP
             className="w-full text-left p-3 rounded-xl transition-all cursor-pointer border"
             style={
               selected === t.id
-                ? { background: 'rgba(220,31,31,0.06)', borderColor: 'rgba(220,31,31,0.20)' }
+                ? { background: 'rgba(236,1,24,0.06)', borderColor: 'rgba(236,1,24,0.20)' }
                 : { borderColor: 'transparent' }
             }
             onMouseEnter={(e) => {
@@ -62,7 +62,7 @@ export default function TemplateLibrary({ selected, onSelect }: TemplateLibraryP
             }}
           >
             <div className="flex items-center gap-2 mb-1">
-              <i className={`${t.icon} text-xs`} style={{ color: selected === t.id ? '#DC1F1F' : 'hsl(var(--muted-foreground))' }} />
+              <i className={`${t.icon} text-xs`} style={{ color: selected === t.id ? '#EC0118' : 'hsl(var(--muted-foreground))' }} />
               <span className="text-xs font-medium text-[hsl(var(--foreground))]">{t.name}</span>
             </div>
             <p className="text-[10px] text-[hsl(var(--muted-foreground))] leading-relaxed">{t.description}</p>

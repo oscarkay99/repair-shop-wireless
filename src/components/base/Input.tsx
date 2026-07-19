@@ -22,7 +22,7 @@ export function Input({ label, error, icon, className = '', id, ...props }: Inpu
         <input
           id={inputId}
           className={`w-full bg-slate-50 border rounded-xl text-sm text-slate-800 placeholder-slate-400
-            focus:outline-none focus:border-[#DC1F1F] focus:bg-white transition-all
+            focus:outline-none focus:border-[#EC0118] focus:bg-white transition-all
             ${error ? 'border-red-400' : 'border-slate-200'}
             ${icon ? 'pl-9 pr-3' : 'px-3'} py-2.5 ${className}`}
           {...props}

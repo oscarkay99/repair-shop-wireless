@@ -59,7 +59,7 @@ export default function ProfilePage() {
     }).catch(() => {});
   }, []);
 
-  const roleColor = user?.role ? roleColors[user.role] : '#DC1F1F';
+  const roleColor = user?.role ? roleColors[user.role] : '#EC0118';
   const roleLabel = user?.role ? roleLabels[user.role] : 'User';
   const userPermissions = user?.role ? rolePermissions[user.role] : [];
 
@@ -114,7 +114,7 @@ export default function ProfilePage() {
     const levels = [
       { score: 1, label: 'Weak', color: '#E05A2B' },
       { score: 2, label: 'Fair', color: '#F59E0B' },
-      { score: 3, label: 'Good', color: '#DC1F1F' },
+      { score: 3, label: 'Good', color: '#EC0118' },
       { score: 4, label: 'Strong', color: '#25D366' },
     ];
     return levels[score - 1] || { score: 0, label: '', color: '' };
@@ -181,7 +181,7 @@ export default function ProfilePage() {
                 key={id}
                 onClick={() => setActiveTab(id as 'profile' | 'security' | 'activity')}
                 className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${activeTab === id ? 'text-white' : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'}`}
-                style={activeTab === id ? { background: '#DC1F1F' } : {}}
+                style={activeTab === id ? { background: '#EC0118' } : {}}
               >
                 {label}
               </button>
@@ -200,7 +200,7 @@ export default function ProfilePage() {
                 ) : (
                   <div className="flex gap-2">
                     <button onClick={() => setEditMode(false)} className="px-4 py-2 rounded-xl text-xs font-semibold border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] cursor-pointer whitespace-nowrap">Cancel</button>
-                    <button onClick={handleSaveProfile} className="px-4 py-2 rounded-xl text-xs font-semibold text-white cursor-pointer whitespace-nowrap" style={{ background: '#DC1F1F' }}>Save Changes</button>
+                    <button onClick={handleSaveProfile} className="px-4 py-2 rounded-xl text-xs font-semibold text-white cursor-pointer whitespace-nowrap" style={{ background: '#EC0118' }}>Save Changes</button>
                   </div>
                 )}
               </div>
@@ -405,7 +405,7 @@ export default function ProfilePage() {
                     onClick={handleChangePassword}
                     disabled={passwordLoading}
                     className="w-full py-3 rounded-xl text-sm font-semibold text-white cursor-pointer whitespace-nowrap disabled:opacity-60"
-                    style={{ background: 'linear-gradient(135deg, #0F172A, #DC1F1F)' }}
+                    style={{ background: 'linear-gradient(135deg, #0F172A, #EC0118)' }}
                   >
                     {passwordLoading ? 'Updating Password...' : 'Update Password'}
                   </button>
@@ -417,8 +417,8 @@ export default function ProfilePage() {
                 <h3 className="text-sm font-bold text-[hsl(var(--foreground))] mb-4">Active Sessions</h3>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 p-3 rounded-xl bg-[hsl(var(--muted))]">
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(220,31,31,0.08)' }}>
-                      <i className="ri-computer-line text-sm" style={{ color: '#DC1F1F' }} />
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(236,1,24,0.08)' }}>
+                      <i className="ri-computer-line text-sm" style={{ color: '#EC0118' }} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold text-[hsl(var(--foreground))]">Current session</p>
@@ -452,7 +452,7 @@ export default function ProfilePage() {
                 ) : pagedAuditLogs.map(log => {
                   const isSuccess = log.status === 'success';
                   const isFailure = log.status === 'failure';
-                  const iconColor = isFailure ? '#E05A2B' : isSuccess ? '#DC1F1F' : '#F59E0B';
+                  const iconColor = isFailure ? '#E05A2B' : isSuccess ? '#EC0118' : '#F59E0B';
                   const icon = log.action === 'create' ? 'ri-add-circle-line' : log.action === 'update' ? 'ri-edit-line' : log.action === 'delete' ? 'ri-delete-bin-line' : log.action === 'verify' ? 'ri-checkbox-circle-line' : 'ri-history-line';
                   const ts = new Date(log.createdAt);
                   const timeLabel = ts.toLocaleString('en-GH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });

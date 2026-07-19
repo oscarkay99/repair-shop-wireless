@@ -21,7 +21,7 @@ export default function LoyaltyPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-5">
         {[
-          { label: 'Total Members', value: loyaltyStats.totalMembers.toLocaleString(), icon: 'ri-group-line', color: '#DC1F1F' },
+          { label: 'Total Members', value: loyaltyStats.totalMembers.toLocaleString(), icon: 'ri-group-line', color: '#EC0118' },
           { label: 'Active Members', value: loyaltyStats.activeMembers.toLocaleString(), icon: 'ri-user-follow-line', color: '#25D366' },
           { label: 'Points Issued', value: (loyaltyStats.totalPointsIssued / 1000).toFixed(0) + 'K', icon: 'ri-coin-line', color: '#F59E0B' },
           { label: 'Points Redeemed', value: (loyaltyStats.totalPointsRedeemed / 1000).toFixed(0) + 'K', icon: 'ri-exchange-line', color: '#E05A2B' },
@@ -49,7 +49,7 @@ export default function LoyaltyPage() {
               className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === tab ? 'text-white' : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'
               }`}
-              style={activeTab === tab ? { background: '#DC1F1F' } : {}}
+              style={activeTab === tab ? { background: '#EC0118' } : {}}
             >
               {tab}
             </button>
@@ -57,7 +57,7 @@ export default function LoyaltyPage() {
         </div>
         <button
           onClick={() => setShowRedeem(true)}
-          className="bg-[#DC1F1F] hover:bg-[#B81616] px-5 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer whitespace-nowrap transition-colors duration-150"
+          className="bg-[#EC0118] hover:bg-[#BD0113] px-5 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer whitespace-nowrap transition-colors duration-150"
         >
           <i className="ri-gift-line mr-1" /> Redeem Points
         </button>
@@ -157,7 +157,7 @@ export default function LoyaltyPage() {
                 <button
                   onClick={() => { setSelectedReward(reward.id); setShowRedeem(true); }}
                   className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white cursor-pointer whitespace-nowrap"
-                  style={{ background: '#DC1F1F' }}
+                  style={{ background: '#EC0118' }}
                 >
                   Redeem
                 </button>
@@ -193,7 +193,7 @@ export default function LoyaltyPage() {
             <h3 className="text-sm font-bold text-[hsl(var(--foreground))] mb-4">Program Performance</h3>
             <div className="space-y-4">
               {[
-                { label: 'Revenue from Loyalty Members', value: `GHS ${loyaltyStats.revenueFromLoyalty.toLocaleString()}`, percent: 62.5, color: '#DC1F1F' },
+                { label: 'Revenue from Loyalty Members', value: `GHS ${loyaltyStats.revenueFromLoyalty.toLocaleString()}`, percent: 62.5, color: '#EC0118' },
                 { label: 'Points Redemption Rate', value: `${((loyaltyStats.totalPointsRedeemed / loyaltyStats.totalPointsIssued) * 100).toFixed(1)}%`, percent: 41, color: '#F59E0B' },
                 { label: 'Member Retention', value: `${loyaltyStats.retentionRate}%`, percent: loyaltyStats.retentionRate, color: '#25D366' },
                 { label: 'Top Tier Percentage', value: `${loyaltyStats.topTierPercentage}%`, percent: loyaltyStats.topTierPercentage * 5, color: 'hsl(var(--foreground))' },

@@ -44,7 +44,7 @@ export default function RevenueVsTarget() {
                   className={`w-[45%] rounded-t-lg transition-all relative ${beat ? 'bg-emerald-500 group-hover:bg-emerald-400' : 'bg-amber-400 group-hover:bg-amber-300'}`}
                   style={{ height: `${revH}%` }}
                 >
-                  <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-[#DC1F1F] text-white text-[9px] px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-all whitespace-nowrap z-10">
+                  <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-[#EC0118] text-white text-[9px] px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-all whitespace-nowrap z-10">
                     GHS {d.revenue.toLocaleString()}
                   </div>
                   {beat && (

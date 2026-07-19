@@ -42,10 +42,10 @@ export default function GeneratorCanvas({ selectedTemplate }: GeneratorCanvasPro
       {template && (
         <div
           className="flex items-center gap-2 rounded-xl px-4 py-2.5 border"
-          style={{ background: 'rgba(220,31,31,0.06)', borderColor: 'rgba(220,31,31,0.15)' }}
+          style={{ background: 'rgba(236,1,24,0.06)', borderColor: 'rgba(236,1,24,0.15)' }}
         >
-          <i className={`${template.icon} text-xs`} style={{ color: '#DC1F1F' }} />
-          <span className="text-xs font-medium" style={{ color: '#DC1F1F' }}>{template.name}</span>
+          <i className={`${template.icon} text-xs`} style={{ color: '#EC0118' }} />
+          <span className="text-xs font-medium" style={{ color: '#EC0118' }}>{template.name}</span>
           <span className="text-[10px] text-[hsl(var(--muted-foreground))] ml-1">— {template.description}</span>
         </div>
       )}
@@ -66,7 +66,7 @@ export default function GeneratorCanvas({ selectedTemplate }: GeneratorCanvasPro
             background: 'hsl(var(--muted))',
             border: '1px solid hsl(var(--border))',
           }}
-          onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(220,31,31,0.40)'; }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(236,1,24,0.40)'; }}
           onBlur={(e) => { e.currentTarget.style.borderColor = 'hsl(var(--border))'; }}
         />
       </div>
@@ -89,9 +89,9 @@ export default function GeneratorCanvas({ selectedTemplate }: GeneratorCanvasPro
           onClick={handleGenerate}
           disabled={loading}
           className="ml-auto flex items-center gap-2 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-all cursor-pointer disabled:opacity-50"
-          style={{ background: loading ? '#B81616' : '#DC1F1F' }}
-          onMouseEnter={(e) => { if (!loading) (e.currentTarget as HTMLElement).style.background = '#B81616'; }}
-          onMouseLeave={(e) => { if (!loading) (e.currentTarget as HTMLElement).style.background = '#DC1F1F'; }}
+          style={{ background: loading ? '#BD0113' : '#EC0118' }}
+          onMouseEnter={(e) => { if (!loading) (e.currentTarget as HTMLElement).style.background = '#BD0113'; }}
+          onMouseLeave={(e) => { if (!loading) (e.currentTarget as HTMLElement).style.background = '#EC0118'; }}
         >
           {loading ? (
             <>

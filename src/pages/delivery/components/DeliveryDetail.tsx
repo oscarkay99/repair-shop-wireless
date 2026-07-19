@@ -113,7 +113,7 @@ export default function DeliveryDetail({ order, drivers, zones }: Props) {
         )}
 
         <div className="flex gap-2">
-          <button className="flex-1 py-2.5 rounded-xl text-white text-xs font-semibold cursor-pointer whitespace-nowrap hover:opacity-90" style={{ background: '#DC1F1F' }}>
+          <button className="flex-1 py-2.5 rounded-xl text-white text-xs font-semibold cursor-pointer whitespace-nowrap hover:opacity-90" style={{ background: '#EC0118' }}>
             <i className="ri-whatsapp-line mr-1" />Notify Customer
           </button>
           <button className="flex-1 py-2.5 rounded-xl border border-[hsl(var(--border))] text-xs text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] cursor-pointer whitespace-nowrap">

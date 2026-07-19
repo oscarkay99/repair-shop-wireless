@@ -386,7 +386,7 @@ export default function AiReceiptModal({ cart, customer, total, tradeIn, payment
                   disabled={!customer?.phone}
                   className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer"
                   style={{
-                    background: customer?.phone ? '#25D366' : 'rgba(220,31,31,0.08)',
+                    background: customer?.phone ? '#25D366' : 'rgba(236,1,24,0.08)',
                     color: customer?.phone ? 'white' : 'rgba(7,16,31,0.3)',
                     cursor: customer?.phone ? 'pointer' : 'not-allowed',
                   }}
@@ -400,7 +400,7 @@ export default function AiReceiptModal({ cart, customer, total, tradeIn, payment
                   disabled={!customer?.email}
                   className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all"
                   style={{
-                    background: customer?.email ? '#DC1F1F' : 'rgba(220,31,31,0.08)',
+                    background: customer?.email ? '#EC0118' : 'rgba(236,1,24,0.08)',
                     color: customer?.email ? 'white' : 'rgba(7,16,31,0.3)',
                     cursor: customer?.email ? 'pointer' : 'not-allowed',
                   }}

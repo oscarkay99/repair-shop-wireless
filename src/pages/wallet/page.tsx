@@ -115,7 +115,7 @@ export default function WalletPage() {
               <button
                 onClick={() => setShowAddCustomer(true)}
                 className="px-4 py-2 rounded-xl text-xs font-semibold text-white cursor-pointer"
-                style={{ background: '#DC1F1F' }}
+                style={{ background: '#EC0118' }}
               >
                 <i className="ri-add-line mr-1" />Add First Customer
               </button>

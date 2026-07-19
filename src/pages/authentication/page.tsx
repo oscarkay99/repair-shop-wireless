@@ -17,7 +17,7 @@ export default function AuthenticationPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
         {[
-          { label: 'Certificates Issued', value: '0', icon: 'ri-shield-check-line', iconColor: '#DC1F1F', bg: 'rgba(220,31,31,0.08)' },
+          { label: 'Certificates Issued', value: '0', icon: 'ri-shield-check-line', iconColor: '#EC0118', bg: 'rgba(236,1,24,0.08)' },
           { label: 'IMEI Checks Today', value: '0', icon: 'ri-scan-line', iconColor: '#06B6D4', bg: 'rgba(6,182,212,0.10)' },
           { label: 'Clean Devices', value: '0%', icon: 'ri-checkbox-circle-line', iconColor: '#F59E0B', bg: '#FEF3C7' },
           { label: 'Flagged Devices', value: '0', icon: 'ri-alert-line', iconColor: '#E05A2B', bg: '#FEE2E2' },
@@ -63,12 +63,12 @@ export default function AuthenticationPage() {
                 key={cert.id}
                 onClick={() => { setSelectedCert(cert); setCertDetailOpen(true); }}
                 className={`w-full bg-[hsl(var(--card))] rounded-2xl border p-4 text-left transition-all cursor-pointer`}
-                style={{ borderColor: selectedCert?.id === cert.id ? '#DC1F1F' : 'hsl(var(--border))' }}
+                style={{ borderColor: selectedCert?.id === cert.id ? '#EC0118' : 'hsl(var(--border))' }}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(220,31,31,0.08)' }}>
-                      <i className="ri-shield-check-line text-lg" style={{ color: '#DC1F1F' }} />
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(236,1,24,0.08)' }}>
+                      <i className="ri-shield-check-line text-lg" style={{ color: '#EC0118' }} />
                     </div>
                     <div>
                       <p className="text-sm font-bold text-[hsl(var(--foreground))]">{cert.device}</p>
@@ -79,7 +79,7 @@ export default function AuthenticationPage() {
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${cert.condition === 'New' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-600'}`}>
                       {cert.condition}
                     </span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(220,31,31,0.08)', color: '#DC1F1F' }}>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(236,1,24,0.08)', color: '#EC0118' }}>
                       <i className="ri-checkbox-circle-line mr-0.5" />Verified
                     </span>
                   </div>
@@ -91,7 +91,7 @@ export default function AuthenticationPage() {
                   </div>
                   <div>
                     <p className="text-[10px] text-[hsl(var(--muted-foreground))]">IMEI Status</p>
-                    <p className="text-xs font-semibold" style={{ color: '#DC1F1F' }}><i className="ri-checkbox-circle-fill mr-0.5" />Clean</p>
+                    <p className="text-xs font-semibold" style={{ color: '#EC0118' }}><i className="ri-checkbox-circle-fill mr-0.5" />Clean</p>
                   </div>
                   <div>
                     <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Warranty</p>

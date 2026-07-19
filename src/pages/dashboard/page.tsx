@@ -749,13 +749,13 @@ function AdminDashboard() {
                 <div
                   className="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors mb-2"
                   style={{
-                    borderColor: action.primary ? 'hsl(350 60% 76%)' : 'hsl(var(--border))',
-                    background:  action.primary ? 'hsl(350 60% 95%)' : 'transparent',
+                    borderColor: action.primary ? 'hsl(354 60% 76%)' : 'hsl(var(--border))',
+                    background:  action.primary ? 'hsl(354 60% 95%)' : 'transparent',
                   }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = action.primary ? 'hsl(350 60% 91%)' : 'hsl(var(--muted))'; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = action.primary ? 'hsl(350 60% 95%)' : 'transparent'; }}>
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = action.primary ? 'hsl(354 60% 91%)' : 'hsl(var(--muted))'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = action.primary ? 'hsl(354 60% 95%)' : 'transparent'; }}>
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ background: action.primary ? 'hsl(350 60% 90%)' : 'hsl(var(--muted))' }}>
+                    style={{ background: action.primary ? 'hsl(354 60% 90%)' : 'hsl(var(--muted))' }}>
                     <action.icon className="w-4 h-4"
                       style={{ color: action.primary ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))' }} />
                   </div>

@@ -38,7 +38,7 @@ export default function SecuritySection() {
               </div>
               <button
                 onClick={() => toggleSetting(item.label)}
-                className={`relative w-11 h-6 rounded-full transition-all cursor-pointer flex-shrink-0 ${item.enabled ? 'bg-[#DC1F1F]' : 'bg-[hsl(var(--muted))]'}`}
+                className={`relative w-11 h-6 rounded-full transition-all cursor-pointer flex-shrink-0 ${item.enabled ? 'bg-[#EC0118]' : 'bg-[hsl(var(--muted))]'}`}
               >
                 <div className={`absolute top-1 w-4 h-4 bg-[hsl(var(--card))] rounded-full shadow transition-all ${item.enabled ? 'left-6' : 'left-1'}`} />
               </button>
@@ -51,8 +51,8 @@ export default function SecuritySection() {
         <div className="space-y-3">
           {sessions.map((session, i) => (
             <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-[hsl(var(--muted))]">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(220,31,31,0.08)' }}>
-                <i className="ri-computer-line text-sm" style={{ color: '#DC1F1F' }} />
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(236,1,24,0.08)' }}>
+                <i className="ri-computer-line text-sm" style={{ color: '#EC0118' }} />
               </div>
               <div className="flex-1">
                 <p className="text-xs font-semibold text-[hsl(var(--foreground))]">{session.device}</p>

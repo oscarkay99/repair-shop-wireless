@@ -91,7 +91,7 @@ export default function ProfitSection() {
 
   const tiles = [
     { label: "Today's Profit",    value: fmt(todayProfit),  sub: `${pct(todayProfit, todayRevenue)}% margin`,   color: '#25D366', icon: 'ri-sun-line',           positive: todayProfit >= 0 },
-    { label: 'Gross Profit (Mo)', value: fmt(monthGross),   sub: `${pct(monthGross, monthRevenue)}% gross margin`, color: '#DC1F1F', icon: 'ri-arrow-up-circle-line', positive: monthGross >= 0 },
+    { label: 'Gross Profit (Mo)', value: fmt(monthGross),   sub: `${pct(monthGross, monthRevenue)}% gross margin`, color: '#EC0118', icon: 'ri-arrow-up-circle-line', positive: monthGross >= 0 },
     { label: 'Net Profit (Mo)',   value: fmt(monthNet),     sub: `after GHS ${Math.round(monthOpEx / 1000 * 10) / 10}k opex`, color: '#06B6D4', icon: 'ri-percent-line', positive: monthNet >= 0 },
     { label: 'YTD Net Profit',    value: fmt(ytdNet),       sub: `${pct(ytdNet, ytdRevenue)}% net margin`,      color: '#F59E0B', icon: 'ri-trophy-line',        positive: ytdNet >= 0 },
   ];
@@ -136,7 +136,7 @@ export default function ProfitSection() {
           <p className="text-xs font-bold text-slate-700 mb-3">This Month's Breakdown</p>
           <div className="space-y-2.5">
             {[
-              { label: 'Revenue',            value: monthRevenue, color: '#DC1F1F', positive: true },
+              { label: 'Revenue',            value: monthRevenue, color: '#EC0118', positive: true },
               { label: '− Cost of Goods',    value: -monthCogs,   color: '#E05A2B', positive: false },
               { label: '= Gross Profit',     value: monthGross,   color: '#25D366', positive: monthGross >= 0, bold: true },
               { label: '− Operating Expenses', value: -monthOpEx, color: '#F59E0B', positive: false },
@@ -168,7 +168,7 @@ export default function ProfitSection() {
                   <div key={d.month} className="flex-1 flex flex-col items-center gap-1 group">
                     <div className="relative w-full" style={{ height: '80px' }}>
                       <div className="absolute bottom-0 left-0 right-0 rounded-t-md transition-all duration-500 group-hover:opacity-80"
-                        style={{ height: `${height}px`, background: d.gross >= 0 ? 'linear-gradient(to top, #DC1F1F, #06B6D4)' : '#E05A2B' }} />
+                        style={{ height: `${height}px`, background: d.gross >= 0 ? 'linear-gradient(to top, #EC0118, #06B6D4)' : '#E05A2B' }} />
                       {d.gross !== 0 && (
                         <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[9px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap z-10">
                           {fmt(d.gross)}

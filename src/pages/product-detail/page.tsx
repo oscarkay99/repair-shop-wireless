@@ -107,7 +107,7 @@ export default function ProductDetailPage() {
                 </div>
               </div>
               <p className="text-sm text-slate-700 leading-relaxed">{productDetail.warrantyDetails}</p>
-              <button className="mt-4 text-sm text-[#DC1F1F] font-medium hover:text-[#B81616] cursor-pointer">
+              <button className="mt-4 text-sm text-[#EC0118] font-medium hover:text-[#BD0113] cursor-pointer">
                 How to file a warranty claim →
               </button>
             </div>

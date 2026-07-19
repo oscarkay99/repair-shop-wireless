@@ -16,7 +16,7 @@ const statusConfig: Record<string, { label: string; color: string; bg: string }>
 };
 
 const returnStatusConfig: Record<string, { label: string; color: string; bg: string }> = {
-  approved: { label: 'Approved', color: '#DC1F1F', bg: 'rgba(220,31,31,0.08)' },
+  approved: { label: 'Approved', color: '#EC0118', bg: 'rgba(236,1,24,0.08)' },
   pending: { label: 'Pending', color: '#F59E0B', bg: '#F59E0B15' },
   rejected: { label: 'Rejected', color: '#E05A2B', bg: '#E05A2B15' },
   completed: { label: 'Completed', color: '#25D366', bg: '#25D36615' },
@@ -48,7 +48,7 @@ export default function WarrantyPage() {
           { label: 'Active Warranties', value: `${warrantyStats.totalActive}`, icon: 'ri-shield-check-line', color: '#25D366' },
           { label: 'Expiring Soon', value: `${warrantyStats.expiringSoon}`, icon: 'ri-alarm-warning-line', color: '#F59E0B' },
           { label: 'Pending Returns', value: `${stats.pendingReturns}`, icon: 'ri-arrow-go-back-line', color: '#E05A2B' },
-          { label: 'Total Returns', value: `${stats.totalReturns}`, icon: 'ri-refund-2-line', color: '#DC1F1F' },
+          { label: 'Total Returns', value: `${stats.totalReturns}`, icon: 'ri-refund-2-line', color: '#EC0118' },
         ].map(s => (
           <div key={s.label} className="bg-[hsl(var(--card))] rounded-2xl p-4 border border-[hsl(var(--border))]">
             <div className="flex items-center gap-2 mb-2">
@@ -70,7 +70,7 @@ export default function WarrantyPage() {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${activeTab === tab ? 'text-white' : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'}`}
-              style={activeTab === tab ? { background: '#DC1F1F' } : {}}
+              style={activeTab === tab ? { background: '#EC0118' } : {}}
             >
               {tab}
             </button>
@@ -107,7 +107,7 @@ export default function WarrantyPage() {
                     key={f}
                     onClick={() => setFilterStatus(f)}
                     className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${filterStatus === f ? 'text-white' : 'bg-[hsl(var(--card))] border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]'}`}
-                    style={filterStatus === f ? { background: '#DC1F1F' } : {}}
+                    style={filterStatus === f ? { background: '#EC0118' } : {}}
                   >
                     {f === 'all' ? 'All' : f === 'expiring_soon' ? 'Expiring' : f.charAt(0).toUpperCase() + f.slice(1)}
                   </button>
@@ -123,7 +123,7 @@ export default function WarrantyPage() {
                     <button
                       key={w.id}
                       onClick={() => setSelectedWarranty(selectedWarranty === w.id ? null : w.id)}
-                      className={`w-full flex items-center gap-4 p-4 text-left hover:bg-[hsl(var(--muted))]/50 transition-colors ${selectedWarranty === w.id ? 'bg-[rgba(220,31,31,0.04)]' : ''}`}
+                      className={`w-full flex items-center gap-4 p-4 text-left hover:bg-[hsl(var(--muted))]/50 transition-colors ${selectedWarranty === w.id ? 'bg-[rgba(236,1,24,0.04)]' : ''}`}
                     >
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: st.bg }}>
                         <i className="ri-shield-check-line text-sm" style={{ color: st.color }} />

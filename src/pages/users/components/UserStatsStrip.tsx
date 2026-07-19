@@ -8,9 +8,9 @@ export default function UserStatsStrip({ users }: UserStatsStripProps) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-5">
       {[
-        { label: 'Total Users', value: `${users.length}`, color: '#DC1F1F' },
+        { label: 'Total Users', value: `${users.length}`, color: '#EC0118' },
         { label: 'Active', value: `${users.filter(u => u.status === 'active').length}`, color: '#25D366' },
-        { label: 'Admins', value: `${users.filter(u => u.role === 'admin').length}`, color: '#DC1F1F' },
+        { label: 'Admins', value: `${users.filter(u => u.role === 'admin').length}`, color: '#EC0118' },
         { label: 'Sales Team', value: `${users.filter(u => u.role === 'sales_manager').length}`, color: '#F59E0B' },
         { label: 'Technicians', value: `${users.filter(u => u.role === 'technician').length}`, color: '#E05A2B' },
       ].map(s => (

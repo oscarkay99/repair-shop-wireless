@@ -28,7 +28,7 @@ export default function LiveFeed() {
             <span className="text-[10px] text-emerald-600 font-semibold">Live</span>
           </div>
         </div>
-        <button onClick={() => navigate('/analytics')} className="text-xs cursor-pointer font-medium" style={{ color: '#DC1F1F' }}>View all</button>
+        <button onClick={() => navigate('/analytics')} className="text-xs cursor-pointer font-medium" style={{ color: '#EC0118' }}>View all</button>
       </div>
       <div className="divide-y divide-slate-50">
         {recentActivity.map((item, i) => {

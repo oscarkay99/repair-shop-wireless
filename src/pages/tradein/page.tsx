@@ -6,7 +6,7 @@ import BookingModal from './components/BookingModal';
 type Condition = 'excellent' | 'good' | 'fair' | 'poor';
 
 const conditionDetails = {
-  excellent: { label: 'Excellent', desc: 'Like new, no scratches, 90%+ battery', borderColor: '#DC1F1F', bg: 'rgba(220,31,31,0.08)', badge: 'bg-slate-100 text-slate-700' },
+  excellent: { label: 'Excellent', desc: 'Like new, no scratches, 90%+ battery', borderColor: '#EC0118', bg: 'rgba(236,1,24,0.08)', badge: 'bg-slate-100 text-slate-700' },
   good: { label: 'Good', desc: 'Minor scratches, fully functional, 80%+ battery', borderColor: '#F59E0B', bg: '#FFFBEB', badge: 'bg-amber-100 text-amber-700' },
   fair: { label: 'Fair', desc: 'Visible wear, works fine, 70%+ battery', borderColor: '#D97706', bg: '#FEF3C7', badge: 'bg-yellow-100 text-yellow-700' },
   poor: { label: 'Poor', desc: 'Cracked screen or major damage', borderColor: '#E05A2B', bg: '#FEE2E2', badge: 'bg-red-100 text-red-700' },
@@ -43,7 +43,7 @@ export default function TradeInPage() {
           {/* Step 1: Brand */}
           <div className="bg-white rounded-2xl border border-slate-100 p-5">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-6 h-6 rounded-full text-white text-xs flex items-center justify-center font-bold" style={{ background: '#DC1F1F' }}>1</div>
+              <div className="w-6 h-6 rounded-full text-white text-xs flex items-center justify-center font-bold" style={{ background: '#EC0118' }}>1</div>
               <h3 className="text-sm font-bold text-slate-800">Select Brand</h3>
             </div>
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
@@ -52,10 +52,10 @@ export default function TradeInPage() {
                   key={brand.id}
                   onClick={() => { setSelectedBrand(brand.id); setSelectedModel(''); setShowResult(false); }}
                   className="flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all cursor-pointer"
-                  style={{ borderColor: selectedBrand === brand.id ? '#DC1F1F' : '#f1f5f9', background: selectedBrand === brand.id ? 'rgba(220,31,31,0.08)' : 'white' }}
+                  style={{ borderColor: selectedBrand === brand.id ? '#EC0118' : '#f1f5f9', background: selectedBrand === brand.id ? 'rgba(236,1,24,0.08)' : 'white' }}
                 >
                   <div className="w-6 h-6 flex items-center justify-center">
-                    <i className={`${brand.icon} text-lg`} style={{ color: selectedBrand === brand.id ? '#DC1F1F' : '#94a3b8' }} />
+                    <i className={`${brand.icon} text-lg`} style={{ color: selectedBrand === brand.id ? '#EC0118' : '#94a3b8' }} />
                   </div>
                   <span className="text-xs font-medium text-slate-700">{brand.name}</span>
                 </button>
@@ -67,7 +67,7 @@ export default function TradeInPage() {
           {selectedBrand && (
             <div className="bg-white rounded-2xl border border-slate-100 p-5">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 rounded-full text-white text-xs flex items-center justify-center font-bold" style={{ background: '#DC1F1F' }}>2</div>
+                <div className="w-6 h-6 rounded-full text-white text-xs flex items-center justify-center font-bold" style={{ background: '#EC0118' }}>2</div>
                 <h3 className="text-sm font-bold text-slate-800">Select Model</h3>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -76,7 +76,7 @@ export default function TradeInPage() {
                     key={model.name}
                     onClick={() => { setSelectedModel(model.name); setShowResult(false); }}
                     className="flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all cursor-pointer text-left"
-                    style={{ borderColor: selectedModel === model.name ? '#DC1F1F' : '#f1f5f9', background: selectedModel === model.name ? 'rgba(220,31,31,0.08)' : 'white' }}
+                    style={{ borderColor: selectedModel === model.name ? '#EC0118' : '#f1f5f9', background: selectedModel === model.name ? 'rgba(236,1,24,0.08)' : 'white' }}
                   >
                     <span className="text-sm text-slate-700">{model.name}</span>
                     <span className="text-xs text-slate-400">up to GHS {model.baseValue.toLocaleString()}</span>
@@ -90,7 +90,7 @@ export default function TradeInPage() {
           {selectedModel && (
             <div className="bg-white rounded-2xl border border-slate-100 p-5">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 rounded-full text-white text-xs flex items-center justify-center font-bold" style={{ background: '#DC1F1F' }}>3</div>
+                <div className="w-6 h-6 rounded-full text-white text-xs flex items-center justify-center font-bold" style={{ background: '#EC0118' }}>3</div>
                 <h3 className="text-sm font-bold text-slate-800">Storage Capacity</h3>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -99,7 +99,7 @@ export default function TradeInPage() {
                     key={s}
                     onClick={() => setSelectedStorage(s)}
                     className="px-4 py-2 rounded-xl border-2 text-sm font-medium transition-all cursor-pointer whitespace-nowrap"
-                    style={{ borderColor: selectedStorage === s ? '#DC1F1F' : '#f1f5f9', background: selectedStorage === s ? 'rgba(220,31,31,0.08)' : 'white', color: selectedStorage === s ? '#DC1F1F' : '#475569' }}
+                    style={{ borderColor: selectedStorage === s ? '#EC0118' : '#f1f5f9', background: selectedStorage === s ? 'rgba(236,1,24,0.08)' : 'white', color: selectedStorage === s ? '#EC0118' : '#475569' }}
                   >
                     {s}
                   </button>
@@ -112,7 +112,7 @@ export default function TradeInPage() {
           {selectedModel && (
             <div className="bg-white rounded-2xl border border-slate-100 p-5">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 rounded-full text-white text-xs flex items-center justify-center font-bold" style={{ background: '#DC1F1F' }}>4</div>
+                <div className="w-6 h-6 rounded-full text-white text-xs flex items-center justify-center font-bold" style={{ background: '#EC0118' }}>4</div>
                 <h3 className="text-sm font-bold text-slate-800">Device Condition</h3>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -141,7 +141,7 @@ export default function TradeInPage() {
               <button
                 onClick={() => setShowResult(true)}
                 className="w-full mt-4 py-3 text-white rounded-xl text-sm font-bold cursor-pointer whitespace-nowrap hover:opacity-90"
-                style={{ background: '#DC1F1F' }}
+                style={{ background: '#EC0118' }}
               >
                 <i className="ri-calculator-line mr-2" />Calculate Trade-In Value
               </button>
@@ -150,7 +150,7 @@ export default function TradeInPage() {
 
           {/* Result */}
           {showResult && tradeValue > 0 && (
-            <div className="rounded-2xl p-6 text-white" style={{ background: 'linear-gradient(135deg, #0F172A 0%, #DC1F1F 100%)' }}>
+            <div className="rounded-2xl p-6 text-white" style={{ background: 'linear-gradient(135deg, #0F172A 0%, #EC0118 100%)' }}>
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <p className="text-white/50 text-xs uppercase tracking-wider mb-1">Estimated Trade-In Value</p>
@@ -217,10 +217,10 @@ export default function TradeInPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border p-5" style={{ background: 'rgba(220,31,31,0.08)', borderColor: 'rgba(7,16,31,0.12)' }}>
+          <div className="rounded-2xl border p-5" style={{ background: 'rgba(236,1,24,0.08)', borderColor: 'rgba(7,16,31,0.12)' }}>
             <div className="flex items-center gap-2 mb-3">
               <div className="w-8 h-8 flex items-center justify-center rounded-xl" style={{ background: 'rgba(7,16,31,0.12)' }}>
-                <i className="ri-bar-chart-2-line" style={{ color: '#DC1F1F' }} />
+                <i className="ri-bar-chart-2-line" style={{ color: '#EC0118' }} />
               </div>
               <h4 className="text-sm font-bold text-slate-800">This Month</h4>
             </div>
@@ -235,7 +235,7 @@ export default function TradeInPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-xs text-slate-500">Converted to upgrades</span>
-                <span className="text-xs font-bold" style={{ color: '#DC1F1F' }}>0 (0%)</span>
+                <span className="text-xs font-bold" style={{ color: '#EC0118' }}>0 (0%)</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-xs text-slate-500">Avg trade-in value</span>

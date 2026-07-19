@@ -42,7 +42,7 @@ export default function AddProductModal({ onSave, onClose, editProduct }: Props)
       <div className="w-full max-w-md rounded-2xl overflow-hidden" style={{ background: 'white', boxShadow: '0 24px 80px rgba(7,16,31,0.2)' }} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid rgba(7,16,31,0.07)' }}>
           <h3 className="text-[14px] font-bold" style={{ color: '#0F172A' }}>{isEditing ? 'Edit Product' : 'Add Product'}</h3>
-          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer" style={{ background: 'rgba(220,31,31,0.08)' }}>
+          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer" style={{ background: 'rgba(236,1,24,0.08)' }}>
             <i className="ri-close-line text-sm" style={{ color: 'rgba(7,16,31,0.5)' }} />
           </button>
         </div>
@@ -150,12 +150,12 @@ export default function AddProductModal({ onSave, onClose, editProduct }: Props)
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose}
               className="flex-1 py-2.5 rounded-xl text-sm font-semibold cursor-pointer"
-              style={{ background: 'rgba(220,31,31,0.08)', color: 'rgba(7,16,31,0.6)' }}>
+              style={{ background: 'rgba(236,1,24,0.08)', color: 'rgba(7,16,31,0.6)' }}>
               Cancel
             </button>
             <button type="submit"
               className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white cursor-pointer"
-              style={{ background: '#DC1F1F' }}>
+              style={{ background: '#EC0118' }}>
               {isEditing ? 'Save Changes' : 'Add Product'}
             </button>
           </div>

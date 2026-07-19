@@ -308,7 +308,7 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
           {canEdit && (
             <button onClick={onEdit}
               className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold"
-              style={{ background: 'hsl(350 60% 94%)', color: 'hsl(350 60% 30%)', border: '1px solid hsl(350 60% 80%)' }}>
+              style={{ background: 'hsl(354 60% 94%)', color: 'hsl(354 60% 30%)', border: '1px solid hsl(354 60% 80%)' }}>
               <Pencil className="w-3.5 h-3.5" />
               Edit
             </button>

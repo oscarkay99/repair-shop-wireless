@@ -40,7 +40,7 @@ export const repairMetrics = [
 ];
 
 export const salesFunnel = [
-  { stage: 'Leads',       value: 312, color: '#DC1F1F' },
+  { stage: 'Leads',       value: 312, color: '#EC0118' },
   { stage: 'Contacted',   value: 248, color: '#F59E0B' },
   { stage: 'Quoted',      value: 148, color: '#06B6D4' },
   { stage: 'Negotiating', value: 96,  color: '#10B981' },
