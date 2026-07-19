@@ -113,23 +113,9 @@ export default function SignInPage() {
 
         <div className="relative z-10 flex min-h-screen flex-col px-12 py-9 w-full">
           {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div
-              className="flex items-center justify-center rounded-xl flex-shrink-0"
-              style={{
-                width: 40, height: 40,
-                background: '#0F0F0F',
-                boxShadow: 'rgba(236,1,24,0.80) 0px 0px 14px 3px, rgba(236,1,24,0.45) 0px 0px 32px 8px, rgba(236,1,24,0.20) 0px 0px 56px 14px',
-              }}
-            >
-              <img src="/wireless-mark.png" alt="" style={{ width: '65%', height: '65%', objectFit: 'contain' }} />
-            </div>
-            <div className="leading-none">
-              <p className="text-[22px] font-bold lowercase text-white" style={{ letterSpacing: '-0.03em', fontFamily: 'ui-sans-serif, system-ui, sans-serif' }}>
-                wireless
-              </p>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mt-0.5" style={{ color: 'hsl(354 40% 65%)' }}>Command Center</p>
-            </div>
+          <div>
+            <img src="/wireless-logo-dark.png" alt="WIRELESS" style={{ height: 26, width: 'auto', objectFit: 'contain' }} />
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mt-1" style={{ color: 'hsl(354 40% 65%)' }}>Command Center</p>
           </div>
 
           {/* Hero + feature list + floating mockup */}
@@ -275,21 +261,9 @@ export default function SignInPage() {
       >
         <div className="relative z-10 flex w-full max-w-[420px] flex-col justify-center">
           {/* Mobile logo */}
-          <div className="flex items-center gap-3 mb-8 lg:hidden">
-            <div
-              className="flex items-center justify-center rounded-xl"
-              style={{
-                width: 36, height: 36,
-                background: '#0F0F0F',
-                boxShadow: 'rgba(236,1,24,0.70) 0px 0px 10px 2px',
-              }}
-            >
-              <img src="/wireless-mark.png" alt="" style={{ width: '65%', height: '65%', objectFit: 'contain' }} />
-            </div>
-            <div>
-              <p className="text-xl font-bold lowercase leading-none" style={{ letterSpacing: '-0.03em', color: 'hsl(var(--primary))' }}>wireless</p>
-              <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: 'hsl(var(--muted-foreground))' }}>Command Center</p>
-            </div>
+          <div className="mb-8 lg:hidden">
+            <img src="/wireless-logo-light.png" alt="WIRELESS" style={{ height: 24, width: 'auto', objectFit: 'contain' }} />
+            <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: 'hsl(var(--muted-foreground))' }}>Command Center</p>
           </div>
 
           <div
