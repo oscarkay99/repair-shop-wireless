@@ -32,7 +32,7 @@ export default function NotificationsSection({
               <p className="text-sm font-medium text-slate-800">{item.label}</p>
               <p className="text-xs text-slate-400 mt-0.5">{item.desc}</p>
             </div>
-            <button onClick={() => item.set(!item.value)} className={`relative w-11 h-6 rounded-full transition-all cursor-pointer flex-shrink-0 ${item.value ? 'bg-[#DC1F1F]' : 'bg-slate-200'}`}>
+            <button onClick={() => item.set(!item.value)} className={`relative w-11 h-6 rounded-full transition-all cursor-pointer flex-shrink-0 ${item.value ? 'bg-[#EC0118]' : 'bg-slate-200'}`}>
               <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${item.value ? 'left-6' : 'left-1'}`} />
             </button>
           </div>

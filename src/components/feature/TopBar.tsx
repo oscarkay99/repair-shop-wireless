@@ -53,7 +53,7 @@ const typeColor: Record<Notification['type'], string> = {
   lead:    'hsl(38 90% 45%)',
   repair:  'hsl(190 80% 40%)',
   payment: 'hsl(220 70% 50%)',
-  alert:   'hsl(350 60% 40%)',
+  alert:   'hsl(354 60% 40%)',
 };
 
 const typeBg: Record<Notification['type'], string> = {
@@ -61,16 +61,16 @@ const typeBg: Record<Notification['type'], string> = {
   lead:    'hsl(38 90% 93%)',
   repair:  'hsl(190 80% 93%)',
   payment: 'hsl(220 70% 94%)',
-  alert:   'hsl(350 60% 94%)',
+  alert:   'hsl(354 60% 94%)',
 };
 
 function NotifRow({ n }: { n: Notification }) {
   return (
     <div
       className="flex items-start gap-3 px-4 py-3 transition-colors"
-      style={{ background: n.read ? 'transparent' : 'hsl(350 60% 98.5%)' }}
+      style={{ background: n.read ? 'transparent' : 'hsl(354 60% 98.5%)' }}
       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
-      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = n.read ? 'transparent' : 'hsl(350 60% 98.5%)'; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = n.read ? 'transparent' : 'hsl(354 60% 98.5%)'; }}
     >
       <div
         className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
@@ -91,7 +91,7 @@ function NotifRow({ n }: { n: Notification }) {
         {fmtTime(n.time)}
       </p>
       {!n.read && (
-        <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-2" style={{ background: 'hsl(350 60% 45%)' }} />
+        <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-2" style={{ background: 'hsl(354 60% 45%)' }} />
       )}
     </div>
   );

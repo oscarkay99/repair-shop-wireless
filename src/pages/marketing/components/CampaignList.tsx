@@ -31,7 +31,7 @@ export default function CampaignList() {
               key={s}
               onClick={() => setFilter(s)}
               className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer whitespace-nowrap capitalize ${
-                filter === s ? 'bg-[#DC1F1F] text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                filter === s ? 'bg-[#EC0118] text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
               }`}
             >
               {s === 'all' ? 'All' : statusConfig[s]?.label}

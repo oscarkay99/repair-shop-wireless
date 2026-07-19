@@ -19,8 +19,8 @@ export default function AIStudioPage() {
         {/* Main Canvas */}
         <div className="lg:col-span-2 bg-[hsl(var(--card))] rounded-2xl p-6 border border-[hsl(var(--border))] shadow-sm flex flex-col overflow-hidden">
           <div className="flex items-center gap-2 mb-5">
-            <div className="w-7 h-7 flex items-center justify-center rounded-lg" style={{ background: 'rgba(220,31,31,0.10)' }}>
-              <i className="ri-sparkling-2-line text-sm" style={{ color: '#DC1F1F' }} />
+            <div className="w-7 h-7 flex items-center justify-center rounded-lg" style={{ background: 'rgba(236,1,24,0.10)' }}>
+              <i className="ri-sparkling-2-line text-sm" style={{ color: '#EC0118' }} />
             </div>
             <h2 className="text-sm font-semibold text-[hsl(var(--foreground))]">AI Generator</h2>
             <div className="ml-auto flex items-center gap-1.5">
@@ -45,7 +45,7 @@ export default function AIStudioPage() {
                   key={g.id}
                   className="p-3 rounded-xl border border-[hsl(var(--border))] hover:border-[hsl(var(--border))] hover:bg-[hsl(var(--muted))] cursor-pointer transition-all"
                 >
-                  <p className="text-[10px] font-semibold mb-1" style={{ color: '#DC1F1F' }}>{g.template}</p>
+                  <p className="text-[10px] font-semibold mb-1" style={{ color: '#EC0118' }}>{g.template}</p>
                   <p className="text-xs text-[hsl(var(--muted-foreground))] line-clamp-2 leading-relaxed">{g.preview}</p>
                   <p className="text-[10px] text-[hsl(var(--muted-foreground))] mt-1.5">{g.time}</p>
                 </div>

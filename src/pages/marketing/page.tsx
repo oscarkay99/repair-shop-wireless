@@ -26,7 +26,7 @@ export default function MarketingPage() {
             onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${
               activeTab === tab.id
-                ? 'bg-[#DC1F1F] text-white shadow-sm'
+                ? 'bg-[#EC0118] text-white shadow-sm'
                 : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
             }`}
           >
@@ -45,8 +45,8 @@ export default function MarketingPage() {
 
           {/* Quick insight banner */}
           <div className="bg-white border border-slate-100 shadow-sm rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-[rgba(220,31,31,0.08)] flex-shrink-0">
-              <i className="ri-sparkling-2-line text-[#DC1F1F] text-lg" />
+            <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-[rgba(236,1,24,0.08)] flex-shrink-0">
+              <i className="ri-sparkling-2-line text-[#EC0118] text-lg" />
             </div>
             <div className="flex-1">
               <p className="text-sm font-semibold text-slate-800">AI Marketing Insight</p>
@@ -54,7 +54,7 @@ export default function MarketingPage() {
                 Run your first campaign to unlock AI-powered insights. Connect your channels, launch a broadcast, and get personalized recommendations based on real performance data.
               </p>
             </div>
-            <button className="flex items-center gap-2 bg-[rgba(220,31,31,0.06)] hover:bg-[rgba(220,31,31,0.1)] text-[#DC1F1F] text-xs font-medium px-4 py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap flex-shrink-0 border border-[rgba(220,31,31,0.15)]">
+            <button className="flex items-center gap-2 bg-[rgba(236,1,24,0.06)] hover:bg-[rgba(236,1,24,0.1)] text-[#EC0118] text-xs font-medium px-4 py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap flex-shrink-0 border border-[rgba(236,1,24,0.15)]">
               <div className="w-4 h-4 flex items-center justify-center">
                 <i className="ri-sparkling-2-line text-xs" />
               </div>

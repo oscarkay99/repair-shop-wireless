@@ -59,7 +59,7 @@ export default function IgPosts({ posts, onNewPost }: IgPostsProps) {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] text-slate-400">Reach: <strong className="text-slate-700">{post.reach.toLocaleString()}</strong></span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(220,31,31,0.08)', color: '#DC1F1F' }}>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(236,1,24,0.08)', color: '#EC0118' }}>
                     {post.leads} leads
                   </span>
                   <span className="text-[10px] text-slate-400 ml-auto">{post.postedAt}</span>

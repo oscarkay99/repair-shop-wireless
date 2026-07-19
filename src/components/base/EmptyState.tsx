@@ -19,7 +19,7 @@ export function EmptyState({ icon = 'ri-inbox-line', title, description, action 
       {action && (
         <button
           onClick={action.onClick}
-          className="mt-4 px-4 py-2 text-xs font-medium bg-[#DC1F1F] hover:bg-[#B81616] text-white rounded-lg transition-colors cursor-pointer"
+          className="mt-4 px-4 py-2 text-xs font-medium bg-[#EC0118] hover:bg-[#BD0113] text-white rounded-lg transition-colors cursor-pointer"
         >
           {action.label}
         </button>

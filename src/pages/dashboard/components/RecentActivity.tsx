@@ -14,7 +14,7 @@ export default function RecentActivity() {
     <div className="bg-white rounded-2xl p-5 border border-slate-100">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-slate-800">Recent Activity</h3>
-        <button onClick={() => navigate('/analytics')} className="text-xs cursor-pointer" style={{ color: '#DC1F1F' }}>View all</button>
+        <button onClick={() => navigate('/analytics')} className="text-xs cursor-pointer" style={{ color: '#EC0118' }}>View all</button>
       </div>
       <div className="space-y-3">
         {recentActivity.map((item, i) => {

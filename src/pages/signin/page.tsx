@@ -95,8 +95,8 @@ export default function SignInPage() {
   };
 
   const inputFocus: React.CSSProperties = {
-    border: '1.5px solid hsl(350 60% 55%)',
-    boxShadow: '0 0 0 3px hsl(350 60% 55% / 0.12)',
+    border: '1.5px solid hsl(354 60% 55%)',
+    boxShadow: '0 0 0 3px hsl(354 60% 55% / 0.12)',
   };
 
   return (
@@ -105,11 +105,11 @@ export default function SignInPage() {
       style={{ background: 'hsl(var(--background))' }}
     >
       {/* ── LEFT PANEL (dark hero side) ── */}
-      <div className="hidden lg:flex relative min-h-screen overflow-hidden" style={{ background: 'hsl(350 38% 8%)' }}>
+      <div className="hidden lg:flex relative min-h-screen overflow-hidden" style={{ background: 'hsl(354 38% 8%)' }}>
         <div className="absolute top-[8%] right-[-15%] w-[560px] h-[560px] rounded-full pointer-events-none blur-3xl"
-          style={{ background: 'radial-gradient(circle, hsl(350 55% 24% / 0.4) 0%, transparent 72%)' }} />
+          style={{ background: 'radial-gradient(circle, hsl(354 55% 24% / 0.4) 0%, transparent 72%)' }} />
         <div className="absolute bottom-0 left-0 right-0 h-64 pointer-events-none"
-          style={{ background: 'linear-gradient(to top, hsl(350 40% 6%), transparent)' }} />
+          style={{ background: 'linear-gradient(to top, hsl(354 40% 6%), transparent)' }} />
 
         <div className="relative z-10 flex min-h-screen flex-col px-12 py-9 w-full">
           {/* Logo */}
@@ -119,16 +119,16 @@ export default function SignInPage() {
               style={{
                 width: 40, height: 40,
                 background: '#0F0F0F',
-                boxShadow: 'rgba(220,60,40,0.80) 0px 0px 14px 3px, rgba(220,60,40,0.45) 0px 0px 32px 8px, rgba(220,60,40,0.20) 0px 0px 56px 14px',
+                boxShadow: 'rgba(236,1,24,0.80) 0px 0px 14px 3px, rgba(236,1,24,0.45) 0px 0px 32px 8px, rgba(236,1,24,0.20) 0px 0px 56px 14px',
               }}
             >
-              <span className="text-white font-black text-[15px] tracking-tighter" style={{ fontFamily: 'ui-sans-serif, system-ui, sans-serif' }}>W</span>
+              <img src="/wireless-mark.png" alt="" style={{ width: '65%', height: '65%', objectFit: 'contain' }} />
             </div>
             <div className="leading-none">
               <p className="text-[22px] font-bold lowercase text-white" style={{ letterSpacing: '-0.03em', fontFamily: 'ui-sans-serif, system-ui, sans-serif' }}>
                 wireless
               </p>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mt-0.5" style={{ color: 'hsl(350 40% 65%)' }}>Command Center</p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] mt-0.5" style={{ color: 'hsl(354 40% 65%)' }}>Command Center</p>
             </div>
           </div>
 
@@ -140,9 +140,9 @@ export default function SignInPage() {
                 <br />
                 repair business
                 <br />
-                <span style={{ color: 'hsl(350 65% 62%)' }}>from one place.</span>
+                <span style={{ color: 'hsl(354 65% 62%)' }}>from one place.</span>
               </h1>
-              <p className="mt-4 text-sm leading-relaxed" style={{ color: 'hsl(350 15% 65%)' }}>
+              <p className="mt-4 text-sm leading-relaxed" style={{ color: 'hsl(354 15% 65%)' }}>
                 Manage repairs, customers, inventory, payments and analytics from one intelligent command center built for modern repair shops.
               </p>
 
@@ -151,13 +151,13 @@ export default function SignInPage() {
                   <div key={f.title} className="flex items-start gap-3">
                     <div
                       className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                      style={{ background: 'rgba(220,31,31,0.12)' }}
+                      style={{ background: 'rgba(236,1,24,0.12)' }}
                     >
-                      <f.icon className="w-4 h-4" style={{ color: 'hsl(350 65% 62%)' }} />
+                      <f.icon className="w-4 h-4" style={{ color: 'hsl(354 65% 62%)' }} />
                     </div>
                     <div className="pt-1">
                       <p className="text-[13px] font-semibold text-white leading-tight">{f.title}</p>
-                      <p className="text-[11.5px] mt-0.5" style={{ color: 'hsl(350 15% 60%)' }}>{f.desc}</p>
+                      <p className="text-[11.5px] mt-0.5" style={{ color: 'hsl(354 15% 60%)' }}>{f.desc}</p>
                     </div>
                   </div>
                 ))}
@@ -173,7 +173,7 @@ export default function SignInPage() {
                   transform: 'rotateY(-10deg) rotateX(4deg) rotate(-1deg)',
                   transformStyle: 'preserve-3d',
                   background: 'hsl(222 24% 12%)',
-                  border: '1px solid hsl(350 30% 22%)',
+                  border: '1px solid hsl(354 30% 22%)',
                   boxShadow: 'rgba(220,40,40,0.35) 0px 30px 70px -20px, rgba(0,0,0,0.5) 0px 40px 80px -20px',
                 }}
               >
@@ -189,7 +189,7 @@ export default function SignInPage() {
                   {/* Mini nav rail */}
                   <div className="w-10 flex-shrink-0 flex flex-col items-center gap-3 py-4 border-r" style={{ borderColor: 'hsl(222 20% 20%)' }}>
                     {['ri-home-5-fill', 'ri-file-list-3-line', 'ri-team-line', 'ri-archive-line', 'ri-shopping-cart-2-line', 'ri-bar-chart-2-line', 'ri-settings-3-line'].map((ic, i) => (
-                      <div key={ic} className="w-6 h-6 rounded-lg flex items-center justify-center" style={i === 0 ? { background: '#DC1F1F' } : undefined}>
+                      <div key={ic} className="w-6 h-6 rounded-lg flex items-center justify-center" style={i === 0 ? { background: '#EC0118' } : undefined}>
                         <i className={`${ic} text-[12px]`} style={{ color: i === 0 ? '#fff' : 'hsl(220 10% 55%)' }} />
                       </div>
                     ))}
@@ -221,7 +221,7 @@ export default function SignInPage() {
                       <div className="rounded-lg p-2" style={{ background: 'hsl(222 20% 16%)' }}>
                         <p className="text-[8.5px]" style={{ color: 'hsl(220 10% 55%)' }}>Revenue Today</p>
                         <p className="text-[14px] font-bold text-white mt-0.5">$3,412.00</p>
-                        <svg viewBox="0 0 80 24" className="w-full h-5 mt-1"><path d="M0 20 L15 16 L30 18 L45 8 L60 10 L80 2" fill="none" stroke="#DC1F1F" strokeWidth="2" strokeLinecap="round" /></svg>
+                        <svg viewBox="0 0 80 24" className="w-full h-5 mt-1"><path d="M0 20 L15 16 L30 18 L45 8 L60 10 L80 2" fill="none" stroke="#EC0118" strokeWidth="2" strokeLinecap="round" /></svg>
                       </div>
                       <div className="rounded-lg p-2" style={{ background: 'hsl(222 20% 16%)' }}>
                         <p className="text-[8.5px]" style={{ color: 'hsl(220 10% 55%)' }}>New Customers</p>
@@ -234,7 +234,7 @@ export default function SignInPage() {
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
                         <p className="text-[10px] font-bold text-white">Recent Repair Tickets</p>
-                        <p className="text-[9px] font-medium" style={{ color: 'hsl(350 65% 62%)' }}>View All</p>
+                        <p className="text-[9px] font-medium" style={{ color: 'hsl(354 65% 62%)' }}>View All</p>
                       </div>
                       <div className="space-y-1.5">
                         {[
@@ -262,8 +262,8 @@ export default function SignInPage() {
             </div>
           </div>
 
-          <div className="pt-6 border-t" style={{ borderColor: 'hsl(350 30% 16%)' }}>
-            <p className="text-[10px]" style={{ color: 'hsl(350 15% 34%)' }}>&copy; 2026 Wireless · All rights reserved</p>
+          <div className="pt-6 border-t" style={{ borderColor: 'hsl(354 30% 16%)' }}>
+            <p className="text-[10px]" style={{ color: 'hsl(354 15% 34%)' }}>&copy; 2026 Wireless · All rights reserved</p>
           </div>
         </div>
       </div>
@@ -281,10 +281,10 @@ export default function SignInPage() {
               style={{
                 width: 36, height: 36,
                 background: '#0F0F0F',
-                boxShadow: 'rgba(220,60,40,0.70) 0px 0px 10px 2px',
+                boxShadow: 'rgba(236,1,24,0.70) 0px 0px 10px 2px',
               }}
             >
-              <span className="text-white font-black text-[13px]" style={{ fontFamily: 'ui-sans-serif, system-ui, sans-serif' }}>W</span>
+              <img src="/wireless-mark.png" alt="" style={{ width: '65%', height: '65%', objectFit: 'contain' }} />
             </div>
             <div>
               <p className="text-xl font-bold lowercase leading-none" style={{ letterSpacing: '-0.03em', color: 'hsl(var(--primary))' }}>wireless</p>
@@ -367,8 +367,8 @@ export default function SignInPage() {
                     disabled={loading}
                     className="w-full py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer hover:opacity-90"
                     style={{
-                      background: 'linear-gradient(135deg, hsl(350 65% 45%), hsl(350 58% 34%))',
-                      boxShadow: '0 4px 14px hsl(350 50% 30% / 0.35)',
+                      background: 'linear-gradient(135deg, hsl(354 65% 45%), hsl(354 58% 34%))',
+                      boxShadow: '0 4px 14px hsl(354 50% 30% / 0.35)',
                       opacity: loading ? 0.7 : 1,
                     }}
                   >
@@ -407,7 +407,7 @@ export default function SignInPage() {
                 </div>
 
                 <p className="text-center text-[11px] mt-5" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                  Need help? <span className="font-semibold" style={{ color: 'hsl(350 60% 35%)' }}>Contact your system administrator</span>
+                  Need help? <span className="font-semibold" style={{ color: 'hsl(354 60% 35%)' }}>Contact your system administrator</span>
                 </p>
               </div>
 
@@ -450,7 +450,7 @@ function FocusInput({ icon, type, value, onChange, placeholder, label, inputBase
       <label className="text-[11px] font-semibold uppercase tracking-wider mb-1.5 block" style={{ color: 'hsl(var(--muted-foreground))' }}>{label}</label>
       <div className="relative">
         <div className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center"
-          style={{ color: focused ? 'hsl(350 60% 45%)' : 'hsl(var(--muted-foreground))' }}>
+          style={{ color: focused ? 'hsl(354 60% 45%)' : 'hsl(var(--muted-foreground))' }}>
           {icon}
         </div>
         <input
@@ -481,7 +481,7 @@ function PasswordInput({ value, onChange, show, onToggle, inputBase, inputFocus 
   return (
     <div className="relative">
       <div className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center"
-        style={{ color: focused ? 'hsl(350 60% 45%)' : 'hsl(var(--muted-foreground))' }}>
+        style={{ color: focused ? 'hsl(354 60% 45%)' : 'hsl(var(--muted-foreground))' }}>
         <Lock className="w-4 h-4" />
       </div>
       <input

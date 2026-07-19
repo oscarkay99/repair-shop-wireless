@@ -12,7 +12,7 @@ const statusTone: Record<string, string> = {
 };
 
 const sourceTone: Record<string, string> = {
-  frontend: 'bg-[#DC1F1F]/8 text-[#DC1F1F]',
+  frontend: 'bg-[#EC0118]/8 text-[#EC0118]',
   backend: 'bg-amber-50 text-amber-700',
 };
 
@@ -101,7 +101,7 @@ export default function AuditLogsPage() {
   const selectedLog = pagedLogs.find((log) => log.id === selectedLogId) ?? pagedLogs[0] ?? null;
 
   const summaryStats = [
-    { label: 'Total Events', value: String(logs.length), icon: 'ri-file-list-3-line', accent: 'bg-[#DC1F1F]' },
+    { label: 'Total Events', value: String(logs.length), icon: 'ri-file-list-3-line', accent: 'bg-[#EC0118]' },
     { label: 'Failed Actions', value: String(logs.filter((log) => log.status === 'failure').length), icon: 'ri-error-warning-line', accent: 'bg-red-500' },
     { label: 'Frontend Events', value: String(logs.filter((log) => log.source === 'frontend').length), icon: 'ri-cursor-line', accent: 'bg-sky-500' },
     { label: 'Backend Events', value: String(logs.filter((log) => log.source === 'backend').length), icon: 'ri-database-2-line', accent: 'bg-amber-500' },
@@ -208,7 +208,7 @@ export default function AuditLogsPage() {
                     className={`w-full px-5 py-4 text-left transition-colors cursor-pointer ${active ? 'bg-[hsl(var(--muted))]' : 'hover:bg-[hsl(var(--muted))]/70'}`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className={`mt-0.5 w-10 h-10 rounded-xl flex items-center justify-center ${log.source === 'backend' ? 'bg-amber-50 text-amber-600' : 'bg-[#DC1F1F]/8 text-[#DC1F1F]'}`}>
+                      <div className={`mt-0.5 w-10 h-10 rounded-xl flex items-center justify-center ${log.source === 'backend' ? 'bg-amber-50 text-amber-600' : 'bg-[#EC0118]/8 text-[#EC0118]'}`}>
                         <i className={`${log.source === 'backend' ? 'ri-database-2-line' : 'ri-cursor-line'} text-base`} />
                       </div>
                       <div className="flex-1 min-w-0">

@@ -16,19 +16,19 @@ export default {
           // Tailwind utility silently unstyled/invisible).
           primary: 'hsl(var(--primary) / <alpha-value>)',
           'primary-foreground': 'hsl(var(--primary-foreground) / <alpha-value>)',
-          // Wireless brand — crimson red
+          // Wireless brand — red sampled directly from the official logo mark
           brand: {
-            50:  '#FFF0F0',
-            100: '#FFDADA',
-            200: '#FFAAAA',
-            300: '#FF7070',
-            400: '#F43535',
-            500: '#DC1F1F',
-            600: '#B81616',
-            700: '#8B1010',
-            800: '#5C0808',
-            900: '#2E0404',
-            950: '#160302',
+            50:  '#FEF0F1',
+            100: '#FCD9DC',
+            200: '#F8A6AE',
+            300: '#F46C79',
+            400: '#EF2F42',
+            500: '#EC0118',
+            600: '#BD0113',
+            700: '#89010E',
+            800: '#5A0009',
+            900: '#2F0005',
+            950: '#180002',
           },
           // Warm accent — burnt orange
           accent: {

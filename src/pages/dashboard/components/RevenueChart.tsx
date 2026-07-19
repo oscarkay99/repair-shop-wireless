@@ -17,7 +17,7 @@ export default function RevenueChart() {
   const change = '0%';
 
   return (
-    <div className="rounded-2xl p-6 h-full" style={{ background: 'white', border: '1px solid rgba(7,16,31,0.07)', boxShadow: '0 1px 3px rgba(7,16,31,0.04), 0 6px 24px rgba(220,31,31,0.08)' }}>
+    <div className="rounded-2xl p-6 h-full" style={{ background: 'white', border: '1px solid rgba(7,16,31,0.07)', boxShadow: '0 1px 3px rgba(7,16,31,0.04), 0 6px 24px rgba(236,1,24,0.08)' }}>
       <div className="flex items-center justify-between mb-5">
         <div>
           <h3 className="text-sm font-bold text-slate-800">Revenue Performance</h3>
@@ -57,7 +57,7 @@ export default function RevenueChart() {
                   <div className="absolute top-0 left-0 right-0 h-4 rounded-t-xl opacity-30" style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.4), transparent)' }} />
                 </div>
                 {/* Tooltip */}
-                <div className="absolute -top-9 left-1/2 -translate-x-1/2 bg-[#DC1F1F] text-white text-[10px] px-2.5 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all whitespace-nowrap z-10 pointer-events-none">
+                <div className="absolute -top-9 left-1/2 -translate-x-1/2 bg-[#EC0118] text-white text-[10px] px-2.5 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all whitespace-nowrap z-10 pointer-events-none">
                   GHS {d.value.toLocaleString()}
                   <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900" />
                 </div>

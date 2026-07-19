@@ -19,8 +19,8 @@ export default function UserDetailPanel({ user, onEdit, onToggleStatus }: UserDe
   if (!user) {
     return (
       <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-8 text-center">
-        <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: 'rgba(220,31,31,0.08)' }}>
-          <i className="ri-user-line text-xl" style={{ color: '#DC1F1F' }} />
+        <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: 'rgba(236,1,24,0.08)' }}>
+          <i className="ri-user-line text-xl" style={{ color: '#EC0118' }} />
         </div>
         <p className="text-sm font-semibold text-[hsl(var(--foreground))] mb-1">Select a user</p>
         <p className="text-xs text-[hsl(var(--muted-foreground))]">Click any user to view their profile and permissions</p>
@@ -73,7 +73,7 @@ export default function UserDetailPanel({ user, onEdit, onToggleStatus }: UserDe
       </div>
 
       <div className="flex gap-2">
-        <button onClick={() => onEdit(user)} className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-white cursor-pointer whitespace-nowrap" style={{ background: '#DC1F1F' }}>
+        <button onClick={() => onEdit(user)} className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-white cursor-pointer whitespace-nowrap" style={{ background: '#EC0118' }}>
           <i className="ri-edit-line mr-1" /> Edit User
         </button>
         <button onClick={() => onToggleStatus(user.id)} className="flex-1 py-2.5 rounded-xl text-xs font-semibold border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] cursor-pointer whitespace-nowrap">

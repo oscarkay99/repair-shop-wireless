@@ -37,7 +37,7 @@ export default function AnalyticsPage() {
       : '—';
     return [
       { label: 'Total Revenue',     value: fmtGHS(revenue),        change: `${completed.length} jobs done`,   icon: 'ri-money-cedi-circle-line', accent: 'bg-emerald-500', iconBg: 'bg-emerald-50',  iconText: 'text-emerald-500', sub: 'From completed repairs'   },
-      { label: 'Jobs Completed',    value: `${completed.length}`,  change: `${active} still active`,          icon: 'ri-checkbox-circle-line',   accent: 'bg-[#DC1F1F]',  iconBg: 'bg-[rgba(220,31,31,0.08)]', iconText: 'text-[#DC1F1F]', sub: 'All-time finished'        },
+      { label: 'Jobs Completed',    value: `${completed.length}`,  change: `${active} still active`,          icon: 'ri-checkbox-circle-line',   accent: 'bg-[#EC0118]',  iconBg: 'bg-[rgba(236,1,24,0.08)]', iconText: 'text-[#EC0118]', sub: 'All-time finished'        },
       { label: 'Avg Job Value',     value: fmtGHS(avgJob),         change: `${repairs.length} total jobs`,    icon: 'ri-bar-chart-box-line',     accent: 'bg-slate-500',  iconBg: 'bg-[hsl(var(--muted))]',   iconText: 'text-[hsl(var(--muted-foreground))]',   sub: 'Per completed repair'     },
       { label: 'Avg Turnaround',    value: `${avgDays} days`,      change: `${customers.length} customers`,   icon: 'ri-time-line',              accent: 'bg-amber-500',  iconBg: 'bg-amber-50',    iconText: 'text-amber-500',   sub: 'Days to complete a job'   },
     ];
@@ -52,7 +52,7 @@ export default function AnalyticsPage() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${
-                activeTab === tab.id ? 'bg-[#DC1F1F] text-white shadow-sm' : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))]'
+                activeTab === tab.id ? 'bg-[#EC0118] text-white shadow-sm' : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))]'
               }`}
             >
               <i className={`${tab.icon} text-sm`} />
@@ -63,7 +63,7 @@ export default function AnalyticsPage() {
         <div className="flex items-center gap-1 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-1">
           {['1M', '3M', '6M', '1Y'].map((p) => (
             <button key={p} onClick={() => setPeriod(p)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${period === p ? 'bg-[#DC1F1F] text-white' : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--muted-foreground))]'}`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${period === p ? 'bg-[#EC0118] text-white' : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--muted-foreground))]'}`}
             >{p}</button>
           ))}
         </div>
@@ -95,9 +95,9 @@ export default function AnalyticsPage() {
       {activeTab === 'overview' && (
         <div className="space-y-5">
           <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-sm rounded-2xl p-5 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-[rgba(220,31,31,0.05)] rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute top-0 right-0 w-48 h-48 bg-[rgba(236,1,24,0.05)] rounded-full blur-3xl pointer-events-none" />
             <div className="relative flex items-center gap-4">
-              <div className="w-10 h-10 flex items-center justify-center rounded-2xl bg-gradient-to-br from-[#DC1F1F] to-[#B81616] flex-shrink-0">
+              <div className="w-10 h-10 flex items-center justify-center rounded-2xl bg-gradient-to-br from-[#EC0118] to-[#BD0113] flex-shrink-0">
                 <i className="ri-sparkling-2-fill text-white text-base" />
               </div>
               <div>
@@ -153,7 +153,7 @@ export default function AnalyticsPage() {
                     <span className="text-xs text-[hsl(var(--muted-foreground))] capitalize">{issue}</span>
                     <div className="flex items-center gap-3">
                       <div className="w-24 h-1.5 rounded-full bg-[hsl(var(--muted))] overflow-hidden">
-                        <div className="h-full rounded-full bg-[#DC1F1F]" style={{ width: `${(count / repairs.length) * 100}%` }} />
+                        <div className="h-full rounded-full bg-[#EC0118]" style={{ width: `${(count / repairs.length) * 100}%` }} />
                       </div>
                       <span className="text-xs font-bold text-[hsl(var(--foreground))] w-4 text-right">{count}</span>
                     </div>
@@ -242,7 +242,7 @@ export default function AnalyticsPage() {
               {[
                 { name: 'Ama Owusu',   role: 'Lead Technician',   metric: '38 repairs', sub: '96% satisfaction', avatar: 'AO', color: '#D97706' },
                 { name: 'Yaw Darko',   role: 'Technician',        metric: '29 repairs', sub: '94% satisfaction', avatar: 'YD', color: '#DC2626' },
-                { name: 'Kwame Asante',role: 'Workshop Manager',  metric: '—',          sub: 'Operations lead',   avatar: 'KA', color: '#DC1F1F' },
+                { name: 'Kwame Asante',role: 'Workshop Manager',  metric: '—',          sub: 'Operations lead',   avatar: 'KA', color: '#EC0118' },
               ].map((m) => (
                 <div key={m.name} className="flex items-center gap-3 p-4 bg-[hsl(var(--muted))] rounded-2xl">
                   <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0" style={{ background: m.color }}>

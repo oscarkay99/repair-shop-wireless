@@ -32,7 +32,7 @@ export const roleLabels: Record<UserRole, string> = {
 };
 
 export const roleColors: Record<UserRole, string> = {
-  admin:             '#DC1F1F',
+  admin:             '#EC0118',
   sales_manager:     '#F59E0B',
   technician:        '#06B6D4',
   inventory_manager: '#64748b',

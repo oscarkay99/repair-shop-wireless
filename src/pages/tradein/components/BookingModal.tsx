@@ -64,7 +64,7 @@ export default function BookingModal({ selectedModel, tradeValue, onClose }: Pro
               onClose();
             }}
             className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold cursor-pointer whitespace-nowrap hover:opacity-90"
-            style={{ background: '#DC1F1F' }}
+            style={{ background: '#EC0118' }}
           >
             Confirm Booking
           </button>

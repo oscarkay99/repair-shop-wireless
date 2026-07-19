@@ -128,7 +128,7 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
           <h3 className="text-[14px] font-bold" style={{ color: 'hsl(var(--foreground))' }}>
             {initial ? 'Edit Ticket' : defaultJobType === 'diagnosis_only' ? 'New Diagnosis' : 'New Ticket'}
           </h3>
-          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer" style={{ background: 'rgba(220,31,31,0.08)' }}>
+          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer" style={{ background: 'rgba(236,1,24,0.08)' }}>
             <i className="ri-close-line text-sm" style={{ color: 'hsl(var(--muted-foreground))' }} />
           </button>
         </div>
@@ -255,11 +255,11 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose}
               className="flex-1 py-2.5 rounded-xl text-sm font-semibold cursor-pointer"
-              style={{ background: 'rgba(220,31,31,0.08)', color: 'hsl(var(--muted-foreground))' }}>
+              style={{ background: 'rgba(236,1,24,0.08)', color: 'hsl(var(--muted-foreground))' }}>
               Cancel
             </button>
             <button type="submit" disabled={saving}
-              className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white cursor-pointer bg-[#DC1F1F] hover:bg-[#B81616] disabled:opacity-70 transition-colors duration-150">
+              className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white cursor-pointer bg-[#EC0118] hover:bg-[#BD0113] disabled:opacity-70 transition-colors duration-150">
               {saving ? 'Saving…' : initial ? 'Save Changes' : defaultJobType === 'diagnosis_only' ? 'Create Diagnosis' : 'Create Ticket'}
             </button>
           </div>

@@ -5,8 +5,8 @@ export const SUPPORT_WHATSAPP = '+233 24 000 0000';
 export const CURRENCY = 'GHS';
 
 export const COLORS = {
-  primary:   '#DC1F1F',
-  primaryDk: '#B81616',
+  primary:   '#EC0118',
+  primaryDk: '#BD0113',
   accent:    '#C84015',
   ink:       '#0F172A',
   amber:     '#F59E0B',

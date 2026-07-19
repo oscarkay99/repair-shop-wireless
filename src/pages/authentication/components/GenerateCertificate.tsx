@@ -47,7 +47,7 @@ export default function GenerateCertificate() {
             <button className="flex-1 py-3 rounded-xl border border-[hsl(var(--border))] text-sm text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] cursor-pointer whitespace-nowrap">
               <i className="ri-eye-line mr-1" />Preview
             </button>
-            <button className="flex-1 py-3 rounded-xl text-white text-sm font-semibold cursor-pointer whitespace-nowrap hover:opacity-90" style={{ background: '#DC1F1F' }}>
+            <button className="flex-1 py-3 rounded-xl text-white text-sm font-semibold cursor-pointer whitespace-nowrap hover:opacity-90" style={{ background: '#EC0118' }}>
               <i className="ri-shield-check-line mr-1" />Generate Certificate
             </button>
           </div>

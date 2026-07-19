@@ -41,7 +41,7 @@ export default function NewBroadcastModal({ open, onClose }: NewBroadcastModalPr
         </div>
         <div className="flex gap-3 mt-5">
           <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 cursor-pointer whitespace-nowrap">Cancel</button>
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold cursor-pointer whitespace-nowrap hover:opacity-90" style={{ background: '#DC1F1F' }}>Schedule Broadcast</button>
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold cursor-pointer whitespace-nowrap hover:opacity-90" style={{ background: '#EC0118' }}>Schedule Broadcast</button>
         </div>
       </div>
     </div>

@@ -370,7 +370,7 @@ export default function POSPage() {
       {/* ── Top stats bar ──────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         {[
-          { label: "Today's Revenue", value: formatGHSShort(todayRevenue), sub: `${growthPct >= 0 ? '+' : ''}${growthPct}% vs yesterday`, icon: 'ri-money-dollar-circle-line', color: '#DC1F1F', positive: growthPct >= 0 },
+          { label: "Today's Revenue", value: formatGHSShort(todayRevenue), sub: `${growthPct >= 0 ? '+' : ''}${growthPct}% vs yesterday`, icon: 'ri-money-dollar-circle-line', color: '#EC0118', positive: growthPct >= 0 },
           { label: 'Transactions', value: String(todaySales.length), sub: `${formatGHSShort(todayAvgOrder)} avg order`, icon: 'ri-receipt-line', color: '#10b981', positive: true },
           { label: "Today's Profit", value: formatGHSShort(todayProfit), sub: `${Math.round((todayProfit / Math.max(todayRevenue, 1)) * 100)}% margin`, icon: 'ri-line-chart-line', color: '#f59e0b', positive: todayProfit >= 0 },
           { label: 'Reorder Alerts', value: String(productMetrics.filter(m => m.reorderAlert).length), sub: 'items need restocking', icon: 'ri-alarm-warning-line', color: productMetrics.some(m => m.reorderAlert) ? '#ef4444' : '#10b981', positive: !productMetrics.some(m => m.reorderAlert) },
@@ -397,8 +397,8 @@ export default function POSPage() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer ${activeTab === tab.id ? 'text-white shadow-sm' : 'bg-white text-slate-500 border border-slate-200 hover:border-[#DC1F1F] hover:text-[#DC1F1F]'}`}
-            style={activeTab === tab.id ? { background: 'linear-gradient(135deg, #DC1F1F, #3b82f6)' } : {}}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer ${activeTab === tab.id ? 'text-white shadow-sm' : 'bg-white text-slate-500 border border-slate-200 hover:border-[#EC0118] hover:text-[#EC0118]'}`}
+            style={activeTab === tab.id ? { background: 'linear-gradient(135deg, #EC0118, #3b82f6)' } : {}}
           >
             <i className={tab.icon} />{tab.label}
             {tab.id === 'intelligence' && (
@@ -434,20 +434,20 @@ export default function POSPage() {
             {/* Search bar */}
             <div className="bg-white rounded-2xl border border-slate-100 p-3 flex items-center gap-3">
               <div className="flex-1 relative">
-                <i className={`absolute left-3 top-1/2 -translate-y-1/2 text-sm ${aiMode ? 'ri-sparkling-2-line text-[#DC1F1F]' : 'ri-search-line text-slate-400'}`} />
-                {isSearching && <i className="ri-loader-4-line animate-spin absolute right-3 top-1/2 -translate-y-1/2 text-[#DC1F1F] text-sm" />}
+                <i className={`absolute left-3 top-1/2 -translate-y-1/2 text-sm ${aiMode ? 'ri-sparkling-2-line text-[#EC0118]' : 'ri-search-line text-slate-400'}`} />
+                {isSearching && <i className="ri-loader-4-line animate-spin absolute right-3 top-1/2 -translate-y-1/2 text-[#EC0118] text-sm" />}
                 <input
                   ref={searchInputRef}
                   value={query}
                   onChange={e => setQuery(e.target.value)}
                   placeholder={aiMode ? 'Try: "Samsung under 5000" or "Apple phone"…' : 'Search by name…'}
-                  className="w-full bg-slate-50 rounded-xl pl-9 pr-9 py-2.5 text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-[rgba(220,31,31,0.2)]"
+                  className="w-full bg-slate-50 rounded-xl pl-9 pr-9 py-2.5 text-sm text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-[rgba(236,1,24,0.2)]"
                   autoFocus
                 />
               </div>
               <button
                 onClick={() => { setAiMode(!aiMode); setQuery(''); }}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${aiMode ? 'bg-[#DC1F1F] text-white' : 'bg-slate-100 text-slate-600 hover:bg-[rgba(220,31,31,0.06)] hover:text-[#DC1F1F]'}`}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${aiMode ? 'bg-[#EC0118] text-white' : 'bg-slate-100 text-slate-600 hover:bg-[rgba(236,1,24,0.06)] hover:text-[#EC0118]'}`}
               >
                 <i className="ri-sparkling-2-line" />AI Search
               </button>
@@ -458,7 +458,7 @@ export default function POSPage() {
               <div className="flex gap-2 flex-wrap">
                 {CATEGORIES.map(cat => (
                   <button key={cat} onClick={() => setCategory(cat)}
-                    className={`px-3 py-1 rounded-full text-xs font-semibold cursor-pointer transition-all ${category === cat ? 'bg-[#DC1F1F] text-white' : 'bg-white text-slate-500 border border-slate-200 hover:border-[#DC1F1F] hover:text-[#DC1F1F]'}`}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold cursor-pointer transition-all ${category === cat ? 'bg-[#EC0118] text-white' : 'bg-white text-slate-500 border border-slate-200 hover:border-[#EC0118] hover:text-[#EC0118]'}`}
                   >{cat}</button>
                 ))}
               </div>
@@ -466,7 +466,7 @@ export default function POSPage() {
               <div className="flex gap-2 flex-wrap">
                 {['phones under 5000', 'Apple accessories', 'Samsung watch', 'between 1000 and 3000'].map(hint => (
                   <button key={hint} onClick={() => setQuery(hint)}
-                    className="px-3 py-1 rounded-full text-xs font-medium bg-[rgba(220,31,31,0.06)] text-[#DC1F1F] border border-[rgba(220,31,31,0.15)] hover:bg-[rgba(220,31,31,0.1)] cursor-pointer"
+                    className="px-3 py-1 rounded-full text-xs font-medium bg-[rgba(236,1,24,0.06)] text-[#EC0118] border border-[rgba(236,1,24,0.15)] hover:bg-[rgba(236,1,24,0.1)] cursor-pointer"
                   >{hint}</button>
                 ))}
               </div>
@@ -498,11 +498,11 @@ export default function POSPage() {
                         key={p.id}
                         onClick={() => p.stock > 0 && addToCart(p)}
                         disabled={p.stock === 0}
-                        className={`group relative bg-white rounded-2xl border p-3 flex flex-col gap-3 text-left transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${qty > 0 ? 'border-[#DC1F1F] ring-2 ring-[#DC1F1F]/20' : 'border-slate-100 hover:border-slate-300 hover:shadow-sm'}`}
+                        className={`group relative bg-white rounded-2xl border p-3 flex flex-col gap-3 text-left transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${qty > 0 ? 'border-[#EC0118] ring-2 ring-[#EC0118]/20' : 'border-slate-100 hover:border-slate-300 hover:shadow-sm'}`}
                       >
                         <VelocityBadge productId={p.id} />
                         {qty > 0 && (
-                          <span className="absolute top-2 right-2 bg-[#DC1F1F] text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">{qty}</span>
+                          <span className="absolute top-2 right-2 bg-[#EC0118] text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">{qty}</span>
                         )}
                         <div className="w-full mt-8">
                           <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5 mb-2">
@@ -538,7 +538,7 @@ export default function POSPage() {
                     <div key={s.id} className="flex-shrink-0 bg-slate-50 rounded-xl px-3 py-2 min-w-[160px]">
                       <p className="text-xs font-semibold text-slate-800 truncate">{s.customer}</p>
                       <p className="text-[10px] text-slate-500 truncate">{s.items}</p>
-                      <span className="text-xs font-bold text-[#DC1F1F]">{s.total}</span>
+                      <span className="text-xs font-bold text-[#EC0118]">{s.total}</span>
                     </div>
                   ))}
                 </div>
@@ -555,8 +555,8 @@ export default function POSPage() {
               {customer ? (
                 <div>
                   <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-full bg-[#DC1F1F]/10 flex items-center justify-center flex-shrink-0">
-                      <span className="text-sm font-bold text-[#DC1F1F]">{customer.name[0]}</span>
+                    <div className="w-9 h-9 rounded-full bg-[#EC0118]/10 flex items-center justify-center flex-shrink-0">
+                      <span className="text-sm font-bold text-[#EC0118]">{customer.name[0]}</span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -568,7 +568,7 @@ export default function POSPage() {
                       <p className="text-[11px] text-slate-500">{customer.phone}</p>
                       <div className="flex gap-3 mt-1 text-[10px] text-slate-500">
                         <span><i className="ri-vip-crown-line text-amber-500 mr-0.5" />{customer.loyaltyPoints} pts</span>
-                        <span><i className="ri-shopping-bag-3-line text-[#DC1F1F] mr-0.5" />{customer.purchaseCount} orders</span>
+                        <span><i className="ri-shopping-bag-3-line text-[#EC0118] mr-0.5" />{customer.purchaseCount} orders</span>
                         {customer.openRepairs > 0 && <span className="text-rose-500"><i className="ri-tools-line mr-0.5" />{customer.openRepairs} repair</span>}
                       </div>
                       {loyaltyDiscount > 0 && (
@@ -581,13 +581,13 @@ export default function POSPage() {
                   </div>
                   {/* AI customer intelligence */}
                   {customerCI && (
-                    <div className="mt-2 bg-[rgba(220,31,31,0.05)] rounded-xl p-2.5 space-y-1">
-                      <p className="text-[9px] font-bold text-[#DC1F1F] uppercase tracking-wider"><i className="ri-sparkling-2-line mr-0.5" />AI Insight</p>
+                    <div className="mt-2 bg-[rgba(236,1,24,0.05)] rounded-xl p-2.5 space-y-1">
+                      <p className="text-[9px] font-bold text-[#EC0118] uppercase tracking-wider"><i className="ri-sparkling-2-line mr-0.5" />AI Insight</p>
                       <p className="text-[10px] text-slate-700"><span className="font-semibold">Next buy:</span> {customerCI.predictedNextPurchase}</p>
                       <p className="text-[10px] text-slate-700"><span className="font-semibold">Offer:</span> {customerCI.recommendedOffer}</p>
                       <div className="flex items-center gap-2">
                         <div className="flex gap-0.5">{[...Array(5)].map((_, i) => <div key={i} className="w-1.5 h-1.5 rounded-full" style={{ background: i < Math.round(customerCI.vipScore / 20) ? '#F59E0B' : '#e2e8f0' }} />)}</div>
-                        <span className="text-[9px] text-[#DC1F1F] font-semibold">VIP {customerCI.vipScore}/100</span>
+                        <span className="text-[9px] text-[#EC0118] font-semibold">VIP {customerCI.vipScore}/100</span>
                         <span className={`text-[9px] font-bold ml-auto px-1.5 py-0.5 rounded-full ${customerCI.churnRisk === 'low' ? 'bg-emerald-100 text-emerald-700' : customerCI.churnRisk === 'medium' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'}`}>
                           {customerCI.churnRisk === 'low' ? 'Loyal' : customerCI.churnRisk === 'medium' ? 'At risk' : 'Churning'}
                         </span>
@@ -604,12 +604,12 @@ export default function POSPage() {
                         value={customerQuery}
                         onChange={e => setCustomerQuery(e.target.value)}
                         placeholder="Search by name or phone…"
-                        className="w-full bg-slate-50 rounded-xl pl-9 pr-3 py-2 text-sm placeholder-slate-400 outline-none focus:ring-2 focus:ring-[#DC1F1F]/30"
+                        className="w-full bg-slate-50 rounded-xl pl-9 pr-3 py-2 text-sm placeholder-slate-400 outline-none focus:ring-2 focus:ring-[#EC0118]/30"
                       />
                     </div>
                     <button
                       onClick={() => setShowAddCustomer(true)}
-                      className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-xl bg-[#DC1F1F] text-white cursor-pointer hover:opacity-90"
+                      className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-xl bg-[#EC0118] text-white cursor-pointer hover:opacity-90"
                       title="Add new customer"
                     >
                       <i className="ri-user-add-line text-sm" />
@@ -619,7 +619,7 @@ export default function POSPage() {
                     <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white rounded-xl border border-slate-200 shadow-lg overflow-hidden">
                       {customerSuggestions.map(c => (
                         <button key={c.id} onClick={() => { setCustomer(c); setCustomerQuery(''); setCustomerSuggestions([]); }} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-50 cursor-pointer text-left">
-                          <div className="w-7 h-7 rounded-full bg-[#DC1F1F]/10 flex items-center justify-center text-xs font-bold text-[#DC1F1F]">{c.name[0]}</div>
+                          <div className="w-7 h-7 rounded-full bg-[#EC0118]/10 flex items-center justify-center text-xs font-bold text-[#EC0118]">{c.name[0]}</div>
                           <div>
                             <p className="text-xs font-semibold text-slate-800">{c.name}</p>
                             <p className="text-[10px] text-slate-400">{c.phone} · {c.loyaltyPoints} pts</p>
@@ -699,14 +699,14 @@ export default function POSPage() {
 
             {/* AI Upsell */}
             {upsells.length > 0 && (
-              <div className="bg-[rgba(220,31,31,0.05)] rounded-2xl border border-[rgba(220,31,31,0.12)] p-3">
-                <p className="text-[10px] font-bold text-[#DC1F1F] uppercase tracking-wider mb-2"><i className="ri-sparkling-2-line mr-1" />AI Suggests</p>
+              <div className="bg-[rgba(236,1,24,0.05)] rounded-2xl border border-[rgba(236,1,24,0.12)] p-3">
+                <p className="text-[10px] font-bold text-[#EC0118] uppercase tracking-wider mb-2"><i className="ri-sparkling-2-line mr-1" />AI Suggests</p>
                 <div className="flex gap-2 overflow-x-auto pb-1">
                   {upsells.map(p => (
-                    <button key={p.id} onClick={() => addToCart(p)} className="flex-shrink-0 bg-white rounded-xl p-2.5 flex flex-col gap-1.5 w-36 border border-[rgba(220,31,31,0.12)] hover:border-[rgba(220,31,31,0.3)] transition-all cursor-pointer text-left">
+                    <button key={p.id} onClick={() => addToCart(p)} className="flex-shrink-0 bg-white rounded-xl p-2.5 flex flex-col gap-1.5 w-36 border border-[rgba(236,1,24,0.12)] hover:border-[rgba(236,1,24,0.3)] transition-all cursor-pointer text-left">
                       <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-400">{p.category}</p>
                       <p className="text-[10px] font-semibold text-slate-700 line-clamp-2 leading-tight">{p.name}</p>
-                      <p className="text-[10px] font-bold text-[#DC1F1F]">{formatGHS(p.price)}</p>
+                      <p className="text-[10px] font-bold text-[#EC0118]">{formatGHS(p.price)}</p>
                     </button>
                   ))}
                 </div>
@@ -715,7 +715,7 @@ export default function POSPage() {
 
             {/* Trade-in */}
             {!tradeIn && !showTradeIn && (
-              <button onClick={() => setShowTradeIn(true)} className="bg-white rounded-2xl border border-dashed border-slate-200 p-3 flex items-center gap-2 text-slate-500 hover:border-[#DC1F1F] hover:text-[#DC1F1F] transition-all cursor-pointer text-xs font-medium">
+              <button onClick={() => setShowTradeIn(true)} className="bg-white rounded-2xl border border-dashed border-slate-200 p-3 flex items-center gap-2 text-slate-500 hover:border-[#EC0118] hover:text-[#EC0118] transition-all cursor-pointer text-xs font-medium">
                 <i className="ri-exchange-line" />Add Trade-In Device
               </button>
             )}
@@ -736,7 +736,7 @@ export default function POSPage() {
                 </select>
                 <div className="grid grid-cols-2 gap-2">
                   {tradeInConditions.map(c => (
-                    <button key={c.id} onClick={() => setTradeInCondition(c.id)} className={`px-2 py-2 rounded-xl text-xs font-semibold text-left border transition-all cursor-pointer ${tradeInCondition === c.id ? 'bg-[#DC1F1F] text-white border-[#DC1F1F]' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>{c.label}</button>
+                    <button key={c.id} onClick={() => setTradeInCondition(c.id)} className={`px-2 py-2 rounded-xl text-xs font-semibold text-left border transition-all cursor-pointer ${tradeInCondition === c.id ? 'bg-[#EC0118] text-white border-[#EC0118]' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>{c.label}</button>
                   ))}
                 </div>
                 {tradeInEstimate !== null && (
@@ -747,7 +747,7 @@ export default function POSPage() {
                 )}
                 <div className="flex gap-2">
                   <button onClick={() => setShowTradeIn(false)} className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-500 cursor-pointer hover:bg-slate-50">Cancel</button>
-                  <button onClick={applyTradeIn} disabled={!tradeInDevice || !tradeInCondition} className="flex-1 px-3 py-2 rounded-xl bg-[#DC1F1F] text-white text-xs font-semibold disabled:opacity-50 cursor-pointer">Apply</button>
+                  <button onClick={applyTradeIn} disabled={!tradeInDevice || !tradeInCondition} className="flex-1 px-3 py-2 rounded-xl bg-[#EC0118] text-white text-xs font-semibold disabled:opacity-50 cursor-pointer">Apply</button>
                 </div>
               </div>
             )}
@@ -779,7 +779,7 @@ export default function POSPage() {
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Payment Plan</p>
                 <div className="grid grid-cols-4 gap-1.5">
                   {installmentPlans.map(pl => (
-                    <button key={pl.id} onClick={() => setSelectedPlan(pl.id)} className={`py-2 rounded-xl text-[10px] font-semibold border transition-all cursor-pointer text-center ${selectedPlan === pl.id ? 'bg-[#DC1F1F] text-white border-[#DC1F1F]' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>{pl.label}</button>
+                    <button key={pl.id} onClick={() => setSelectedPlan(pl.id)} className={`py-2 rounded-xl text-[10px] font-semibold border transition-all cursor-pointer text-center ${selectedPlan === pl.id ? 'bg-[#EC0118] text-white border-[#EC0118]' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>{pl.label}</button>
                   ))}
                 </div>
               </div>
@@ -835,7 +835,7 @@ export default function POSPage() {
               onClick={completeSale}
               disabled={cart.length === 0 || !hasCustomer}
               className="w-full py-4 rounded-2xl text-white font-bold text-base disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all hover:opacity-90 flex items-center justify-center gap-2"
-              style={{ background: cart.length === 0 || !hasCustomer ? '#94a3b8' : 'linear-gradient(135deg, #DC1F1F 0%, #B81616 100%)' }}
+              style={{ background: cart.length === 0 || !hasCustomer ? '#94a3b8' : 'linear-gradient(135deg, #EC0118 0%, #BD0113 100%)' }}
             >
               <i className="ri-checkbox-circle-line text-lg" />
               Complete Sale · {formatGHS(totalWithPlan)}

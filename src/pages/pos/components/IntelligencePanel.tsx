@@ -80,13 +80,13 @@ export default function IntelligencePanel() {
   const insightTypeStyle = {
     opportunity: { icon: 'ri-lightbulb-flash-line', color: '#059669', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.2)' },
     warning:     { icon: 'ri-alert-line',            color: '#D97706', bg: 'rgba(217,119,6,0.08)',  border: 'rgba(217,119,6,0.2)' },
-    trend:       { icon: 'ri-line-chart-line',        color: '#1E5FBE', bg: 'rgba(220,31,31,0.08)',  border: 'rgba(7,16,31,0.15)' },
+    trend:       { icon: 'ri-line-chart-line',        color: '#1E5FBE', bg: 'rgba(236,1,24,0.08)',  border: 'rgba(7,16,31,0.15)' },
   };
 
   const cardStyle = {
     background: 'white',
     border: '1px solid rgba(7,16,31,0.07)',
-    boxShadow: '0 1px 3px rgba(7,16,31,0.04), 0 6px 24px rgba(220,31,31,0.08)',
+    boxShadow: '0 1px 3px rgba(7,16,31,0.04), 0 6px 24px rgba(236,1,24,0.08)',
   };
 
   return (
@@ -140,7 +140,7 @@ export default function IntelligencePanel() {
                   <TrendIcon t={m.trend} />
                   <span className="text-xs font-bold text-slate-700">{formatGHS(m.revenue30d)}</span>
                 </div>
-                <div className="ml-6 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(220,31,31,0.08)' }}>
+                <div className="ml-6 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(236,1,24,0.08)' }}>
                   <div className="h-full rounded-full" style={{ width: `${barWidth}%`, background: 'linear-gradient(90deg, #0F172A, #2463BE)' }} />
                 </div>
                 <div className="ml-6 flex gap-3 mt-0.5 text-[9px]" style={{ color: 'rgba(10,31,74,0.38)' }}>
@@ -342,7 +342,7 @@ export default function IntelligencePanel() {
 
       {/* ── Demand forecast ────────────────────────────────────────────────── */}
       <div className="lg:col-span-2 rounded-2xl p-4 text-white"
-        style={{ background: 'linear-gradient(135deg, #0F172A 0%, #DC1F1F 50%, #06B6D4 100%)' }}>
+        style={{ background: 'linear-gradient(135deg, #0F172A 0%, #EC0118 50%, #06B6D4 100%)' }}>
         <p className="text-[10px] font-bold text-white/60 uppercase tracking-wider mb-3">
           <i className="ri-sparkling-2-line mr-1 text-amber-400" />
           AI Demand Forecast — Next 7 Days

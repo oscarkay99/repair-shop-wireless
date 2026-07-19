@@ -43,7 +43,7 @@ function RepairCard({ repair, onClick, selected }: {
       style={{
         background: 'hsl(var(--card))',
         border: `1px solid ${selected ? 'hsl(var(--primary))' : 'hsl(var(--border))'}`,
-        boxShadow: selected ? '0 0 0 2px rgba(220,31,31,0.15)' : 'none',
+        boxShadow: selected ? '0 0 0 2px rgba(236,1,24,0.15)' : 'none',
       }}
       onMouseEnter={e => { if (!selected) (e.currentTarget as HTMLElement).style.borderColor = 'hsl(var(--muted-foreground)/0.4)'; }}
       onMouseLeave={e => { if (!selected) (e.currentTarget as HTMLElement).style.borderColor = 'hsl(var(--border))'; }}

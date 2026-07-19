@@ -102,7 +102,7 @@ export default function CartPanel({ cartItems, delivery, payment, subtotal, deli
                   key={d}
                   onClick={() => onDeliveryChange(d)}
                   className={`flex-1 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer whitespace-nowrap capitalize ${
-                    delivery === d ? 'bg-[#DC1F1F] text-white' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
+                    delivery === d ? 'bg-[#EC0118] text-white' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
                   }`}
                 >
                   {d}
@@ -119,7 +119,7 @@ export default function CartPanel({ cartItems, delivery, payment, subtotal, deli
                   key={m}
                   onClick={() => onPaymentChange(m)}
                   className={`flex items-center gap-1.5 py-2 px-2 rounded-xl text-xs transition-all cursor-pointer whitespace-nowrap ${
-                    payment === m ? 'bg-[rgba(220,31,31,0.06)] border border-[#DC1F1F]/30 text-[#DC1F1F]' : 'bg-slate-50 border border-transparent text-slate-500 hover:bg-slate-100'
+                    payment === m ? 'bg-[rgba(236,1,24,0.06)] border border-[#EC0118]/30 text-[#EC0118]' : 'bg-slate-50 border border-transparent text-slate-500 hover:bg-slate-100'
                   }`}
                 >
                   <div className="w-3 h-3 flex items-center justify-center">
@@ -157,7 +157,7 @@ export default function CartPanel({ cartItems, delivery, payment, subtotal, deli
               onClick={handleComplete}
               disabled={processing}
               className="w-full py-3 text-white text-sm font-bold rounded-xl transition-all cursor-pointer whitespace-nowrap"
-              style={{ background: done ? '#10B981' : '#DC1F1F', opacity: processing ? 0.7 : 1 }}
+              style={{ background: done ? '#10B981' : '#EC0118', opacity: processing ? 0.7 : 1 }}
             >
               {done ? 'Sale Recorded!' : processing ? 'Processing…' : 'Complete Sale'}
             </button>

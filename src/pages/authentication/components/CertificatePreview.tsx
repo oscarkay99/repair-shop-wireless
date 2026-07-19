@@ -18,10 +18,10 @@ interface Props {
 
 export default function CertificatePreview({ cert }: Props) {
   return (
-    <div className="rounded-2xl p-5 text-white" style={{ background: 'linear-gradient(180deg, #0F172A 0%, #DC1F1F 100%)' }}>
+    <div className="rounded-2xl p-5 text-white" style={{ background: 'linear-gradient(180deg, #0F172A 0%, #EC0118 100%)' }}>
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-8 h-8 flex items-center justify-center rounded-lg" style={{ background: 'rgba(220,31,31,0.2)' }}>
-          <i className="ri-shield-check-line" style={{ color: '#DC1F1F' }} />
+        <div className="w-8 h-8 flex items-center justify-center rounded-lg" style={{ background: 'rgba(236,1,24,0.2)' }}>
+          <i className="ri-shield-check-line" style={{ color: '#EC0118' }} />
         </div>
         <div>
           <p className="text-xs font-bold text-white">Wireless</p>
@@ -76,12 +76,12 @@ export default function CertificatePreview({ cert }: Props) {
         <p className="text-[10px] text-white/40 mt-1">Purchased {cert.purchaseDate}</p>
       </div>
 
-      <div className="flex items-center gap-2 p-3 rounded-xl border" style={{ background: 'rgba(220,31,31,0.15)', borderColor: 'rgba(220,31,31,0.3)' }}>
+      <div className="flex items-center gap-2 p-3 rounded-xl border" style={{ background: 'rgba(236,1,24,0.15)', borderColor: 'rgba(236,1,24,0.3)' }}>
         <div className="w-5 h-5 flex items-center justify-center">
-          <i className="ri-shield-check-fill text-sm" style={{ color: '#DC1F1F' }} />
+          <i className="ri-shield-check-fill text-sm" style={{ color: '#EC0118' }} />
         </div>
         <div>
-          <p className="text-[10px] font-bold" style={{ color: '#DC1F1F' }}>Verified Authentic</p>
+          <p className="text-[10px] font-bold" style={{ color: '#EC0118' }}>Verified Authentic</p>
           <p className="text-[10px] text-white/40">fixhub.com/verify/{cert.id}</p>
         </div>
       </div>

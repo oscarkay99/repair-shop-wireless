@@ -90,13 +90,13 @@ export default function PriceDetail({ product }: Props) {
           </div>
         </div>
 
-        <div className="bg-[rgba(220,31,31,0.05)] border border-[rgba(220,31,31,0.15)] rounded-xl p-4">
+        <div className="bg-[rgba(236,1,24,0.05)] border border-[rgba(236,1,24,0.15)] rounded-xl p-4">
           <div className="flex items-start gap-2">
             <div className="w-6 h-6 flex items-center justify-center flex-shrink-0">
-              <i className="ri-sparkling-2-line text-[#DC1F1F] text-sm" />
+              <i className="ri-sparkling-2-line text-[#EC0118] text-sm" />
             </div>
             <div>
-              <p className="text-xs font-bold text-[#DC1F1F] mb-0.5">AI Pricing Suggestion</p>
+              <p className="text-xs font-bold text-[#EC0118] mb-0.5">AI Pricing Suggestion</p>
               <p className="text-xs text-slate-600">{product.suggestion}</p>
             </div>
           </div>

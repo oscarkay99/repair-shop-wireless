@@ -48,7 +48,7 @@ export default function ImeiChecker({ imeiCheckHistory }: Props) {
             onClick={checkImei}
             disabled={checking}
             className="px-6 py-3 text-white rounded-xl text-sm font-semibold cursor-pointer whitespace-nowrap disabled:opacity-60 hover:opacity-90"
-            style={{ background: '#DC1F1F' }}
+            style={{ background: '#EC0118' }}
           >
             {checking ? <><i className="ri-loader-4-line animate-spin mr-1" />Checking...</> : <><i className="ri-scan-line mr-1" />Check IMEI</>}
           </button>

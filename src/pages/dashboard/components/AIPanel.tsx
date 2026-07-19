@@ -17,7 +17,7 @@ function ReportModal({ report, onClose }: { report: string; onClose: () => void 
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(7,16,31,0.6)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
       <div className="w-full max-w-2xl bg-white rounded-2xl overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100" style={{ background: 'linear-gradient(135deg, #0F172A, #DC1F1F)' }}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100" style={{ background: 'linear-gradient(135deg, #0F172A, #EC0118)' }}>
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)' }}>
               <i className="ri-sparkling-2-fill text-white text-sm" />
@@ -77,7 +77,7 @@ function ReportModal({ report, onClose }: { report: string; onClose: () => void 
           >
             <i className="ri-download-line" />Download
           </button>
-          <button onClick={onClose} className="px-4 py-2 rounded-xl text-xs font-semibold text-white cursor-pointer" style={{ background: '#DC1F1F' }}>
+          <button onClick={onClose} className="px-4 py-2 rounded-xl text-xs font-semibold text-white cursor-pointer" style={{ background: '#EC0118' }}>
             Close
           </button>
         </div>
@@ -181,7 +181,7 @@ export default function AIPanel() {
 
   return (
     <>
-      <div className="rounded-2xl p-5 text-white h-full flex flex-col relative overflow-hidden" style={{ background: 'linear-gradient(160deg, #0F172A 0%, #DC1F1F 55%, #06B6D4 100%)' }}>
+      <div className="rounded-2xl p-5 text-white h-full flex flex-col relative overflow-hidden" style={{ background: 'linear-gradient(160deg, #0F172A 0%, #EC0118 55%, #06B6D4 100%)' }}>
         <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(245,166,35,0.1)' }} />
         <div className="absolute bottom-0 left-0 w-24 h-24 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(36,99,190,0.2)' }} />
 

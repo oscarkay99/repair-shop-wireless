@@ -13,7 +13,7 @@ import {
 const GHS = (n: number) =>
   `₵${n.toLocaleString('en-GH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-const DONUT_COLORS = ['#DC1F1F', '#06B6D4', '#F59E0B', '#10B981', '#64748b', '#EF4444', '#F97316'];
+const DONUT_COLORS = ['#EC0118', '#06B6D4', '#F59E0B', '#10B981', '#64748b', '#EF4444', '#F97316'];
 const LOW_STOCK_THRESHOLD = 5;
 
 function getWeekStart(dateStr: string): string {
@@ -182,8 +182,8 @@ export default function FinancialOverview() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
           icon="ri-money-cedi-circle-line"
-          iconBg="rgba(220,31,31,0.10)"
-          iconColor="#DC1F1F"
+          iconBg="rgba(236,1,24,0.10)"
+          iconColor="#EC0118"
           value={GHS(totalRevenue)}
           label="Revenue"
         />
@@ -247,7 +247,7 @@ export default function FinancialOverview() {
                 <span style={{ fontSize: 11, color: '#64748b' }}>{v === 'profit' ? 'Profit' : 'Revenue'}</span>
               )} />
               <Bar dataKey="profit" name="profit" fill="#10B981" radius={[3, 3, 0, 0]} />
-              <Bar dataKey="revenue" name="revenue" fill="#DC1F1F" radius={[3, 3, 0, 0]} />
+              <Bar dataKey="revenue" name="revenue" fill="#EC0118" radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -340,7 +340,7 @@ export default function FinancialOverview() {
                 <span style={{ fontSize: 11, color: '#64748b' }}>{v === 'value' ? 'Value (₵)' : 'Units'}</span>
               )} />
               <Bar dataKey="units" name="units" fill="#94a3b8" radius={[0, 3, 3, 0]} barSize={8} />
-              <Bar dataKey="value" name="value" fill="#DC1F1F" radius={[0, 3, 3, 0]} barSize={8} />
+              <Bar dataKey="value" name="value" fill="#EC0118" radius={[0, 3, 3, 0]} barSize={8} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -387,9 +387,9 @@ export default function FinancialOverview() {
                 type="monotone"
                 dataKey="revenue"
                 name="revenue"
-                stroke="#DC1F1F"
+                stroke="#EC0118"
                 strokeWidth={2.5}
-                dot={{ r: 4, fill: '#DC1F1F', strokeWidth: 0 }}
+                dot={{ r: 4, fill: '#EC0118', strokeWidth: 0 }}
                 activeDot={{ r: 5 }}
               />
             </LineChart>
@@ -405,7 +405,7 @@ export default function FinancialOverview() {
             value: products.length,
             sub: `${lowStockCount + outOfStockCount} need attention`,
             icon: 'ri-box-3-line',
-            color: '#DC1F1F',
+            color: '#EC0118',
           },
           {
             label: 'Low Stock',

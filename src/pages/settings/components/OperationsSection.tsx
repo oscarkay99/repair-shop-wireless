@@ -19,11 +19,11 @@ export default function OperationsSection() {
             <div key={field.label}>
               <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] block mb-1.5">{field.label}</label>
               {field.type === 'select' ? (
-                <select className="w-full border border-[hsl(var(--border))] rounded-xl px-3 py-2.5 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[#DC1F1F]">
+                <select className="w-full border border-[hsl(var(--border))] rounded-xl px-3 py-2.5 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[#EC0118]">
                   {field.options?.map(o => <option key={o}>{o}</option>)}
                 </select>
               ) : (
-                <input type="number" defaultValue={field.default as number} className="w-full border border-[hsl(var(--border))] rounded-xl px-3 py-2.5 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[#DC1F1F]" />
+                <input type="number" defaultValue={field.default as number} className="w-full border border-[hsl(var(--border))] rounded-xl px-3 py-2.5 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[#EC0118]" />
               )}
             </div>
           ))}
@@ -34,7 +34,7 @@ export default function OperationsSection() {
             {[{ day: 'Mon–Fri', hours: '8:00 AM – 8:00 PM' }, { day: 'Saturday', hours: '9:00 AM – 7:00 PM' }, { day: 'Sunday', hours: '10:00 AM – 6:00 PM' }].map((row) => (
               <div key={row.day} className="flex items-center gap-3">
                 <span className="text-xs text-[hsl(var(--muted-foreground))] w-20">{row.day}</span>
-                <input type="text" defaultValue={row.hours} className="flex-1 border border-[hsl(var(--border))] rounded-xl px-3 py-2 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[#DC1F1F]" />
+                <input type="text" defaultValue={row.hours} className="flex-1 border border-[hsl(var(--border))] rounded-xl px-3 py-2 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[#EC0118]" />
               </div>
             ))}
           </div>
@@ -46,7 +46,7 @@ export default function OperationsSection() {
               type="button"
               onClick={() => save({ taxEnabled: !taxEnabled })}
               className="relative w-9 h-5 rounded-full transition-colors shrink-0"
-              style={{ background: taxEnabled ? '#DC1F1F' : 'hsl(var(--border))' }}
+              style={{ background: taxEnabled ? '#EC0118' : 'hsl(var(--border))' }}
               title={taxEnabled ? 'Tax is applied on Invoices and Sales checkout' : 'Tax is disabled everywhere'}
             >
               <span className="text-[9px] font-semibold text-[hsl(var(--muted-foreground))] absolute -top-4 right-0 whitespace-nowrap">
@@ -61,7 +61,7 @@ export default function OperationsSection() {
           <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="text-[10px] text-[hsl(var(--muted-foreground))] block mb-1">Currency</label>
-              <select className="w-full border border-[hsl(var(--border))] rounded-xl px-3 py-2.5 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[#DC1F1F]">
+              <select className="w-full border border-[hsl(var(--border))] rounded-xl px-3 py-2.5 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[#EC0118]">
                 <option>GHS — Ghana Cedi</option>
                 <option>USD — US Dollar</option>
               </select>
@@ -73,7 +73,7 @@ export default function OperationsSection() {
                 value={vatRate}
                 disabled={!taxEnabled}
                 onChange={e => save({ vatRate: parseFloat(e.target.value) || 0 })}
-                className="w-full border border-[hsl(var(--border))] rounded-xl px-3 py-2.5 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[#DC1F1F] disabled:opacity-50 disabled:bg-[hsl(var(--muted))]"
+                className="w-full border border-[hsl(var(--border))] rounded-xl px-3 py-2.5 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[#EC0118] disabled:opacity-50 disabled:bg-[hsl(var(--muted))]"
               />
             </div>
             <div>

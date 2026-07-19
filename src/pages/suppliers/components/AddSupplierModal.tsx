@@ -122,11 +122,11 @@ export default function AddSupplierModal({ supplier, onSave, onClose }: Props) {
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose}
               className="flex-1 py-2.5 rounded-xl text-sm font-semibold cursor-pointer"
-              style={{ background: 'rgba(220,31,31,0.08)', color: 'rgba(7,16,31,0.6)' }}>
+              style={{ background: 'rgba(236,1,24,0.08)', color: 'rgba(7,16,31,0.6)' }}>
               Cancel
             </button>
             <button type="submit" disabled={saving}
-              className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white cursor-pointer bg-[#DC1F1F] hover:bg-[#B81616] disabled:opacity-70 transition-colors duration-150">
+              className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white cursor-pointer bg-[#EC0118] hover:bg-[#BD0113] disabled:opacity-70 transition-colors duration-150">
               {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Supplier'}
             </button>
           </div>

@@ -40,7 +40,7 @@ export default function SettingsPage() {
   const [phone, setPhone] = useState('+233 24 000 0000');
   const [whatsapp, setWhatsapp] = useState('+233 24 000 0000');
   const [address, setAddress] = useState('Accra Mall, Accra, Ghana');
-  const [primaryColor, setPrimaryColor] = useState('#DC1F1F');
+  const [primaryColor, setPrimaryColor] = useState('#EC0118');
   const [showAddRole, setShowAddRole] = useState(false);
   const [editingRole, setEditingRole] = useState<{ id: string; name: string; permissions: string[] } | null>(null);
   const [showInvite, setShowInvite] = useState(false);

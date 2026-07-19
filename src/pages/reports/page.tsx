@@ -3,7 +3,7 @@ import AdminLayout from '@/components/feature/AdminLayout';
 import ReportHistory from './components/ReportHistory';
 
 const reportTypes = [
-  { id: 'sales', name: 'Sales Report', icon: 'ri-shopping-bag-3-line', color: '#DC1F1F', desc: 'Revenue, orders, top products, payment methods' },
+  { id: 'sales', name: 'Sales Report', icon: 'ri-shopping-bag-3-line', color: '#EC0118', desc: 'Revenue, orders, top products, payment methods' },
   { id: 'inventory', name: 'Inventory Report', icon: 'ri-archive-line', color: 'hsl(var(--foreground))', desc: 'Stock levels, fast movers, restock alerts' },
   { id: 'customers', name: 'Customer Report', icon: 'ri-group-line', color: '#F59E0B', desc: 'LTV, segments, retention, new vs returning' },
   { id: 'repairs', name: 'Repairs Report', icon: 'ri-tools-line', color: '#E05A2B', desc: 'Turnaround time, revenue, technician performance' },
@@ -16,7 +16,7 @@ const reportTypes = [
 const prebuiltReports: never[] = [];
 
 const kpiData = [
-  { label: 'Total Revenue', value: 'GHS 0', change: '0%', up: true, color: '#DC1F1F' },
+  { label: 'Total Revenue', value: 'GHS 0', change: '0%', up: true, color: '#EC0118' },
   { label: 'Total Orders', value: '0', change: '0%', up: true, color: 'hsl(var(--foreground))' },
   { label: 'Avg Order Value', value: 'GHS 0', change: '0%', up: true, color: '#F59E0B' },
   { label: 'Gross Profit', value: 'GHS 0', change: '0%', up: true, color: '#25D366' },
@@ -64,7 +64,7 @@ export default function ReportsPage() {
             key={id}
             onClick={() => setActiveTab(id as 'overview' | 'generate' | 'history')}
             className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${activeTab === id ? 'text-white' : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'}`}
-            style={activeTab === id ? { background: '#DC1F1F' } : {}}
+            style={activeTab === id ? { background: '#EC0118' } : {}}
           >
             {label}
           </button>
@@ -127,7 +127,7 @@ export default function ReportsPage() {
                   key={rt.id}
                   onClick={() => setSelectedReport(rt.id)}
                   className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all cursor-pointer text-left ${selectedReport === rt.id ? 'text-white' : 'hover:bg-[hsl(var(--muted))]'}`}
-                  style={selectedReport === rt.id ? { background: '#DC1F1F' } : {}}
+                  style={selectedReport === rt.id ? { background: '#EC0118' } : {}}
                 >
                   <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: selectedReport === rt.id ? 'rgba(255,255,255,0.2)' : `${rt.color}15` }}>
                     <i className={`${rt.icon} text-xs`} style={{ color: selectedReport === rt.id ? '#fff' : rt.color }} />
@@ -171,7 +171,7 @@ export default function ReportsPage() {
                         key={f}
                         onClick={() => setFormat(f)}
                         className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${format === f ? 'text-white' : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))]'}`}
-                        style={format === f ? { background: '#DC1F1F' } : {}}
+                        style={format === f ? { background: '#EC0118' } : {}}
                       >
                         {f}
                       </button>
@@ -204,7 +204,7 @@ export default function ReportsPage() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-white cursor-pointer whitespace-nowrap" style={{ background: '#DC1F1F' }}>
+                  <button className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-white cursor-pointer whitespace-nowrap" style={{ background: '#EC0118' }}>
                     <i className="ri-download-line mr-1" /> Download {format}
                   </button>
                   <button className="flex-1 py-2.5 rounded-xl text-xs font-semibold border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] cursor-pointer whitespace-nowrap">
@@ -220,7 +220,7 @@ export default function ReportsPage() {
                 onClick={handleGenerate}
                 disabled={generating}
                 className="w-full py-4 rounded-2xl text-sm font-bold text-white cursor-pointer whitespace-nowrap transition-all"
-                style={{ background: generating ? '#94A3B8' : 'linear-gradient(135deg, #0F172A, #DC1F1F)' }}
+                style={{ background: generating ? '#94A3B8' : 'linear-gradient(135deg, #0F172A, #EC0118)' }}
               >
                 {generating ? (
                   <span className="flex items-center justify-center gap-2">

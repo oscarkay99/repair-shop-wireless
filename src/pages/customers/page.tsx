@@ -207,9 +207,9 @@ function CustomerDetailPanel({ customer, lastRepair, canEdit, onEdit, onClose }:
               <button
                 onClick={e => { e.stopPropagation(); onEdit(); }}
                 className="flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-semibold transition-colors"
-                style={{ background: 'hsl(350 60% 94%)', color: 'hsl(350 60% 30%)', border: '1px solid hsl(350 60% 80%)' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(350 60% 88%)'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(350 60% 94%)'; }}
+                style={{ background: 'hsl(354 60% 94%)', color: 'hsl(354 60% 30%)', border: '1px solid hsl(354 60% 80%)' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(354 60% 88%)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(354 60% 94%)'; }}
               >
                 <Pencil className="w-3 h-3" />
                 Edit
