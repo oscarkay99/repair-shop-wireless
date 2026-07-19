@@ -7,13 +7,6 @@ import {
   Ticket, Users, Boxes, LineChart, Sparkles, Shield, Lock as LockIcon, Headset, Star,
 } from 'lucide-react';
 
-const QUICK_ACCESS = [
-  { name: 'Kwame Asante', role: 'Administrator',  email: 'admin@wireless.com', password: 'admin123', avatar: 'KA', color: '#DC1F1F', badgeBg: 'hsl(350 60% 95%)', lastLogin: 'Recently' },
-  { name: 'Efua Boateng', role: 'Receptionist',   email: 'efua@wireless.com',  password: 'efua123',  avatar: 'EB', color: '#8B5CF6', badgeBg: 'hsl(262 60% 95%)', lastLogin: 'Demo account' },
-  { name: 'Ama Owusu',    role: 'Technician',     email: 'ama@wireless.com',   password: 'ama123',   avatar: 'AO', color: '#06B6D4', badgeBg: 'hsl(190 80% 93%)', lastLogin: 'Recently' },
-  { name: 'Kofi Mensah',  role: 'Sales Manager',  email: 'kofi@wireless.com',  password: 'kofi123',  avatar: 'KM', color: '#F59E0B', badgeBg: 'hsl(38 90% 93%)',  lastLogin: 'Recently' },
-];
-
 const FEATURES = [
   { icon: Ticket,    title: 'Smart Ticket Management', desc: 'Track every repair from start to finish' },
   { icon: Users,     title: 'Customer Relationship',   desc: 'Build stronger relationships' },
@@ -88,26 +81,6 @@ export default function SignInPage() {
       setGoogleLoading(false);
     }
     // On success the page redirects to Google, then back — nothing else to do here.
-  };
-
-  const handleMicrosoft = () => {
-    setError('Microsoft sign-in is not set up yet — use email/password or Google for now.');
-  };
-
-  const quickLogin = async (userEmail: string, userPassword: string) => {
-    setEmail(userEmail);
-    setPassword(userPassword);
-    setError('');
-    setLoading(true);
-    const result = await login(userEmail, userPassword);
-    setLoading(false);
-    if (result.success) {
-      setLoginSuccess(true);
-      await new Promise(r => setTimeout(r, 600));
-      navigate('/');
-    } else {
-      setError(result.error || 'Invalid credentials');
-    }
   };
 
   const inputBase: React.CSSProperties = {
@@ -453,56 +426,6 @@ export default function SignInPage() {
                     )}
                     {googleLoading ? 'Redirecting…' : 'Continue with Google'}
                   </button>
-
-                  <button
-                    type="button"
-                    onClick={handleMicrosoft}
-                    className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2.5 transition-colors cursor-pointer"
-                    style={{ background: 'hsl(var(--card))', border: '1.5px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--card))'; }}
-                  >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24">
-                      <rect x="1" y="1" width="10" height="10" fill="#F25022"/>
-                      <rect x="13" y="1" width="10" height="10" fill="#7FBA00"/>
-                      <rect x="1" y="13" width="10" height="10" fill="#00A4EF"/>
-                      <rect x="13" y="13" width="10" height="10" fill="#FFB900"/>
-                    </svg>
-                    Continue with Microsoft
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-3 my-5">
-                  <div className="flex-1 h-px" style={{ background: 'hsl(var(--border))' }} />
-                  <span className="text-[10px] uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>Quick Access</span>
-                  <div className="flex-1 h-px" style={{ background: 'hsl(var(--border))' }} />
-                </div>
-
-                <div className="space-y-1.5 max-h-[220px] overflow-y-auto pr-0.5 -mr-0.5">
-                  {QUICK_ACCESS.map(u => (
-                    <button
-                      key={u.email}
-                      type="button"
-                      onClick={() => quickLogin(u.email, u.password)}
-                      className="w-full flex items-center gap-3 p-2.5 rounded-xl text-left cursor-pointer group"
-                      style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', transition: 'background 0.15s, border-color 0.15s' }}
-                      onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'hsl(var(--card))'; el.style.borderColor = u.color; }}
-                      onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'hsl(var(--muted))'; el.style.borderColor = 'hsl(var(--border))'; }}
-                    >
-                      <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                        style={{ background: u.color }}>
-                        {u.avatar}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <p className="text-xs font-semibold" style={{ color: 'hsl(var(--foreground))' }}>{u.name}</p>
-                          <span className="text-[9.5px] font-semibold px-1.5 py-[1px] rounded-full" style={{ background: u.badgeBg, color: u.color }}>{u.role}</span>
-                        </div>
-                        <p className="text-[10px] mt-0.5" style={{ color: 'hsl(var(--muted-foreground))' }}>{u.lastLogin}</p>
-                      </div>
-                      <ArrowRight className="w-3.5 h-3.5 flex-shrink-0 opacity-0 group-hover:opacity-60 transition-opacity" style={{ color: u.color }} />
-                    </button>
-                  ))}
                 </div>
 
                 <p className="text-center text-[11px] mt-5" style={{ color: 'hsl(var(--muted-foreground))' }}>
