@@ -114,9 +114,9 @@ export default function UserTable({
                   {user.role !== 'admin' && (
                     <button
                       onClick={() => onDelete(user.id)}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-red-50 cursor-pointer"
+                      className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-red-50 cursor-pointer group"
                     >
-                      <i className="ri-delete-bin-line text-red-400 text-sm" />
+                      <i className="ri-delete-bin-line text-red-400 group-hover:text-red-500 text-sm transition-colors" />
                     </button>
                   )}
                 </div>

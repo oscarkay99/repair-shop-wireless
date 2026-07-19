@@ -125,16 +125,13 @@ export default function DateRangePicker({ value, onChange, label = 'Date range' 
               <button
                 key={p.label}
                 onClick={() => applyPreset(p.range())}
-                className="w-full flex items-center justify-between px-4 py-2 text-xs font-medium text-left transition-colors"
-                style={{
-                  background: isActive ? 'hsl(350 60% 95%)' : 'transparent',
-                  color: isActive ? 'hsl(350 60% 30%)' : 'hsl(var(--foreground))',
-                }}
+                className={`w-full flex items-center justify-between px-4 py-2 text-xs font-medium text-left transition-colors ${isActive ? 'bg-brand-50 text-brand-600' : ''}`}
+                style={!isActive ? { color: 'hsl(var(--foreground))' } : undefined}
                 onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
                 onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
               >
                 {p.label}
-                {isActive && <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'hsl(350 60% 40%)' }} />}
+                {isActive && <span className="w-1.5 h-1.5 rounded-full bg-brand-500" />}
               </button>
             );
           })}
@@ -145,11 +142,8 @@ export default function DateRangePicker({ value, onChange, label = 'Date range' 
           {/* Custom toggle */}
           <button
             onClick={() => setShowCustom(s => !s)}
-            className="w-full flex items-center justify-between px-4 py-2 text-xs font-medium text-left transition-colors"
-            style={{
-              background: isCustom || showCustom ? 'hsl(350 60% 95%)' : 'transparent',
-              color: isCustom || showCustom ? 'hsl(350 60% 30%)' : 'hsl(var(--foreground))',
-            }}
+            className={`w-full flex items-center justify-between px-4 py-2 text-xs font-medium text-left transition-colors ${isCustom || showCustom ? 'bg-brand-50 text-brand-600' : ''}`}
+            style={!(isCustom || showCustom) ? { color: 'hsl(var(--foreground))' } : undefined}
             onMouseEnter={e => { if (!isCustom && !showCustom) (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
             onMouseLeave={e => { if (!isCustom && !showCustom) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
           >
@@ -187,8 +181,7 @@ export default function DateRangePicker({ value, onChange, label = 'Date range' 
               </div>
               <button
                 onClick={() => setOpen(false)}
-                className="w-full h-7 rounded-lg text-xs font-semibold text-white mt-1"
-                style={{ background: 'hsl(var(--primary))' }}
+                className="w-full h-7 rounded-lg text-xs font-semibold text-white mt-1 bg-brand-500 hover:bg-brand-600 transition-colors cursor-pointer"
               >
                 Apply
               </button>

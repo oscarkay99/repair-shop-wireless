@@ -19,7 +19,7 @@ export default function DeleteConfirmModal({ userId, onConfirm, onCancel }: Dele
           <button onClick={onCancel} className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] cursor-pointer whitespace-nowrap">
             Cancel
           </button>
-          <button onClick={() => onConfirm(userId)} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer whitespace-nowrap bg-red-500">
+          <button onClick={() => onConfirm(userId)} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer whitespace-nowrap bg-red-500 hover:bg-red-600 transition-colors">
             Delete
           </button>
         </div>

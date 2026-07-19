@@ -112,7 +112,7 @@ export default function InviteUserModal({ open, onClose, onCreated }: Props) {
               </button>
               <button
                 onClick={handleClose}
-                className="flex-1 px-4 py-2 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg transition-colors"
+                className="flex-1 px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-medium rounded-lg transition-colors"
               >
                 Done
               </button>
@@ -170,7 +170,7 @@ export default function InviteUserModal({ open, onClose, onCreated }: Props) {
                 <button
                   onClick={handleCreate}
                   disabled={saving}
-                  className="flex-1 px-4 py-2 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
                 >
                   {saving ? 'Creating…' : 'Create Account'}
                 </button>

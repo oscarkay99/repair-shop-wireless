@@ -172,7 +172,7 @@ export default function SuppliersPage() {
                           Cancel
                         </button>
                         <button onClick={() => { removeSupplier(supplier.id); setConfirmDeleteSupplierId(null); }}
-                          className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-red-500 text-white cursor-pointer">
+                          className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-red-500 hover:bg-red-600 transition-colors text-white cursor-pointer">
                           Remove
                         </button>
                       </div>

@@ -163,10 +163,8 @@ export default function Sidebar() {
             <button
               onClick={handleLogout}
               title="Sign out"
-              className="w-7 h-7 flex items-center justify-center rounded-lg flex-shrink-0 cursor-pointer transition-colors"
+              className="w-7 h-7 flex items-center justify-center rounded-lg flex-shrink-0 cursor-pointer transition-colors hover:bg-red-50 hover:text-red-500"
               style={{ color: 'hsl(var(--muted-foreground))' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(0 70% 94%)'; (e.currentTarget as HTMLElement).style.color = 'hsl(0 65% 40%)'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.color = 'hsl(var(--muted-foreground))'; }}
             >
               <LogOut className="w-3.5 h-3.5" />
             </button>
