@@ -13,6 +13,7 @@ import {
   Receipt,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme } from '@/context/ThemeContext';
 import { roleLabels, roleColors } from '@/mocks/users';
 import { canAccessModule, type AppModule } from '@/utils/access';
 
@@ -86,6 +87,7 @@ export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { theme } = useTheme();
 
   const isActive = (path: string) =>
     path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
@@ -105,25 +107,13 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="px-6 py-5 border-b" style={{ borderColor: 'hsl(var(--sidebar-border))' }}>
         <div className="flex items-center gap-3">
-          <div
-            className="rounded-xl flex-shrink-0 flex items-center justify-center"
-            style={{
-              width: 40, height: 40,
-              background: '#0F0F0F',
-              boxShadow: 'rgba(236,1,24,0.80) 0px 0px 14px 3px, rgba(236,1,24,0.45) 0px 0px 32px 8px, rgba(236,1,24,0.20) 0px 0px 56px 14px',
-            }}
-          >
-            <img
-              src="/wireless-mark.png"
-              alt="WIRELESS logo"
-              style={{ width: '65%', height: '65%', objectFit: 'contain' }}
-            />
-          </div>
-          <div>
-            <p className="text-sm font-black tracking-[0.12em] uppercase" style={{ color: 'hsl(354 60% 22%)' }}>WIRELESS</p>
-            <p className="text-[9px] leading-tight tracking-widest uppercase" style={{ color: 'hsl(var(--sidebar-foreground))' }}>Repair &amp; Service</p>
-          </div>
+          <img
+            src={theme === 'dark' ? '/wireless-logo-dark.png' : '/wireless-logo-light.png'}
+            alt="WIRELESS"
+            style={{ height: 22, width: 'auto', objectFit: 'contain' }}
+          />
         </div>
+        <p className="text-[9px] leading-tight tracking-widest uppercase mt-1.5" style={{ color: 'hsl(var(--sidebar-foreground))' }}>Repair &amp; Service</p>
       </div>
 
       {/* Main nav */}
