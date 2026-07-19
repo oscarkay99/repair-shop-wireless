@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import {
   Mail, Lock, Eye, EyeOff, ArrowRight, Loader2,
-  ArrowLeft, KeyRound, MailCheck, AlertCircle, CheckCircle2,
+  AlertCircle, CheckCircle2,
   Ticket, Users, Boxes, LineChart, Sparkles, Shield, Lock as LockIcon, Headset, Star,
 } from 'lucide-react';
 
@@ -24,7 +24,7 @@ const FEATURES = [
 
 export default function SignInPage() {
   const navigate = useNavigate();
-  const { login, loginWithGoogle, resetPassword, deniedMessage, clearDeniedMessage, isSupabaseAuth, isAuthenticated } = useAuth();
+  const { login, loginWithGoogle, deniedMessage, clearDeniedMessage, isSupabaseAuth, isAuthenticated } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -52,11 +52,6 @@ export default function SignInPage() {
   useEffect(() => {
     if (isAuthenticated) navigate('/', { replace: true });
   }, [isAuthenticated, navigate]);
-
-  const [view, setView] = useState<'signin' | 'forgot' | 'reset_sent'>('signin');
-  const [forgotEmail, setForgotEmail] = useState('');
-  const [forgotError, setForgotError] = useState('');
-  const [forgotLoading, setForgotLoading] = useState(false);
 
   // Sign-in is always day mode, regardless of the app-wide theme preference —
   // this only touches the DOM class for as long as the page is mounted, it
@@ -97,18 +92,6 @@ export default function SignInPage() {
 
   const handleMicrosoft = () => {
     setError('Microsoft sign-in is not set up yet — use email/password or Google for now.');
-  };
-
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!forgotEmail) { setForgotError('Please enter your email address'); return; }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(forgotEmail)) { setForgotError('Please enter a valid email address'); return; }
-    setForgotLoading(true);
-    setForgotError('');
-    const result = await resetPassword(forgotEmail);
-    setForgotLoading(false);
-    if (result.success) { setView('reset_sent'); return; }
-    setForgotError(result.error || 'Unable to send reset link');
   };
 
   const quickLogin = async (userEmail: string, userPassword: string) => {
@@ -367,8 +350,7 @@ export default function SignInPage() {
             }}
           >
             {/* ── SIGN IN VIEW ── */}
-            {view === 'signin' && (
-              <div className={`transition-all duration-500 ${loginSuccess ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}>
+            <div className={`transition-all duration-500 ${loginSuccess ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}>
                 <div className="mb-5 flex items-start justify-between gap-3">
                   <div>
                     <h2 className="text-xl font-black tracking-tight mb-1" style={{ color: 'hsl(var(--foreground))' }}>Welcome back 👋</h2>
@@ -400,17 +382,7 @@ export default function SignInPage() {
                   />
 
                   <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <label className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>Password</label>
-                      <button
-                        type="button"
-                        onClick={() => { setView('forgot'); setForgotEmail(email); setForgotError(''); }}
-                        className="text-xs font-semibold cursor-pointer hover:opacity-80 transition-opacity"
-                        style={{ color: 'hsl(350 60% 35%)' }}
-                      >
-                        Forgot password?
-                      </button>
-                    </div>
+                    <label className="text-[11px] font-semibold uppercase tracking-wider mb-1.5 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Password</label>
                     <PasswordInput
                       value={password}
                       onChange={setPassword}
@@ -537,90 +509,6 @@ export default function SignInPage() {
                   Need help? <span className="font-semibold" style={{ color: 'hsl(350 60% 35%)' }}>Contact your system administrator</span>
                 </p>
               </div>
-            )}
-
-            {/* ── FORGOT PASSWORD VIEW ── */}
-            {view === 'forgot' && (
-              <div>
-                <button
-                  onClick={() => setView('signin')}
-                  className="flex items-center gap-1.5 text-xs font-medium mb-6 cursor-pointer transition-opacity hover:opacity-70"
-                  style={{ color: 'hsl(var(--muted-foreground))' }}
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" /> Back to Sign In
-                </button>
-                <div className="mb-6">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
-                    style={{ background: 'hsl(350 60% 96%)', border: '1px solid hsl(350 60% 85%)' }}>
-                    <KeyRound className="w-5 h-5" style={{ color: 'hsl(350 60% 35%)' }} />
-                  </div>
-                  <h2 className="text-xl font-black tracking-tight mb-1" style={{ color: 'hsl(var(--foreground))' }}>Forgot Password?</h2>
-                  <p className="text-sm" style={{ color: 'hsl(var(--muted-foreground))' }}>Enter your email and we'll send you a reset link.</p>
-                </div>
-                <form onSubmit={handleForgotPassword} className="space-y-4">
-                  <FocusInput
-                    icon={<Mail className="w-4 h-4" />}
-                    type="email"
-                    value={forgotEmail}
-                    onChange={setForgotEmail}
-                    placeholder="you@wireless.com"
-                    label="Email Address"
-                    inputBase={inputBase}
-                    inputFocus={inputFocus}
-                  />
-                  {forgotError && (
-                    <div className="flex items-center gap-2 p-3 rounded-lg text-xs"
-                      style={{ background: 'hsl(0 80% 97%)', border: '1px solid hsl(0 70% 88%)', color: 'hsl(0 65% 40%)' }}>
-                      <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                      {forgotError}
-                    </div>
-                  )}
-                  <button
-                    type="submit"
-                    disabled={forgotLoading}
-                    className="w-full py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 cursor-pointer bg-brand-500 hover:bg-brand-600 transition-colors"
-                    style={{ opacity: forgotLoading ? 0.7 : 1 }}
-                  >
-                    {forgotLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Sending…</> : 'Send Reset Link'}
-                  </button>
-                </form>
-              </div>
-            )}
-
-            {/* ── RESET SENT VIEW ── */}
-            {view === 'reset_sent' && (
-              <div className="text-center">
-                <div className="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-5"
-                  style={{ background: 'hsl(142 55% 91%)', border: '1px solid hsl(142 50% 78%)' }}>
-                  <MailCheck className="w-7 h-7" style={{ color: 'hsl(142 55% 28%)' }} />
-                </div>
-                <h2 className="text-xl font-black tracking-tight mb-2" style={{ color: 'hsl(var(--foreground))' }}>Check your email</h2>
-                <p className="text-sm mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>We've sent a reset link to</p>
-                <p className="text-sm font-bold mb-5" style={{ color: 'hsl(350 60% 35%)' }}>{forgotEmail}</p>
-                <div className="p-3 rounded-lg mb-5 text-left"
-                  style={{ background: 'hsl(350 60% 97%)', border: '1px solid hsl(350 60% 88%)' }}>
-                  <div className="flex items-start gap-2">
-                    <AlertCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: 'hsl(350 60% 42%)' }} />
-                    <div>
-                      <p className="text-xs font-semibold mb-0.5" style={{ color: 'hsl(350 60% 35%)' }}>
-                        {isSupabaseAuth ? 'Supabase Connected' : 'Demo Mode'}
-                      </p>
-                      <p className="text-xs" style={{ color: 'hsl(350 30% 42%)' }}>
-                        {isSupabaseAuth
-                          ? 'If your Supabase project is configured to send auth emails, the reset link has been dispatched.'
-                          : 'This is a simulated reset. Contact your system administrator to reset your password.'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setView('signin')}
-                  className="w-full py-3 rounded-xl text-sm font-bold text-white cursor-pointer bg-brand-500 hover:bg-brand-600 transition-colors"
-                >
-                  Back to Sign In
-                </button>
-              </div>
-            )}
 
             {/* ── SUCCESS OVERLAY ── */}
             {loginSuccess && (

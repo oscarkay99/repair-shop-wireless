@@ -207,15 +207,6 @@ export function useAuth() {
     setState({ user: null });
   };
 
-  const resetPassword = async (email: string): Promise<AuthResult> => {
-    if (isSupabaseConfigured) {
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
-      return error ? { success: false, error: error.message } : { success: true };
-    }
-    const exists = mockUsers.some(u => u.email === email);
-    return exists ? { success: true } : { success: false, error: 'No account found' };
-  };
-
   const loginWithGoogle = async (): Promise<AuthResult> => {
     if (!isSupabaseConfigured) return { success: false, error: 'Google sign-in requires a live Supabase connection.' };
     setState({ deniedMessage: null });
@@ -233,7 +224,6 @@ export function useAuth() {
     login,
     loginWithGoogle,
     logout,
-    resetPassword,
     deniedMessage: snap.deniedMessage,
     clearDeniedMessage,
     isAdmin: snap.user?.role === 'admin',
