@@ -154,18 +154,26 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
             className="mt-3 rounded-xl p-3 flex items-center gap-2.5"
             style={{ background: 'hsl(220 14% 94%)', border: '1px solid hsl(220 13% 88%)' }}
           >
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0"
-              style={{ background: user.role ? (roleColors[user.role] ?? 'hsl(354 60% 35%)') : 'hsl(354 60% 35%)' }}
+            <Link
+              to="/profile"
+              title="View profile"
+              className="flex items-center gap-2.5 flex-1 min-w-0 rounded-lg -m-1 p-1 transition-colors cursor-pointer"
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(220 13% 88%)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}
             >
-              {user.avatar || user.name.slice(0, 2).toUpperCase()}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold truncate" style={{ color: 'hsl(220 20% 12%)' }}>{user.name}</p>
-              <p className="text-[10px] truncate" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                {user.role ? (roleLabels[user.role] ?? user.role) : user.role}
-              </p>
-            </div>
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0"
+                style={{ background: user.role ? (roleColors[user.role] ?? 'hsl(354 60% 35%)') : 'hsl(354 60% 35%)' }}
+              >
+                {user.avatar || user.name.slice(0, 2).toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold truncate" style={{ color: 'hsl(220 20% 12%)' }}>{user.name}</p>
+                <p className="text-[10px] truncate" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                  {user.role ? (roleLabels[user.role] ?? user.role) : user.role}
+                </p>
+              </div>
+            </Link>
             <button
               onClick={handleLogout}
               title="Sign out"
