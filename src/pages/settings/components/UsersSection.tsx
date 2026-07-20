@@ -1,7 +1,14 @@
 import { useState, useEffect } from 'react';
-import { getWirelessUsers, updateWirelessUser, deleteWirelessUser, type WirelessProfile } from '@/services/wireless/users';
+import { getWirelessUsers, updateWirelessUser, deleteWirelessUser, resetUserPassword, type WirelessProfile } from '@/services/wireless/users';
 import { isSupabaseConfigured } from '@/services/supabase';
 import InviteUserModal from './InviteUserModal';
+
+function generatePassword(): string {
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  let out = '';
+  for (let i = 0; i < 10; i++) out += chars[Math.floor(Math.random() * chars.length)];
+  return out;
+}
 
 const ROLE_LABELS: Record<string, string> = {
   admin: 'Admin',
@@ -26,6 +33,13 @@ function EditUserModal({ user, onClose, onSaved }: { user: WirelessProfile; onCl
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [resetError, setResetError] = useState('');
+  const [resetDone, setResetDone] = useState(false);
+
   const handleSave = async () => {
     if (!name.trim()) { setError('Name is required'); return; }
     setSaving(true);
@@ -38,6 +52,20 @@ function EditUserModal({ user, onClose, onSaved }: { user: WirelessProfile; onCl
       setError(e instanceof Error ? e.message : 'Failed to save changes');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (newPassword.length < 6) { setResetError('Password must be at least 6 characters'); return; }
+    setResetting(true);
+    setResetError('');
+    try {
+      await resetUserPassword(user.id, newPassword);
+      setResetDone(true);
+    } catch (e: unknown) {
+      setResetError(e instanceof Error ? e.message : 'Failed to reset password');
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -80,6 +108,71 @@ function EditUserModal({ user, onClose, onSaved }: { user: WirelessProfile; onCl
                 <option key={val} value={val}>{label}</option>
               ))}
             </select>
+          </div>
+
+          <div className="border-t border-border pt-3">
+            {!showResetPassword ? (
+              <button
+                type="button"
+                onClick={() => setShowResetPassword(true)}
+                className="text-xs font-semibold text-brand-500 hover:text-brand-600 transition-colors"
+              >
+                Reset password…
+              </button>
+            ) : resetDone ? (
+              <div className="bg-background border border-border rounded-lg p-3 space-y-2">
+                <p className="text-xs font-medium text-foreground">Password reset. Share the new password with {user.name}:</p>
+                <p className="font-mono text-sm text-foreground bg-card border border-border rounded-md px-2 py-1.5">{newPassword}</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <label className="text-xs text-muted-foreground block">New password</label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type={showNewPassword ? 'text' : 'password'}
+                      value={newPassword}
+                      onChange={e => setNewPassword(e.target.value)}
+                      placeholder="At least 6 characters"
+                      className="w-full bg-background border border-border rounded-lg pl-3 pr-9 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(s => !s)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      tabIndex={-1}
+                    >
+                      <i className={showNewPassword ? 'ri-eye-off-line' : 'ri-eye-line'} />
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setNewPassword(generatePassword()); setShowNewPassword(true); }}
+                    className="px-3 py-2 border border-border text-xs font-medium text-muted-foreground rounded-lg hover:bg-background transition-colors whitespace-nowrap"
+                  >
+                    Generate
+                  </button>
+                </div>
+                {resetError && <p className="text-xs text-red-400 bg-red-500/10 rounded-lg px-3 py-2">{resetError}</p>}
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => { setShowResetPassword(false); setNewPassword(''); setResetError(''); }}
+                    className="flex-1 px-3 py-1.5 border border-border text-xs text-muted-foreground rounded-lg hover:bg-background transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleResetPassword}
+                    disabled={resetting}
+                    className="flex-1 px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    {resetting ? 'Resetting…' : 'Reset Password'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {error && <p className="text-xs text-red-400 bg-red-500/10 rounded-lg px-3 py-2">{error}</p>}

@@ -79,6 +79,22 @@ export async function deleteWirelessUser(userId: string): Promise<void> {
   if (!res.ok) throw new Error(json.error ?? 'Failed to delete user');
 }
 
+// Admin-only: set another user's password directly (they aren't asked for
+// their old one — this goes through the service-role backend, same gate as
+// create/delete-user, not the self-service changePassword below).
+export async function resetUserPassword(userId: string, password: string): Promise<void> {
+  const token = await getToken();
+  if (!token) throw new Error('Not authenticated');
+
+  const res = await fetch(`${API}/reset-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ userId, password }),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error ?? 'Failed to reset password');
+}
+
 export async function changePassword(newPassword: string): Promise<void> {
   if (!isSupabaseConfigured) throw new Error('Not connected to Supabase');
   const { error } = await supabase.auth.updateUser({ password: newPassword });
