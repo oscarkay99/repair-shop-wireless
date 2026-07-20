@@ -1,4 +1,5 @@
 import { db } from '@/services/supabase';
+import { AUDIT_ACTION_LABEL, summarizeAuditAction } from '@/utils/auditSummary';
 
 export type AuditStatus = 'success' | 'failure' | 'attempted' | 'info';
 export type AuditSource = 'frontend' | 'backend';
@@ -34,15 +35,6 @@ type AuditLogRow = {
   created_at: string;
 };
 
-const ACTION_LABEL: Record<string, string> = { insert: 'created', update: 'updated', delete: 'deleted' };
-
-function summarize(row: AuditLogRow): string {
-  const who = row.actor_name || 'Someone';
-  const verb = ACTION_LABEL[row.action] ?? row.action;
-  const what = row.table_name.replace(/_/g, ' ').replace(/s$/, '');
-  return `${who} ${verb} a ${what} record`;
-}
-
 // These rows come from Postgres triggers firing after a real, already-committed
 // change — there's no "attempted" or "failure" state to capture at this layer,
 // and no frontend request context, so status/source/layer are fixed rather
@@ -50,7 +42,7 @@ function summarize(row: AuditLogRow): string {
 function toRecord(row: AuditLogRow): AuditLogRecord {
   return {
     id: row.id,
-    action: ACTION_LABEL[row.action] ?? row.action,
+    action: AUDIT_ACTION_LABEL[row.action] ?? row.action,
     entityType: row.table_name,
     entityId: row.entity_id ?? undefined,
     actorId: row.actor_id ?? undefined,
@@ -58,7 +50,7 @@ function toRecord(row: AuditLogRow): AuditLogRecord {
     status: 'success',
     source: 'backend',
     layer: 'database',
-    summary: summarize(row),
+    summary: summarizeAuditAction(row.actor_name, row.action, row.table_name),
     beforeData: row.before_data ?? undefined,
     afterData: row.after_data ?? undefined,
     createdAt: row.created_at,
