@@ -47,11 +47,14 @@ function toNotification(row: MyNotificationRow, read: boolean): Notification {
   };
 }
 
+const MAX_VISIBLE_TOASTS = 3;
+
 export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [toasts, setToasts] = useState<Notification[]>([]);
   const seenIds = useRef<Set<string>>(new Set());
   const readIds = useRef<Set<string>>(new Set());
+  const isFirstLoad = useRef(true);
 
   const poll = useCallback(async () => {
     let rows: MyNotificationRow[];
@@ -61,19 +64,23 @@ export function useNotifications() {
       return;
     }
 
+    const wasFirstLoad = isFirstLoad.current;
     const freshlySeen: Notification[] = [];
     const mapped = rows.map(row => {
       const firstTimeSeen = !seenIds.current.has(row.id);
       if (firstTimeSeen) seenIds.current.add(row.id);
-      const notif = toNotification(row, readIds.current.has(row.id));
-      if (firstTimeSeen) freshlySeen.push(notif);
+      const notif = toNotification(row, wasFirstLoad || readIds.current.has(row.id));
+      if (firstTimeSeen && !wasFirstLoad) freshlySeen.push(notif);
       return notif;
     });
 
     setNotifications(mapped);
+    isFirstLoad.current = false;
 
+    // Existing history loads as already-read and never toasts — only events
+    // that arrive after the initial fetch are "new" and worth popping up.
     if (freshlySeen.length > 0) {
-      setToasts(prev => [...prev, ...freshlySeen]);
+      setToasts(prev => [...prev, ...freshlySeen].slice(-MAX_VISIBLE_TOASTS));
       freshlySeen.forEach(n => {
         setTimeout(() => {
           setToasts(prev => prev.filter(t => t.id !== n.id));
