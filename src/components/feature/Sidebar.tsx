@@ -11,6 +11,7 @@ import {
   Hammer,
   LogOut,
   Receipt,
+  X,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/context/ThemeContext';
@@ -83,7 +84,12 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
   );
 }
 
-export default function Sidebar() {
+interface SidebarProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export default function Sidebar({ open, onClose }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -101,19 +107,29 @@ export default function Sidebar() {
 
   return (
     <aside
-      className="w-60 flex-shrink-0 h-full flex flex-col border-r"
+      className={`w-60 flex-shrink-0 h-full flex flex-col border-r fixed inset-y-0 left-0 z-40 transition-transform duration-200 lg:relative lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}
       style={{ background: 'hsl(var(--sidebar-background))', borderColor: 'hsl(var(--sidebar-border))' }}
     >
       {/* Logo */}
-      <div className="px-6 py-5 border-b" style={{ borderColor: 'hsl(var(--sidebar-border))' }}>
-        <div className="flex items-center gap-3">
-          <img
-            src={theme === 'dark' ? '/wireless-logo-dark.png' : '/wireless-logo-light.png'}
-            alt="WIRELESS"
-            style={{ height: 22, width: 'auto', objectFit: 'contain' }}
-          />
+      <div className="px-6 py-5 border-b flex items-start justify-between" style={{ borderColor: 'hsl(var(--sidebar-border))' }}>
+        <div>
+          <div className="flex items-center gap-3">
+            <img
+              src={theme === 'dark' ? '/wireless-logo-dark.png' : '/wireless-logo-light.png'}
+              alt="WIRELESS"
+              style={{ height: 22, width: 'auto', objectFit: 'contain' }}
+            />
+          </div>
+          <p className="text-[9px] leading-tight tracking-widest uppercase mt-1.5" style={{ color: 'hsl(var(--sidebar-foreground))' }}>Repair &amp; Service</p>
         </div>
-        <p className="text-[9px] leading-tight tracking-widest uppercase mt-1.5" style={{ color: 'hsl(var(--sidebar-foreground))' }}>Repair &amp; Service</p>
+        <button
+          onClick={onClose}
+          className="lg:hidden w-7 h-7 flex items-center justify-center rounded-lg flex-shrink-0 cursor-pointer transition-colors hover:bg-[hsl(var(--sidebar-accent))]"
+          style={{ color: 'hsl(var(--sidebar-foreground))' }}
+          aria-label="Close menu"
+        >
+          <X className="w-4 h-4" />
+        </button>
       </div>
 
       {/* Main nav */}

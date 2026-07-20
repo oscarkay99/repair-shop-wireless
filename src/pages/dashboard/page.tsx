@@ -690,6 +690,7 @@ function AdminDashboard() {
             <div className="py-10 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No repairs yet</div>
           ) : (
             <>
+              <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr style={{ borderBottom: '1px solid hsl(var(--border))' }}>
@@ -725,6 +726,7 @@ function AdminDashboard() {
                   })}
                 </tbody>
               </table>
+              </div>
               <div className="px-5 py-1">
                 <Pagination page={recentPage} pageCount={recentTotalPages} total={recentTotal} pageSize={5} onPageChange={setRecentPage} />
               </div>

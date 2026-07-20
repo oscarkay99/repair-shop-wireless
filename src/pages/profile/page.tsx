@@ -146,7 +146,7 @@ export default function ProfilePage() {
             <span className="text-xs px-3 py-1 rounded-full font-semibold text-white" style={{ background: roleColor }}>
               {roleLabel}
             </span>
-            <div className="mt-4 pt-4 border-t border-[hsl(var(--border))] grid grid-cols-2 gap-3 text-center">
+            <div className="mt-4 pt-4 border-t border-[hsl(var(--border))] grid grid-cols-1 sm:grid-cols-2 gap-3 text-center">
               <div>
                 <p className="text-lg font-bold text-[hsl(var(--foreground))]">{userPermissions.length}</p>
                 <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Modules Access</p>
@@ -213,7 +213,7 @@ export default function ProfilePage() {
               )}
 
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs font-semibold text-[hsl(var(--muted-foreground))] block mb-1.5">Full Name</label>
                     {editMode ? (
@@ -260,7 +260,7 @@ export default function ProfilePage() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 pt-2 border-t border-[hsl(var(--border))]">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[hsl(var(--border))]">
                   <div>
                     <label className="text-xs font-semibold text-[hsl(var(--muted-foreground))] block mb-1">Role</label>
                     <span className="text-xs px-2.5 py-1 rounded-full font-semibold text-white" style={{ background: roleColor }}>{roleLabel}</span>

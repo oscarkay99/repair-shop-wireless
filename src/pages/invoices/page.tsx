@@ -370,6 +370,7 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
         </div>
 
         <div className="rounded-xl overflow-hidden mb-6" style={{ border: '1px solid hsl(var(--border))' }}>
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr style={{ borderBottom: '1px solid hsl(var(--border))' }}>
@@ -394,6 +395,7 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
               )}
             </tbody>
           </table>
+          </div>
         </div>
 
         <div className="ml-auto max-w-xs space-y-1.5 mb-8">
@@ -513,7 +515,7 @@ export default function InvoicesPage() {
   return (
     <div className="space-y-5">
       {/* Stat cards */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-xl p-5" style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
           <div className="text-xs mb-2" style={{ color: 'hsl(var(--muted-foreground))' }}>Total Invoices</div>
           <div className="text-2xl font-bold" style={{ color: 'hsl(var(--foreground))' }}>{invoices.length}</div>
@@ -568,6 +570,7 @@ export default function InvoicesPage() {
         {loading ? (
           <div className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Loading…</div>
         ) : (
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr style={{ borderBottom: '1px solid hsl(var(--border))' }}>
@@ -613,6 +616,7 @@ export default function InvoicesPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 

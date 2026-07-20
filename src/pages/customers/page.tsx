@@ -196,7 +196,7 @@ function CustomerDetailPanel({ customer, lastRepair, canEdit, onEdit, onClose }:
   return createPortal(
     <div className="fixed inset-0 z-50" style={{ background: 'rgba(0,0,0,0.4)' }} onClick={onClose}>
       <div
-        className="absolute right-0 top-0 bottom-0 w-80 overflow-y-auto"
+        className="absolute right-0 top-0 bottom-0 w-full lg:w-80 overflow-y-auto"
         style={{ background: 'hsl(var(--card))', borderLeft: '1px solid hsl(var(--border))' }}
         onClick={e => e.stopPropagation()}
       >
@@ -393,6 +393,7 @@ export default function CustomersPage() {
 
       {/* Table */}
       <div className="rounded-xl border overflow-hidden" style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr style={{ borderBottom: '1px solid hsl(var(--border))' }}>
@@ -456,6 +457,7 @@ export default function CustomersPage() {
             })}
           </tbody>
         </table>
+        </div>
       </div>
 
       <Pagination

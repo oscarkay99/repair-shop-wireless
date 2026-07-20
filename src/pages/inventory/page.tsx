@@ -219,6 +219,7 @@ export default function InventoryPage() {
         {loading ? (
           <div className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Loading…</div>
         ) : (
+          <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr style={{ borderBottom: '1px solid hsl(var(--border))' }}>
@@ -297,6 +298,7 @@ export default function InventoryPage() {
               })}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 

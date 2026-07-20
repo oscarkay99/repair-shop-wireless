@@ -589,14 +589,14 @@ export default function RepairsBoard() {
     { label: 'READY FOR PICKUP', value: String(ready.length),      icon: CheckCircle2, border: '#22c55e' },
   ] as const;
 
-  const cols = selected ? 'grid-cols-2' : 'grid-cols-3';
+  const cols = selected ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3';
 
   return (
     <div className="flex h-full -m-6 overflow-hidden">
       {/* Scrollable left section */}
       <div className="flex-1 overflow-y-auto p-6 space-y-5 min-w-0">
         {/* Stat cards */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {STATS.map(card => {
             const Icon = card.icon;
             return (
@@ -691,7 +691,7 @@ export default function RepairsBoard() {
 
       {/* Detail panel */}
       {selected && (
-        <div className="w-80 shrink-0 h-full overflow-hidden border-l"
+        <div className="fixed inset-0 z-40 lg:relative lg:inset-auto lg:z-auto lg:w-80 shrink-0 h-full overflow-hidden border-l"
           style={{ borderColor: 'hsl(var(--border))' }}>
           <RepairDetailPanel
             repair={selected}

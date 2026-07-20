@@ -248,7 +248,7 @@ export default function TechnicianDashboard() {
       )}
 
       {/* KPI cards */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard label="Active Work"      value={totalActive}    sub="In your queue right now"   icon={Wrench}       color="#06B6D4" />
         <KPICard label="Ready for Pickup" value={totalReady}     sub="Awaiting customer"          icon={CheckCircle2} color="#10B981" />
         <KPICard label="Parts Pending"    value={totalParts}     sub="Waiting on parts"           icon={Clock}        color="#F59E0B" />
