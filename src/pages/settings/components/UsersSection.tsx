@@ -22,6 +22,7 @@ const ROLE_COLORS: Record<string, string> = {
 function EditUserModal({ user, onClose, onSaved }: { user: WirelessProfile; onClose: () => void; onSaved: () => void }) {
   const [name, setName] = useState(user.name);
   const [role, setRole] = useState(user.role);
+  const [username, setUsername] = useState(user.username ?? '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -30,7 +31,7 @@ function EditUserModal({ user, onClose, onSaved }: { user: WirelessProfile; onCl
     setSaving(true);
     setError('');
     try {
-      await updateWirelessUser(user.id, { name: name.trim(), role });
+      await updateWirelessUser(user.id, { name: name.trim(), role, username: username.trim() || null });
       onSaved();
       onClose();
     } catch (e: unknown) {
@@ -57,6 +58,16 @@ function EditUserModal({ user, onClose, onSaved }: { user: WirelessProfile; onCl
           <div>
             <label className="text-xs text-muted-foreground mb-1 block">Email</label>
             <p className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-muted-foreground">{user.email}</p>
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Username <span className="opacity-60">(optional)</span></label>
+            <input
+              type="text"
+              value={username}
+              onChange={e => setUsername(e.target.value.replace(/\s/g, ''))}
+              placeholder="e.g. kwame.a"
+              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
+            />
           </div>
           <div>
             <label className="text-xs text-muted-foreground mb-1 block">Role</label>
@@ -157,7 +168,7 @@ export default function UsersSection() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">{u.name}</p>
-                  <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                  <p className="text-xs text-muted-foreground truncate">{u.email}{u.username ? ` · @${u.username}` : ''}</p>
                 </div>
                 <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${ROLE_COLORS[u.role] ?? 'bg-muted text-muted-foreground'}`}>
                   {ROLE_LABELS[u.role] ?? u.role}

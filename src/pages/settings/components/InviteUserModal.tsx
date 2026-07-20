@@ -26,9 +26,10 @@ export default function InviteUserModal({ open, onClose, onCreated }: Props) {
   const [role, setRole] = useState('technician');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [result, setResult] = useState<{ name: string; email: string; password: string; role: string } | null>(null);
+  const [result, setResult] = useState<{ name: string; email: string; username: string; password: string; role: string } | null>(null);
   const [copied, setCopied] = useState(false);
 
   if (!open) return null;
@@ -37,6 +38,7 @@ export default function InviteUserModal({ open, onClose, onCreated }: Props) {
     setRole('technician');
     setName('');
     setEmail('');
+    setUsername('');
     setError('');
     setResult(null);
     setCopied(false);
@@ -53,8 +55,8 @@ export default function InviteUserModal({ open, onClose, onCreated }: Props) {
     setSaving(true);
     const password = generatePassword();
     try {
-      await createWirelessUser({ name: name.trim(), email: email.trim(), role, password });
-      setResult({ name: name.trim(), email: email.trim(), password, role });
+      await createWirelessUser({ name: name.trim(), email: email.trim(), username: username.trim() || undefined, role, password });
+      setResult({ name: name.trim(), email: email.trim(), username: username.trim(), password, role });
       onCreated?.();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to create account');
@@ -65,7 +67,8 @@ export default function InviteUserModal({ open, onClose, onCreated }: Props) {
 
   const copyCredentials = () => {
     if (!result) return;
-    const text = `WIRELESS login\nEmail: ${result.email}\nPassword: ${result.password}\n\nSign in at your usual WIRELESS link, or use "Continue with Google" if this email is a Google account. You can change your password anytime from Settings.`;
+    const signInAs = result.username ? `Username: ${result.username} (or email: ${result.email})` : `Email: ${result.email}`;
+    const text = `WIRELESS login\n${signInAs}\nPassword: ${result.password}\n\nSign in at your usual WIRELESS link, or use "Continue with Google" if this email is a Google account. You can change your password anytime from Settings.`;
     navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
   };
 
@@ -89,6 +92,12 @@ export default function InviteUserModal({ open, onClose, onCreated }: Props) {
                 <span className="text-muted-foreground text-xs">Email</span>
                 <span className="text-foreground">{result.email}</span>
               </div>
+              {result.username && (
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground text-xs">Username</span>
+                  <span className="text-foreground">{result.username}</span>
+                </div>
+              )}
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground text-xs">Password</span>
                 <span className="text-foreground">{result.password}</span>
@@ -152,6 +161,17 @@ export default function InviteUserModal({ open, onClose, onCreated }: Props) {
                   placeholder="name@example.com"
                   className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
                 />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Username <span className="opacity-60">(optional)</span></label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={e => setUsername(e.target.value.replace(/\s/g, ''))}
+                  placeholder="e.g. kwame.a"
+                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
+                />
+                <p className="text-[11px] text-muted-foreground mt-1">Lets them sign in with a short username instead of typing their full email.</p>
               </div>
 
               {error && <p className="text-xs text-red-400 bg-red-500/10 rounded-lg px-3 py-2">{error}</p>}

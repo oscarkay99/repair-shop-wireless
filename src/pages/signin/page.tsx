@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import {
-  Mail, Lock, Eye, EyeOff, ArrowRight, Loader2,
+  Lock, Eye, EyeOff, ArrowRight, Loader2, User,
   AlertCircle, CheckCircle2,
   Ticket, Users, Boxes, LineChart,
 } from 'lucide-react';
@@ -137,9 +137,9 @@ export default function SignInPage() {
                   <div key={f.title} className="flex items-start gap-3">
                     <div
                       className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                      style={{ background: 'rgba(236,1,24,0.12)' }}
+                      style={{ background: '#0F0F0F', border: '1px solid rgba(236,1,24,0.25)' }}
                     >
-                      <f.icon className="w-4 h-4" style={{ color: 'hsl(354 65% 62%)' }} />
+                      <f.icon className="w-4 h-4" style={{ color: '#EC0118' }} />
                     </div>
                     <div className="pt-1">
                       <p className="text-[13px] font-semibold text-white leading-tight">{f.title}</p>
@@ -296,12 +296,12 @@ export default function SignInPage() {
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <FocusInput
-                    icon={<Mail className="w-4 h-4" />}
-                    type="email"
+                    icon={<User className="w-4 h-4" />}
+                    type="text"
                     value={email}
                     onChange={setEmail}
-                    placeholder={isSupabaseAuth ? 'your@email.com' : 'you@wireless.com'}
-                    label="Email Address"
+                    placeholder={isSupabaseAuth ? 'you@wireless.com or username' : 'you@wireless.com'}
+                    label="Email or Username"
                     inputBase={inputBase}
                     inputFocus={inputFocus}
                   />
