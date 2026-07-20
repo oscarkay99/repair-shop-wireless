@@ -166,7 +166,7 @@ export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: T
   const [showAllNotifs, setShowAllNotifs] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const bellRef = useRef<HTMLDivElement>(null);
-  const { notifications, toasts, unreadCount, markAllRead, dismissToast } = useNotifications();
+  const { notifications, toasts, unreadCount, markAllRead, dismissToast, clearToasts } = useNotifications();
   const upcomingBirthdays = useUpcomingBirthdays();
   const { theme, toggleTheme } = useTheme();
 
@@ -380,7 +380,7 @@ export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: T
           {/* Bell */}
           <div ref={bellRef} className="relative">
             <button
-              onClick={() => { setBellOpen(o => !o); if (bellOpen) setShowAllNotifs(false); if (!bellOpen && unreadCount > 0) markAllRead(); }}
+              onClick={() => { setBellOpen(o => !o); if (bellOpen) setShowAllNotifs(false); if (!bellOpen) { clearToasts(); if (unreadCount > 0) markAllRead(); } }}
               className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors relative ${bellOpen ? 'text-brand-500' : ''}`}
               style={!bellOpen ? { color: 'hsl(var(--muted-foreground))' } : undefined}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
@@ -401,7 +401,7 @@ export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: T
             {/* Dropdown panel */}
             {bellOpen && (
               <div
-                className="absolute top-full mt-2 right-0 z-50 rounded-xl overflow-hidden"
+                className="absolute top-full mt-2 right-0 z-[110] rounded-xl overflow-hidden"
                 style={{
                   background: 'hsl(var(--card))',
                   border: '1px solid hsl(var(--border))',

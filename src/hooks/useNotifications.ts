@@ -106,7 +106,11 @@ export function useNotifications() {
     setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
 
+  const clearToasts = useCallback(() => {
+    setToasts([]);
+  }, []);
+
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  return { notifications, toasts, unreadCount, markAllRead, dismissToast };
+  return { notifications, toasts, unreadCount, markAllRead, dismissToast, clearToasts };
 }
