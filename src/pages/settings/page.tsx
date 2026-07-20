@@ -15,7 +15,7 @@ import InviteUserModal from './components/InviteUserModal';
 const allSections = [
   { id: 'branding', label: 'Branding', icon: 'ri-palette-line', adminOnly: false },
   { id: 'operations', label: 'Operations', icon: 'ri-settings-4-line', adminOnly: false },
-  { id: 'team', label: 'Team & Roles', icon: 'ri-team-line', adminOnly: false },
+  { id: 'team', label: 'Team & Roles', icon: 'ri-team-line', adminOnly: true },
   { id: 'users', label: 'Users', icon: 'ri-user-settings-line', adminOnly: true },
   { id: 'security', label: 'Security', icon: 'ri-shield-keyhole-line', adminOnly: false },
   { id: 'password', label: 'Change Password', icon: 'ri-lock-password-line', adminOnly: false },
@@ -98,7 +98,7 @@ export default function SettingsPage() {
 
           {activeSection === 'operations' && <OperationsSection />}
 
-          {activeSection === 'team' && (
+          {activeSection === 'team' && isAdmin && (
             <TeamRolesSection
               roles={teamRoles}
               onAddRole={() => { setEditingRole(null); setShowAddRole(true); }}

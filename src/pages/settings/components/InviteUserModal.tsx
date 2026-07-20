@@ -27,6 +27,8 @@ export default function InviteUserModal({ open, onClose, onCreated }: Props) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<{ name: string; email: string; username: string; password: string; role: string } | null>(null);
@@ -39,6 +41,8 @@ export default function InviteUserModal({ open, onClose, onCreated }: Props) {
     setName('');
     setEmail('');
     setUsername('');
+    setPassword('');
+    setShowPassword(false);
     setError('');
     setResult(null);
     setCopied(false);
@@ -52,11 +56,12 @@ export default function InviteUserModal({ open, onClose, onCreated }: Props) {
   const handleCreate = async () => {
     setError('');
     if (!name.trim() || !email.trim()) { setError('Name and email are required'); return; }
+    if (password.trim() && password.trim().length < 6) { setError('Password must be at least 6 characters'); return; }
     setSaving(true);
-    const password = generatePassword();
+    const finalPassword = password.trim() || generatePassword();
     try {
-      await createWirelessUser({ name: name.trim(), email: email.trim(), username: username.trim() || undefined, role, password });
-      setResult({ name: name.trim(), email: email.trim(), username: username.trim(), password, role });
+      await createWirelessUser({ name: name.trim(), email: email.trim(), username: username.trim() || undefined, role, password: finalPassword });
+      setResult({ name: name.trim(), email: email.trim(), username: username.trim(), password: finalPassword, role });
       onCreated?.();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to create account');
@@ -173,12 +178,38 @@ export default function InviteUserModal({ open, onClose, onCreated }: Props) {
                 />
                 <p className="text-[11px] text-muted-foreground mt-1">Lets them sign in with a short username instead of typing their full email.</p>
               </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Password <span className="opacity-60">(optional)</span></label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      placeholder="Leave blank to auto-generate"
+                      className="w-full bg-background border border-border rounded-lg pl-3 pr-9 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(s => !s)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      tabIndex={-1}
+                    >
+                      <i className={showPassword ? 'ri-eye-off-line' : 'ri-eye-line'} />
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setPassword(generatePassword()); setShowPassword(true); }}
+                    className="px-3 py-2 border border-border text-xs font-medium text-muted-foreground rounded-lg hover:bg-background transition-colors whitespace-nowrap"
+                  >
+                    Generate
+                  </button>
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-1">Set one yourself, or leave blank and a secure one will be generated for you to share.</p>
+              </div>
 
               {error && <p className="text-xs text-red-400 bg-red-500/10 rounded-lg px-3 py-2">{error}</p>}
-
-              <p className="text-[11px] text-muted-foreground">
-                A secure password is generated automatically — you'll get a copy to share with them once the account is created.
-              </p>
 
               <div className="flex gap-3 pt-2">
                 <button
