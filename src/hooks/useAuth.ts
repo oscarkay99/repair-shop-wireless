@@ -86,6 +86,21 @@ if (isSupabaseConfigured) {
   });
 }
 
+// Accepts either an email or a username. GoTrue only ever authenticates by
+// email, so a bare username is resolved to its email first via a rate-limited
+// RPC (anon-callable, since this runs before the user has a session) — the
+// real password check still happens in GoTrue afterward either way.
+async function resolveIdentifierToEmail(identifier: string): Promise<string> {
+  if (identifier.includes('@')) return identifier;
+  try {
+    const { data, error } = await supabase.schema('wireless').rpc('resolve_login_email', { p_identifier: identifier });
+    if (error || !data) return identifier;
+    return data as string;
+  } catch {
+    return identifier;
+  }
+}
+
 async function loadProfileFromSession(userId: string, email: string): Promise<AuthUser | null> {
   // Demo account defaults are only ever used to provision a brand-new profile
   // (first login, no row yet) — never to overwrite a real, already-existing
@@ -153,15 +168,18 @@ export function useAuth() {
     return () => { listeners.delete(handler); };
   }, []);
 
-  const login = async (email: string, password: string): Promise<AuthResult> => {
+  const login = async (identifier: string, password: string): Promise<AuthResult> => {
     setState({ loading: true });
 
-    const demoMatch = mockUsers.find(u => u.email === email && u.password === password);
+    // Demo/mock accounts only ever have an email, never a username — a
+    // username login simply won't match one, which is correct.
+    const demoMatch = mockUsers.find(u => u.email === identifier && u.password === password);
     setState({ deniedMessage: null });
 
     // Admin tries Supabase first (needs real session for RLS), others skip straight to mock
     if (isSupabaseConfigured && demoMatch?.role === 'admin') {
       try {
+        const email = await resolveIdentifierToEmail(identifier);
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (!error && data.session) {
           // Load profile; fall back to demo data if DB query fails
@@ -179,13 +197,14 @@ export function useAuth() {
     // Non-demo users with Supabase configured must go through Supabase only
     if (isSupabaseConfigured && !demoMatch) {
       try {
+        const email = await resolveIdentifierToEmail(identifier);
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (!error && data.session) {
           const user = await loadProfileFromSession(data.session.user.id, data.session.user.email ?? '');
           if (user) { writeStoredUser(user); setState({ user, loading: false }); return { success: true }; }
         }
         setState({ loading: false });
-        return { success: false, error: 'Invalid email or password' };
+        return { success: false, error: 'Invalid email/username or password' };
       } catch {
         setState({ loading: false });
         return { success: false, error: 'Connection error — please try again' };
@@ -193,7 +212,7 @@ export function useAuth() {
     }
 
     // Mock auth — all demo accounts reach here (non-admin always, admin if Supabase failed)
-    if (!demoMatch) { setState({ loading: false }); return { success: false, error: 'Invalid email or password' }; }
+    if (!demoMatch) { setState({ loading: false }); return { success: false, error: 'Invalid email/username or password' }; }
     const { password: _pw, ...userFields } = demoMatch;
     const user: AuthUser = { ...userFields, _isMock: true };
     writeStoredUser(user);
@@ -212,7 +231,14 @@ export function useAuth() {
     setState({ deniedMessage: null });
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin + '/signin' },
+      options: {
+        redirectTo: window.location.origin + '/signin',
+        // Always show Google's account chooser rather than silently
+        // re-using whatever Google account happens to already be signed in
+        // on this browser — that's what leaves someone stuck unable to
+        // switch to their actual Wireless-registered Google account.
+        queryParams: { prompt: 'select_account' },
+      },
     });
     return error ? { success: false, error: error.message } : { success: true };
   };

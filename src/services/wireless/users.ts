@@ -12,6 +12,7 @@ export interface WirelessProfile {
   id: string;
   name: string;
   email: string;
+  username: string | null;
   role: string;
   avatar: string;
   last_login: string | null;
@@ -21,7 +22,7 @@ export async function getWirelessUsers(): Promise<WirelessProfile[]> {
   if (!isSupabaseConfigured) return [];
   const { data, error } = await db
     .from('profiles')
-    .select('id, name, email, role, avatar, last_login')
+    .select('id, name, email, username, role, avatar, last_login')
     .order('name');
   if (error) throw error;
   return (data ?? []) as WirelessProfile[];
@@ -30,6 +31,7 @@ export async function getWirelessUsers(): Promise<WirelessProfile[]> {
 export async function createWirelessUser(payload: {
   name: string;
   email: string;
+  username?: string;
   role: string;
   password: string;
 }): Promise<void> {
@@ -51,12 +53,17 @@ export async function createWirelessUser(payload: {
   }
 }
 
-// Admins can update any profile's name/role directly — RLS (profiles_update)
-// already allows this for the admin role, no service-role backend call needed.
-export async function updateWirelessUser(userId: string, patch: { name?: string; role?: string }): Promise<void> {
+// Admins can update any profile's name/role/username directly — RLS
+// (profiles_update) already allows this for the admin role, no service-role
+// backend call needed. A duplicate username surfaces as a Postgres unique-
+// violation (23505), which callers should catch and show as "already taken".
+export async function updateWirelessUser(userId: string, patch: { name?: string; role?: string; username?: string | null }): Promise<void> {
   if (!isSupabaseConfigured) throw new Error('Not connected to Supabase');
   const { error } = await db.from('profiles').update(patch).eq('id', userId);
-  if (error) throw error;
+  if (error) {
+    if (error.code === '23505') throw new Error('That username is already taken');
+    throw error;
+  }
 }
 
 export async function deleteWirelessUser(userId: string): Promise<void> {
