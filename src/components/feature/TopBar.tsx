@@ -41,6 +41,8 @@ function fmtTime(d: Date) {
   return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 }
 
+const NOTIF_PREVIEW_COUNT = 5;
+
 const typeIcon: Record<Notification['type'], React.ReactNode> = {
   sale:    <ShoppingBag className="w-3.5 h-3.5" />,
   lead:    <Zap className="w-3.5 h-3.5" />,
@@ -161,6 +163,7 @@ export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: T
   const { user } = useAuth();
   const [query, setQuery] = useState('');
   const [bellOpen, setBellOpen] = useState(false);
+  const [showAllNotifs, setShowAllNotifs] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const bellRef = useRef<HTMLDivElement>(null);
   const { notifications, toasts, unreadCount, markAllRead, dismissToast } = useNotifications();
@@ -377,7 +380,7 @@ export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: T
           {/* Bell */}
           <div ref={bellRef} className="relative">
             <button
-              onClick={() => { setBellOpen(o => !o); if (!bellOpen && unreadCount > 0) markAllRead(); }}
+              onClick={() => { setBellOpen(o => !o); if (bellOpen) setShowAllNotifs(false); if (!bellOpen && unreadCount > 0) markAllRead(); }}
               className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors relative ${bellOpen ? 'text-brand-500' : ''}`}
               style={!bellOpen ? { color: 'hsl(var(--muted-foreground))' } : undefined}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
@@ -445,9 +448,20 @@ export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: T
                       <p className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No notifications yet</p>
                     </div>
                   ) : (
-                    <div className="divide-y" style={{ borderColor: 'hsl(var(--border))' }}>
-                      {notifications.map(n => <NotifRow key={n.id} n={n} />)}
-                    </div>
+                    <>
+                      <div className="divide-y" style={{ borderColor: 'hsl(var(--border))' }}>
+                        {(showAllNotifs ? notifications : notifications.slice(0, NOTIF_PREVIEW_COUNT)).map(n => <NotifRow key={n.id} n={n} />)}
+                      </div>
+                      {notifications.length > NOTIF_PREVIEW_COUNT && (
+                        <button
+                          onClick={() => setShowAllNotifs(v => !v)}
+                          className="w-full text-center py-2.5 text-[11px] font-semibold transition-opacity hover:opacity-70 text-brand-500"
+                          style={{ borderTop: '1px solid hsl(var(--border))' }}
+                        >
+                          {showAllNotifs ? 'Show less' : `Show all (${notifications.length})`}
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
