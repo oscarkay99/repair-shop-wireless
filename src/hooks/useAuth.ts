@@ -231,7 +231,14 @@ export function useAuth() {
     setState({ deniedMessage: null });
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin + '/signin' },
+      options: {
+        redirectTo: window.location.origin + '/signin',
+        // Always show Google's account chooser rather than silently
+        // re-using whatever Google account happens to already be signed in
+        // on this browser — that's what leaves someone stuck unable to
+        // switch to their actual Wireless-registered Google account.
+        queryParams: { prompt: 'select_account' },
+      },
     });
     return error ? { success: false, error: error.message } : { success: true };
   };

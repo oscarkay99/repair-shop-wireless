@@ -52,7 +52,7 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
               boxShadow: 'rgba(142,29,49,0.08) 0px 0px 10px inset',
               color: 'hsl(354 60% 25%)',
             }
-          : { color: 'hsl(var(--sidebar-foreground))' }
+          : { color: 'hsl(var(--foreground))' }
       }
       onMouseEnter={e => {
         if (!active) {
@@ -63,7 +63,7 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
       onMouseLeave={e => {
         if (!active) {
           (e.currentTarget as HTMLElement).style.background = '';
-          (e.currentTarget as HTMLElement).style.color = 'hsl(var(--sidebar-foreground))';
+          (e.currentTarget as HTMLElement).style.color = 'hsl(var(--foreground))';
         }
       }}
     >
