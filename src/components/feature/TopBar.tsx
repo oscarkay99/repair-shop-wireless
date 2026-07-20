@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bell, Plus, ShoppingBag, Wrench, CreditCard, TriangleAlert, Zap, X, CheckCheck, Cake, Sun, Moon } from 'lucide-react';
+import { Bell, Plus, ShoppingBag, Wrench, CreditCard, TriangleAlert, Zap, X, CheckCheck, Cake, Sun, Moon, Menu } from 'lucide-react';
 import { usePageTitle } from '@/context/PageTitleContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useNotifications, type Notification } from '@/hooks/useNotifications';
@@ -18,6 +18,7 @@ type NavItem = SearchItem & { to: string };
 interface TopBarProps {
   title?: string;
   subtitle?: string;
+  onMenuClick?: () => void;
 }
 
 function getGreeting() {
@@ -154,7 +155,7 @@ function NotifToast({ n, onDismiss }: { n: Notification; onDismiss: () => void }
   );
 }
 
-export default function TopBar({ title = 'Dashboard', subtitle }: TopBarProps) {
+export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: TopBarProps) {
   const { pageTitle } = usePageTitle();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -262,30 +263,44 @@ export default function TopBar({ title = 'Dashboard', subtitle }: TopBarProps) {
   return (
     <>
       <header
-        className="h-14 flex items-center justify-between px-6 flex-shrink-0 border-b"
+        className="h-14 flex items-center justify-between gap-2 px-3 sm:px-6 flex-shrink-0 border-b"
         style={{
           background: 'hsl(var(--card))',
           borderColor: 'hsl(var(--border))',
         }}
       >
-        {/* Left: page title */}
-        <div>
-          <h1
-            className="text-sm font-bold tracking-wide uppercase"
-            style={{ color: 'hsl(var(--foreground))' }}
-          >
-            {title}
-          </h1>
-          <p
-            className="text-[11px] mt-0.5"
-            style={{ color: 'hsl(var(--muted-foreground))' }}
-          >
-            {displaySubtitle}
-          </p>
+        {/* Left: menu toggle + page title */}
+        <div className="flex items-center gap-2 min-w-0">
+          {onMenuClick && (
+            <button
+              onClick={onMenuClick}
+              className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg transition-colors flex-shrink-0"
+              style={{ color: 'hsl(var(--muted-foreground))' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}
+              aria-label="Open menu"
+            >
+              <Menu className="w-4.5 h-4.5" />
+            </button>
+          )}
+          <div className="min-w-0">
+            <h1
+              className="text-sm font-bold tracking-wide uppercase truncate"
+              style={{ color: 'hsl(var(--foreground))' }}
+            >
+              {title}
+            </h1>
+            <p
+              className="text-[11px] mt-0.5 truncate hidden sm:block"
+              style={{ color: 'hsl(var(--muted-foreground))' }}
+            >
+              {displaySubtitle}
+            </p>
+          </div>
         </div>
 
         {/* Right: actions */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto flex-shrink-0" style={{ scrollbarWidth: 'none' }}>
           {/* Extra outline buttons (e.g. invoice actions) */}
           {pageTitle.extraActions?.map((ea, i) => (
             <button
@@ -389,6 +404,7 @@ export default function TopBar({ title = 'Dashboard', subtitle }: TopBarProps) {
                   border: '1px solid hsl(var(--border))',
                   boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
                   width: 340,
+                  maxWidth: 'calc(100vw - 2rem)',
                 }}
               >
                 {/* Header */}
@@ -442,7 +458,7 @@ export default function TopBar({ title = 'Dashboard', subtitle }: TopBarProps) {
 
       {/* Toast stack — bottom-right */}
       {toasts.length > 0 && (
-        <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-2 pointer-events-none">
+        <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[100] flex flex-col gap-2 pointer-events-none" style={{ maxWidth: 'calc(100vw - 2rem)' }}>
           {toasts.map(t => (
             <div key={t.id} className="pointer-events-auto">
               <NotifToast n={t} onDismiss={() => dismissToast(t.id)} />

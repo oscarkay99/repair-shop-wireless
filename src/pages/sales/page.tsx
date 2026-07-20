@@ -484,6 +484,7 @@ export default function AccessoriesSalesPage() {
                 </div>
 
                 <div className="rounded-xl border overflow-hidden" style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
+                  <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr style={{ borderBottom: '1px solid hsl(var(--border))' }}>
@@ -535,6 +536,7 @@ export default function AccessoriesSalesPage() {
                       })}
                     </tbody>
                   </table>
+                  </div>
                 </div>
                 <Pagination
                   page={productPage}
@@ -573,6 +575,7 @@ export default function AccessoriesSalesPage() {
                 </div>
 
                 <div className="rounded-xl border overflow-hidden" style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
+                  <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr style={{ borderBottom: '1px solid hsl(var(--border))' }}>
@@ -612,6 +615,7 @@ export default function AccessoriesSalesPage() {
                       })}
                     </tbody>
                   </table>
+                  </div>
                 </div>
                 <Pagination
                   page={salesPage}

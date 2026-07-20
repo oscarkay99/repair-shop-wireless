@@ -131,7 +131,7 @@ export default function ReceptionistDashboard() {
       </div>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard label="Check-ins Today"   value={todayRepairs.length}  sub="Devices received today"     icon={ClipboardList} color="#06B6D4" />
         <KPICard label="Ready for Pickup"  value={ready.length}         sub="Customers to notify"        icon={Package}       color="#10B981" />
         <KPICard label="In Progress"       value={inProgress.length}    sub="Currently being worked on"  icon={Clock}         color="#F59E0B" />

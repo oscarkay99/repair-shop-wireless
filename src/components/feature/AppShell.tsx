@@ -1,4 +1,4 @@
-import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Component, useEffect, useState, type ErrorInfo, type ReactNode } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
@@ -42,13 +42,23 @@ class PageErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundary
 function ShellInner() {
   const { pageTitle } = usePageTitle();
   const { pathname } = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Dismiss the mobile drawer on every navigation, not just an explicit close.
+  useEffect(() => { setSidebarOpen(false); }, [pathname]);
 
   return (
     <div className="flex h-full w-full overflow-hidden bg-background">
-      <Sidebar />
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <TopBar title={pageTitle.title} subtitle={pageTitle.subtitle} />
-        <div className="flex-1 overflow-y-auto p-6">
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <main className="flex-1 flex flex-col overflow-hidden min-w-0">
+        <TopBar title={pageTitle.title} subtitle={pageTitle.subtitle} onMenuClick={() => setSidebarOpen(true)} />
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
           <PageErrorBoundary key={pathname}>
             <Outlet />
           </PageErrorBoundary>

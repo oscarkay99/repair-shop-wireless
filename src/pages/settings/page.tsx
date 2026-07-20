@@ -81,7 +81,7 @@ export default function SettingsPage() {
 
   return (
     <AdminLayout title="Settings" subtitle="Configure your Wireless Command Center">
-      <div className="flex gap-5">
+      <div className="flex flex-col lg:flex-row gap-5">
         <SettingsSidebar sections={sections} activeSection={activeSection} onSelect={setActiveSection} />
 
         <div className="flex-1 min-w-0 space-y-5">
