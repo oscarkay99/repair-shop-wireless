@@ -96,6 +96,22 @@ export interface Invoice {
   updated_at: string;
 }
 
+export interface Payment {
+  id: string;
+  amount: number;
+  method: PaymentMethod;
+  invoice_id?: string;
+  invoice?: Pick<Invoice, 'id' | 'invoice_number'>;
+  ticket_id?: string;
+  ticket?: { id: string; ticket_number: string };
+  customer_id?: string;
+  customer_name: string;
+  reference?: string;
+  notes?: string;
+  recorded_by?: string;
+  created_at: string;
+}
+
 export interface InvoiceItem {
   id: string;
   invoice_id: string;

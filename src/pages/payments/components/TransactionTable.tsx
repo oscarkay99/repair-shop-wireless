@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTransactions } from '@/hooks/useTransactions';
 import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/shared/Pagination';
+import RecordPaymentModal from './RecordPaymentModal';
 
 const PAGE_SIZE = 10;
 
@@ -22,10 +23,11 @@ const methodIcons: Record<string, string> = {
 const itemsByProduct: Record<string, Array<{ name: string; qty: number; price: string }>> = {};
 
 export default function TransactionTable() {
-  const { transactions, verify } = useTransactions();
+  const { transactions, verify, reload } = useTransactions();
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string>('');
+  const [showRecordModal, setShowRecordModal] = useState(false);
 
   const approve = (id: string) => verify(id, 'verified');
 
@@ -60,6 +62,8 @@ export default function TransactionTable() {
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-[14px] font-bold" style={{ color: '#0F172A' }}>Transactions</h3>
             <button
+              onClick={() => setShowRecordModal(true)}
+              title="Record Payment"
               className="w-7 h-7 flex items-center justify-center rounded-lg text-white text-sm cursor-pointer"
               style={{ background: '#EC0118' }}
             >
@@ -304,6 +308,10 @@ export default function TransactionTable() {
           <i className="ri-file-list-3-line text-4xl" style={{ color: 'rgba(7,16,31,0.15)' }} />
           <p className="text-sm" style={{ color: 'rgba(7,16,31,0.3)' }}>Select a transaction to view details</p>
         </div>
+      )}
+
+      {showRecordModal && (
+        <RecordPaymentModal onClose={() => setShowRecordModal(false)} onSaved={reload} />
       )}
     </div>
   );

@@ -1,4 +1,5 @@
 import { useTransactions } from '@/hooks/useTransactions';
+import { useInvoices } from '@/hooks/useInvoices';
 
 function parseAmt(a: string) {
   return parseFloat(a.replace(/[^0-9.]/g, '')) || 0;
@@ -10,6 +11,9 @@ function fmtGHS(n: number) {
 
 export default function PaymentStats() {
   const { transactions } = useTransactions();
+  const { invoices, totals: invoiceTotals } = useInvoices();
+
+  const outstandingInvoices = invoices.filter(i => i.status !== 'paid' && i.status !== 'cancelled' && i.total - i.amount_paid > 0);
 
   const verified   = transactions.filter(t => t.status === 'verified');
   const pending    = transactions.filter(t => t.status === 'pending' || t.status === 'needs_review');
@@ -44,8 +48,8 @@ export default function PaymentStats() {
         </div>
         <div className="bg-[hsl(var(--card))] rounded-2xl p-5 border border-[hsl(var(--border))]">
           <p className="text-xs text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">Outstanding Balance</p>
-          <p className="text-2xl font-bold text-red-500">{fmtGHS(0)}</p>
-          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">0 customers</p>
+          <p className="text-2xl font-bold text-red-500">{fmtGHS(invoiceTotals.outstanding)}</p>
+          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">{outstandingInvoices.length} invoice{outstandingInvoices.length !== 1 ? 's' : ''}</p>
         </div>
         <div className="bg-[hsl(var(--card))] rounded-2xl p-5 border border-[hsl(var(--border))]">
           <p className="text-xs text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-1">Reconciliation Queue</p>
