@@ -4,11 +4,19 @@ import { usePageTitle } from '@/context/PageTitleContext';
 import { useTechnicians } from '@/hooks/useTechnicians';
 import { useRepairs } from '@/hooks/useRepairs';
 import Pagination from '@/components/shared/Pagination';
-import { Clock, Trash2, UserPlus, X, RefreshCw, Pencil } from 'lucide-react';
+import { Clock, Trash2, UserPlus, X, RefreshCw, Pencil, Eye, EyeOff } from 'lucide-react';
 import type { Technician } from '@/types/wireless';
 import { REPAIR_STATUS_META, isActiveRepairStatus } from '@/utils/repairStatus';
+import { createWirelessUser } from '@/services/wireless/users';
 
 const PAGE_SIZE = 9;
+
+function generatePassword(): string {
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  let out = '';
+  for (let i = 0; i < 10; i++) out += chars[Math.floor(Math.random() * chars.length)];
+  return out;
+}
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -46,16 +54,45 @@ function AddTechnicianModal({ onSave, onClose }: {
   onSave: (t: Omit<Technician, 'id' | 'rating' | 'total_completed' | 'created_at' | 'updated_at'>) => Promise<unknown>;
   onClose: () => void;
 }) {
-  const [form, setForm] = useState({ name: '', phone: '', email: '', specialty: '', status: 'available' as Technician['status'] });
+  const [form, setForm] = useState({ name: '', phone: '', email: '', specialty: '' });
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [result, setResult] = useState<{ name: string; email: string; username: string; password: string } | null>(null);
+  const [copied, setCopied] = useState(false);
   const set = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.phone) return;
+    setError('');
+    if (!form.name || !form.phone || !form.email) { setError('Name, phone, and email are required'); return; }
+    if (password.trim() && password.trim().length < 6) { setError('Password must be at least 6 characters'); return; }
     setSaving(true);
-    try { await onSave(form); onClose(); }
-    finally { setSaving(false); }
+    const finalPassword = password.trim() || generatePassword();
+    try {
+      const profileId = await createWirelessUser({
+        name: form.name.trim(),
+        email: form.email.trim(),
+        username: username.trim() || undefined,
+        role: 'technician',
+        password: finalPassword,
+      });
+      await onSave({ ...form, profile_id: profileId, status: 'available' });
+      setResult({ name: form.name.trim(), email: form.email.trim(), username: username.trim(), password: finalPassword });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add technician');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const copyCredentials = () => {
+    if (!result) return;
+    const signInAs = result.username ? `Username: ${result.username} (or email: ${result.email})` : `Email: ${result.email}`;
+    const text = `WIRELESS Tech Portal login\n${signInAs}\nPassword: ${result.password}`;
+    navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
   };
 
   return createPortal(
@@ -65,34 +102,110 @@ function AddTechnicianModal({ onSave, onClose }: {
       <div className="w-full max-w-sm rounded-2xl overflow-hidden"
         style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
         onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'hsl(var(--border))' }}>
-          <p className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>New Technician</p>
-          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-lg" style={{ background: 'hsl(var(--muted))' }}>
-            <X className="w-3.5 h-3.5" style={{ color: 'hsl(var(--muted-foreground))' }} />
-          </button>
-        </div>
-        <form onSubmit={handleSubmit} className="px-5 py-4 space-y-3">
-          {[
-            { key: 'name',      label: 'Full Name *',  type: 'text', required: true },
-            { key: 'phone',     label: 'Phone *',      type: 'tel',  required: true },
-            { key: 'email',     label: 'Email',        type: 'email',required: false },
-            { key: 'specialty', label: 'Specialty',    type: 'text', required: false },
-          ].map(f => (
-            <div key={f.key}>
-              <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>{f.label}</label>
-              <input required={f.required} type={f.type} value={(form as Record<string,string>)[f.key]}
-                onChange={e => set(f.key, e.target.value)}
-                className="w-full h-9 px-3 rounded-lg text-sm outline-none"
-                style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
+        {result ? (
+          <>
+            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'hsl(var(--border))' }}>
+              <p className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>Technician Added</p>
             </div>
-          ))}
-          <div className="flex gap-2 pt-1">
-            <button type="button" onClick={onClose} className="flex-1 h-9 rounded-lg text-xs font-semibold"
-              style={{ background: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' }}>Cancel</button>
-            <button type="submit" disabled={saving} className="flex-1 h-9 rounded-lg text-xs font-semibold text-white disabled:opacity-60"
-              style={{ background: 'hsl(var(--primary))' }}>{saving ? 'Saving…' : 'Add Technician'}</button>
-          </div>
-        </form>
+            <div className="px-5 py-4 space-y-3">
+              <p className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Share these credentials with {result.name} so they can sign into the Tech Portal.</p>
+              <div className="space-y-2 rounded-xl p-4 font-mono text-sm" style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))' }}>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Email</span>
+                  <span style={{ color: 'hsl(var(--foreground))' }}>{result.email}</span>
+                </div>
+                {result.username && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Username</span>
+                    <span style={{ color: 'hsl(var(--foreground))' }}>{result.username}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Password</span>
+                  <span style={{ color: 'hsl(var(--foreground))' }}>{result.password}</span>
+                </div>
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button onClick={copyCredentials} className="flex-1 h-9 rounded-lg text-xs font-semibold"
+                  style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}>
+                  {copied ? 'Copied!' : 'Copy Credentials'}
+                </button>
+                <button onClick={onClose} className="flex-1 h-9 rounded-lg text-xs font-semibold text-white"
+                  style={{ background: 'hsl(var(--primary))' }}>
+                  Done
+                </button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'hsl(var(--border))' }}>
+              <p className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>New Technician</p>
+              <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-lg" style={{ background: 'hsl(var(--muted))' }}>
+                <X className="w-3.5 h-3.5" style={{ color: 'hsl(var(--muted-foreground))' }} />
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="px-5 py-4 space-y-3">
+              {[
+                { key: 'name',      label: 'Full Name *',  type: 'text', required: true },
+                { key: 'phone',     label: 'Phone *',      type: 'tel',  required: true },
+                { key: 'email',     label: 'Email *',      type: 'email',required: true },
+                { key: 'specialty', label: 'Specialty',    type: 'text', required: false },
+              ].map(f => (
+                <div key={f.key}>
+                  <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>{f.label}</label>
+                  <input required={f.required} type={f.type} value={(form as Record<string,string>)[f.key]}
+                    onChange={e => set(f.key, e.target.value)}
+                    className="w-full h-9 px-3 rounded-lg text-sm outline-none"
+                    style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
+                </div>
+              ))}
+
+              <div>
+                <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                  Username <span className="opacity-60 normal-case">(optional)</span>
+                </label>
+                <input type="text" value={username} onChange={e => setUsername(e.target.value.replace(/\s/g, ''))}
+                  placeholder="e.g. joe.a"
+                  className="w-full h-9 px-3 rounded-lg text-sm outline-none"
+                  style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                  Password <span className="opacity-60 normal-case">(optional — auto-generated if blank)</span>
+                </label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
+                      placeholder="Leave blank to auto-generate"
+                      className="w-full h-9 pl-3 pr-9 rounded-lg text-sm outline-none"
+                      style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
+                    <button type="button" onClick={() => setShowPassword(s => !s)} tabIndex={-1}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2"
+                      style={{ color: 'hsl(var(--muted-foreground))' }}>
+                      {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                  <button type="button" onClick={() => { setPassword(generatePassword()); setShowPassword(true); }}
+                    className="px-3 h-9 rounded-lg text-xs font-medium whitespace-nowrap"
+                    style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--muted-foreground))' }}>
+                    Generate
+                  </button>
+                </div>
+              </div>
+
+              {error && <p className="text-xs rounded-lg px-3 py-2" style={{ background: 'rgba(239,68,68,0.1)', color: '#dc2626' }}>{error}</p>}
+
+              <div className="flex gap-2 pt-1">
+                <button type="button" onClick={onClose} className="flex-1 h-9 rounded-lg text-xs font-semibold"
+                  style={{ background: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' }}>Cancel</button>
+                <button type="submit" disabled={saving} className="flex-1 h-9 rounded-lg text-xs font-semibold text-white disabled:opacity-60"
+                  style={{ background: 'hsl(var(--primary))' }}>{saving ? 'Adding…' : 'Add Technician'}</button>
+              </div>
+            </form>
+          </>
+        )}
       </div>
     </div>,
     document.body

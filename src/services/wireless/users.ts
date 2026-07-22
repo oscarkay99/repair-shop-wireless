@@ -34,7 +34,7 @@ export async function createWirelessUser(payload: {
   username?: string;
   role: string;
   password: string;
-}): Promise<void> {
+}): Promise<string> {
   const token = await getToken();
   if (!token) throw new Error('Not authenticated');
 
@@ -51,6 +51,7 @@ export async function createWirelessUser(payload: {
   if (userId) {
     await db.from('profiles').update({ name: payload.name, role: payload.role }).eq('id', userId);
   }
+  return userId;
 }
 
 // Admins can update any profile's name/role/username directly — RLS
