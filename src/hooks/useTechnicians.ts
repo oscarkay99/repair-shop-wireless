@@ -24,8 +24,13 @@ export function useTechnicians() {
   };
 
   const patch = async (id: string, data: Partial<Technician>) => {
-    await updateTechnician(id, data);
-    setTechnicians(prev => prev.map(t => t.id === id ? { ...t, ...data } : t));
+    try {
+      await updateTechnician(id, data);
+      setTechnicians(prev => prev.map(t => t.id === id ? { ...t, ...data } : t));
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Failed to update technician', 'error');
+      throw e;
+    }
   };
 
   const remove = async (id: string) => {

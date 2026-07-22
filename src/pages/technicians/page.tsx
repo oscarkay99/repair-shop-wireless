@@ -8,6 +8,7 @@ import { Clock, Trash2, UserPlus, X, RefreshCw, Pencil, Eye, EyeOff, KeyRound } 
 import type { Technician } from '@/types/wireless';
 import { REPAIR_STATUS_META, isActiveRepairStatus } from '@/utils/repairStatus';
 import { createWirelessUser } from '@/services/wireless/users';
+import { isCurrentlyUnavailable } from '@/utils/technicianAvailability';
 
 const PAGE_SIZE = 9;
 
@@ -382,7 +383,8 @@ function EditTechnicianModal({ technician, onSave, onClose }: {
     email: technician.email,
     specialty: technician.specialty,
     status: technician.status,
-    leave_until: technician.leave_until ?? '',
+    unavailable_from: technician.unavailable_from ?? '',
+    unavailable_until: technician.unavailable_until ?? '',
   });
   const [saving, setSaving] = useState(false);
   const set = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
@@ -398,7 +400,8 @@ function EditTechnicianModal({ technician, onSave, onClose }: {
         email: form.email,
         specialty: form.specialty,
         status: form.status,
-        leave_until: form.status === 'off_duty' ? (form.leave_until || null) : null,
+        unavailable_from: form.status === 'unavailable' ? (form.unavailable_from || null) : null,
+        unavailable_until: form.status === 'unavailable' ? (form.unavailable_until || null) : null,
       });
       onClose();
     } finally { setSaving(false); }
@@ -444,26 +447,31 @@ function EditTechnicianModal({ technician, onSave, onClose }: {
               className="w-full h-9 px-3 rounded-lg text-sm outline-none"
               style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>Status</label>
-              <select value={form.status} onChange={e => set('status', e.target.value)}
-                className="w-full h-9 px-3 rounded-lg text-sm outline-none"
-                style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}>
-                <option value="available">Available</option>
-                <option value="busy">Busy</option>
-                <option value="off_duty">Off Duty</option>
-              </select>
-            </div>
-            {form.status === 'off_duty' && (
+          <div>
+            <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>Status</label>
+            <select value={form.status} onChange={e => set('status', e.target.value)}
+              className="w-full h-9 px-3 rounded-lg text-sm outline-none"
+              style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}>
+              <option value="available">Available</option>
+              <option value="unavailable">Unavailable</option>
+            </select>
+          </div>
+          {form.status === 'unavailable' && (
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>Back On</label>
-                <input type="date" value={form.leave_until} onChange={e => set('leave_until', e.target.value)}
+                <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>From</label>
+                <input type="date" value={form.unavailable_from} onChange={e => set('unavailable_from', e.target.value)}
                   className="w-full h-9 px-3 rounded-lg text-sm outline-none"
                   style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
               </div>
-            )}
-          </div>
+              <div>
+                <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>Until</label>
+                <input type="date" value={form.unavailable_until} min={form.unavailable_from || undefined} onChange={e => set('unavailable_until', e.target.value)}
+                  className="w-full h-9 px-3 rounded-lg text-sm outline-none"
+                  style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
+              </div>
+            </div>
+          )}
           <div className="flex gap-2 pt-1">
             <button type="button" onClick={onClose} className="flex-1 h-9 rounded-lg text-xs font-semibold"
               style={{ background: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' }}>Cancel</button>
@@ -522,7 +530,7 @@ export default function TechniciansPage() {
   const [creatingLoginFor, setCreatingLoginFor] = useState<Technician | null>(null);
   const [page, setPage] = useState(1);
 
-  const onBreakTechs = technicians.filter(t => t.status === 'on_break').length;
+  const unavailableTechs = technicians.filter(t => isCurrentlyUnavailable(t)).length;
   const totalInQueue = useMemo(() =>
     repairs.filter(r => isActiveRepairStatus(r.status)).length,
   [repairs]);
@@ -533,11 +541,11 @@ export default function TechniciansPage() {
   useEffect(() => {
     setPageTitle({
       title: 'Technicians',
-      subtitle: `${onBreakTechs} on break · ${technicians.length} total`,
+      subtitle: `${unavailableTechs} unavailable · ${technicians.length} total`,
       action: { label: 'Add Technician', onClick: () => setShowAdd(true) },
       secondaryAction: { label: 'Reassign', onClick: () => setShowReassign(true) },
     });
-  }, [technicians.length, onBreakTechs, setPageTitle]);
+  }, [technicians.length, unavailableTechs, setPageTitle]);
 
   const doneHours = filterHours(timeline);
   const doneLabel = timeline === 'All' ? 'Done (all)' : `Done (${timeline})`;
@@ -586,7 +594,7 @@ export default function TechniciansPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Technicians',      value: loading ? '…' : technicians.length },
-          { label: 'On Break',         value: loading ? '…' : onBreakTechs },
+          { label: 'Unavailable',      value: loading ? '…' : unavailableTechs },
           { label: 'In Queue',         value: totalInQueue },
           { label: 'Unassigned',       value: unassigned },
         ].map(s => (
@@ -620,7 +628,7 @@ export default function TechniciansPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {pagedTechStats.map(({ tech, current, queue, done, activeLoad, avgCompletionHrs }) => {
-            const isOnBreak   = tech.status === 'on_break';
+            const isUnavailable = isCurrentlyUnavailable(tech);
             const color      = avatarColor(tech.name);
             const loadPct    = Math.round((activeLoad / maxLoad) * 100);
             const isOverload = loadPct >= 80;
@@ -634,9 +642,9 @@ export default function TechniciansPage() {
               <div key={tech.id} className="rounded-xl border overflow-hidden relative"
                 style={{
                   background: 'hsl(var(--card))',
-                  borderColor: isOnBreak ? 'rgba(245,158,11,0.4)' : 'hsl(var(--border))',
-                  borderLeftWidth: isOnBreak ? 3 : 1,
-                  borderLeftColor: isOnBreak ? '#f59e0b' : 'hsl(var(--border))',
+                  borderColor: isUnavailable ? 'rgba(239,68,68,0.4)' : 'hsl(var(--border))',
+                  borderLeftWidth: isUnavailable ? 3 : 1,
+                  borderLeftColor: isUnavailable ? '#ef4444' : 'hsl(var(--border))',
                 }}>
 
                 {/* Create Login + Edit + Delete buttons */}
@@ -683,18 +691,14 @@ export default function TechniciansPage() {
                       </div>
                       {/* Status dot */}
                       <span className="absolute bottom-0.5 right-0.5 w-3 h-3 rounded-full border-2 border-[hsl(var(--card))]"
-                        style={{ background: tech.status === 'off_duty' ? '#ef4444' : isOnBreak ? '#f59e0b' : 'hsl(142 60% 45%)' }} />
+                        style={{ background: isUnavailable ? '#ef4444' : 'hsl(142 60% 45%)' }} />
                     </div>
                     <div className="flex-1 min-w-0 pt-1">
                       <div className="flex items-center gap-2">
                         <p className="font-bold text-base" style={{ color: 'hsl(var(--foreground))' }}>{tech.name}</p>
-                        {tech.status === 'off_duty' ? (
+                        {isUnavailable ? (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white" style={{ background: '#ef4444' }}>
-                            ON LEAVE{tech.leave_until ? ` · back ${new Date(tech.leave_until + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}
-                          </span>
-                        ) : isOnBreak ? (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white" style={{ background: '#f59e0b' }}>
-                            ON BREAK
+                            UNAVAILABLE{tech.unavailable_until ? ` · back ${new Date(tech.unavailable_until + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}
                           </span>
                         ) : (
                           <span className="text-[10px] font-semibold uppercase" style={{ color: 'hsl(var(--muted-foreground))' }}>

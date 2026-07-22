@@ -3,9 +3,9 @@ import type { Technician } from '@/types/wireless';
 
 const SEED: Technician[] = [
   { id: 't1', name: 'Ama Owusu',     phone: '+233 24 100 0001', email: 'ama@wireless.com',   specialty: 'iPhone & iOS',       status: 'available', rating: 4.9, total_completed: 45, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-  { id: 't2', name: 'Joe Asante',    phone: '+233 24 100 0002', email: 'joe@wireless.com',   specialty: 'Android & Samsung',  status: 'on_break',  rating: 4.7, total_completed: 38, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+  { id: 't2', name: 'Joe Asante',    phone: '+233 24 100 0002', email: 'joe@wireless.com',   specialty: 'Android & Samsung',  status: 'available', rating: 4.7, total_completed: 38, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
   { id: 't3', name: 'Yaw Frimpong',  phone: '+233 24 100 0003', email: 'yaw@wireless.com',   specialty: 'General Repairs',    status: 'available', rating: 4.6, total_completed: 29, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-  { id: 't4', name: 'Adjoa Mensah',  phone: '+233 24 100 0004', email: 'adjoa@wireless.com', specialty: 'Motherboard & Logic',status: 'off_duty',  rating: 4.8, total_completed: 21, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+  { id: 't4', name: 'Adjoa Mensah',  phone: '+233 24 100 0004', email: 'adjoa@wireless.com', specialty: 'Motherboard & Logic',status: 'unavailable', unavailable_from: new Date().toISOString().slice(0,10), unavailable_until: new Date(Date.now() + 3*86400000).toISOString().slice(0,10), rating: 4.8, total_completed: 21, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
 ];
 let localStore = [...SEED];
 
@@ -42,15 +42,21 @@ export async function createTechnician(input: Omit<Technician, 'id' | 'total_com
 }
 
 export async function updateTechnician(id: string, patch: Partial<Technician>): Promise<void> {
-  localStore = localStore.map(t => t.id === id ? { ...t, ...patch } : t);
-  if (!isSupabaseConfigured) return;
+  if (!isSupabaseConfigured) {
+    localStore = localStore.map(t => t.id === id ? { ...t, ...patch } : t);
+    return;
+  }
   const { error } = await db.from('technicians').update(patch).eq('id', id);
-  if (error) console.warn('[wireless/technicians] update error', error);
+  if (error) throw error;
+  localStore = localStore.map(t => t.id === id ? { ...t, ...patch } : t);
 }
 
 export async function deleteTechnician(id: string): Promise<void> {
-  localStore = localStore.filter(t => t.id !== id);
-  if (!isSupabaseConfigured) return;
+  if (!isSupabaseConfigured) {
+    localStore = localStore.filter(t => t.id !== id);
+    return;
+  }
   const { error } = await db.from('technicians').delete().eq('id', id);
-  if (error) console.warn('[wireless/technicians] delete error', error);
+  if (error) throw error;
+  localStore = localStore.filter(t => t.id !== id);
 }

@@ -4,6 +4,7 @@ import { useTechnicians } from '@/hooks/useTechnicians';
 import type { Repair } from '@/types/repair';
 import type { WCustomer } from '@/types/wireless';
 import CustomerPicker from '@/components/shared/CustomerPicker';
+import { isCurrentlyUnavailable } from '@/utils/technicianAvailability';
 
 interface Props {
   onSave: (r: Omit<Repair, 'id'>) => Promise<unknown>;
@@ -203,10 +204,12 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
                 <option value="">Unassigned</option>
                 {sortedTechnicians.map(t => {
                   const load = activeLoadByName[t.name] ?? 0;
+                  const unavailable = isCurrentlyUnavailable(t);
                   return (
-                    <option key={t.id} value={t.name}>
-                      {t.name} — {load === 0 ? 'free' : `${load} active job${load > 1 ? 's' : ''}`}
-                      {t.status === 'off_duty' ? ` (on leave${t.leave_until ? ` until ${new Date(t.leave_until + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''})` : ''}
+                    <option key={t.id} value={t.name} disabled={unavailable}>
+                      {unavailable
+                        ? `${t.name} — Unavailable${t.unavailable_until ? ` until ${new Date(t.unavailable_until + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}`
+                        : `${t.name} — ${load === 0 ? 'free' : `${load} active job${load > 1 ? 's' : ''}`}`}
                     </option>
                   );
                 })}

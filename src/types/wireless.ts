@@ -2,7 +2,7 @@
 
 import type { PaymentMethod } from '@/types/sale';
 
-export type TechnicianStatus = 'available' | 'on_break' | 'off_duty';
+export type TechnicianStatus = 'available' | 'unavailable';
 export type InvoiceStatus = 'unpaid' | 'partial' | 'paid' | 'overdue' | 'cancelled';
 export type PaymentStatus = 'paid' | 'partial' | 'unpaid';
 
@@ -27,8 +27,9 @@ export interface Technician {
   email: string;
   specialty: string;
   status: TechnicianStatus;
-  /** Return date while status is 'off_duty', ISO 'YYYY-MM-DD'. Null/undefined once available again. */
-  leave_until?: string | null;
+  /** Date range while status is 'unavailable', ISO 'YYYY-MM-DD'. Both null/undefined once available again. */
+  unavailable_from?: string | null;
+  unavailable_until?: string | null;
   rating: number;
   total_completed: number;
   created_at: string;

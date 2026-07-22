@@ -1,19 +1,19 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, Clock, ChevronRight } from 'lucide-react';
+import { LogOut, Clock, Calendar, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTechnicians } from '@/hooks/useTechnicians';
 import { useRepairs } from '@/hooks/useRepairs';
 import { RepairDetailPanel } from '@/pages/repairs/RepairsBoard';
 import { REPAIR_STATUS_META } from '@/utils/repairStatus';
 import { roleColors, roleLabels } from '@/mocks/users';
+import { isCurrentlyUnavailable } from '@/utils/technicianAvailability';
 import type { RepairStatus } from '@/types/repair';
-import type { TechnicianStatus } from '@/types/wireless';
 
 const QUEUE_STATUSES: RepairStatus[] = ['received', 'diagnosis_paid', 'diagnosing', 'awaiting_approval', 'parts_pending'];
 const DONE_STATUSES: RepairStatus[] = ['ready', 'completed', 'diagnosis_only_closed'];
 
-function fmtLeaveDate(iso: string) {
+function fmtDate(iso: string) {
   return new Date(iso + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
@@ -21,20 +21,38 @@ function initials(name: string) {
   return name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
 }
 
-const STATUS_BUTTONS: { key: TechnicianStatus; label: string; color: string }[] = [
-  { key: 'available', label: 'Available', color: '#22c55e' },
-  { key: 'on_break',   label: 'On Break',  color: '#f59e0b' },
-  { key: 'off_duty',   label: 'Off Day',   color: '#ef4444' },
-];
-
 export default function TechPortalPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { technicians, patch: patchTechnician } = useTechnicians();
   const { repairs, loading, updateStatus, addNote, addMedia, removeMedia, patchRepair } = useRepairs();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [showUnavailablePicker, setShowUnavailablePicker] = useState(false);
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+  const pickerRef = useRef<HTMLDivElement>(null);
 
   const myTech = useMemo(() => technicians.find(t => t.profile_id === user?.id), [technicians, user]);
+  const unavailableNow = myTech ? isCurrentlyUnavailable(myTech) : false;
+
+  // Self-correct: once the marked range has passed, flip back to available
+  // rather than relying on the technician remembering to do it themselves.
+  useEffect(() => {
+    if (!myTech) return;
+    if (myTech.status === 'unavailable' && !isCurrentlyUnavailable(myTech) && myTech.unavailable_until) {
+      patchTechnician(myTech.id, { status: 'available', unavailable_from: null, unavailable_until: null });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myTech?.id, myTech?.status, myTech?.unavailable_until]);
+
+  useEffect(() => {
+    if (!showUnavailablePicker) return;
+    const fn = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) setShowUnavailablePicker(false);
+    };
+    document.addEventListener('mousedown', fn);
+    return () => document.removeEventListener('mousedown', fn);
+  }, [showUnavailablePicker]);
 
   const myRepairs = useMemo(() =>
     myTech ? repairs.filter(r => r.technicianId === myTech.id) : [],
@@ -52,14 +70,15 @@ export default function TechPortalPage() {
     navigate('/signin', { replace: true });
   };
 
-  const setStatus = (status: TechnicianStatus) => {
-    if (!myTech) return;
-    patchTechnician(myTech.id, { status, leave_until: null });
-  };
-
   const returnToWork = () => {
     if (!myTech) return;
-    patchTechnician(myTech.id, { status: 'available', leave_until: null });
+    patchTechnician(myTech.id, { status: 'available', unavailable_from: null, unavailable_until: null });
+  };
+
+  const confirmUnavailable = () => {
+    if (!myTech || !fromDate || !toDate) return;
+    patchTechnician(myTech.id, { status: 'unavailable', unavailable_from: fromDate, unavailable_until: toDate });
+    setShowUnavailablePicker(false);
   };
 
   const handleUpdateStatus = (id: string, status: RepairStatus) => {
@@ -115,26 +134,64 @@ export default function TechPortalPage() {
             {/* Status toggle */}
             <div className="flex items-center gap-2 pt-4 flex-wrap relative" style={{ borderTop: '1px solid hsl(var(--border))' }}>
               <span className="text-xs font-semibold" style={{ color: 'hsl(var(--muted-foreground))' }}>Status:</span>
-              {STATUS_BUTTONS.map(s => {
-                const isActive = myTech?.status === s.key;
-                return (
-                  <button key={s.key} onClick={() => setStatus(s.key)}
-                    className="flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold transition-colors"
-                    style={isActive
-                      ? { background: `${s.color}18`, color: s.color, border: `1px solid ${s.color}55` }
-                      : { color: 'hsl(var(--muted-foreground))', border: '1px solid hsl(var(--border))' }}>
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: isActive ? s.color : 'hsl(var(--muted-foreground))' }} />
-                    {s.label}
-                  </button>
-                );
-              })}
+              <button onClick={returnToWork}
+                className="flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold transition-colors"
+                style={!unavailableNow
+                  ? { background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.35)' }
+                  : { color: 'hsl(var(--muted-foreground))', border: '1px solid hsl(var(--border))' }}>
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: !unavailableNow ? '#22c55e' : 'hsl(var(--muted-foreground))' }} />
+                Available
+              </button>
+              <button onClick={() => { setFromDate(new Date().toISOString().slice(0, 10)); setToDate(''); setShowUnavailablePicker(v => !v); }}
+                className="flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold transition-colors"
+                style={unavailableNow
+                  ? { background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.35)' }
+                  : { color: 'hsl(var(--muted-foreground))', border: '1px solid hsl(var(--border))' }}>
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: unavailableNow ? '#ef4444' : 'hsl(var(--muted-foreground))' }} />
+                Unavailable
+              </button>
 
+              {showUnavailablePicker && (
+                <div ref={pickerRef} className="absolute top-full left-0 mt-2 z-20 rounded-xl overflow-hidden p-3 w-64"
+                  style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', boxShadow: 'var(--shadow-md)' }}>
+                  <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                    Which days will you be unavailable?
+                  </p>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="text-[10px] font-semibold block mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>From</label>
+                      <div className="relative">
+                        <Calendar className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'hsl(var(--muted-foreground))' }} />
+                        <input type="date" value={fromDate} min={new Date().toISOString().slice(0, 10)}
+                          onChange={e => setFromDate(e.target.value)}
+                          className="w-full h-8 pl-8 pr-2 rounded-lg text-xs outline-none"
+                          style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-semibold block mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>Until</label>
+                      <div className="relative">
+                        <Calendar className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'hsl(var(--muted-foreground))' }} />
+                        <input type="date" value={toDate} min={fromDate || new Date().toISOString().slice(0, 10)}
+                          onChange={e => setToDate(e.target.value)}
+                          className="w-full h-8 pl-8 pr-2 rounded-lg text-xs outline-none"
+                          style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
+                      </div>
+                    </div>
+                    <button disabled={!fromDate || !toDate} onClick={confirmUnavailable}
+                      className="w-full h-8 rounded-lg text-xs font-semibold text-white disabled:opacity-40"
+                      style={{ background: 'hsl(var(--primary))' }}>
+                      Set
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {myTech?.status === 'off_duty' && (
+            {unavailableNow && myTech && (
               <div className="flex items-center justify-between gap-2 mt-3 px-3 py-2 rounded-xl" style={{ background: 'rgba(239,68,68,0.08)' }}>
                 <p className="text-xs font-medium" style={{ color: '#dc2626' }}>
-                  Off{myTech.leave_until ? ` until ${fmtLeaveDate(myTech.leave_until)}` : ''}
+                  Unavailable{myTech.unavailable_from && myTech.unavailable_until ? ` ${fmtDate(myTech.unavailable_from)} – ${fmtDate(myTech.unavailable_until)}` : ''}
                 </p>
                 <button onClick={returnToWork} className="text-xs font-semibold" style={{ color: '#dc2626' }}>
                   Return to work
