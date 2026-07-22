@@ -77,6 +77,7 @@ export interface Repair {
   approvalDecisionAt?: string;
   repairStartedAt?: string;
   technician: string;
+  technicianId?: string;
   eta: string;
   cost: string;
   costNum?: number;

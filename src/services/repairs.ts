@@ -33,6 +33,7 @@ type TicketRow = {
   approval_decision_at?: string | null;
   repair_started_at?: string | null;
   technician_name: string;
+  technician_id?: string | null;
   eta: string;
   cost_label: string;
   received_at: string;
@@ -171,6 +172,7 @@ function normalizeTicketRow(row: TicketRow, media: RepairMedia[]): Repair {
     approvalDecisionAt: row.approval_decision_at ?? undefined,
     repairStartedAt: row.repair_started_at ?? undefined,
     technician: row.technician_name,
+    technicianId: row.technician_id ?? undefined,
     eta: row.eta,
     cost: row.cost_label,
     costNum: row.estimated_cost ?? undefined,
@@ -206,6 +208,7 @@ function toTicketPatch(item: Partial<Repair>) {
   if ('approvalDecisionAt' in item) patch.approval_decision_at = item.approvalDecisionAt ?? null;
   if ('repairStartedAt' in item) patch.repair_started_at = item.repairStartedAt ?? null;
   if ('technician' in item) patch.technician_name = item.technician;
+  if ('technicianId' in item) patch.technician_id = item.technicianId ?? null;
   if ('eta' in item) patch.eta = item.eta;
   if ('cost' in item) patch.cost_label = item.cost;
   if ('costNum' in item) patch.estimated_cost = item.costNum ?? null;
@@ -322,6 +325,7 @@ export async function createRepair(r: Omit<Repair, 'id'>): Promise<Repair> {
         approval_decision_at: item.approvalDecisionAt ?? null,
         repair_started_at: item.repairStartedAt ?? null,
         technician_name: item.technician,
+        technician_id: item.technicianId ?? null,
         eta: item.eta,
         cost_label: item.cost,
         estimated_cost: item.costNum ?? null,

@@ -67,6 +67,10 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
     setSaving(true);
     try {
       const costNum = parseFloat(form.cost.replace(/[^0-9.]/g, '')) || 0;
+      // technicians is the roster; technicianId is the FK the backend/RLS
+      // actually uses to scope a technician to their own tickets — the
+      // name string alone (kept for display) isn't enough for that.
+      const technicianId = technicians.find(t => t.name === form.technician)?.id;
 
       if (initial && onUpdate) {
         await onUpdate(initial.id, {
@@ -79,6 +83,7 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
           deviceType: form.deviceType,
           issue: form.issue,
           technician: form.technician,
+          technicianId,
           cost: form.cost,
           costNum,
           eta: form.eta,
@@ -89,6 +94,7 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
       } else {
         await onSave({
           ...form,
+          technicianId,
           customerId: selectedCustomer?.id,
           customerEmail: form.customerEmail || selectedCustomer?.email,
           customerPhone: form.customerPhone || selectedCustomer?.phone,
