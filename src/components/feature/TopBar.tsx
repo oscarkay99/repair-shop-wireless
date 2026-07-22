@@ -303,7 +303,8 @@ export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: T
         </div>
 
         {/* Right: actions */}
-        <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto flex-shrink-0" style={{ scrollbarWidth: 'none' }}>
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
           {/* Extra outline buttons (e.g. invoice actions) */}
           {pageTitle.extraActions?.map((ea, i) => (
             <button
@@ -364,6 +365,7 @@ export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: T
               inputRef={inputRef}
             />
           </div>
+        </div>
 
           {/* Theme toggle */}
           <button
