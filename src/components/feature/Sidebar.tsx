@@ -11,6 +11,7 @@ import {
   Hammer,
   LogOut,
   Receipt,
+  CreditCard,
   X,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -28,6 +29,7 @@ const mainNav: NavItem[] = [
   { label: 'Accessories Sales', icon: ShoppingBag,     path: '/sales',       module: 'Sales' },
   { label: 'Inventory',         icon: Package,         path: '/inventory',   module: 'Inventory' },
   { label: 'Invoices',          icon: FileText,        path: '/invoices',    module: 'Invoices' },
+  { label: 'Payments',          icon: CreditCard,      path: '/payments',    module: 'Payments' },
   { label: 'Expenses & P&L',   icon: Receipt,         path: '/expenses',    module: 'Expenses' },
 ];
 
