@@ -1,11 +1,12 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { LogOut, Clock, Calendar, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTechnicians } from '@/hooks/useTechnicians';
 import { useRepairs } from '@/hooks/useRepairs';
 import { RepairDetailPanel } from '@/pages/repairs/RepairsBoard';
 import { REPAIR_STATUS_META } from '@/utils/repairStatus';
+import { roleColors, roleLabels } from '@/mocks/users';
 import type { RepairStatus } from '@/types/repair';
 import type { TechnicianStatus } from '@/types/wireless';
 
@@ -104,7 +105,7 @@ export default function TechPortalPage() {
   return (
     <div className="h-screen flex flex-col" style={{ background: 'hsl(var(--background))' }}>
       {/* Header */}
-      <header className="flex items-center justify-between px-4 sm:px-6 h-16 border-b flex-shrink-0" style={{ borderColor: 'hsl(var(--border))' }}>
+      <header className="flex items-center px-4 sm:px-6 h-16 border-b flex-shrink-0" style={{ borderColor: 'hsl(var(--border))' }}>
         <div className="flex items-center gap-2.5">
           <img src="/wireless-mark.png" alt="" className="w-8 h-8" />
           <div>
@@ -112,23 +113,9 @@ export default function TechPortalPage() {
             <p className="text-[9px] tracking-widest uppercase mt-1" style={{ color: 'hsl(var(--muted-foreground))' }}>Tech Portal</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-[11px] font-bold" style={{ background: '#f59e0b' }}>
-              {initials(user?.name ?? 'T')}
-            </div>
-            <span className="text-sm font-semibold" style={{ color: 'hsl(var(--foreground))' }}>{user?.name?.split(' ')[0]}</span>
-          </div>
-          <button onClick={handleSignOut}
-            className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold transition-colors"
-            style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}>
-            <LogOut className="w-3.5 h-3.5" />
-            Switch
-          </button>
-        </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-24">
         <div className="max-w-2xl w-full mx-auto space-y-5">
           {/* Profile + status card */}
           <div className="rounded-2xl border p-5" style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
@@ -258,6 +245,41 @@ export default function TechPortalPage() {
           </div>
         </div>
       </div>
+
+      {/* User card + sign out — bottom-left, matching the sidebar's convention in every other role */}
+      {user && (
+        <div className="fixed bottom-4 left-4 z-40 rounded-xl p-3 flex items-center gap-2.5 max-w-[calc(100vw-2rem)]"
+          style={{ background: 'hsl(220 14% 94%)', border: '1px solid hsl(220 13% 88%)' }}>
+          <Link
+            to="/profile"
+            title="View profile"
+            className="flex items-center gap-2.5 flex-1 min-w-0 rounded-lg -m-1 p-1 transition-colors cursor-pointer"
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(220 13% 88%)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}
+          >
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0"
+              style={{ background: user.role ? (roleColors[user.role] ?? 'hsl(354 60% 35%)') : 'hsl(354 60% 35%)' }}
+            >
+              {user.avatar || user.name.slice(0, 2).toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold truncate" style={{ color: 'hsl(220 20% 12%)' }}>{user.name}</p>
+              <p className="text-[10px] truncate" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                {user.role ? (roleLabels[user.role] ?? user.role) : user.role}
+              </p>
+            </div>
+          </Link>
+          <button
+            onClick={handleSignOut}
+            title="Sign out"
+            className="w-7 h-7 flex items-center justify-center rounded-lg flex-shrink-0 cursor-pointer transition-colors hover:bg-red-50 hover:text-red-500"
+            style={{ color: 'hsl(var(--muted-foreground))' }}
+          >
+            <LogOut className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {selected && (
         <div className="fixed inset-0 z-50">
