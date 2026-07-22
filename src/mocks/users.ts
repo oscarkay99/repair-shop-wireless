@@ -17,9 +17,8 @@ export interface SystemUser {
 
 export const rolePermissions: Record<UserRole, string[]> = {
   admin:             ['Dashboard', 'Analytics', 'Audit Logs', 'Inventory', 'Payments', 'Customers', 'Tickets', 'Technicians', 'Invoices', 'Sales', 'Activity', 'Portal', 'Warranty', 'Delivery', 'Expenses', 'Reports', 'Loyalty', 'Team', 'Settings', 'Authentication', 'AI Studio', 'Users'],
-  sales_manager:     ['Dashboard', 'Analytics', 'Inventory', 'Payments', 'Customers', 'Tickets', 'Invoices', 'Sales', 'Reports', 'Loyalty', 'Team'],
+  sales_manager:     ['Dashboard', 'Analytics', 'Inventory', 'Delivery', 'Payments', 'Customers', 'Tickets', 'Invoices', 'Sales', 'Reports', 'Loyalty', 'Team'],
   technician:        ['Dashboard', 'Tickets', 'Warranty', 'Inventory', 'Customers'],
-  inventory_manager: ['Dashboard', 'Analytics', 'Inventory', 'Delivery', 'Reports'],
   receptionist:      ['Dashboard', 'Tickets', 'Customers', 'Payments', 'Invoices'],
 };
 
@@ -27,7 +26,6 @@ export const roleLabels: Record<UserRole, string> = {
   admin: 'Admin',
   sales_manager: 'Sales Manager',
   technician: 'Technician',
-  inventory_manager: 'Inventory Manager',
   receptionist: 'Receptionist',
 };
 
@@ -35,7 +33,6 @@ export const roleColors: Record<UserRole, string> = {
   admin:             '#EC0118',
   sales_manager:     '#F59E0B',
   technician:        '#06B6D4',
-  inventory_manager: '#64748b',
   receptionist:      '#8B5CF6',
 };
 
@@ -83,13 +80,13 @@ export const systemUsers: SystemUser[] = [
     id: 'U005',
     name: 'Yaw Darko',
     email: 'yaw@wireless.com',
-    role: 'inventory_manager',
+    role: 'sales_manager',
     avatar: 'YD',
     status: 'active',
     lastLogin: 'Apr 21, 2026 · 6:00 PM',
     createdAt: 'Mar 1, 2026',
     phone: '+233 24 000 0005',
-    permissions: rolePermissions.inventory_manager,
+    permissions: rolePermissions.sales_manager,
     birthday: '11-02',
   },
   {

@@ -14,7 +14,6 @@ const ROLE_LABELS: Record<string, string> = {
   admin: 'Admin',
   sales_manager: 'Sales Manager',
   technician: 'Technician',
-  inventory_manager: 'Inventory Manager',
   receptionist: 'Receptionist',
 };
 
@@ -22,7 +21,6 @@ const ROLE_COLORS: Record<string, string> = {
   admin: 'bg-red-500/20 text-red-400',
   sales_manager: 'bg-blue-500/20 text-blue-400',
   technician: 'bg-amber-500/20 text-amber-400',
-  inventory_manager: 'bg-purple-500/20 text-purple-400',
   receptionist: 'bg-cyan-500/20 text-cyan-400',
 };
 

@@ -5,7 +5,6 @@ const ROLE_OPTIONS = [
   { value: 'technician', label: 'Technician' },
   { value: 'receptionist', label: 'Receptionist' },
   { value: 'sales_manager', label: 'Sales Manager' },
-  { value: 'inventory_manager', label: 'Inventory Manager' },
   { value: 'admin', label: 'Admin' },
 ];
 

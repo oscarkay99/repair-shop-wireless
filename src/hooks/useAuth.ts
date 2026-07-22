@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { isSupabaseConfigured, supabase } from '@/services/supabase';
 
-export type UserRole = 'admin' | 'sales_manager' | 'technician' | 'inventory_manager' | 'receptionist';
+export type UserRole = 'admin' | 'sales_manager' | 'technician' | 'receptionist';
 
 export interface AuthUser {
   id: string;
@@ -20,7 +20,7 @@ export const mockUsers: (AuthUser & { password: string })[] = [
   { id: 'U001', name: 'Kwame Asante',   email: 'admin@wireless.com',  password: 'admin123', role: 'admin',             avatar: 'KA', lastLogin: '' },
   { id: 'U002', name: 'Kofi Mensah',    email: 'kofi@wireless.com',   password: 'kofi123',  role: 'sales_manager',     avatar: 'KM', lastLogin: '' },
   { id: 'U004', name: 'Ama Owusu',      email: 'ama@wireless.com',    password: 'ama123',   role: 'technician',        avatar: 'AO', lastLogin: '' },
-  { id: 'U005', name: 'Yaw Darko',      email: 'yaw@wireless.com',    password: 'yaw123',   role: 'inventory_manager', avatar: 'YD', lastLogin: '' },
+  { id: 'U005', name: 'Yaw Darko',      email: 'yaw@wireless.com',    password: 'yaw123',   role: 'sales_manager',     avatar: 'YD', lastLogin: '' },
   { id: 'U006', name: 'Efua Boateng',   email: 'efua@wireless.com',   password: 'efua123',  role: 'receptionist',      avatar: 'EB', lastLogin: '' },
 ];
 

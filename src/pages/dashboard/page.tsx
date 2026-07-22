@@ -13,7 +13,6 @@ import BirthdayBanner from '@/components/shared/BirthdayBanner';
 import TechnicianDashboard from './TechnicianDashboard';
 import ReceptionistDashboard from './ReceptionistDashboard';
 import SalesManagerDashboard from './SalesManagerDashboard';
-import InventoryManagerDashboard from './InventoryManagerDashboard';
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
   XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
@@ -894,7 +893,6 @@ export default function DashboardPage() {
           case 'technician':        return <TechnicianDashboard />;
           case 'receptionist':      return <ReceptionistDashboard />;
           case 'sales_manager':     return <SalesManagerDashboard />;
-          case 'inventory_manager': return <InventoryManagerDashboard />;
           default:                  return <AdminDashboard />;
         }
       })()}
