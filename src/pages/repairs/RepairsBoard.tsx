@@ -7,8 +7,8 @@ import SearchDropdown from '@/components/shared/SearchDropdown';
 import Pagination from '@/components/shared/Pagination';
 import DateRangePicker, { type DateRange } from '@/components/shared/DateRangePicker';
 import {
-  X, Clock, Shield, Plus, Check, Pencil, Trash2, Camera, Video, AlertCircle, Loader2,
-  CreditCard, CheckCircle2, Scissors, Stethoscope, ArrowRightCircle, UserX, XCircle,
+  X, Clock, Shield, Plus, Pencil, Trash2, Camera, Video, AlertCircle, Loader2,
+  CheckCircle2, Scissors, Stethoscope, ArrowRightCircle, UserX, XCircle,
 } from 'lucide-react';
 import type { Repair, RepairStatus, RepairMediaStage, RepairMediaUploadInput } from '@/types/repair';
 import {
@@ -16,8 +16,16 @@ import {
   nextAction, nextStatus, isActiveRepairStatus, isDiagnosisStage,
   statusToMediaStage, requiredMediaStageForAdvance, REQUIRED_MEDIA_STAGE_LABEL,
 } from '@/utils/repairStatus';
+import { formatDate } from '@/utils/date';
 
 const PAGE_SIZE = 12;
+
+// started is either a bare YYYY-MM-DD or a full timestamptz ISO string
+function fmtStarted(started: string): string {
+  if (!started) return '—';
+  const hasTime = started.includes('T');
+  return formatDate(hasTime ? started : `${started}T00:00`);
+}
 
 const FILTER_TABS: { key: string; label: string }[] = [
   { key: 'all',           label: 'All' },
@@ -193,13 +201,15 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
               <Pencil className="w-3.5 h-3.5" />
             </button>
           )}
-          <button onClick={onDelete} className="w-7 h-7 flex items-center justify-center rounded-lg"
-            style={{ color: 'hsl(var(--muted-foreground))' }}
-            title="Delete"
-            onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'hsl(0 60% 95%)'; el.style.color = 'hsl(0 65% 45%)'; }}
-            onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = ''; el.style.color = 'hsl(var(--muted-foreground))'; }}>
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
+          {canManageTickets && (
+            <button onClick={onDelete} className="w-7 h-7 flex items-center justify-center rounded-lg"
+              style={{ color: 'hsl(var(--muted-foreground))' }}
+              title="Delete"
+              onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'hsl(0 60% 95%)'; el.style.color = 'hsl(0 65% 45%)'; }}
+              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = ''; el.style.color = 'hsl(var(--muted-foreground))'; }}>
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
           <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-lg"
             style={{ color: 'hsl(var(--muted-foreground))' }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
@@ -230,36 +240,20 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
           </div>
         </div>
 
-        {/* Progress stepper */}
+        {/* Progress */}
         <div>
-          <p className="text-xs font-bold mb-3" style={{ color: 'hsl(var(--foreground))' }}>Progress</p>
-          {pipeline.map((step, i) => {
-            const done   = currentStep > i;
-            const active = currentStep === i;
-            return (
-              <div key={step} className="flex gap-3">
-                <div className="flex flex-col items-center">
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold"
-                    style={{
-                      background: done || active ? '#22c55e' : 'hsl(var(--muted))',
-                      color: done || active ? '#fff' : 'hsl(var(--muted-foreground))',
-                    }}>
-                    {done || active ? <Check className="w-3.5 h-3.5" /> : i + 1}
-                  </div>
-                  {i < pipeline.length - 1 && (
-                    <div className="w-0.5" style={{ height: 20, background: done ? '#22c55e' : 'hsl(var(--border))' }} />
-                  )}
-                </div>
-                <div className="pb-2 pt-1">
-                  <p className="text-xs font-medium"
-                    style={{ color: active ? '#22c55e' : currentStep < i ? 'hsl(var(--muted-foreground))' : 'hsl(var(--foreground))' }}>
-                    {step}
-                  </p>
-                  {active && <p className="text-[10px]" style={{ color: 'hsl(var(--muted-foreground))' }}>In progress</p>}
-                </div>
-              </div>
-            );
-          })}
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-bold" style={{ color: 'hsl(var(--foreground))' }}>Progress</p>
+            <p className="text-[10px]" style={{ color: 'hsl(var(--muted-foreground))' }}>Step {Math.min(currentStep + 1, pipeline.length)} of {pipeline.length}</p>
+          </div>
+          <div className="flex items-center gap-1 mb-2">
+            {pipeline.map((step, i) => (
+              <div key={step} className="flex-1 h-1.5 rounded-full" style={{ background: currentStep >= i ? '#22c55e' : 'hsl(var(--muted))' }} />
+            ))}
+          </div>
+          <p className="text-xs font-semibold" style={{ color: '#22c55e' }}>
+            {pipeline[Math.min(currentStep, pipeline.length - 1)]}
+          </p>
         </div>
 
         {/* Details */}
@@ -267,7 +261,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
           {[
             ['Customer',       repair.customer],
             ['Technician',     repair.technician || '—'],
-            ['Started',        repair.started || '—'],
+            ['Started',        fmtStarted(repair.started)],
             ['ETA',            repair.eta || '—'],
             ['Estimated Cost', repair.cost || '—'],
             ['Warranty',       repair.warranty ? 'Yes' : 'No'],
@@ -479,21 +473,13 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
             {requiredStage && !hasRequiredPhoto ? <Camera className="w-4 h-4" /> : null}
             {requiredStage && !hasRequiredPhoto ? 'Add Photo to Continue' : nextAction(repair.status)}
           </button>
-          <div className="flex gap-2">
-            <button onClick={() => setAddingNote(true)}
-              className="flex-1 h-9 rounded-xl text-xs font-semibold"
-              style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}>
-              Add Note
-            </button>
-            <button className="flex-1 h-9 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5"
-              style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}>
-              <CreditCard className="w-3.5 h-3.5" />View Job Card
-            </button>
-          </div>
+          <button onClick={() => setAddingNote(true)}
+            className="w-full h-9 rounded-xl text-xs font-semibold"
+            style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}>
+            Add Note
+          </button>
         </div>
       )}
     </div>
