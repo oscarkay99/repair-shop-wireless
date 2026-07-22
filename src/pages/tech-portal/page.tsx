@@ -275,21 +275,24 @@ export default function TechPortalPage() {
       )}
 
       {selected && (
-        <div className="fixed inset-0 z-50">
-          <RepairDetailPanel
-            repair={selected}
-            onClose={() => setSelectedId(null)}
-            onUpdateStatus={handleUpdateStatus}
-            onAddNote={addNote}
-            onAddMedia={addMedia}
-            onRemoveMedia={removeMedia}
-            uploaderName={user?.name}
-            canManageTickets={false}
-            onProceedToRepair={handleProceedToRepair}
-            onCloseDiagnosisOnly={handleCloseDiagnosisOnly}
-            onEdit={() => {}}
-            onDelete={() => {}}
-          />
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <div className="absolute inset-0" style={{ background: 'rgba(15,23,42,0.45)' }} onClick={() => setSelectedId(null)} />
+          <div className="relative w-full sm:max-w-md h-full shadow-2xl rounded-l-2xl overflow-hidden sm:my-0">
+            <RepairDetailPanel
+              repair={selected}
+              onClose={() => setSelectedId(null)}
+              onUpdateStatus={handleUpdateStatus}
+              onAddNote={addNote}
+              onAddMedia={addMedia}
+              onRemoveMedia={removeMedia}
+              uploaderName={user?.name}
+              canManageTickets={false}
+              onProceedToRepair={handleProceedToRepair}
+              onCloseDiagnosisOnly={handleCloseDiagnosisOnly}
+              onEdit={() => {}}
+              onDelete={() => {}}
+            />
+          </div>
         </div>
       )}
     </div>
