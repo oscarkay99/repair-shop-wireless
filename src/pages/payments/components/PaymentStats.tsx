@@ -24,13 +24,15 @@ export default function PaymentStats() {
 
   const momoTotal = verified.filter(t => t.method === 'MoMo').reduce((s, t) => s + parseAmt(t.amount), 0);
   const bankTotal = verified.filter(t => t.method === 'Bank Transfer').reduce((s, t) => s + parseAmt(t.amount), 0);
-  const cashCardTotal = verified.filter(t => t.method === 'Cash' || t.method === 'Card').reduce((s, t) => s + parseAmt(t.amount), 0);
-  const maxBreakdown = Math.max(momoTotal, bankTotal, cashCardTotal, 1);
+  const cashTotal = verified.filter(t => t.method === 'Cash').reduce((s, t) => s + parseAmt(t.amount), 0);
+  const cardTotal = verified.filter(t => t.method === 'Card').reduce((s, t) => s + parseAmt(t.amount), 0);
+  const maxBreakdown = Math.max(momoTotal, bankTotal, cashTotal, cardTotal, 1);
 
   const breakdown = [
-    { label: 'MTN MoMo',      value: fmtGHS(momoTotal),     pct: `${Math.round((momoTotal / maxBreakdown) * 100)}%` },
-    { label: 'Bank Transfer', value: fmtGHS(bankTotal),     pct: `${Math.round((bankTotal / maxBreakdown) * 100)}%` },
-    { label: 'Cash & Card',   value: fmtGHS(cashCardTotal), pct: `${Math.round((cashCardTotal / maxBreakdown) * 100)}%` },
+    { label: 'MoMo',          value: fmtGHS(momoTotal), pct: `${Math.round((momoTotal / maxBreakdown) * 100)}%` },
+    { label: 'Bank Transfer', value: fmtGHS(bankTotal), pct: `${Math.round((bankTotal / maxBreakdown) * 100)}%` },
+    { label: 'Cash',          value: fmtGHS(cashTotal), pct: `${Math.round((cashTotal / maxBreakdown) * 100)}%` },
+    { label: 'Card',          value: fmtGHS(cardTotal), pct: `${Math.round((cardTotal / maxBreakdown) * 100)}%` },
   ];
 
   return (
@@ -58,25 +60,10 @@ export default function PaymentStats() {
         </div>
       </div>
 
-      {/* Method breakdown — replaces the mock version in the parent */}
+      {/* Method breakdown */}
       <div className="bg-[hsl(var(--card))] rounded-2xl p-5 border border-[hsl(var(--border))]">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-              <i className="ri-smartphone-line text-lg" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-[hsl(var(--foreground))]">Mobile Money Integration</p>
-              <p className="text-xs text-[hsl(var(--muted-foreground))]">MTN MoMo · Vodafone Cash · AirtelTigo</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs text-emerald-600 font-medium">Connected</span>
-            <span className="text-xs text-[hsl(var(--muted-foreground))]">· Last sync: 2 min ago</span>
-          </div>
-        </div>
-        <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-[hsl(var(--border))]">
+        <p className="text-sm font-semibold text-[hsl(var(--foreground))] mb-4">Collected by Payment Method</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {breakdown.map((m) => (
             <div key={m.label}>
               <p className="text-xs text-[hsl(var(--muted-foreground))]">{m.label}</p>
