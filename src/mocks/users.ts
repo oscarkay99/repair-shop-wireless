@@ -18,7 +18,7 @@ export interface SystemUser {
 export const rolePermissions: Record<UserRole, string[]> = {
   admin:             ['Dashboard', 'Analytics', 'Audit Logs', 'Inventory', 'Payments', 'Customers', 'Tickets', 'Technicians', 'Invoices', 'Sales', 'Activity', 'Portal', 'Warranty', 'Delivery', 'Expenses', 'Reports', 'Loyalty', 'Team', 'Settings', 'Authentication', 'AI Studio', 'Users'],
   sales_manager:     ['Dashboard', 'Analytics', 'Inventory', 'Delivery', 'Payments', 'Customers', 'Tickets', 'Invoices', 'Sales', 'Reports', 'Loyalty', 'Team'],
-  technician:        ['Dashboard', 'Tickets', 'Warranty', 'Inventory', 'Customers'],
+  technician:        ['Dashboard', 'Tickets', 'Warranty'],
   receptionist:      ['Dashboard', 'Tickets', 'Customers', 'Payments', 'Invoices'],
 };
 
