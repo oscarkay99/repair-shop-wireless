@@ -1,6 +1,6 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, Clock, Calendar, ChevronRight } from 'lucide-react';
+import { LogOut, Clock, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTechnicians } from '@/hooks/useTechnicians';
 import { useRepairs } from '@/hooks/useRepairs';
@@ -12,13 +12,6 @@ import type { TechnicianStatus } from '@/types/wireless';
 
 const QUEUE_STATUSES: RepairStatus[] = ['received', 'diagnosis_paid', 'diagnosing', 'awaiting_approval', 'parts_pending'];
 const DONE_STATUSES: RepairStatus[] = ['ready', 'completed', 'diagnosis_only_closed'];
-
-const LEAVE_PRESETS = [
-  { label: '1 day', days: 1 },
-  { label: '3 days', days: 3 },
-  { label: '1 week', days: 7 },
-  { label: '2 weeks', days: 14 },
-];
 
 function fmtLeaveDate(iso: string) {
   return new Date(iso + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -40,18 +33,6 @@ export default function TechPortalPage() {
   const { technicians, patch: patchTechnician } = useTechnicians();
   const { repairs, loading, updateStatus, addNote, addMedia, removeMedia, patchRepair } = useRepairs();
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [showLeavePicker, setShowLeavePicker] = useState(false);
-  const [customDate, setCustomDate] = useState('');
-  const leavePickerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!showLeavePicker) return;
-    const fn = (e: MouseEvent) => {
-      if (leavePickerRef.current && !leavePickerRef.current.contains(e.target as Node)) setShowLeavePicker(false);
-    };
-    document.addEventListener('mousedown', fn);
-    return () => document.removeEventListener('mousedown', fn);
-  }, [showLeavePicker]);
 
   const myTech = useMemo(() => technicians.find(t => t.profile_id === user?.id), [technicians, user]);
 
@@ -73,21 +54,7 @@ export default function TechPortalPage() {
 
   const setStatus = (status: TechnicianStatus) => {
     if (!myTech) return;
-    if (status === 'off_duty') { setShowLeavePicker(true); return; }
     patchTechnician(myTech.id, { status, leave_until: null });
-  };
-
-  const goOnLeave = (untilIso: string) => {
-    if (!myTech) return;
-    patchTechnician(myTech.id, { status: 'off_duty', leave_until: untilIso });
-    setShowLeavePicker(false);
-    setCustomDate('');
-  };
-
-  const pickPreset = (days: number) => {
-    const d = new Date();
-    d.setDate(d.getDate() + days);
-    goOnLeave(d.toISOString().slice(0, 10));
   };
 
   const returnToWork = () => {
@@ -162,37 +129,6 @@ export default function TechPortalPage() {
                 );
               })}
 
-              {showLeavePicker && (
-                <div ref={leavePickerRef} className="absolute top-full left-0 mt-2 z-20 rounded-xl overflow-hidden p-3 w-56"
-                  style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', boxShadow: 'var(--shadow-md)' }}>
-                  <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                    How long will you be off?
-                  </p>
-                  <div className="grid grid-cols-2 gap-1.5 mb-2">
-                    {LEAVE_PRESETS.map(p => (
-                      <button key={p.label} onClick={() => pickPreset(p.days)}
-                        className="h-8 rounded-lg text-xs font-semibold transition-colors"
-                        style={{ background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }}>
-                        {p.label}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="relative flex-1">
-                      <Calendar className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'hsl(var(--muted-foreground))' }} />
-                      <input type="date" value={customDate} min={new Date().toISOString().slice(0, 10)}
-                        onChange={e => setCustomDate(e.target.value)}
-                        className="w-full h-8 pl-8 pr-2 rounded-lg text-xs outline-none"
-                        style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
-                    </div>
-                    <button disabled={!customDate} onClick={() => goOnLeave(customDate)}
-                      className="h-8 px-3 rounded-lg text-xs font-semibold text-white disabled:opacity-40"
-                      style={{ background: 'hsl(var(--primary))' }}>
-                      Set
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
 
             {myTech?.status === 'off_duty' && (
