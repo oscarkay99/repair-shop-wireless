@@ -251,7 +251,7 @@ export default function TechniciansPage() {
   const [editingTech, setEditingTech] = useState<Technician | null>(null);
   const [page, setPage] = useState(1);
 
-  const activeTechs  = technicians.filter(t => t.status === 'busy').length;
+  const onBreakTechs = technicians.filter(t => t.status === 'on_break').length;
   const totalInQueue = useMemo(() =>
     repairs.filter(r => isActiveRepairStatus(r.status)).length,
   [repairs]);
@@ -262,11 +262,11 @@ export default function TechniciansPage() {
   useEffect(() => {
     setPageTitle({
       title: 'Technicians',
-      subtitle: `${activeTechs} active · ${technicians.length} total`,
+      subtitle: `${onBreakTechs} on break · ${technicians.length} total`,
       action: { label: 'Add Technician', onClick: () => setShowAdd(true) },
       secondaryAction: { label: 'Reassign', onClick: () => setShowReassign(true) },
     });
-  }, [technicians.length, activeTechs, setPageTitle]);
+  }, [technicians.length, onBreakTechs, setPageTitle]);
 
   const doneHours = filterHours(timeline);
   const doneLabel = timeline === 'All' ? 'Done (all)' : `Done (${timeline})`;
@@ -315,7 +315,7 @@ export default function TechniciansPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Technicians',      value: loading ? '…' : technicians.length },
-          { label: 'Currently Active', value: loading ? '…' : activeTechs },
+          { label: 'On Break',         value: loading ? '…' : onBreakTechs },
           { label: 'In Queue',         value: totalInQueue },
           { label: 'Unassigned',       value: unassigned },
         ].map(s => (
@@ -349,7 +349,7 @@ export default function TechniciansPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {pagedTechStats.map(({ tech, current, queue, done, activeLoad, avgCompletionHrs }) => {
-            const isActive   = tech.status === 'busy';
+            const isOnBreak   = tech.status === 'on_break';
             const color      = avatarColor(tech.name);
             const loadPct    = Math.round((activeLoad / maxLoad) * 100);
             const isOverload = loadPct >= 80;
@@ -363,9 +363,9 @@ export default function TechniciansPage() {
               <div key={tech.id} className="rounded-xl border overflow-hidden relative"
                 style={{
                   background: 'hsl(var(--card))',
-                  borderColor: isActive ? 'hsl(var(--primary) / 0.4)' : 'hsl(var(--border))',
-                  borderLeftWidth: isActive ? 3 : 1,
-                  borderLeftColor: isActive ? 'hsl(var(--primary))' : 'hsl(var(--border))',
+                  borderColor: isOnBreak ? 'rgba(245,158,11,0.4)' : 'hsl(var(--border))',
+                  borderLeftWidth: isOnBreak ? 3 : 1,
+                  borderLeftColor: isOnBreak ? '#f59e0b' : 'hsl(var(--border))',
                 }}>
 
                 {/* Edit + Delete buttons */}
@@ -402,7 +402,7 @@ export default function TechniciansPage() {
                       </div>
                       {/* Status dot */}
                       <span className="absolute bottom-0.5 right-0.5 w-3 h-3 rounded-full border-2 border-[hsl(var(--card))]"
-                        style={{ background: tech.status === 'off_duty' ? '#ef4444' : isActive ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))' }} />
+                        style={{ background: tech.status === 'off_duty' ? '#ef4444' : isOnBreak ? '#f59e0b' : 'hsl(142 60% 45%)' }} />
                     </div>
                     <div className="flex-1 min-w-0 pt-1">
                       <div className="flex items-center gap-2">
@@ -411,9 +411,9 @@ export default function TechniciansPage() {
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white" style={{ background: '#ef4444' }}>
                             ON LEAVE{tech.leave_until ? ` · back ${new Date(tech.leave_until + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}
                           </span>
-                        ) : isActive ? (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white" style={{ background: 'hsl(var(--primary))' }}>
-                            ACTIVE
+                        ) : isOnBreak ? (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white" style={{ background: '#f59e0b' }}>
+                            ON BREAK
                           </span>
                         ) : (
                           <span className="text-[10px] font-semibold uppercase" style={{ color: 'hsl(var(--muted-foreground))' }}>

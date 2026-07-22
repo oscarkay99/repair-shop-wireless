@@ -32,6 +32,7 @@ import ActivityPage from "../pages/activity/page";
 
 const routes: RouteObject[] = [
   { path: "/signin", element: <SignInPage /> },
+  { path: "/tech-portal", element: <AuthGuard><TechPortalPage /></AuthGuard> },
 
   {
     element: <AppShell />,
@@ -47,7 +48,6 @@ const routes: RouteObject[] = [
       { path: "/tickets",            element: <AuthGuard requiredModule="Tickets"><RepairsPage /></AuthGuard> },
       { path: "/technicians",        element: <AuthGuard requiredModule="Technicians"><TechniciansPage /></AuthGuard> },
       { path: "/invoices",           element: <AuthGuard requiredModule="Invoices"><InvoicesPage /></AuthGuard> },
-      { path: "/tech-portal",        element: <AuthGuard requiredModule="Portal"><TechPortalPage /></AuthGuard> },
       { path: "/inventory-portal",   element: <AuthGuard requiredModule="Portal"><InventoryPortalPage /></AuthGuard> },
       { path: "/reception",          element: <AuthGuard requiredModule="Portal"><ReceptionPortalPage /></AuthGuard> },
       { path: "/activity",           element: <AuthGuard requiredModule="Activity"><ActivityPage /></AuthGuard> },

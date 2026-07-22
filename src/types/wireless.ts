@@ -2,7 +2,7 @@
 
 import type { PaymentMethod } from '@/types/sale';
 
-export type TechnicianStatus = 'available' | 'busy' | 'off_duty';
+export type TechnicianStatus = 'available' | 'on_break' | 'off_duty';
 export type InvoiceStatus = 'unpaid' | 'partial' | 'paid' | 'overdue' | 'cancelled';
 export type PaymentStatus = 'paid' | 'partial' | 'unpaid';
 

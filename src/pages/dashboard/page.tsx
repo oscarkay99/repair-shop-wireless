@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { usePageTitle } from '@/context/PageTitleContext';
 import { useRepairs } from '@/hooks/useRepairs';
 import { useAuth } from '@/hooks/useAuth';
@@ -10,7 +10,6 @@ import { useInvoices } from '@/hooks/useInvoices';
 import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/shared/Pagination';
 import BirthdayBanner from '@/components/shared/BirthdayBanner';
-import TechnicianDashboard from './TechnicianDashboard';
 import ReceptionistDashboard from './ReceptionistDashboard';
 import SalesManagerDashboard from './SalesManagerDashboard';
 import {
@@ -885,12 +884,14 @@ function AdminDashboard() {
 export default function DashboardPage() {
   const { user } = useAuth();
   if (!user) return null;
+  // Technicians get a dedicated full-screen portal (no sidebar/topbar) —
+  // never the shared shell's dashboard.
+  if (user.role === 'technician') return <Navigate to="/tech-portal" replace />;
   return (
     <>
       <BirthdayBanner />
       {(() => {
         switch (user.role) {
-          case 'technician':        return <TechnicianDashboard />;
           case 'receptionist':      return <ReceptionistDashboard />;
           case 'sales_manager':     return <SalesManagerDashboard />;
           default:                  return <AdminDashboard />;
