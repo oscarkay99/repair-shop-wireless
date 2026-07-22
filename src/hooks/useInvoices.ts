@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getInvoices, createInvoice, updateInvoiceStatus, patchInvoice, deleteInvoice } from '@/services/wireless/invoices';
 import type { Invoice, InvoiceStatus } from '@/types/wireless';
+import type { PaymentMethod } from '@/types/sale';
 import { useToast } from '@/contexts/ToastContext';
 
 export function useInvoices() {
@@ -23,10 +24,10 @@ export function useInvoices() {
     return inv;
   };
 
-  const markStatus = async (id: string, status: InvoiceStatus, amountPaid?: number) => {
-    await updateInvoiceStatus(id, status, amountPaid);
+  const markStatus = async (id: string, status: InvoiceStatus, amountPaid?: number, paymentMethod?: PaymentMethod) => {
+    await updateInvoiceStatus(id, status, amountPaid, paymentMethod);
     setInvoices(prev => prev.map(i =>
-      i.id === id ? { ...i, status, amount_paid: amountPaid ?? i.amount_paid } : i
+      i.id === id ? { ...i, status, amount_paid: amountPaid ?? i.amount_paid, payment_method: paymentMethod ?? i.payment_method } : i
     ));
     showToast(`Invoice marked ${status}`);
   };

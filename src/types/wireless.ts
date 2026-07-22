@@ -1,5 +1,7 @@
 // ── TypeScript types for the wireless schema ──────────────────
 
+import type { PaymentMethod } from '@/types/sale';
+
 export type TechnicianStatus = 'available' | 'busy' | 'off_duty';
 export type InvoiceStatus = 'unpaid' | 'partial' | 'paid' | 'overdue' | 'cancelled';
 export type PaymentStatus = 'paid' | 'partial' | 'unpaid';
@@ -86,6 +88,7 @@ export interface Invoice {
   total: number;
   amount_paid: number;
   status: InvoiceStatus;
+  payment_method?: PaymentMethod;
   due_date?: string;
   notes?: string;
   created_by?: string;

@@ -5,12 +5,33 @@ import { useInvoices } from '@/hooks/useInvoices';
 import { useWirelessCustomers } from '@/hooks/useWirelessCustomers';
 import { useAuth } from '@/hooks/useAuth';
 import { useTaxSettings } from '@/hooks/useTaxSettings';
-import { getInvoiceItems } from '@/services/wireless/invoices';
+import { getInvoiceItems, sendInvoiceEmail } from '@/services/wireless/invoices';
 import SearchDropdown from '@/components/shared/SearchDropdown';
 import Pagination from '@/components/shared/Pagination';
 import DateRangePicker, { type DateRange } from '@/components/shared/DateRangePicker';
-import { Check, Share2, Printer, ChevronLeft, X, Pencil, Plus } from 'lucide-react';
+import { Check, Share2, Printer, Download, Mail, Loader2, ChevronLeft, X, Pencil, Plus } from 'lucide-react';
 import type { Invoice, InvoiceStatus } from '@/types/wireless';
+import type { PaymentMethod } from '@/types/sale';
+import { downloadInvoicePdf, invoicePdfBase64 } from '@/utils/invoicePdf';
+
+const PAYMENT_METHODS: PaymentMethod[] = ['Cash', 'Card', 'MoMo', 'Bank Transfer'];
+
+const PAYMENT_METHOD_COLORS: Record<PaymentMethod, { bg: string; color: string }> = {
+  Cash:            { bg: 'rgba(34,197,94,0.12)',  color: '#22c55e' },
+  Card:            { bg: 'rgba(99,102,241,0.15)', color: '#6366f1' },
+  MoMo:            { bg: 'rgba(245,158,11,0.15)', color: '#f59e0b' },
+  'Bank Transfer': { bg: 'hsl(var(--muted))',      color: 'hsl(var(--foreground))' },
+};
+
+function PaymentMethodBadge({ method }: { method: PaymentMethod }) {
+  const s = PAYMENT_METHOD_COLORS[method];
+  return (
+    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold"
+      style={{ background: s.bg, color: s.color }}>
+      {method}
+    </span>
+  );
+}
 
 const PAGE_SIZE = 10;
 
@@ -274,11 +295,34 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
   inv: Invoice;
   canEdit: boolean;
   onBack: () => void;
-  onMarkPaid: (id: string) => void;
+  onMarkPaid: (id: string, method: PaymentMethod) => void;
   onEdit: () => void;
 }) {
   const { taxEnabled, vatRate } = useTaxSettings();
+  const [pickingMethod, setPickingMethod] = useState(false);
+  const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [emailError, setEmailError] = useState('');
   const items = getInvoiceItems(inv.id);
+
+  const handleEmailInvoice = async () => {
+    if (!inv.customer?.email) return;
+    setEmailStatus('sending');
+    setEmailError('');
+    try {
+      const pdfBase64 = invoicePdfBase64({ invoice: inv, items, taxEnabled, vatRate });
+      await sendInvoiceEmail({
+        to: inv.customer.email,
+        invoiceNumber: inv.invoice_number,
+        customerName: inv.customer.name,
+        pdfBase64,
+      });
+      setEmailStatus('sent');
+      setTimeout(() => setEmailStatus('idle'), 3000);
+    } catch (e) {
+      setEmailError(e instanceof Error ? e.message : 'Failed to send email');
+      setEmailStatus('error');
+    }
+  };
   const subtotal = items.length ? items.reduce((s, i) => s + i.total_price, 0) : inv.subtotal;
   const vat      = taxEnabled ? Math.round(subtotal * (vatRate / 100) * 100) / 100 : 0;
   const nhil     = taxEnabled ? Math.round(subtotal * 0.025 * 100) / 100 : 0;
@@ -296,14 +340,31 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
         </button>
 
         {/* Action buttons */}
-        <div className="flex items-center gap-2">
-          {canEdit && inv.status !== 'paid' && (
-            <button onClick={() => onMarkPaid(inv.id)}
+        <div className="flex items-center gap-2 relative">
+          {canEdit && inv.status !== 'paid' && !pickingMethod && (
+            <button onClick={() => setPickingMethod(true)}
               className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold text-white"
               style={{ background: 'hsl(142 60% 40%)' }}>
               <Check className="w-3.5 h-3.5" />
               Mark Paid
             </button>
+          )}
+          {canEdit && inv.status !== 'paid' && pickingMethod && (
+            <div className="absolute top-full mt-1 right-0 z-10 flex flex-col gap-1 p-1.5 rounded-xl"
+              style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}>
+              <p className="px-1.5 pt-0.5 pb-1 text-[10px] font-semibold uppercase tracking-wider"
+                style={{ color: 'hsl(var(--muted-foreground))' }}>Paid via…</p>
+              {PAYMENT_METHODS.map(method => (
+                <button key={method}
+                  onClick={() => { onMarkPaid(inv.id, method); setPickingMethod(false); }}
+                  className="flex items-center justify-between gap-3 px-2.5 h-8 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors"
+                  style={{ color: 'hsl(var(--foreground))' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}>
+                  {method}
+                </button>
+              ))}
+            </div>
           )}
           {canEdit && (
             <button onClick={onEdit}
@@ -322,6 +383,26 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
             Print
           </button>
           <button
+            onClick={() => downloadInvoicePdf({ invoice: inv, items, taxEnabled, vatRate })}
+            className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold transition-colors"
+            style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))', background: 'transparent' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
+            <Download className="w-3.5 h-3.5" />
+            Download PDF
+          </button>
+          <button
+            onClick={handleEmailInvoice}
+            disabled={!inv.customer?.email || emailStatus === 'sending'}
+            title={!inv.customer?.email ? 'This customer has no email on file' : undefined}
+            className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))', background: 'transparent' }}
+            onMouseEnter={e => { if (!e.currentTarget.disabled) (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
+            {emailStatus === 'sending' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
+            {emailStatus === 'sent' ? 'Sent!' : emailStatus === 'error' ? 'Retry Email' : 'Email Invoice'}
+          </button>
+          <button
             onClick={async () => {
               const text = `Invoice ${inv.invoice_number} — Total: ${fmt(inv.total)}`;
               if (navigator.share) { await navigator.share({ title: inv.invoice_number, text }); }
@@ -337,6 +418,10 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
         </div>
       </div>
 
+      {emailStatus === 'error' && (
+        <p className="text-xs text-right" style={{ color: '#ef4444' }}>{emailError}</p>
+      )}
+
       {/* Invoice card */}
       <div className="mx-auto max-w-2xl rounded-2xl p-8 print:shadow-none"
         style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
@@ -349,7 +434,10 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
           <div className="text-right">
             <div className="text-xl font-bold" style={{ color: 'hsl(var(--foreground))' }}>{inv.invoice_number}</div>
             <div className="text-xs mt-1" style={{ color: 'hsl(var(--muted-foreground))' }}>{fmtDate(inv.created_at)}</div>
-            <div className="mt-2"><StatusBadge status={inv.status} /></div>
+            <div className="mt-2 flex items-center gap-1.5 justify-end">
+              <StatusBadge status={inv.status} />
+              {inv.payment_method && <PaymentMethodBadge method={inv.payment_method} />}
+            </div>
           </div>
         </div>
 
@@ -446,9 +534,9 @@ export default function InvoicesPage() {
 
   const selected = selectedId ? invoices.find(i => i.id === selectedId) ?? null : null;
 
-  const handleMarkPaid = (id: string) => {
+  const handleMarkPaid = (id: string, method: PaymentMethod) => {
     const inv = invoices.find(i => i.id === id);
-    if (inv) markStatus(id, 'paid', inv.total);
+    if (inv) markStatus(id, 'paid', inv.total, method);
   };
 
   useEffect(() => {

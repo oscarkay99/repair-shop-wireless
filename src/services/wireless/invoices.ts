@@ -1,5 +1,8 @@
-import { isSupabaseConfigured, db } from '@/services/supabase';
+import { isSupabaseConfigured, supabase, db } from '@/services/supabase';
 import type { Invoice, InvoiceItem, InvoiceStatus } from '@/types/wireless';
+import type { PaymentMethod } from '@/types/sale';
+
+const WIRELESS_ADMIN_API = 'https://api.wirelesscares.com/wireless-admin/v1';
 
 // Local line-items store (used in offline / local mode)
 interface LocalItem {
@@ -126,21 +129,42 @@ export async function createInvoice(
   return inv;
 }
 
-export async function updateInvoiceStatus(id: string, status: InvoiceStatus, amountPaid?: number): Promise<void> {
+export async function updateInvoiceStatus(id: string, status: InvoiceStatus, amountPaid?: number, paymentMethod?: PaymentMethod): Promise<void> {
   const patch: Partial<Invoice> = { status, updated_at: new Date().toISOString() };
   if (amountPaid !== undefined) patch.amount_paid = amountPaid;
+  if (paymentMethod !== undefined) patch.payment_method = paymentMethod;
   localStore = localStore.map(i => i.id === id ? { ...i, ...patch } : i);
   if (!isSupabaseConfigured) return;
   const { error } = await db.from('invoices').update(patch).eq('id', id);
   if (error) console.warn('[wireless/invoices] update error', error);
 }
 
-export async function patchInvoice(id: string, data: Partial<Pick<Invoice, 'status' | 'amount_paid' | 'due_date' | 'notes' | 'discount'>>): Promise<void> {
+export async function patchInvoice(id: string, data: Partial<Pick<Invoice, 'status' | 'amount_paid' | 'payment_method' | 'due_date' | 'notes' | 'discount'>>): Promise<void> {
   const patch = { ...data, updated_at: new Date().toISOString() };
   localStore = localStore.map(i => i.id === id ? { ...i, ...patch } : i);
   if (!isSupabaseConfigured) return;
   const { error } = await db.from('invoices').update(patch).eq('id', id);
   if (error) console.warn('[wireless/invoices] patch error', error);
+}
+
+export async function sendInvoiceEmail(payload: {
+  to: string;
+  invoiceNumber: string;
+  customerName?: string;
+  pdfBase64: string;
+}): Promise<void> {
+  if (!isSupabaseConfigured) throw new Error('Not authenticated');
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error('Not authenticated');
+
+  const res = await fetch(`${WIRELESS_ADMIN_API}/send-invoice-email`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(payload),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error ?? 'Failed to send invoice email');
 }
 
 export async function deleteInvoice(id: string): Promise<void> {
