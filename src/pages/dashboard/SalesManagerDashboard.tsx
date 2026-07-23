@@ -1,12 +1,10 @@
 import { useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { TrendingUp, ShoppingBag, Users, BarChart3 } from 'lucide-react';
+import { TrendingUp, ShoppingBag, Users } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useRepairs } from '@/hooks/useRepairs';
 import { useInvoices } from '@/hooks/useInvoices';
 import { useAccessoryStore } from '@/hooks/useAccessoryStore';
 import { usePageTitle } from '@/context/PageTitleContext';
-import { isActiveRepairStatus } from '@/utils/repairStatus';
 import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/shared/Pagination';
 
@@ -40,7 +38,6 @@ function fmt(n: number) {
 export default function SalesManagerDashboard() {
   const { user } = useAuth();
   const { setPageTitle } = usePageTitle();
-  const { repairs, loading: rLoading } = useRepairs();
 
   useEffect(() => { setPageTitle({ title: 'Dashboard', hideDefaultAction: true }); }, [setPageTitle]);
   const { invoices, loading: iLoading } = useInvoices();
@@ -48,18 +45,6 @@ export default function SalesManagerDashboard() {
 
   const today     = new Date().toISOString().slice(0, 10);
   const startMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10);
-  const startWeek  = (() => {
-    const d = new Date();
-    d.setDate(d.getDate() - 6);
-    return d.toISOString().slice(0, 10);
-  })();
-
-  const isDone = (status: string) => status === 'completed' || status === 'diagnosis_only_closed';
-
-  // Completed repairs this month (for the "Completed Repairs" list — job count/value, not revenue)
-  const completedThisMonth = useMemo(() =>
-    repairs.filter(r => isDone(r.status) && r.completedDate?.slice(0, 10) >= startMonth),
-    [repairs, startMonth]);
 
   // Revenue = paid invoices (amount_paid) + accessory sales. Accessory sales are
   // recorded straight to accessory_sales and never become an invoice, so they
@@ -77,36 +62,22 @@ export default function SalesManagerDashboard() {
     return invoiceRevenue + accessoryRevenue;
   }, [invoices, salesThisMonth, startMonth]);
 
-  // Active pipeline
-  const activePipeline = useMemo(() =>
-    repairs.filter(r => isActiveRepairStatus(r.status)),
-    [repairs]);
-
   // Sales today
   const salesToday = useMemo(() =>
     sales.filter(s => s.sold_at.slice(0, 10) === today),
     [sales, today]);
 
-  // Customers with repairs this month
+  // Unique customers across invoices and accessory sales (all-time)
   const uniqueCustomers = useMemo(() => {
-    const ids = new Set(
-      repairs
-        .filter(r => (r.createdAt ?? r.started)?.slice(0, 10) >= startMonth)
-        .map(r => r.customerId ?? r.customer)
-    );
+    const ids = new Set<string>();
+    invoices.forEach(i => { if (i.customer_id) ids.add(i.customer_id); });
+    sales.forEach(s => { if (s.customer_id) ids.add(s.customer_id); });
     return ids.size;
-  }, [repairs, startMonth]);
+  }, [invoices, sales]);
 
-  // Recent completed
-  const recentCompleted = useMemo(() =>
-    [...repairs].filter(r => isDone(r.status))
-      .sort((a, b) => (b.completedDate ?? '').localeCompare(a.completedDate ?? '')),
-    [repairs]);
-
-  const { paginated: pagedCompleted, page: completedPage, setPage: setCompletedPage, totalPages: completedTotalPages, total: completedTotal } = usePagination(recentCompleted, 6);
   const { paginated: pagedSales, page: salesPage, setPage: setSalesPage, totalPages: salesTotalPages, total: salesTotal } = usePagination(salesThisMonth, 6);
 
-  const loading = rLoading || sLoading || iLoading;
+  const loading = sLoading || iLoading;
   const firstName = user?.name?.split(' ')[0] ?? 'Manager';
 
   return (
@@ -131,7 +102,7 @@ export default function SalesManagerDashboard() {
       </div>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <KPICard
           label="Total Revenue (Month)"
           value={fmt(totalRevenueMonth)}
@@ -147,14 +118,7 @@ export default function SalesManagerDashboard() {
           color="#F59E0B"
         />
         <KPICard
-          label="Active Pipeline"
-          value={String(activePipeline.length)}
-          sub="Repairs in progress"
-          icon={BarChart3}
-          color="#06B6D4"
-        />
-        <KPICard
-          label="Customers (Month)"
+          label="Customers"
           value={String(uniqueCustomers)}
           sub="Unique customers served"
           icon={Users}
@@ -162,82 +126,39 @@ export default function SalesManagerDashboard() {
         />
       </div>
 
-      {/* Two-column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Recent completed repairs */}
-        <div className="rounded-2xl overflow-hidden" style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', boxShadow: 'var(--shadow-card)' }}>
-          <div className="px-5 py-4 border-b" style={{ borderColor: 'hsl(var(--border))' }}>
-            <p className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>Completed Repairs</p>
-          </div>
-          {loading ? (
-            <div className="flex items-center justify-center py-10">
-              <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: 'hsl(var(--primary)) transparent transparent' }} />
-            </div>
-          ) : recentCompleted.length === 0 ? (
-            <div className="flex items-center justify-center py-10">
-              <p className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No completed repairs yet</p>
-            </div>
-          ) : (
-            <>
-              {pagedCompleted.map(r => (
-                <div key={r.id}
-                  className="flex items-center gap-3 px-5 py-3"
-                  style={{ borderBottom: '1px solid hsl(var(--border))' }}
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold truncate" style={{ color: 'hsl(var(--foreground))' }}>
-                      {r.customer || '—'} — {r.device}
-                    </p>
-                    <p className="text-[11px] truncate" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                      {r.id} · {r.completedDate ? new Date(r.completedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
-                    </p>
-                  </div>
-                  <p className="text-xs font-bold flex-shrink-0" style={{ color: '#10B981' }}>
-                    {r.costNum ? `GH₵ ${r.costNum.toLocaleString()}` : '—'}
-                  </p>
-                </div>
-              ))}
-              <div className="px-5 pb-3">
-                <Pagination page={completedPage} pageCount={completedTotalPages} total={completedTotal} pageSize={6} onPageChange={setCompletedPage} />
-              </div>
-            </>
-          )}
+      {/* Recent sales */}
+      <div className="rounded-2xl overflow-hidden" style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', boxShadow: 'var(--shadow-card)' }}>
+        <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: 'hsl(var(--border))' }}>
+          <p className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>Accessory Sales</p>
+          <Link to="/sales" className="text-[11px] font-semibold hover:opacity-70" style={{ color: 'hsl(var(--primary))' }}>View all →</Link>
         </div>
-
-        {/* Recent sales */}
-        <div className="rounded-2xl overflow-hidden" style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', boxShadow: 'var(--shadow-card)' }}>
-          <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: 'hsl(var(--border))' }}>
-            <p className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>Accessory Sales</p>
-            <Link to="/sales" className="text-[11px] font-semibold hover:opacity-70" style={{ color: 'hsl(var(--primary))' }}>View all →</Link>
+        {loading ? (
+          <div className="flex items-center justify-center py-10">
+            <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: 'hsl(var(--primary)) transparent transparent' }} />
           </div>
-          {loading ? (
-            <div className="flex items-center justify-center py-10">
-              <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: 'hsl(var(--primary)) transparent transparent' }} />
-            </div>
-          ) : salesThisMonth.length === 0 ? (
-            <div className="flex items-center justify-center py-10">
-              <p className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No sales this month</p>
-            </div>
-          ) : (
-            <>
-              {pagedSales.map(s => (
-                <div key={s.id} className="flex items-center gap-3 px-5 py-3" style={{ borderBottom: '1px solid hsl(var(--border))' }}>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold truncate" style={{ color: 'hsl(var(--foreground))' }}>{s.customer_name || 'Walk-in Customer'}</p>
-                    <p className="text-[11px] truncate" style={{ color: 'hsl(var(--muted-foreground))' }}>{s.product_name} × {s.quantity}</p>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="text-xs font-bold" style={{ color: '#F59E0B' }}>GH₵ {s.total.toLocaleString()}</p>
-                    <p className="text-[10px]" style={{ color: 'hsl(var(--muted-foreground))' }}>{s.payment_method}</p>
-                  </div>
+        ) : salesThisMonth.length === 0 ? (
+          <div className="flex items-center justify-center py-10">
+            <p className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No sales this month</p>
+          </div>
+        ) : (
+          <>
+            {pagedSales.map(s => (
+              <div key={s.id} className="flex items-center gap-3 px-5 py-3" style={{ borderBottom: '1px solid hsl(var(--border))' }}>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold truncate" style={{ color: 'hsl(var(--foreground))' }}>{s.customer_name || 'Walk-in Customer'}</p>
+                  <p className="text-[11px] truncate" style={{ color: 'hsl(var(--muted-foreground))' }}>{s.product_name} × {s.quantity}</p>
                 </div>
-              ))}
-              <div className="px-5 pb-3">
-                <Pagination page={salesPage} pageCount={salesTotalPages} total={salesTotal} pageSize={6} onPageChange={setSalesPage} />
+                <div className="text-right flex-shrink-0">
+                  <p className="text-xs font-bold" style={{ color: '#F59E0B' }}>GH₵ {s.total.toLocaleString()}</p>
+                  <p className="text-[10px]" style={{ color: 'hsl(var(--muted-foreground))' }}>{s.payment_method}</p>
+                </div>
               </div>
-            </>
-          )}
-        </div>
+            ))}
+            <div className="px-5 pb-3">
+              <Pagination page={salesPage} pageCount={salesTotalPages} total={salesTotal} pageSize={6} onPageChange={setSalesPage} />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
