@@ -7,6 +7,7 @@ import { useWirelessCustomers } from '@/hooks/useWirelessCustomers';
 import { useParts } from '@/hooks/useParts';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useInvoices } from '@/hooks/useInvoices';
+import { useAccessoryStore } from '@/hooks/useAccessoryStore';
 import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/shared/Pagination';
 import BirthdayBanner from '@/components/shared/BirthdayBanner';
@@ -174,7 +175,7 @@ function PnLBanner({
           <p className="text-2xl font-black tracking-tight" style={{ color: '#22c55e' }}>
             {formatGHS(revenue)}
           </p>
-          <p className="text-xs mt-1.5" style={{ color: 'hsl(var(--muted-foreground))' }}>from paid invoices</p>
+          <p className="text-xs mt-1.5" style={{ color: 'hsl(var(--muted-foreground))' }}>paid invoices + accessory sales</p>
         </div>
 
         {/* Expenses */}
@@ -303,6 +304,7 @@ function AdminDashboard() {
   const { user } = useAuth();
   const { expenses } = useExpenses();
   const { invoices } = useInvoices();
+  const { sales } = useAccessoryStore();
 
   const [pnlPeriod, setPnlPeriod] = useState<PnLPeriod>('1m');
   const [revFilter, setRevFilter] = useState<RevFilter>('14d');
@@ -391,17 +393,18 @@ function AdminDashboard() {
   // ── P&L calculations ──────────────────────────────────────────────────────
   const { from: pnlFrom } = pnlBounds(pnlPeriod);
 
-  // Invoices are the canonical "money received" ledger — amount_paid on paid
-  // invoices, not ticket/accessory-sale totals directly, to avoid double-counting
-  // the same job/sale across both its record and its invoice.
+  // Revenue = paid invoices (amount_paid) + accessory sales. Accessory sales are
+  // recorded straight to accessory_sales and never become an invoice, so they
+  // have to be added in explicitly or they never show up as revenue anywhere.
   const pnlRevenue = useMemo(() => {
-    const src = invoices.filter(i => {
-      if (i.status !== 'paid') return false;
-      if (!pnlFrom) return true;
-      return new Date(i.updated_at) >= pnlFrom;
-    });
-    return src.reduce((s, i) => s + i.amount_paid, 0);
-  }, [invoices, pnlPeriod]);
+    const invoiceRevenue = invoices
+      .filter(i => i.status === 'paid' && (!pnlFrom || new Date(i.updated_at) >= pnlFrom))
+      .reduce((s, i) => s + i.amount_paid, 0);
+    const accessoryRevenue = sales
+      .filter(s => !pnlFrom || new Date(s.sold_at) >= pnlFrom)
+      .reduce((s, sale) => s + sale.total, 0);
+    return invoiceRevenue + accessoryRevenue;
+  }, [invoices, sales, pnlPeriod]);
 
   const pnlExpenses = useMemo(() => {
     return expenses.filter(e => {
