@@ -4,12 +4,12 @@ import { usePageTitle } from '@/context/PageTitleContext';
 import { useInvoices } from '@/hooks/useInvoices';
 import { useWirelessCustomers } from '@/hooks/useWirelessCustomers';
 import { useAuth } from '@/hooks/useAuth';
-import { useTaxSettings } from '@/hooks/useTaxSettings';
+import { useWirelessSettings } from '@/hooks/useWirelessSettings';
 import { getInvoiceItems, sendInvoiceEmail } from '@/services/wireless/invoices';
 import SearchDropdown from '@/components/shared/SearchDropdown';
 import Pagination from '@/components/shared/Pagination';
 import DateRangePicker, { type DateRange } from '@/components/shared/DateRangePicker';
-import { Check, Share2, Printer, Download, Mail, Loader2, ChevronLeft, X, Pencil, Plus } from 'lucide-react';
+import { Check, Share2, Printer, Download, Mail, Loader2, ChevronLeft, X, Pencil } from 'lucide-react';
 import type { Invoice, InvoiceStatus } from '@/types/wireless';
 import type { PaymentMethod } from '@/types/sale';
 import { downloadInvoicePdf, invoicePdfBase64 } from '@/utils/invoicePdf';
@@ -298,11 +298,15 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
   onMarkPaid: (id: string, method: PaymentMethod) => void;
   onEdit: () => void;
 }) {
-  const { taxEnabled, vatRate } = useTaxSettings();
+  const { settings } = useWirelessSettings();
+  const taxEnabled = settings?.tax_enabled ?? true;
+  const vatRate = settings?.vat_rate ?? 15;
   const [pickingMethod, setPickingMethod] = useState(false);
   const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [emailError, setEmailError] = useState('');
   const items = getInvoiceItems(inv.id);
+  const balanceDue = Math.max(0, inv.total - inv.amount_paid);
+  const isPaid = inv.status === 'paid';
 
   const handleEmailInvoice = async () => {
     if (!inv.customer?.email) return;
@@ -422,92 +426,156 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
         <p className="text-xs text-right" style={{ color: '#ef4444' }}>{emailError}</p>
       )}
 
-      {/* Invoice card */}
-      <div className="mx-auto max-w-2xl rounded-2xl p-8 print:shadow-none"
-        style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
+      {/* Invoice card — fixed paper colors so it looks the same on-screen, printed, and emailed regardless of app theme */}
+      <div className="relative mx-auto max-w-2xl rounded-2xl overflow-hidden print:shadow-none isolate"
+        style={{ background: '#fff', border: '1px solid hsl(var(--border))' }}>
 
-        <div className="flex items-start justify-between mb-8">
-          <div>
-            <div className="text-xl font-bold tracking-wide" style={{ color: 'hsl(var(--primary))' }}>WIRELESS</div>
-            <div className="text-xs mt-0.5" style={{ color: 'hsl(var(--muted-foreground))' }}>Repair &amp; Service System</div>
-          </div>
-          <div className="text-right">
-            <div className="text-xl font-bold" style={{ color: 'hsl(var(--foreground))' }}>{inv.invoice_number}</div>
-            <div className="text-xs mt-1" style={{ color: 'hsl(var(--muted-foreground))' }}>{fmtDate(inv.created_at)}</div>
-            <div className="mt-2 flex items-center gap-1.5 justify-end">
-              <StatusBadge status={inv.status} />
-              {inv.payment_method && <PaymentMethodBadge method={inv.payment_method} />}
+        <img src="/wireless-logo-light.png" alt="" aria-hidden="true"
+          className="absolute top-1/2 left-1/2 pointer-events-none select-none"
+          style={{ width: 'min(70%, 420px)', transform: 'translate(-50%, -50%) rotate(-25deg)', opacity: 0.05, filter: 'grayscale(1)', zIndex: 0 }} />
+
+        <div className="relative p-8" style={{ zIndex: 1 }}>
+
+          {/* Top: logo + title */}
+          <div className="flex items-start justify-between gap-6 mb-6 flex-wrap">
+            <div className="flex items-start gap-3">
+              <img src="/wireless-logo.png" alt="" className="w-9 h-9 object-contain mt-0.5" />
+              <div>
+                <div className="text-base font-bold tracking-wide" style={{ color: '#1e1e1e' }}>
+                  {(settings?.business_name || 'Wireless').toUpperCase()}
+                </div>
+                <div className="text-xs mt-0.5" style={{ color: '#888' }}>{settings?.tagline || 'Repair & Service System'}</div>
+                {settings?.address && <div className="text-[11px] mt-1.5" style={{ color: '#999' }}>{settings.address}</div>}
+                {settings?.phone && <div className="text-[11px]" style={{ color: '#999' }}>{settings.phone}</div>}
+              </div>
+            </div>
+            <div className="text-right">
+              {isPaid && (
+                <div className="inline-block mb-2 px-3 py-1 rounded-md text-sm font-black"
+                  style={{ border: '3px solid #22c55e', color: '#22c55e', letterSpacing: '0.12em', transform: 'rotate(-8deg)' }}>
+                  PAID
+                </div>
+              )}
+              <div className="text-3xl font-extrabold" style={{ color: '#1e1e1e', letterSpacing: '0.04em' }}>
+                {isPaid ? 'RECEIPT' : 'INVOICE'}
+              </div>
+              <div className="text-xs mt-1.5" style={{ color: '#888' }}># {inv.invoice_number}</div>
+              {inv.payment_method && (
+                <div className="mt-2 flex justify-end"><PaymentMethodBadge method={inv.payment_method} /></div>
+              )}
             </div>
           </div>
-        </div>
 
-        <div className="grid grid-cols-2 gap-8 mb-8">
-          <div>
-            <div className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: 'hsl(var(--muted-foreground))' }}>BILL TO</div>
-            {inv.customer ? (
+          <hr style={{ border: 'none', borderTop: '1px solid #e0e0e0' }} />
+
+          {/* Middle: bill to + meta table */}
+          <div className="flex gap-6 my-6 items-start flex-wrap">
+            <div className="flex-1 min-w-[180px]">
+              <div className="text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: '#888' }}>Bill To</div>
+              {inv.customer ? (
+                <>
+                  <div className="text-sm font-bold" style={{ color: '#1e1e1e' }}>{inv.customer.name}</div>
+                  {inv.customer.phone && <div className="text-xs mt-0.5" style={{ color: '#666' }}>{inv.customer.phone}</div>}
+                  {inv.customer.email && <div className="text-xs" style={{ color: '#666' }}>{inv.customer.email}</div>}
+                  {inv.customer.address && <div className="text-xs" style={{ color: '#666' }}>{inv.customer.address}</div>}
+                </>
+              ) : (
+                <div className="text-sm" style={{ color: '#888' }}>—</div>
+              )}
+            </div>
+
+            <div className="w-full sm:w-[260px] rounded-md overflow-hidden flex-shrink-0" style={{ border: '1px solid #d8d8d8' }}>
+              <div className="flex items-center justify-between px-3 py-2 text-xs" style={{ borderBottom: '1px solid #e8e8e8' }}>
+                <span style={{ color: '#888' }}>Date</span>
+                <span style={{ color: '#1e1e1e', fontWeight: 500 }}>{fmtDate(inv.created_at)}</span>
+              </div>
+              {inv.due_date && (
+                <div className="flex items-center justify-between px-3 py-2 text-xs" style={{ borderBottom: '1px solid #e8e8e8' }}>
+                  <span style={{ color: '#888' }}>Due Date</span>
+                  <span style={{ color: '#1e1e1e', fontWeight: 500 }}>{fmtDate(inv.due_date)}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between px-3 py-2.5" style={{ background: '#ebf2fa' }}>
+                <span className="text-xs font-bold" style={{ color: '#1e1e1e' }}>Balance Due</span>
+                <span className="text-sm font-extrabold" style={{ color: '#1e1e1e' }}>{fmt(balanceDue)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Items table */}
+          <div className="rounded-md overflow-hidden mb-2" style={{ border: '1px solid #e0e0e0' }}>
+            <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ background: '#2b2b2b' }}>
+                  {['Description', 'Qty', 'Unit Price', 'Total'].map((h, i) => (
+                    <th key={h} className={`px-3.5 py-2.5 text-xs font-semibold uppercase tracking-wider text-white ${i === 0 ? 'text-left' : 'text-right'}`}>
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {items.length ? items.map((item, i) => (
+                  <tr key={item.id} style={{ background: i % 2 ? '#fafafa' : '#fff', borderBottom: i < items.length - 1 ? '1px solid #ebebeb' : 'none' }}>
+                    <td className="px-3.5 py-3 text-sm" style={{ color: '#1e1e1e' }}>{item.description}</td>
+                    <td className="px-3.5 py-3 text-sm text-right" style={{ color: '#666' }}>{item.quantity}</td>
+                    <td className="px-3.5 py-3 text-sm text-right" style={{ color: '#666' }}>{fmt(item.unit_price)}</td>
+                    <td className="px-3.5 py-3 text-sm font-bold text-right" style={{ color: '#1e1e1e' }}>{fmt(item.total_price)}</td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td colSpan={4} className="px-3.5 py-6 text-center text-xs" style={{ color: '#999' }}>No line items</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+            </div>
+          </div>
+
+          {/* Totals */}
+          <div className="ml-auto max-w-xs space-y-1.5 mb-6">
+            {[
+              { label: 'Subtotal', value: subtotal },
+              ...(taxEnabled ? [
+                { label: `VAT (${vatRate}%)`,   value: vat },
+                { label: 'NHIL (2.5%)',    value: nhil },
+                { label: 'GETFUND (2.5%)', value: getfund },
+              ] : []),
+            ].map(row => (
+              <div key={row.label} className="flex items-center justify-between gap-8">
+                <span className="text-xs" style={{ color: '#888' }}>{row.label}</span>
+                <span className="text-xs" style={{ color: '#1e1e1e' }}>{fmt(row.value)}</span>
+              </div>
+            ))}
+            <div className="flex items-center justify-between gap-8 pt-2" style={{ borderTop: '1px solid #ccc' }}>
+              <span className="text-sm font-extrabold" style={{ color: '#1e1e1e' }}>Total</span>
+              <span className="text-base font-extrabold" style={{ color: '#1e1e1e' }}>{fmt(inv.total)}</span>
+            </div>
+            {inv.amount_paid > 0 && (
               <>
-                <div className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>{inv.customer.name}</div>
-                {inv.customer.phone && <div className="text-xs mt-0.5" style={{ color: 'hsl(var(--muted-foreground))' }}>{inv.customer.phone}</div>}
-                {inv.customer.email && <div className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>{inv.customer.email}</div>}
-                {inv.customer.address && <div className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>{inv.customer.address}</div>}
+                <div className="flex items-center justify-between gap-8">
+                  <span className="text-xs" style={{ color: '#888' }}>Amount Paid</span>
+                  <span className="text-xs" style={{ color: '#1e1e1e' }}>{fmt(inv.amount_paid)}</span>
+                </div>
+                <div className="flex items-center justify-between gap-8 pt-2" style={{ borderTop: '1px solid #ccc' }}>
+                  <span className="text-sm font-extrabold" style={{ color: '#1e1e1e' }}>Balance Due</span>
+                  <span className="text-base font-extrabold" style={{ color: '#1e1e1e' }}>{fmt(balanceDue)}</span>
+                </div>
               </>
-            ) : (
-              <div className="text-sm" style={{ color: 'hsl(var(--muted-foreground))' }}>—</div>
             )}
           </div>
-        </div>
 
-        <div className="rounded-xl overflow-hidden mb-6" style={{ border: '1px solid hsl(var(--border))' }}>
-          <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr style={{ borderBottom: '1px solid hsl(var(--border))' }}>
-                {['Description', 'Qty', 'Unit Price', 'Total'].map((h, i) => (
-                  <th key={h} className={`px-4 py-3 text-xs font-semibold uppercase tracking-wider ${i === 0 ? 'text-left' : 'text-right'}`}
-                    style={{ color: 'hsl(var(--muted-foreground))' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {items.length ? items.map((item, i) => (
-                <tr key={item.id} style={{ borderBottom: i < items.length - 1 ? '1px solid hsl(var(--border))' : 'none' }}>
-                  <td className="px-4 py-3 text-sm" style={{ color: 'hsl(var(--foreground))' }}>{item.description}</td>
-                  <td className="px-4 py-3 text-sm text-right" style={{ color: 'hsl(var(--muted-foreground))' }}>{item.quantity}</td>
-                  <td className="px-4 py-3 text-sm text-right" style={{ color: 'hsl(var(--muted-foreground))' }}>{fmt(item.unit_price)}</td>
-                  <td className="px-4 py-3 text-sm font-bold text-right" style={{ color: 'hsl(var(--foreground))' }}>{fmt(item.total_price)}</td>
-                </tr>
-              )) : (
-                <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No line items</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-          </div>
-        </div>
-
-        <div className="ml-auto max-w-xs space-y-1.5 mb-8">
-          {[
-            { label: 'Subtotal', value: subtotal },
-            ...(taxEnabled ? [
-              { label: `VAT (${vatRate}%)`,   value: vat },
-              { label: 'NHIL (2.5%)',    value: nhil },
-              { label: 'GETFUND (2.5%)', value: getfund },
-            ] : []),
-          ].map(row => (
-            <div key={row.label} className="flex items-center justify-between gap-8">
-              <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>{row.label}</span>
-              <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>{fmt(row.value)}</span>
+          {inv.notes && (
+            <div className="mb-4">
+              <div className="text-xs mb-1" style={{ color: '#888' }}>Notes:</div>
+              <div className="text-[13px] leading-relaxed" style={{ color: '#444' }}>{inv.notes}</div>
             </div>
-          ))}
-          <div className="flex items-center justify-between gap-8 pt-2" style={{ borderTop: '1px solid hsl(var(--border))' }}>
-            <span className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>Total</span>
-            <span className="text-base font-bold" style={{ color: 'hsl(var(--foreground))' }}>{fmt(inv.total)}</span>
-          </div>
-        </div>
+          )}
 
-        <div className="text-center text-xs pt-6" style={{ borderTop: '1px solid hsl(var(--border))', color: 'hsl(var(--muted-foreground))' }}>
-          Thank you for choosing WIRELESS. All repairs are backed by a 90-day warranty.
+          <div className="text-center text-xs pt-6" style={{ borderTop: '1px solid #e0e0e0', color: '#999' }}>
+            Thank you for choosing {settings?.business_name || 'WIRELESS'}. All repairs are backed by a 90-day warranty.
+          </div>
         </div>
       </div>
     </div>
@@ -644,15 +712,6 @@ export default function InvoicesPage() {
             width={260}
           />
           <DateRangePicker value={dateRange} onChange={setDateRange} label="Invoice date" />
-          {canIssue && (
-            <button
-              onClick={() => setShowIssue(true)}
-              className="ml-auto flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold text-white"
-              style={{ background: 'hsl(var(--primary))' }}>
-              <Plus className="w-3.5 h-3.5" />
-              New Invoice
-            </button>
-          )}
         </div>
 
         {loading ? (
