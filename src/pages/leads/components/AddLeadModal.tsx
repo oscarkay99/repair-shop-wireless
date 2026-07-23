@@ -49,7 +49,7 @@ export default function AddLeadModal({ defaultStatus = 'warm', onSave, onClose }
             phone={form.phone}
             onChange={(name, phone) => setForm(p => ({ ...p, name, phone }))}
             required
-            label="Customer *"
+            label="Customer"
             placeholder="Search existing or type new name…"
           />
           <div className="grid grid-cols-2 gap-3">

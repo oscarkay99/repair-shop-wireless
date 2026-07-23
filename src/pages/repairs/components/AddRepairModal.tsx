@@ -151,7 +151,7 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
                 setSelectedCustomer(customer ?? null);
               }}
               required
-              label="Customer *"
+              label="Customer"
             />
             <div>
               <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Device *</label>
