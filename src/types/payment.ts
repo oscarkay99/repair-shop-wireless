@@ -4,11 +4,9 @@ export type TransactionStatus = 'verified' | 'pending' | 'needs_review' | 'faile
 
 export interface Transaction {
   id: string;
-  sourceType: 'sale' | 'payment';
   customer: string;
   customerPhone: string | null;
   customerId: string | null;
-  amountValue: number;
   amount: string;
   method: PaymentMethod;
   status: TransactionStatus;

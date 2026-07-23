@@ -1,10 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { useTransactions } from '@/hooks/useTransactions';
 import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/shared/Pagination';
 import RecordPaymentModal from './RecordPaymentModal';
-import IssueRefundModal from './IssueRefundModal';
-import { getRefundsForSources, type RefundRecord } from '@/services/wireless/refunds';
 
 const PAGE_SIZE = 10;
 
@@ -28,9 +26,6 @@ export default function TransactionTable() {
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string>('');
   const [showRecordModal, setShowRecordModal] = useState(false);
-  const [showRefundModal, setShowRefundModal] = useState(false);
-  const [printing, setPrinting] = useState(false);
-  const [refunds, setRefunds] = useState<RefundRecord[]>([]);
 
   const approve = (id: string) => verify(id, 'verified');
 
@@ -45,27 +40,6 @@ export default function TransactionTable() {
   const selected = transactions.find(t => t.id === selectedId) ?? transactions[0];
   const items = selected ? [{ name: selected.product, qty: 1, price: selected.amount }] : [];
   const sc = selected ? statusConfig[selected.status] : statusConfig.pending;
-  const selectedRefunds = selected ? refunds.filter(r => r.source_id === selected.id) : [];
-
-  const reloadRefunds = useCallback(async (id: string) => {
-    try { setRefunds(await getRefundsForSources([id])); } catch { /* refund history is a nice-to-have, not worth surfacing an error toast for */ }
-  }, []);
-
-  useEffect(() => {
-    if (selected?.id) reloadRefunds(selected.id);
-    else setRefunds([]);
-  }, [selected?.id, reloadRefunds]);
-
-  const handlePrintReceipt = async () => {
-    if (!selected) return;
-    setPrinting(true);
-    try {
-      const { printReceipt } = await import('@/utils/receiptPdf');
-      printReceipt(selected);
-    } finally {
-      setPrinting(false);
-    }
-  };
 
   const filters = ['all', 'verified', 'pending', 'needs_review', 'failed'];
 
@@ -249,22 +223,6 @@ export default function TransactionTable() {
               </div>
             </div>
 
-            {selectedRefunds.length > 0 && (
-              <div className="rounded-2xl p-4 mb-4" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)' }}>
-                <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: '#DC2626' }}>
-                  Refunded — {selectedRefunds.reduce((s, r) => s + r.amount, 0).toFixed(2)} total
-                </p>
-                <div className="space-y-2">
-                  {selectedRefunds.map(r => (
-                    <div key={r.id} className="text-[11px]" style={{ color: 'rgba(7,16,31,0.55)' }}>
-                      GH₵ {r.amount.toFixed(2)} on {new Date(r.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                      {r.reason && ` — ${r.reason}`}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Line items */}
             <div
               className="rounded-2xl p-4 mb-4"
@@ -307,44 +265,28 @@ export default function TransactionTable() {
           </div>
 
           {/* CTA */}
-          <div className="px-6 py-4" style={{ borderTop: '1px solid rgba(7,16,31,0.07)' }}>
-            {selected.status === 'pending' || selected.status === 'needs_review' ? (
-              <button
-                onClick={() => approve(selected.id)}
-                className="w-full py-3.5 rounded-2xl text-[13px] font-bold text-white cursor-pointer transition-all hover:opacity-90"
-                style={{ background: 'linear-gradient(135deg, #EC0118, #BD0113)' }}
-              >
-                <i className="ri-checkbox-circle-line mr-2" />
-                Mark as Verified — {selected.amount}
-              </button>
-            ) : selected.status === 'verified' ? (
-              <div className="flex gap-3">
+          {(selected.status === 'pending' || selected.status === 'needs_review' || selected.status === 'failed') && (
+            <div className="px-6 py-4" style={{ borderTop: '1px solid rgba(7,16,31,0.07)' }}>
+              {selected.status === 'pending' || selected.status === 'needs_review' ? (
                 <button
-                  onClick={handlePrintReceipt}
-                  disabled={printing}
-                  className="flex-1 py-3 rounded-2xl text-[12px] font-bold cursor-pointer transition-all disabled:opacity-50"
-                  style={{ background: 'rgba(236,1,24,0.08)', color: '#EC0118' }}
+                  onClick={() => approve(selected.id)}
+                  className="w-full py-3.5 rounded-2xl text-[13px] font-bold text-white cursor-pointer transition-all hover:opacity-90"
+                  style={{ background: 'linear-gradient(135deg, #EC0118, #BD0113)' }}
                 >
-                  <i className="ri-printer-line mr-1.5" />{printing ? 'Preparing…' : 'Print Receipt'}
+                  <i className="ri-checkbox-circle-line mr-2" />
+                  Mark as Verified — {selected.amount}
                 </button>
+              ) : (
                 <button
-                  onClick={() => setShowRefundModal(true)}
-                  className="flex-1 py-3 rounded-2xl text-[12px] font-bold cursor-pointer transition-all"
+                  className="w-full py-3.5 rounded-2xl text-[13px] font-bold cursor-pointer transition-all"
                   style={{ background: 'rgba(239,68,68,0.08)', color: '#DC2626' }}
                 >
-                  <i className="ri-refund-line mr-1.5" />Issue Refund
+                  <i className="ri-close-circle-line mr-2" />
+                  Transaction Failed — Contact Customer
                 </button>
-              </div>
-            ) : (
-              <button
-                className="w-full py-3.5 rounded-2xl text-[13px] font-bold cursor-pointer transition-all"
-                style={{ background: 'rgba(239,68,68,0.08)', color: '#DC2626' }}
-              >
-                <i className="ri-close-circle-line mr-2" />
-                Transaction Failed — Contact Customer
-              </button>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center flex-col gap-3">
@@ -355,14 +297,6 @@ export default function TransactionTable() {
 
       {showRecordModal && (
         <RecordPaymentModal onClose={() => setShowRecordModal(false)} onSaved={reload} />
-      )}
-
-      {showRefundModal && selected && (
-        <IssueRefundModal
-          txn={selected}
-          onClose={() => setShowRefundModal(false)}
-          onIssued={() => reloadRefunds(selected.id)}
-        />
       )}
     </div>
   );
