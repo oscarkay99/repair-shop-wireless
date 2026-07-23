@@ -527,8 +527,8 @@ export default function InvoicesPage() {
   const [showIssue, setShowIssue] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
 
-  const canIssue = user?.role === 'admin';
-  const canEdit  = user?.role === 'admin';
+  const canIssue = user?.role === 'admin' || user?.role === 'sales_manager';
+  const canEdit  = user?.role === 'admin' || user?.role === 'sales_manager';
 
   useEffect(() => { setPage(1); }, [query, dateRange]);
 
