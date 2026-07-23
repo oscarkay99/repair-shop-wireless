@@ -61,18 +61,21 @@ export default function SalesManagerDashboard() {
     repairs.filter(r => isDone(r.status) && r.completedDate?.slice(0, 10) >= startMonth),
     [repairs, startMonth]);
 
-  // Revenue (Option B): invoices are the canonical "money received" ledger —
-  // amount_paid on paid invoices, not ticket/accessory-sale totals directly, to
-  // avoid double-counting the same job/sale across both its record and its invoice.
-  const totalRevenueMonth = useMemo(() =>
-    invoices.filter(i => i.status === 'paid' && i.updated_at.slice(0, 10) >= startMonth)
-      .reduce((s, i) => s + i.amount_paid, 0),
-    [invoices, startMonth]);
-
-  // Accessory sales (real data — units/activity, not counted again as revenue above)
+  // Revenue = paid invoices (amount_paid) + accessory sales. Accessory sales are
+  // recorded straight to accessory_sales and never become an invoice, so they
+  // have to be added in explicitly — there's no double-counting risk here, since
+  // nothing else was counting them as revenue before this.
   const salesThisMonth = useMemo(() =>
     sales.filter(s => s.sold_at.slice(0, 10) >= startMonth),
     [sales, startMonth]);
+
+  const totalRevenueMonth = useMemo(() => {
+    const invoiceRevenue = invoices
+      .filter(i => i.status === 'paid' && i.updated_at.slice(0, 10) >= startMonth)
+      .reduce((s, i) => s + i.amount_paid, 0);
+    const accessoryRevenue = salesThisMonth.reduce((s, sale) => s + sale.total, 0);
+    return invoiceRevenue + accessoryRevenue;
+  }, [invoices, salesThisMonth, startMonth]);
 
   // Active pipeline
   const activePipeline = useMemo(() =>
@@ -132,7 +135,7 @@ export default function SalesManagerDashboard() {
         <KPICard
           label="Total Revenue (Month)"
           value={fmt(totalRevenueMonth)}
-          sub={`From paid invoices`}
+          sub="Paid invoices + accessory sales"
           icon={TrendingUp}
           color="#10B981"
         />
