@@ -4,9 +4,11 @@ export type TransactionStatus = 'verified' | 'pending' | 'needs_review' | 'faile
 
 export interface Transaction {
   id: string;
+  sourceType: 'sale' | 'payment';
   customer: string;
   customerPhone: string | null;
   customerId: string | null;
+  amountValue: number;
   amount: string;
   method: PaymentMethod;
   status: TransactionStatus;
@@ -15,19 +17,3 @@ export interface Transaction {
   product: string;
 }
 
-export interface VerificationQueueItem {
-  id: string;
-  customer: string;
-  amount: string;
-  method: PaymentMethod;
-  reference: string;
-  proofNote: string;
-  time: string;
-}
-
-export interface PaymentStats {
-  totalCollected: { value: string; change: string };
-  pendingVerification: { value: string; count: number };
-  outstandingBalance: { value: string; count: number };
-  reconciliationQueue: { value: number; label: string };
-}

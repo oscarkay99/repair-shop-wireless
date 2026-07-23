@@ -9,7 +9,7 @@ import { getInvoiceItems, sendInvoiceEmail } from '@/services/wireless/invoices'
 import SearchDropdown from '@/components/shared/SearchDropdown';
 import Pagination from '@/components/shared/Pagination';
 import DateRangePicker, { type DateRange } from '@/components/shared/DateRangePicker';
-import { Check, Share2, Printer, Download, Mail, Loader2, ChevronLeft, X, Pencil } from 'lucide-react';
+import { Check, Share2, Printer, Download, Mail, Loader2, ChevronLeft, X, Pencil, Plus } from 'lucide-react';
 import type { Invoice, InvoiceStatus } from '@/types/wireless';
 import type { PaymentMethod } from '@/types/sale';
 import { downloadInvoicePdf, invoicePdfBase64 } from '@/utils/invoicePdf';
@@ -79,16 +79,20 @@ const inputStyle = { background: 'hsl(var(--muted))', border: '1px solid hsl(var
 
 // ─── Issue Invoice Modal ─────────────────────────────────────────────────────
 
+interface DraftLineItem { description: string; quantity: string; unit_price: string }
+
 function IssueInvoiceModal({ onSave, onClose }: {
-  onSave: (input: Omit<Invoice, 'id' | 'invoice_number' | 'created_at' | 'updated_at'>) => Promise<unknown>;
+  onSave: (
+    input: Omit<Invoice, 'id' | 'invoice_number' | 'created_at' | 'updated_at'>,
+    items?: { description: string; quantity: number; unit_price: number; total_price: number }[]
+  ) => Promise<unknown>;
   onClose: () => void;
 }) {
   const { customers } = useWirelessCustomers();
   const { user } = useAuth();
   const [customerSearch, setCustomerSearch] = useState('');
   const [customerId, setCustomerId] = useState('');
-  const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState('');
+  const [lineItems, setLineItems] = useState<DraftLineItem[]>([{ description: '', quantity: '1', unit_price: '' }]);
   const [dueDate, setDueDate] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
@@ -103,10 +107,27 @@ function IssueInvoiceModal({ onSave, onClose }: {
 
   const selectedCustomer = customers.find(c => c.id === customerId);
 
+  const updateRow = (i: number, field: keyof DraftLineItem, value: string) => {
+    setLineItems(prev => prev.map((row, idx) => idx === i ? { ...row, [field]: value } : row));
+  };
+  const addRow = () => setLineItems(prev => [...prev, { description: '', quantity: '1', unit_price: '' }]);
+  const removeRow = (i: number) => setLineItems(prev => prev.filter((_, idx) => idx !== i));
+
+  const parsedItems = lineItems
+    .map(row => ({
+      description: row.description.trim(),
+      quantity: parseFloat(row.quantity) || 0,
+      unit_price: parseFloat(row.unit_price) || 0,
+    }))
+    .filter(row => row.description && row.quantity > 0 && row.unit_price >= 0)
+    .map(row => ({ ...row, total_price: row.quantity * row.unit_price }));
+
+  const subtotal = parsedItems.reduce((s, i) => s + i.total_price, 0);
+  const canSubmit = !!customerId && parsedItems.length > 0;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!customerId || !amount) return;
-    const subtotal = parseFloat(amount) || 0;
+    if (!canSubmit) return;
     setSaving(true);
     try {
       await onSave({
@@ -118,9 +139,9 @@ function IssueInvoiceModal({ onSave, onClose }: {
         amount_paid: 0,
         status: 'unpaid',
         due_date: dueDate || undefined,
-        notes: [description, notes].filter(Boolean).join('\n') || undefined,
+        notes: notes || undefined,
         created_by: user?.id,
-      });
+      }, parsedItems);
       onClose();
     } catch { /* error toast already shown by useInvoices */ }
     finally { setSaving(false); }
@@ -130,7 +151,7 @@ function IssueInvoiceModal({ onSave, onClose }: {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
       onClick={onClose}>
-      <div className="w-full max-w-sm rounded-2xl overflow-hidden"
+      <div className="w-full max-w-lg rounded-2xl overflow-hidden"
         style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
         onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'hsl(var(--border))' }}>
@@ -140,7 +161,7 @@ function IssueInvoiceModal({ onSave, onClose }: {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-5 py-4 space-y-3">
+        <form onSubmit={handleSubmit} className="px-5 py-4 space-y-3 max-h-[75vh] overflow-y-auto">
           {/* Customer search */}
           <Field label="Customer *">
             {selectedCustomer ? (
@@ -167,15 +188,51 @@ function IssueInvoiceModal({ onSave, onClose }: {
             )}
           </Field>
 
-          <Field label="Description">
-            <input type="text" value={description} onChange={e => setDescription(e.target.value)}
-              placeholder="e.g. Screen replacement, Labour" className={inputCls} style={inputStyle} />
-          </Field>
-
-          <Field label="Amount (GH₵) *">
-            <input type="number" min="0" step="0.01" value={amount} onChange={e => setAmount(e.target.value)}
-              placeholder="0.00" className={inputCls} style={inputStyle} required />
-          </Field>
+          <div>
+            <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1.5" style={{ color: 'hsl(var(--muted-foreground))' }}>
+              Line Items *
+            </label>
+            <div className="rounded-lg overflow-hidden" style={{ border: '1px solid hsl(var(--border))' }}>
+              <div className="grid grid-cols-[1fr_56px_84px_84px_28px] gap-1.5 px-2 py-1.5"
+                style={{ background: 'hsl(var(--muted))' }}>
+                <span className="text-[10px] font-semibold uppercase" style={{ color: 'hsl(var(--muted-foreground))' }}>Description</span>
+                <span className="text-[10px] font-semibold uppercase" style={{ color: 'hsl(var(--muted-foreground))' }}>Qty</span>
+                <span className="text-[10px] font-semibold uppercase" style={{ color: 'hsl(var(--muted-foreground))' }}>Unit Price</span>
+                <span className="text-[10px] font-semibold uppercase" style={{ color: 'hsl(var(--muted-foreground))' }}>Total</span>
+                <span />
+              </div>
+              <div className="divide-y" style={{ borderColor: 'hsl(var(--border))' }}>
+                {lineItems.map((row, i) => {
+                  const rowTotal = (parseFloat(row.quantity) || 0) * (parseFloat(row.unit_price) || 0);
+                  return (
+                    <div key={i} className="grid grid-cols-[1fr_56px_84px_84px_28px] gap-1.5 px-2 py-1.5 items-center">
+                      <input type="text" value={row.description} onChange={e => updateRow(i, 'description', e.target.value)}
+                        placeholder="Screen replacement" className="h-8 px-2 rounded-md text-xs outline-none" style={inputStyle} />
+                      <input type="number" min="0" step="1" value={row.quantity} onChange={e => updateRow(i, 'quantity', e.target.value)}
+                        className="h-8 px-2 rounded-md text-xs outline-none" style={inputStyle} />
+                      <input type="number" min="0" step="0.01" value={row.unit_price} onChange={e => updateRow(i, 'unit_price', e.target.value)}
+                        placeholder="0.00" className="h-8 px-2 rounded-md text-xs outline-none" style={inputStyle} />
+                      <span className="text-xs font-semibold text-right pr-1" style={{ color: 'hsl(var(--foreground))' }}>{fmt(rowTotal)}</span>
+                      <button type="button" onClick={() => removeRow(i)} disabled={lineItems.length === 1}
+                        className="w-7 h-7 flex items-center justify-center rounded-md disabled:opacity-30"
+                        style={{ color: 'hsl(var(--muted-foreground))' }}>
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="flex items-center justify-between mt-2">
+              <button type="button" onClick={addRow}
+                className="flex items-center gap-1 text-xs font-semibold" style={{ color: 'hsl(var(--primary))' }}>
+                <Plus className="w-3.5 h-3.5" /> Add item
+              </button>
+              <span className="text-xs font-semibold" style={{ color: 'hsl(var(--foreground))' }}>
+                Subtotal: {fmt(subtotal)}
+              </span>
+            </div>
+          </div>
 
           <Field label="Due Date">
             <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)}
@@ -194,7 +251,7 @@ function IssueInvoiceModal({ onSave, onClose }: {
               style={{ background: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' }}>
               Cancel
             </button>
-            <button type="submit" disabled={saving || !customerId || !amount}
+            <button type="submit" disabled={saving || !canSubmit}
               className="flex-1 h-9 rounded-lg text-xs font-semibold text-white disabled:opacity-50"
               style={{ background: 'hsl(var(--primary))' }}>
               {saving ? 'Issuing…' : 'Issue Invoice'}

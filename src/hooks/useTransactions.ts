@@ -20,9 +20,11 @@ function toTransaction(s: AccessorySaleRecord): { sortKey: number; txn: Transact
     sortKey: new Date(s.sold_at).getTime(),
     txn: {
       id: s.id,
+      sourceType: 'sale',
       customer: s.customer_name || 'Walk-in Customer',
       customerPhone: null,
       customerId: s.customer_id ?? null,
+      amountValue: s.total,
       amount: `GH₵ ${s.total.toFixed(2)}`,
       method: s.payment_method === 'Transfer' ? 'Bank Transfer' : s.payment_method,
       status: STATUS_FROM_PAYMENT[s.payment_status] ?? 'pending',
@@ -41,9 +43,11 @@ function toTransactionFromPayment(p: Payment): { sortKey: number; txn: Transacti
     sortKey: new Date(p.created_at).getTime(),
     txn: {
       id: p.id,
+      sourceType: 'payment',
       customer: p.customer_name || 'Walk-in Customer',
       customerPhone: null,
       customerId: p.customer_id ?? null,
+      amountValue: p.amount,
       amount: `GH₵ ${p.amount.toFixed(2)}`,
       method: p.method,
       status: 'verified',

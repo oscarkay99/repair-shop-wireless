@@ -1,7 +1,6 @@
 import AdminLayout from '@/components/feature/AdminLayout';
 import PaymentStats from './components/PaymentStats';
 import TransactionTable from './components/TransactionTable';
-import VerificationQueue from './components/VerificationQueue';
 
 export default function PaymentsPage() {
   return (
@@ -10,10 +9,6 @@ export default function PaymentsPage() {
         <PaymentStats />
 
         <TransactionTable />
-
-        <div className="mt-5">
-          <VerificationQueue />
-        </div>
       </div>
     </AdminLayout>
   );

@@ -1,6 +1,7 @@
 import { jsPDF, GState } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { Invoice } from '@/types/wireless';
+import { loadWirelessLogo, fmtGHS } from '@/utils/pdfBranding';
 
 interface InvoiceLineItem {
   description: string;
@@ -28,28 +29,10 @@ const PAGE_W = 210;
 const MARGIN = 14;
 const RIGHT_X = PAGE_W - MARGIN;
 
-function fmt(n: number) {
-  return `GHS ${n.toLocaleString('en-GH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
+const fmt = fmtGHS;
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
-}
-
-let logoDataUrlPromise: Promise<string> | null = null;
-/** Fetches the light-background lockup once and caches it for reuse across icon + watermark. */
-function loadLogo(): Promise<string> {
-  if (!logoDataUrlPromise) {
-    logoDataUrlPromise = fetch('/wireless-logo-light.png')
-      .then(res => res.blob())
-      .then(blob => new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      }));
-  }
-  return logoDataUrlPromise;
 }
 
 /** Draws a rotated "PAID" stamp (border box + text) centered at cx,cy. */
@@ -87,7 +70,7 @@ export async function buildInvoicePdf({ invoice, items, taxEnabled, vatRate, set
   const balanceDue = Math.max(0, invoice.total - invoice.amount_paid);
 
   let logo: string | null = null;
-  try { logo = await loadLogo(); } catch { logo = null; }
+  try { logo = await loadWirelessLogo(); } catch { logo = null; }
 
   // Watermark — drawn first so header/table content layers on top of it.
   if (logo) {
