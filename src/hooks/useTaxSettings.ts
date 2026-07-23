@@ -4,9 +4,10 @@ import { getWirelessSettings, updateWirelessSettings } from '@/services/wireless
 export interface TaxSettings {
   taxEnabled: boolean;
   vatRate: number;
+  nhilGetfundRate: number;
 }
 
-const DEFAULTS: TaxSettings = { taxEnabled: true, vatRate: 15 };
+const DEFAULTS: TaxSettings = { taxEnabled: true, vatRate: 15, nhilGetfundRate: 5 };
 
 export function useTaxSettings() {
   const [settings, setSettings] = useState<TaxSettings>(DEFAULTS);
@@ -14,16 +15,17 @@ export function useTaxSettings() {
 
   useEffect(() => {
     getWirelessSettings().then(s => {
-      setSettings({ taxEnabled: s.tax_enabled, vatRate: s.vat_rate });
+      setSettings({ taxEnabled: s.tax_enabled, vatRate: s.vat_rate, nhilGetfundRate: s.nhil_getfund_rate });
     }).finally(() => setLoading(false));
   }, []);
 
   const save = useCallback(async (patch: Partial<TaxSettings>) => {
-    setSettings(prev => ({ ...prev, ...patch }));
     await updateWirelessSettings({
       ...(patch.taxEnabled !== undefined && { tax_enabled: patch.taxEnabled }),
       ...(patch.vatRate !== undefined && { vat_rate: patch.vatRate }),
+      ...(patch.nhilGetfundRate !== undefined && { nhil_getfund_rate: patch.nhilGetfundRate }),
     });
+    setSettings(prev => ({ ...prev, ...patch }));
   }, []);
 
   return { ...settings, loading, save };

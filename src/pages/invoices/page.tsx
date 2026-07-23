@@ -5,6 +5,7 @@ import { useInvoices } from '@/hooks/useInvoices';
 import { useWirelessCustomers } from '@/hooks/useWirelessCustomers';
 import { useAuth } from '@/hooks/useAuth';
 import { useWirelessSettings } from '@/hooks/useWirelessSettings';
+import { useTaxSettings } from '@/hooks/useTaxSettings';
 import { getInvoiceItems, sendInvoiceEmail } from '@/services/wireless/invoices';
 import SearchDropdown from '@/components/shared/SearchDropdown';
 import Pagination from '@/components/shared/Pagination';
@@ -90,6 +91,7 @@ function IssueInvoiceModal({ onSave, onClose }: {
 }) {
   const { customers } = useWirelessCustomers();
   const { user } = useAuth();
+  const { taxEnabled, vatRate, nhilGetfundRate } = useTaxSettings();
   const [customerSearch, setCustomerSearch] = useState('');
   const [customerId, setCustomerId] = useState('');
   const [lineItems, setLineItems] = useState<DraftLineItem[]>([{ description: '', quantity: '1', unit_price: '' }]);
@@ -123,6 +125,10 @@ function IssueInvoiceModal({ onSave, onClose }: {
     .map(row => ({ ...row, total_price: row.quantity * row.unit_price }));
 
   const subtotal = parsedItems.reduce((s, i) => s + i.total_price, 0);
+  const vat = taxEnabled ? Math.round(subtotal * (vatRate / 100) * 100) / 100 : 0;
+  const levy = taxEnabled ? Math.round(subtotal * (nhilGetfundRate / 100) * 100) / 100 : 0;
+  const tax = vat + levy;
+  const total = subtotal + tax;
   const canSubmit = !!customerId && parsedItems.length > 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -133,9 +139,9 @@ function IssueInvoiceModal({ onSave, onClose }: {
       await onSave({
         customer_id: customerId,
         subtotal,
-        tax: 0,
+        tax,
         discount: 0,
-        total: subtotal,
+        total,
         amount_paid: 0,
         status: 'unpaid',
         due_date: dueDate || undefined,
@@ -228,9 +234,15 @@ function IssueInvoiceModal({ onSave, onClose }: {
                 className="flex items-center gap-1 text-xs font-semibold" style={{ color: 'hsl(var(--primary))' }}>
                 <Plus className="w-3.5 h-3.5" /> Add item
               </button>
-              <span className="text-xs font-semibold" style={{ color: 'hsl(var(--foreground))' }}>
-                Subtotal: {fmt(subtotal)}
-              </span>
+              <div className="text-right">
+                <div className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Subtotal: {fmt(subtotal)}</div>
+                {taxEnabled && (
+                  <div className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                    Tax (VAT {vatRate}% + Levy {nhilGetfundRate}%): {fmt(tax)}
+                  </div>
+                )}
+                <div className="text-xs font-semibold" style={{ color: 'hsl(var(--foreground))' }}>Total: {fmt(total)}</div>
+              </div>
             </div>
           </div>
 
@@ -358,6 +370,7 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
   const { settings } = useWirelessSettings();
   const taxEnabled = settings?.tax_enabled ?? true;
   const vatRate = settings?.vat_rate ?? 15;
+  const levyRate = settings?.nhil_getfund_rate ?? 5;
   const [pickingMethod, setPickingMethod] = useState(false);
   const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [emailError, setEmailError] = useState('');
@@ -370,7 +383,7 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
     setEmailStatus('sending');
     setEmailError('');
     try {
-      const pdfBase64 = await invoicePdfBase64({ invoice: inv, items, taxEnabled, vatRate, settings: settings ?? undefined });
+      const pdfBase64 = await invoicePdfBase64({ invoice: inv, items, taxEnabled, vatRate, levyRate, settings: settings ?? undefined });
       await sendInvoiceEmail({
         to: inv.customer.email,
         invoiceNumber: inv.invoice_number,
@@ -386,8 +399,7 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
   };
   const subtotal = items.length ? items.reduce((s, i) => s + i.total_price, 0) : inv.subtotal;
   const vat      = taxEnabled ? Math.round(subtotal * (vatRate / 100) * 100) / 100 : 0;
-  const nhil     = taxEnabled ? Math.round(subtotal * 0.025 * 100) / 100 : 0;
-  const getfund  = taxEnabled ? Math.round(subtotal * 0.025 * 100) / 100 : 0;
+  const levy     = taxEnabled ? Math.round(subtotal * (levyRate / 100) * 100) / 100 : 0;
 
   return (
     <div className="space-y-5">
@@ -444,7 +456,7 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
             Print
           </button>
           <button
-            onClick={() => downloadInvoicePdf({ invoice: inv, items, taxEnabled, vatRate, settings: settings ?? undefined })}
+            onClick={() => downloadInvoicePdf({ invoice: inv, items, taxEnabled, vatRate, levyRate, settings: settings ?? undefined })}
             className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold transition-colors"
             style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))', background: 'transparent' }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
@@ -595,9 +607,8 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
             {[
               { label: 'Subtotal', value: subtotal },
               ...(taxEnabled ? [
-                { label: `VAT (${vatRate}%)`,   value: vat },
-                { label: 'NHIL (2.5%)',    value: nhil },
-                { label: 'GETFUND (2.5%)', value: getfund },
+                { label: `VAT (${vatRate}%)`, value: vat },
+                { label: `NHIL + GETFund (${levyRate}%)`, value: levy },
               ] : []),
             ].map(row => (
               <div key={row.label} className="flex items-center justify-between gap-8">

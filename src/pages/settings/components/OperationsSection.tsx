@@ -1,7 +1,7 @@
 import { useTaxSettings } from '@/hooks/useTaxSettings';
 
 export default function OperationsSection() {
-  const { taxEnabled, vatRate, save } = useTaxSettings();
+  const { taxEnabled, vatRate, nhilGetfundRate, save } = useTaxSettings();
 
   return (
     <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-6">
@@ -78,7 +78,13 @@ export default function OperationsSection() {
             </div>
             <div>
               <label className="text-[10px] text-[hsl(var(--muted-foreground))] block mb-1">NHIL + GETFund (%)</label>
-              <input type="number" defaultValue={5} disabled className="w-full border border-[hsl(var(--border))] rounded-xl px-3 py-2.5 text-sm text-[hsl(var(--muted-foreground))] outline-none bg-[hsl(var(--muted))]" />
+              <input
+                type="number"
+                value={nhilGetfundRate}
+                disabled={!taxEnabled}
+                onChange={e => save({ nhilGetfundRate: parseFloat(e.target.value) || 0 })}
+                className="w-full border border-[hsl(var(--border))] rounded-xl px-3 py-2.5 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[#EC0118] disabled:opacity-50 disabled:bg-[hsl(var(--muted))]"
+              />
             </div>
           </div>
           <p className="text-[10px] text-[hsl(var(--muted-foreground))] mt-2">

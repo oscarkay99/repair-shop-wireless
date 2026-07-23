@@ -22,6 +22,7 @@ export interface InvoicePdfOptions {
   items: InvoiceLineItem[];
   taxEnabled: boolean;
   vatRate: number;
+  levyRate: number;
   settings?: InvoiceBrandSettings;
 }
 
@@ -57,7 +58,7 @@ function drawPaidStamp(doc: jsPDF, cx: number, cy: number) {
   doc.text('PAID', cx, cy, { angle: angleDeg, align: 'center', baseline: 'middle' });
 }
 
-export async function buildInvoicePdf({ invoice, items, taxEnabled, vatRate, settings }: InvoicePdfOptions): Promise<jsPDF> {
+export async function buildInvoicePdf({ invoice, items, taxEnabled, vatRate, levyRate, settings }: InvoicePdfOptions): Promise<jsPDF> {
   const doc = new jsPDF();
   const isPaid = invoice.status === 'paid';
   const businessName = settings?.business_name?.trim() || 'Wireless';
@@ -65,8 +66,7 @@ export async function buildInvoicePdf({ invoice, items, taxEnabled, vatRate, set
 
   const subtotal = items.length ? items.reduce((s, i) => s + i.total_price, 0) : invoice.subtotal;
   const vat = taxEnabled ? Math.round(subtotal * (vatRate / 100) * 100) / 100 : 0;
-  const nhil = taxEnabled ? Math.round(subtotal * 0.025 * 100) / 100 : 0;
-  const getfund = taxEnabled ? Math.round(subtotal * 0.025 * 100) / 100 : 0;
+  const levy = taxEnabled ? Math.round(subtotal * (levyRate / 100) * 100) / 100 : 0;
   const balanceDue = Math.max(0, invoice.total - invoice.amount_paid);
 
   let logo: string | null = null;
@@ -178,7 +178,7 @@ export async function buildInvoicePdf({ invoice, items, taxEnabled, vatRate, set
   // ── Totals ──
   let ty = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
   const rows: [string, number][] = [['Subtotal', subtotal]];
-  if (taxEnabled) rows.push([`VAT (${vatRate}%)`, vat], ['NHIL (2.5%)', nhil], ['GETFUND (2.5%)', getfund]);
+  if (taxEnabled) rows.push([`VAT (${vatRate}%)`, vat], [`NHIL + GETFund (${levyRate}%)`, levy]);
   doc.setFontSize(9);
   for (const [label, value] of rows) {
     doc.setFont('helvetica', 'normal');

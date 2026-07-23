@@ -131,6 +131,7 @@ export interface WirelessSettings {
   address: string;
   monthly_target: number;
   vat_rate: number;
+  nhil_getfund_rate: number;
   currency: string;
   warranty_days: number;
   primary_color: string;

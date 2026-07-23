@@ -10,6 +10,7 @@ const DEFAULT: WirelessSettings = {
   address: '',
   monthly_target: 10000,
   vat_rate: 0,
+  nhil_getfund_rate: 5,
   currency: 'GH₵',
   warranty_days: 30,
   primary_color: '#EC0118',
