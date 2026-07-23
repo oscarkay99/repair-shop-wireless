@@ -11,7 +11,7 @@ import SearchDropdown from '@/components/shared/SearchDropdown';
 import Pagination from '@/components/shared/Pagination';
 import DateRangePicker, { type DateRange } from '@/components/shared/DateRangePicker';
 import { Check, Share2, Printer, Download, Mail, Loader2, ChevronLeft, X, Pencil, Plus } from 'lucide-react';
-import type { Invoice, InvoiceStatus } from '@/types/wireless';
+import type { Invoice, InvoiceItem, InvoiceStatus } from '@/types/wireless';
 import type { PaymentMethod } from '@/types/sale';
 import { downloadInvoicePdf, invoicePdfBase64 } from '@/utils/invoicePdf';
 
@@ -374,9 +374,19 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
   const [pickingMethod, setPickingMethod] = useState(false);
   const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [emailError, setEmailError] = useState('');
-  const items = getInvoiceItems(inv.id);
+  const [items, setItems] = useState<InvoiceItem[]>([]);
+  const [itemsLoading, setItemsLoading] = useState(true);
   const balanceDue = Math.max(0, inv.total - inv.amount_paid);
   const isPaid = inv.status === 'paid';
+
+  useEffect(() => {
+    let cancelled = false;
+    setItemsLoading(true);
+    getInvoiceItems(inv.id)
+      .then(data => { if (!cancelled) setItems(data); })
+      .finally(() => { if (!cancelled) setItemsLoading(false); });
+    return () => { cancelled = true; };
+  }, [inv.id]);
 
   const handleEmailInvoice = async () => {
     if (!inv.customer?.email) return;
@@ -585,7 +595,11 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
                 </tr>
               </thead>
               <tbody>
-                {items.length ? items.map((item, i) => (
+                {itemsLoading ? (
+                  <tr>
+                    <td colSpan={4} className="px-3.5 py-6 text-center text-xs" style={{ color: '#999' }}>Loading…</td>
+                  </tr>
+                ) : items.length ? items.map((item, i) => (
                   <tr key={item.id} style={{ background: i % 2 ? '#fafafa' : '#fff', borderBottom: i < items.length - 1 ? '1px solid #ebebeb' : 'none' }}>
                     <td className="px-3.5 py-3 text-sm" style={{ color: '#1e1e1e' }}>{item.description}</td>
                     <td className="px-3.5 py-3 text-sm text-right" style={{ color: '#666' }}>{item.quantity}</td>

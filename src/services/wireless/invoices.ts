@@ -3,17 +3,8 @@ import type { Invoice, InvoiceItem } from '@/types/wireless';
 
 const WIRELESS_ADMIN_API = 'https://api.wirelesscares.com/wireless-admin/v1';
 
-// Local line-items store (used in offline / local mode)
-interface LocalItem {
-  id: string;
-  invoice_id: string;
-  description: string;
-  quantity: number;
-  unit_price: number;
-  total_price: number;
-}
-
-const ITEMS_SEED: LocalItem[] = [
+// Local line-items store (used in offline / local mode, and as a read-failure fallback)
+const ITEMS_SEED: InvoiceItem[] = [
   { id: 'li1', invoice_id: 'inv1', description: 'MacBook Air M2 Keyboard Replacement', quantity: 1, unit_price: 129.99, total_price: 129.99 },
   { id: 'li2', invoice_id: 'inv1', description: 'Labor - Keyboard Replacement',         quantity: 1, unit_price:  50.00, total_price:  50.00 },
   { id: 'li3', invoice_id: 'inv2', description: 'iPhone 15 Pro Screen Replacement',      quantity: 1, unit_price: 249.99, total_price: 249.99 },
@@ -21,14 +12,20 @@ const ITEMS_SEED: LocalItem[] = [
 ];
 let itemsStore = [...ITEMS_SEED];
 
-export function getInvoiceItems(invoiceId: string): LocalItem[] {
-  return itemsStore.filter(i => i.invoice_id === invoiceId);
-}
-
-export function addInvoiceItem(invoiceId: string, item: Omit<LocalItem, 'id' | 'invoice_id'>): LocalItem {
-  const li: LocalItem = { ...item, id: crypto.randomUUID(), invoice_id: invoiceId };
-  itemsStore = [...itemsStore, li];
-  return li;
+export async function getInvoiceItems(invoiceId: string): Promise<InvoiceItem[]> {
+  if (!isSupabaseConfigured) return itemsStore.filter(i => i.invoice_id === invoiceId);
+  try {
+    const { data, error } = await db
+      .from('invoice_items')
+      .select('*')
+      .eq('invoice_id', invoiceId)
+      .order('id', { ascending: true });
+    if (error) throw error;
+    return (data as InvoiceItem[] | null) ?? [];
+  } catch (e) {
+    console.warn('[wireless/invoices] falling back to local item store', e);
+    return itemsStore.filter(i => i.invoice_id === invoiceId);
+  }
 }
 
 const SEED: Invoice[] = [
