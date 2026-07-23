@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getInvoices, createInvoice, updateInvoiceStatus, patchInvoice, deleteInvoice } from '@/services/wireless/invoices';
-import type { Invoice, InvoiceStatus } from '@/types/wireless';
+import { getInvoices, createInvoice, patchInvoice, deleteInvoice } from '@/services/wireless/invoices';
+import { recordPayment } from '@/services/wireless/payments';
+import type { Invoice } from '@/types/wireless';
 import type { PaymentMethod } from '@/types/sale';
 import { useToast } from '@/contexts/ToastContext';
 
@@ -24,12 +25,17 @@ export function useInvoices() {
     return inv;
   };
 
-  const markStatus = async (id: string, status: InvoiceStatus, amountPaid?: number, paymentMethod?: PaymentMethod) => {
-    await updateInvoiceStatus(id, status, amountPaid, paymentMethod);
-    setInvoices(prev => prev.map(i =>
-      i.id === id ? { ...i, status, amount_paid: amountPaid ?? i.amount_paid, payment_method: paymentMethod ?? i.payment_method } : i
-    ));
-    showToast(`Invoice marked ${status}`);
+  // Routes through the same payments ledger (record_payment RPC) as the Payments
+  // page's Record Payment modal, so a "Mark Paid" click shows up in payment
+  // history/revenue totals too, instead of only ever touching the invoice row.
+  const markPaid = async (id: string, amount: number, method: PaymentMethod, customerName?: string) => {
+    await recordPayment({ amount, method, invoiceId: id, customerName });
+    setInvoices(prev => prev.map(i => {
+      if (i.id !== id) return i;
+      const amount_paid = i.amount_paid + amount;
+      return { ...i, amount_paid, status: amount_paid >= i.total ? 'paid' : 'partial', payment_method: method };
+    }));
+    showToast('Invoice marked paid');
   };
 
   const patch = async (id: string, data: Parameters<typeof patchInvoice>[1]) => {
@@ -51,5 +57,5 @@ export function useInvoices() {
     overdue: invoices.filter(i => i.status === 'overdue').reduce((s, i) => s + i.total, 0),
   };
 
-  return { invoices, loading, reload, add, markStatus, patch, remove, totals };
+  return { invoices, loading, reload, add, markPaid, patch, remove, totals };
 }

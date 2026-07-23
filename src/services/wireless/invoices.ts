@@ -1,6 +1,5 @@
 import { isSupabaseConfigured, supabase, db } from '@/services/supabase';
-import type { Invoice, InvoiceItem, InvoiceStatus } from '@/types/wireless';
-import type { PaymentMethod } from '@/types/sale';
+import type { Invoice, InvoiceItem } from '@/types/wireless';
 
 const WIRELESS_ADMIN_API = 'https://api.wirelesscares.com/wireless-admin/v1';
 
@@ -127,16 +126,6 @@ export async function createInvoice(
   const inv: Invoice = { ...input, id: crypto.randomUUID(), invoice_number: nextNumber(), created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
   localStore = [inv, ...localStore];
   return inv;
-}
-
-export async function updateInvoiceStatus(id: string, status: InvoiceStatus, amountPaid?: number, paymentMethod?: PaymentMethod): Promise<void> {
-  const patch: Partial<Invoice> = { status, updated_at: new Date().toISOString() };
-  if (amountPaid !== undefined) patch.amount_paid = amountPaid;
-  if (paymentMethod !== undefined) patch.payment_method = paymentMethod;
-  localStore = localStore.map(i => i.id === id ? { ...i, ...patch } : i);
-  if (!isSupabaseConfigured) return;
-  const { error } = await db.from('invoices').update(patch).eq('id', id);
-  if (error) console.warn('[wireless/invoices] update error', error);
 }
 
 export async function patchInvoice(id: string, data: Partial<Pick<Invoice, 'status' | 'amount_paid' | 'payment_method' | 'due_date' | 'notes' | 'discount'>>): Promise<void> {

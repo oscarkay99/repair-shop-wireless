@@ -313,7 +313,7 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
     setEmailStatus('sending');
     setEmailError('');
     try {
-      const pdfBase64 = invoicePdfBase64({ invoice: inv, items, taxEnabled, vatRate });
+      const pdfBase64 = await invoicePdfBase64({ invoice: inv, items, taxEnabled, vatRate, settings: settings ?? undefined });
       await sendInvoiceEmail({
         to: inv.customer.email,
         invoiceNumber: inv.invoice_number,
@@ -387,7 +387,7 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
             Print
           </button>
           <button
-            onClick={() => downloadInvoicePdf({ invoice: inv, items, taxEnabled, vatRate })}
+            onClick={() => downloadInvoicePdf({ invoice: inv, items, taxEnabled, vatRate, settings: settings ?? undefined })}
             className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold transition-colors"
             style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))', background: 'transparent' }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
@@ -586,7 +586,7 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
 
 export default function InvoicesPage() {
   const { setPageTitle } = usePageTitle();
-  const { invoices, loading, add, markStatus, patch } = useInvoices();
+  const { invoices, loading, add, markPaid, patch } = useInvoices();
   const { user } = useAuth();
   const [query, setQuery] = useState('');
   const [dateRange, setDateRange] = useState<DateRange>({ from: '', to: '' });
@@ -604,7 +604,7 @@ export default function InvoicesPage() {
 
   const handleMarkPaid = (id: string, method: PaymentMethod) => {
     const inv = invoices.find(i => i.id === id);
-    if (inv) markStatus(id, 'paid', inv.total, method);
+    if (inv) markPaid(id, inv.total - inv.amount_paid, method, inv.customer?.name);
   };
 
   useEffect(() => {

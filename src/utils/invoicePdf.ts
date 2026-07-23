@@ -1,4 +1,4 @@
-import jsPDF from 'jspdf';
+import { jsPDF, GState } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { Invoice } from '@/types/wireless';
 
@@ -9,12 +9,24 @@ interface InvoiceLineItem {
   total_price: number;
 }
 
+export interface InvoiceBrandSettings {
+  business_name?: string;
+  tagline?: string;
+  phone?: string;
+  address?: string;
+}
+
 export interface InvoicePdfOptions {
   invoice: Invoice;
   items: InvoiceLineItem[];
   taxEnabled: boolean;
   vatRate: number;
+  settings?: InvoiceBrandSettings;
 }
+
+const PAGE_W = 210;
+const MARGIN = 14;
+const RIGHT_X = PAGE_W - MARGIN;
 
 function fmt(n: number) {
   return `GHS ${n.toLocaleString('en-GH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -24,87 +36,235 @@ function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
 }
 
-export function buildInvoicePdf({ invoice, items, taxEnabled, vatRate }: InvoicePdfOptions): jsPDF {
+let logoDataUrlPromise: Promise<string> | null = null;
+/** Fetches the light-background lockup once and caches it for reuse across icon + watermark. */
+function loadLogo(): Promise<string> {
+  if (!logoDataUrlPromise) {
+    logoDataUrlPromise = fetch('/wireless-logo-light.png')
+      .then(res => res.blob())
+      .then(blob => new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      }));
+  }
+  return logoDataUrlPromise;
+}
+
+/** Draws a rotated "PAID" stamp (border box + text) centered at cx,cy. */
+function drawPaidStamp(doc: jsPDF, cx: number, cy: number) {
+  const angleDeg = -8;
+  const rad = (angleDeg * Math.PI) / 180;
+  const hw = 15, hh = 6;
+  const corners: [number, number][] = [[-hw, -hh], [hw, -hh], [hw, hh], [-hw, hh]].map(([dx, dy]) => [
+    cx + dx * Math.cos(rad) - dy * Math.sin(rad),
+    cy + dx * Math.sin(rad) + dy * Math.cos(rad),
+  ]);
+  const deltas: [number, number][] = [];
+  for (let i = 1; i < corners.length; i++) {
+    deltas.push([corners[i][0] - corners[i - 1][0], corners[i][1] - corners[i - 1][1]]);
+  }
+  doc.setDrawColor(34, 197, 94);
+  doc.setLineWidth(0.8);
+  doc.lines(deltas, corners[0][0], corners[0][1], [1, 1], 'S', true);
+  doc.setTextColor(34, 197, 94);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.text('PAID', cx, cy, { angle: angleDeg, align: 'center', baseline: 'middle' });
+}
+
+export async function buildInvoicePdf({ invoice, items, taxEnabled, vatRate, settings }: InvoicePdfOptions): Promise<jsPDF> {
   const doc = new jsPDF();
+  const isPaid = invoice.status === 'paid';
+  const businessName = settings?.business_name?.trim() || 'Wireless';
+  const tagline = settings?.tagline?.trim() || 'Repair & Service System';
+
   const subtotal = items.length ? items.reduce((s, i) => s + i.total_price, 0) : invoice.subtotal;
   const vat = taxEnabled ? Math.round(subtotal * (vatRate / 100) * 100) / 100 : 0;
   const nhil = taxEnabled ? Math.round(subtotal * 0.025 * 100) / 100 : 0;
   const getfund = taxEnabled ? Math.round(subtotal * 0.025 * 100) / 100 : 0;
+  const balanceDue = Math.max(0, invoice.total - invoice.amount_paid);
 
-  doc.setFontSize(18);
-  doc.setFont('helvetica', 'bold');
-  doc.text('WIRELESS', 14, 20);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Repair & Service System', 14, 26);
+  let logo: string | null = null;
+  try { logo = await loadLogo(); } catch { logo = null; }
 
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.text(invoice.invoice_number, 196, 20, { align: 'right' });
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  doc.text(fmtDate(invoice.created_at), 196, 26, { align: 'right' });
-  doc.text(`Status: ${invoice.status}${invoice.payment_method ? ` · ${invoice.payment_method}` : ''}`, 196, 31, { align: 'right' });
-
-  doc.setFontSize(8);
-  doc.setTextColor(120);
-  doc.text('BILL TO', 14, 42);
-  doc.setFontSize(10);
-  doc.setTextColor(20);
-  let y = 48;
-  if (invoice.customer) {
-    doc.setFont('helvetica', 'bold');
-    doc.text(invoice.customer.name, 14, y);
-    doc.setFont('helvetica', 'normal');
-    y += 5;
-    if (invoice.customer.phone) { doc.text(invoice.customer.phone, 14, y); y += 5; }
-    if (invoice.customer.email) { doc.text(invoice.customer.email, 14, y); y += 5; }
-    if (invoice.customer.address) { doc.text(invoice.customer.address, 14, y); y += 5; }
+  // Watermark — drawn first so header/table content layers on top of it.
+  if (logo) {
+    const wmW = 140;
+    const wmH = wmW * (261 / 1280);
+    doc.saveGraphicsState();
+    doc.setGState(new GState({ opacity: 0.06 }));
+    doc.addImage(logo, 'PNG', (PAGE_W - wmW) / 2, (297 - wmH) / 2, wmW, wmH, undefined, undefined, -25);
+    doc.restoreGraphicsState();
   }
 
+  // ── Header: logo + business block (left), title + invoice # (right) ──
+  if (logo) doc.addImage(logo, 'PNG', MARGIN, 14, 32, 32 * (261 / 1280));
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(30);
+  doc.text(businessName.toUpperCase(), MARGIN, 26);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(136);
+  let headerY = 30.5;
+  doc.text(tagline, MARGIN, headerY);
+  doc.setTextColor(153);
+  doc.setFontSize(7.5);
+  if (settings?.address) { headerY += 4; doc.text(settings.address, MARGIN, headerY); }
+  if (settings?.phone) { headerY += 4; doc.text(settings.phone, MARGIN, headerY); }
+
+  if (isPaid) drawPaidStamp(doc, RIGHT_X - 24, 15);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(22);
+  doc.setTextColor(30);
+  doc.text(isPaid ? 'RECEIPT' : 'INVOICE', RIGHT_X, 26, { align: 'right' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(136);
+  doc.text(`# ${invoice.invoice_number}`, RIGHT_X, 32, { align: 'right' });
+  if (invoice.payment_method) {
+    doc.text(`Paid via ${invoice.payment_method}`, RIGHT_X, 37, { align: 'right' });
+  }
+
+  doc.setDrawColor(224, 224, 224);
+  doc.setLineWidth(0.2);
+  doc.line(MARGIN, 45, RIGHT_X, 45);
+
+  // ── Middle: Bill To (left) + Date/Due/Balance meta box (right) ──
+  let leftY = 54;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.setTextColor(136);
+  doc.text('BILL TO', MARGIN, 48);
+  doc.setFontSize(11);
+  doc.setTextColor(30);
+  doc.text(invoice.customer?.name || '—', MARGIN, leftY);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(102);
+  if (invoice.customer?.phone)   { leftY += 5; doc.text(invoice.customer.phone, MARGIN, leftY); }
+  if (invoice.customer?.email)   { leftY += 5; doc.text(invoice.customer.email, MARGIN, leftY); }
+  if (invoice.customer?.address) { leftY += 5; doc.text(invoice.customer.address, MARGIN, leftY); }
+
+  const metaX = 126, metaW = RIGHT_X - 126, metaTop = 48;
+  const metaRows: { label: string; value: string; highlight?: boolean }[] = [
+    { label: 'Date', value: fmtDate(invoice.created_at) },
+  ];
+  if (invoice.due_date) metaRows.push({ label: 'Due Date', value: fmtDate(invoice.due_date) });
+  metaRows.push({ label: 'Balance Due', value: fmt(balanceDue), highlight: true });
+
+  let metaY = metaTop;
+  for (const row of metaRows) {
+    const rh = row.highlight ? 9 : 7;
+    if (row.highlight) { doc.setFillColor(235, 242, 250); doc.rect(metaX, metaY, metaW, rh, 'F'); }
+    doc.setFont('helvetica', row.highlight ? 'bold' : 'normal');
+    doc.setFontSize(row.highlight ? 9 : 8);
+    doc.setTextColor(row.highlight ? 30 : 136);
+    doc.text(row.label, metaX + 3, metaY + rh / 2 + 1.2);
+    doc.setFont('helvetica', row.highlight ? 'bold' : 'normal');
+    doc.setTextColor(30);
+    doc.text(row.value, metaX + metaW - 3, metaY + rh / 2 + 1.2, { align: 'right' });
+    metaY += rh;
+  }
+  doc.setDrawColor(216, 216, 216);
+  doc.rect(metaX, metaTop, metaW, metaY - metaTop, 'S');
+  let dividerY = metaTop;
+  doc.setDrawColor(232, 232, 232);
+  for (let i = 0; i < metaRows.length - 1; i++) {
+    dividerY += metaRows[i].highlight ? 9 : 7;
+    doc.line(metaX, dividerY, metaX + metaW, dividerY);
+  }
+
+  // ── Items table ──
+  const itemsStartY = Math.max(leftY, metaY) + 8;
   autoTable(doc, {
-    startY: y + 6,
+    startY: itemsStartY,
     head: [['Description', 'Qty', 'Unit Price', 'Total']],
     body: items.length
       ? items.map(i => [i.description, String(i.quantity), fmt(i.unit_price), fmt(i.total_price)])
       : [['No line items', '', '', '']],
-    styles: { fontSize: 9 },
-    headStyles: { fillColor: [236, 1, 24] },
-    columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' } },
+    styles: { fontSize: 9, textColor: 30 },
+    headStyles: { fillColor: [43, 43, 43], textColor: 255, fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: [250, 250, 250] },
+    columnStyles: { 1: { halign: 'center' }, 2: { halign: 'right' }, 3: { halign: 'right' } },
+    margin: { left: MARGIN, right: MARGIN },
   });
 
-  const afterTableY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
+  // ── Totals ──
+  let ty = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
   const rows: [string, number][] = [['Subtotal', subtotal]];
-  if (taxEnabled) {
-    rows.push([`VAT (${vatRate}%)`, vat], ['NHIL (2.5%)', nhil], ['GETFUND (2.5%)', getfund]);
-  }
-  let ty = afterTableY;
+  if (taxEnabled) rows.push([`VAT (${vatRate}%)`, vat], ['NHIL (2.5%)', nhil], ['GETFUND (2.5%)', getfund]);
   doc.setFontSize(9);
   for (const [label, value] of rows) {
-    doc.setTextColor(100);
-    doc.text(label, 150, ty);
-    doc.setTextColor(20);
-    doc.text(fmt(value), 196, ty, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(136);
+    doc.text(label, 130, ty);
+    doc.setTextColor(30);
+    doc.text(fmt(value), RIGHT_X, ty, { align: 'right' });
     ty += 6;
   }
+  doc.setDrawColor(204, 204, 204);
+  doc.line(130, ty - 3, RIGHT_X, ty - 3);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
-  doc.text('Total', 150, ty + 2);
-  doc.text(fmt(invoice.total), 196, ty + 2, { align: 'right' });
+  doc.setTextColor(30);
+  doc.text('Total', 130, ty + 3);
+  doc.text(fmt(invoice.total), RIGHT_X, ty + 3, { align: 'right' });
+  ty += 12;
 
+  if (invoice.amount_paid > 0) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(136);
+    doc.text('Amount Paid', 130, ty);
+    doc.setTextColor(30);
+    doc.text(fmt(invoice.amount_paid), RIGHT_X, ty, { align: 'right' });
+    ty += 9;
+    doc.setDrawColor(204, 204, 204);
+    doc.line(130, ty - 3, RIGHT_X, ty - 3);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(30);
+    doc.text('Balance Due', 130, ty + 3);
+    doc.text(fmt(balanceDue), RIGHT_X, ty + 3, { align: 'right' });
+    ty += 12;
+  }
+
+  // ── Notes ──
+  let noteY = ty + 4;
+  if (invoice.notes) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(136);
+    doc.text('Notes:', MARGIN, noteY);
+    noteY += 5;
+    doc.setFontSize(9.5);
+    doc.setTextColor(68);
+    const wrapped = doc.splitTextToSize(invoice.notes, RIGHT_X - MARGIN);
+    doc.text(wrapped, MARGIN, noteY);
+    noteY += wrapped.length * 4.5;
+  }
+
+  // ── Footer ──
+  doc.setDrawColor(224, 224, 224);
+  doc.line(MARGIN, noteY + 6, RIGHT_X, noteY + 6);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
-  doc.setTextColor(140);
-  doc.text('Thank you for choosing WIRELESS. All repairs are backed by a 90-day warranty.', 105, 285, { align: 'center' });
+  doc.setTextColor(153);
+  doc.text(`Thank you for choosing ${businessName}. All repairs are backed by a 90-day warranty.`, PAGE_W / 2, noteY + 12, { align: 'center' });
 
   return doc;
 }
 
-export function downloadInvoicePdf(opts: InvoicePdfOptions) {
-  buildInvoicePdf(opts).save(`${opts.invoice.invoice_number}.pdf`);
+export async function downloadInvoicePdf(opts: InvoicePdfOptions) {
+  const doc = await buildInvoicePdf(opts);
+  doc.save(`${opts.invoice.invoice_number}.pdf`);
 }
 
 /** Base64-encoded PDF payload (no data-URI prefix) for emailing as an attachment. */
-export function invoicePdfBase64(opts: InvoicePdfOptions): string {
-  return buildInvoicePdf(opts).output('datauristring').split(',')[1];
+export async function invoicePdfBase64(opts: InvoicePdfOptions): Promise<string> {
+  const doc = await buildInvoicePdf(opts);
+  return doc.output('datauristring').split(',')[1];
 }
