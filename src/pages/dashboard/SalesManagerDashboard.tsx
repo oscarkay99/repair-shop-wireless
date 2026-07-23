@@ -1,6 +1,6 @@
 import { useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { TrendingUp, ShoppingBag, Users, BarChart3, ChevronRight } from 'lucide-react';
+import { TrendingUp, ShoppingBag, Users, BarChart3 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRepairs } from '@/hooks/useRepairs';
 import { useInvoices } from '@/hooks/useInvoices';
@@ -119,18 +119,10 @@ export default function SalesManagerDashboard() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Link to="/sales" className="px-4 h-8 flex items-center gap-1.5 rounded-lg text-xs font-semibold transition-colors"
-            style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))', background: 'transparent' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
-          >
+          <Link to="/sales" className="px-4 h-8 flex items-center gap-1.5 rounded-lg text-xs font-semibold text-white"
+            style={{ background: 'hsl(var(--primary))' }}>
             <ShoppingBag className="w-3.5 h-3.5" />
             Accessories
-          </Link>
-          <Link to="/tickets" className="px-4 h-8 flex items-center gap-1.5 rounded-lg text-xs font-semibold text-white"
-            style={{ background: 'hsl(var(--primary))' }}>
-            <BarChart3 className="w-3.5 h-3.5" />
-            Repairs
           </Link>
         </div>
       </div>
@@ -171,9 +163,8 @@ export default function SalesManagerDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Recent completed repairs */}
         <div className="rounded-2xl overflow-hidden" style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', boxShadow: 'var(--shadow-card)' }}>
-          <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: 'hsl(var(--border))' }}>
+          <div className="px-5 py-4 border-b" style={{ borderColor: 'hsl(var(--border))' }}>
             <p className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>Completed Repairs</p>
-            <Link to="/tickets" className="text-[11px] font-semibold hover:opacity-70" style={{ color: 'hsl(var(--primary))' }}>View all →</Link>
           </div>
           {loading ? (
             <div className="flex items-center justify-center py-10">
@@ -186,11 +177,9 @@ export default function SalesManagerDashboard() {
           ) : (
             <>
               {pagedCompleted.map(r => (
-                <Link key={r.id} to="/tickets"
-                  className="flex items-center gap-3 px-5 py-3 transition-colors group"
+                <div key={r.id}
+                  className="flex items-center gap-3 px-5 py-3"
                   style={{ borderBottom: '1px solid hsl(var(--border))' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}
                 >
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold truncate" style={{ color: 'hsl(var(--foreground))' }}>
@@ -203,8 +192,7 @@ export default function SalesManagerDashboard() {
                   <p className="text-xs font-bold flex-shrink-0" style={{ color: '#10B981' }}>
                     {r.costNum ? `GH₵ ${r.costNum.toLocaleString()}` : '—'}
                   </p>
-                  <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-40" style={{ color: 'hsl(var(--foreground))' }} />
-                </Link>
+                </div>
               ))}
               <div className="px-5 pb-3">
                 <Pagination page={completedPage} pageCount={completedTotalPages} total={completedTotal} pageSize={6} onPageChange={setCompletedPage} />
