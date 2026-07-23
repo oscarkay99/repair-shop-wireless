@@ -105,7 +105,7 @@ export default function TransactionTable() {
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 mb-0.5">
-                      <span className="text-[12px] font-bold" style={{ color: '#0F172A' }}>{txn.id}</span>
+                      <span className="text-[12px] font-bold" style={{ color: '#0F172A' }}>{txn.reference}</span>
                       <span
                         className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
                         style={{ background: s.badge, color: s.text }}
@@ -179,7 +179,7 @@ export default function TransactionTable() {
           <div className="flex-1 overflow-y-auto px-6 py-5">
             {/* Order header */}
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-[20px] font-bold" style={{ color: '#0F172A' }}>{selected.id}</h2>
+              <h2 className="text-[20px] font-bold" style={{ color: '#0F172A' }}>{selected.reference}</h2>
               <span
                 className="text-[11px] font-bold px-3 py-1.5 rounded-full"
                 style={{ background: sc.badge, color: sc.text }}
@@ -216,10 +216,6 @@ export default function TransactionTable() {
                     <p className="text-[12px] font-bold" style={{ color: '#0F172A' }}>{value}</p>
                   </div>
                 ))}
-              </div>
-              <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(236,1,24,0.08)' }}>
-                <p className="text-[10px] mb-0.5" style={{ color: 'rgba(7,16,31,0.38)' }}>Reference</p>
-                <p className="text-[11px] font-mono font-semibold" style={{ color: '#EC0118' }}>{selected.reference}</p>
               </div>
             </div>
 
