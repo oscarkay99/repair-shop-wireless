@@ -111,7 +111,6 @@ function IssueInvoiceModal({ onSave, onClose }: {
     try {
       await onSave({
         customer_id: customerId,
-        customer: selectedCustomer,
         subtotal,
         tax: 0,
         discount: 0,
@@ -120,10 +119,11 @@ function IssueInvoiceModal({ onSave, onClose }: {
         status: 'unpaid',
         due_date: dueDate || undefined,
         notes: [description, notes].filter(Boolean).join('\n') || undefined,
-        created_by: user?.name,
+        created_by: user?.id,
       });
       onClose();
-    } finally { setSaving(false); }
+    } catch { /* error toast already shown by useInvoices */ }
+    finally { setSaving(false); }
   };
 
   return createPortal(

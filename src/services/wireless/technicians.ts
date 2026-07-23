@@ -30,11 +30,10 @@ export async function getTechnicians(): Promise<Technician[]> {
 export async function createTechnician(input: Omit<Technician, 'id' | 'total_completed' | 'rating' | 'created_at' | 'updated_at'>): Promise<Technician> {
   if (isSupabaseConfigured) {
     const { data, error } = await db.from('technicians').insert(input).select().single();
-    if (!error && data) {
-      const t = data as Technician;
-      localStore = [t, ...localStore];
-      return t;
-    }
+    if (error) throw error;
+    const t = data as Technician;
+    localStore = [t, ...localStore];
+    return t;
   }
   const t: Technician = { ...input, id: crypto.randomUUID(), rating: 5.0, total_completed: 0, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
   localStore = [t, ...localStore];

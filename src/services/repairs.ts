@@ -299,57 +299,53 @@ export async function getRepairs(): Promise<Repair[]> {
 }
 
 export async function createRepair(r: Omit<Repair, 'id'>): Promise<Repair> {
-  const localId = `R-${String(store.length + 1).padStart(4, '0')}`;
-  let item = normalizeRepair({ ...r, id: localId, media: r.media ?? [] } as Repair);
-
   if (isSupabaseConfigured) {
-    try {
-      const { data: inserted, error } = await db.from('tickets').insert({
-        customer_id: item.customerId ?? null,
-        customer_name: item.customer,
-        customer_email: item.customerEmail ?? null,
-        customer_phone: item.customerPhone ?? null,
-        website_auth_user_id: item.websiteAuthUserId ?? null,
-        device: item.device,
-        device_type: item.deviceType ?? null,
-        issue: item.issue,
-        status: item.status,
-        job_type: item.jobType ?? null,
-        service_stage: item.serviceStage ?? null,
-        quote_status: item.quoteStatus ?? null,
-        diagnosis: item.diagnosisSummary ?? null,
-        diagnosis_fee: item.diagnosisFee ?? null,
-        diagnosis_paid_at: item.diagnosisPaidAt ?? null,
-        quote_amount: item.quoteAmount ?? null,
-        quote_sent_at: item.quoteSentAt ?? null,
-        approval_decision_at: item.approvalDecisionAt ?? null,
-        repair_started_at: item.repairStartedAt ?? null,
-        technician_name: item.technician,
-        technician_id: item.technicianId ?? null,
-        eta: item.eta,
-        cost_label: item.cost,
-        estimated_cost: item.costNum ?? null,
-        completed_at: item.completedDate ?? null,
-        warranty: item.warranty,
-        parts_json: item.parts,
-        notes_json: item.notes,
-        payments_json: item.payments ?? [],
-      }).select('ticket_number, received_at, created_at').single();
+    let item = normalizeRepair({ ...r, id: '', media: r.media ?? [] } as Repair);
+    const { data: inserted, error } = await db.from('tickets').insert({
+      customer_id: item.customerId ?? null,
+      customer_name: item.customer,
+      customer_email: item.customerEmail ?? null,
+      customer_phone: item.customerPhone ?? null,
+      website_auth_user_id: item.websiteAuthUserId ?? null,
+      device: item.device,
+      device_type: item.deviceType ?? null,
+      issue: item.issue,
+      status: item.status,
+      job_type: item.jobType ?? null,
+      service_stage: item.serviceStage ?? null,
+      quote_status: item.quoteStatus ?? null,
+      diagnosis: item.diagnosisSummary ?? null,
+      diagnosis_fee: item.diagnosisFee ?? null,
+      diagnosis_paid_at: item.diagnosisPaidAt ?? null,
+      quote_amount: item.quoteAmount ?? null,
+      quote_sent_at: item.quoteSentAt ?? null,
+      approval_decision_at: item.approvalDecisionAt ?? null,
+      repair_started_at: item.repairStartedAt ?? null,
+      technician_name: item.technician,
+      technician_id: item.technicianId ?? null,
+      eta: item.eta,
+      cost_label: item.cost,
+      estimated_cost: item.costNum ?? null,
+      completed_at: item.completedDate ?? null,
+      warranty: item.warranty,
+      parts_json: item.parts,
+      notes_json: item.notes,
+      payments_json: item.payments ?? [],
+    }).select('ticket_number, received_at, created_at').single();
 
-      if (error) throw error;
-      if (inserted) {
-        item = normalizeRepair({
-          ...item,
-          id: inserted.ticket_number,
-          started: inserted.received_at,
-          createdAt: inserted.created_at ?? undefined,
-        });
-      }
-    } catch (error) {
-      console.warn('Unable to sync new repair to Supabase. Keeping it local-only.', error);
-    }
+    if (error) throw error;
+    item = normalizeRepair({
+      ...item,
+      id: inserted.ticket_number,
+      started: inserted.received_at,
+      createdAt: inserted.created_at ?? undefined,
+    });
+    store = [item, ...store];
+    return normalizeRepair(item);
   }
 
+  const localId = `R-${String(store.length + 1).padStart(4, '0')}`;
+  const item = normalizeRepair({ ...r, id: localId, media: r.media ?? [] } as Repair);
   store = [item, ...store];
   return normalizeRepair(item);
 }
@@ -361,27 +357,20 @@ export async function updateRepairStatus(id: string, status: RepairStatus): Prom
   }
 
   assertCanMoveToStatus(repair, status);
-  updateLocalRepair(id, (currentRepair) => ({ ...currentRepair, status }));
 
   if (isSupabaseConfigured) {
-    try {
-      await db.from('tickets').update({ status }).eq('ticket_number', id);
-    } catch (error) {
-      console.warn('Unable to sync repair status to Supabase.', error);
-    }
+    const { error } = await db.from('tickets').update({ status }).eq('ticket_number', id);
+    if (error) throw error;
   }
+  updateLocalRepair(id, (currentRepair) => ({ ...currentRepair, status }));
 }
 
 export async function updateRepairNotes(id: string, notes: string[]): Promise<void> {
-  updateLocalRepair(id, (repair) => ({ ...repair, notes }));
-
   if (isSupabaseConfigured) {
-    try {
-      await db.from('tickets').update({ notes_json: notes }).eq('ticket_number', id);
-    } catch (error) {
-      console.warn('Unable to sync repair notes to Supabase.', error);
-    }
+    const { error } = await db.from('tickets').update({ notes_json: notes }).eq('ticket_number', id);
+    if (error) throw error;
   }
+  updateLocalRepair(id, (repair) => ({ ...repair, notes }));
 }
 
 export async function updateRepair(id: string, patch: Partial<Repair>): Promise<void> {
@@ -395,27 +384,19 @@ export async function updateRepair(id: string, patch: Partial<Repair>): Promise<
     assertCanMoveToStatus(nextRepair, patch.status);
   }
 
-  updateLocalRepair(id, () => nextRepair);
-
   if (isSupabaseConfigured) {
-    try {
-      await db.from('tickets').update(toTicketPatch(patch)).eq('ticket_number', id);
-    } catch (error) {
-      console.warn('Unable to sync repair update to Supabase.', error);
-    }
+    const { error } = await db.from('tickets').update(toTicketPatch(patch)).eq('ticket_number', id);
+    if (error) throw error;
   }
+  updateLocalRepair(id, () => nextRepair);
 }
 
 export async function deleteRepair(id: string): Promise<void> {
-  store = store.filter((repair) => repair.id !== id);
-
   if (isSupabaseConfigured) {
-    try {
-      await db.from('tickets').delete().eq('ticket_number', id);
-    } catch (error) {
-      console.warn('Unable to delete repair from Supabase.', error);
-    }
+    const { error } = await db.from('tickets').delete().eq('ticket_number', id);
+    if (error) throw error;
   }
+  store = store.filter((repair) => repair.id !== id);
 }
 
 export async function addRepairMedia(repairId: string, input: RepairMediaUploadInput): Promise<RepairMedia> {
@@ -425,52 +406,44 @@ export async function addRepairMedia(repairId: string, input: RepairMediaUploadI
 
   const mediaType = toMediaType(input.file);
   const createdAt = new Date().toISOString();
-  const localPreviewUrl = URL.createObjectURL(input.file);
-  let resolvedUrl = localPreviewUrl;
+  let resolvedUrl = URL.createObjectURL(input.file);
   let savedId = crypto.randomUUID();
 
   if (isSupabaseConfigured) {
-    try {
-      const filePath = buildStoragePath(repairId, input.file, input.stage);
-      const { error: uploadError } = await supabase.storage
-        .from(REPAIR_MEDIA_BUCKET)
-        .upload(filePath, input.file, {
-          cacheControl: '3600',
-          contentType: input.file.type,
-          upsert: false,
-        });
+    const filePath = buildStoragePath(repairId, input.file, input.stage);
+    const { error: uploadError } = await supabase.storage
+      .from(REPAIR_MEDIA_BUCKET)
+      .upload(filePath, input.file, {
+        cacheControl: '3600',
+        contentType: input.file.type,
+        upsert: false,
+      });
+    if (uploadError) throw uploadError;
 
-      if (uploadError) throw uploadError;
+    const { data: publicUrlData } = supabase.storage.from(REPAIR_MEDIA_BUCKET).getPublicUrl(filePath);
+    resolvedUrl = publicUrlData.publicUrl;
 
-      const { data: publicUrlData } = supabase.storage.from(REPAIR_MEDIA_BUCKET).getPublicUrl(filePath);
-      resolvedUrl = publicUrlData.publicUrl;
-
-      const uploaderId = await currentUserId();
-      const { data: inserted, error: insertError } = await db
-        .from('ticket_media')
-        .insert({
-          ticket_number: repairId,
-          stage: input.stage,
-          media_type: mediaType,
-          file_path: filePath,
-          file_url: resolvedUrl,
-          file_name: input.file.name,
-          file_size: input.file.size,
-          mime_type: input.file.type,
-          duration_seconds: input.durationSeconds,
-          caption: input.caption?.trim() || null,
-          uploaded_by: input.uploadedBy ?? null,
-          uploaded_by_id: uploaderId,
-        })
-        .select()
-        .single();
-
-      if (!insertError && inserted) {
-        savedId = (inserted as TicketMediaRow).id;
-      }
-    } catch (error) {
-      console.warn('Unable to sync repair media to Supabase. Keeping a local preview.', error);
-    }
+    const uploaderId = await currentUserId();
+    const { data: inserted, error: insertError } = await db
+      .from('ticket_media')
+      .insert({
+        ticket_number: repairId,
+        stage: input.stage,
+        media_type: mediaType,
+        file_path: filePath,
+        file_url: resolvedUrl,
+        file_name: input.file.name,
+        file_size: input.file.size,
+        mime_type: input.file.type,
+        duration_seconds: input.durationSeconds,
+        caption: input.caption?.trim() || null,
+        uploaded_by: input.uploadedBy ?? null,
+        uploaded_by_id: uploaderId,
+      })
+      .select()
+      .single();
+    if (insertError) throw insertError;
+    savedId = (inserted as TicketMediaRow).id;
   }
 
   const media: RepairMedia = {
@@ -497,16 +470,12 @@ export async function addRepairMedia(repairId: string, input: RepairMediaUploadI
 }
 
 export async function deleteRepairMedia(repairId: string, mediaId: string): Promise<void> {
+  if (isSupabaseConfigured) {
+    const { error } = await db.from('ticket_media').delete().eq('id', mediaId);
+    if (error) throw error;
+  }
   updateLocalRepair(repairId, (repair) => ({
     ...repair,
     media: (repair.media ?? []).filter((item) => item.id !== mediaId),
   }));
-
-  if (isSupabaseConfigured) {
-    try {
-      await db.from('ticket_media').delete().eq('id', mediaId);
-    } catch (error) {
-      console.warn('Unable to delete repair media from Supabase.', error);
-    }
-  }
 }

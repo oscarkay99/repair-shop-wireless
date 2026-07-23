@@ -32,12 +32,11 @@ export async function getWirelessSettings(): Promise<WirelessSettings> {
 }
 
 export async function updateWirelessSettings(patch: Partial<WirelessSettings>): Promise<WirelessSettings> {
-  localSettings = { ...localSettings, ...patch, updated_at: new Date().toISOString() };
+  const next = { ...localSettings, ...patch, updated_at: new Date().toISOString() };
   if (isSupabaseConfigured) {
-    const { error } = await db
-      .from('settings')
-      .upsert({ ...localSettings, id: 'store' });
-    if (error) console.warn('[wireless/settings] update error', error);
+    const { error } = await db.from('settings').upsert({ ...next, id: 'store' });
+    if (error) throw error;
   }
+  localSettings = next;
   return { ...localSettings };
 }

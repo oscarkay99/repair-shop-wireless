@@ -113,15 +113,23 @@ export async function createInvoice(
   items: Omit<InvoiceItem, 'id' | 'invoice_id'>[] = []
 ): Promise<Invoice> {
   if (isSupabaseConfigured) {
-    const { data, error } = await db.from('invoices').insert(input).select().single();
-    if (!error && data) {
-      const inv = data as Invoice;
-      if (items.length) {
-        await db.from('invoice_items').insert(items.map(i => ({ ...i, invoice_id: inv.id })));
-      }
-      localStore = [inv, ...localStore];
-      return inv;
+    // `customer` is a hydrated join, not a real column — sending it to insert()
+    // makes Postgres reject the whole row (unknown column), which used to be
+    // swallowed below and silently downgraded to a fake local-only invoice.
+    const { customer: _customer, ...row } = input;
+    const { data, error } = await db
+      .from('invoices')
+      .insert(row)
+      .select('*, customer:customers(id,name,phone,email,address,ticket_count,total_spent,created_at,updated_at)')
+      .single();
+    if (error) throw error;
+    const inv = data as Invoice;
+    if (items.length) {
+      const { error: itemsError } = await db.from('invoice_items').insert(items.map(i => ({ ...i, invoice_id: inv.id })));
+      if (itemsError) throw itemsError;
     }
+    localStore = [inv, ...localStore];
+    return inv;
   }
   const inv: Invoice = { ...input, id: crypto.randomUUID(), invoice_number: nextNumber(), created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
   localStore = [inv, ...localStore];
@@ -130,10 +138,13 @@ export async function createInvoice(
 
 export async function patchInvoice(id: string, data: Partial<Pick<Invoice, 'status' | 'amount_paid' | 'payment_method' | 'due_date' | 'notes' | 'discount'>>): Promise<void> {
   const patch = { ...data, updated_at: new Date().toISOString() };
-  localStore = localStore.map(i => i.id === id ? { ...i, ...patch } : i);
-  if (!isSupabaseConfigured) return;
+  if (!isSupabaseConfigured) {
+    localStore = localStore.map(i => i.id === id ? { ...i, ...patch } : i);
+    return;
+  }
   const { error } = await db.from('invoices').update(patch).eq('id', id);
-  if (error) console.warn('[wireless/invoices] patch error', error);
+  if (error) throw error;
+  localStore = localStore.map(i => i.id === id ? { ...i, ...patch } : i);
 }
 
 export async function sendInvoiceEmail(payload: {
@@ -157,8 +168,11 @@ export async function sendInvoiceEmail(payload: {
 }
 
 export async function deleteInvoice(id: string): Promise<void> {
-  localStore = localStore.filter(i => i.id !== id);
-  if (!isSupabaseConfigured) return;
+  if (!isSupabaseConfigured) {
+    localStore = localStore.filter(i => i.id !== id);
+    return;
+  }
   const { error } = await db.from('invoices').delete().eq('id', id);
-  if (error) console.warn('[wireless/invoices] delete error', error);
+  if (error) throw error;
+  localStore = localStore.filter(i => i.id !== id);
 }

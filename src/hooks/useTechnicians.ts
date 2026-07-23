@@ -17,10 +17,15 @@ export function useTechnicians() {
   useEffect(() => { reload(); }, [reload]);
 
   const add = async (input: Parameters<typeof createTechnician>[0]) => {
-    const t = await createTechnician(input);
-    setTechnicians(prev => [t, ...prev]);
-    showToast('Technician added');
-    return t;
+    try {
+      const t = await createTechnician(input);
+      setTechnicians(prev => [t, ...prev]);
+      showToast('Technician added');
+      return t;
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Failed to add technician', 'error');
+      throw e;
+    }
   };
 
   const patch = async (id: string, data: Partial<Technician>) => {
@@ -34,9 +39,14 @@ export function useTechnicians() {
   };
 
   const remove = async (id: string) => {
-    await deleteTechnician(id);
-    setTechnicians(prev => prev.filter(t => t.id !== id));
-    showToast('Technician removed');
+    try {
+      await deleteTechnician(id);
+      setTechnicians(prev => prev.filter(t => t.id !== id));
+      showToast('Technician removed');
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Failed to remove technician', 'error');
+      throw e;
+    }
   };
 
   return { technicians, loading, reload, add, patch, remove };

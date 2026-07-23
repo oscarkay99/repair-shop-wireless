@@ -13,22 +13,37 @@ export function useExpenses() {
   }, []);
 
   const add = async (e: Omit<ExpenseRecord, 'id'>) => {
-    const created = await createExpense(e);
-    setExpenses(prev => [created, ...prev]);
-    showToast('Expense recorded');
-    return created;
+    try {
+      const created = await createExpense(e);
+      setExpenses(prev => [created, ...prev]);
+      showToast('Expense recorded');
+      return created;
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to record expense', 'error');
+      throw err;
+    }
   };
 
   const update = async (id: string, changes: Partial<ExpenseRecord>) => {
-    await updateExpense(id, changes);
-    setExpenses(prev => prev.map(e => e.id === id ? { ...e, ...changes } : e));
-    showToast('Expense updated');
+    try {
+      await updateExpense(id, changes);
+      setExpenses(prev => prev.map(e => e.id === id ? { ...e, ...changes } : e));
+      showToast('Expense updated');
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to update expense', 'error');
+      throw err;
+    }
   };
 
   const remove = async (id: string) => {
-    await deleteExpense(id);
-    setExpenses(prev => prev.filter(e => e.id !== id));
-    showToast('Expense deleted');
+    try {
+      await deleteExpense(id);
+      setExpenses(prev => prev.filter(e => e.id !== id));
+      showToast('Expense deleted');
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to delete expense', 'error');
+      throw err;
+    }
   };
 
   return { expenses, loading, add, update, remove };

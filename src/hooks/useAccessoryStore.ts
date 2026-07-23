@@ -26,34 +26,59 @@ export function useAccessoryStore() {
   useEffect(() => { reload(); }, [reload]);
 
   const addProduct = async (input: Parameters<typeof createProduct>[0]) => {
-    const p = await createProduct(input);
-    setProducts(prev => [p, ...prev]);
-    showToast('Product added');
-    return p;
+    try {
+      const p = await createProduct(input);
+      setProducts(prev => [p, ...prev]);
+      showToast('Product added');
+      return p;
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Failed to add product', 'error');
+      throw e;
+    }
   };
 
   const patchProduct = async (id: string, data: Partial<AccessoryProduct>) => {
-    await updateProduct(id, data);
-    setProducts(prev => prev.map(p => p.id === id ? { ...p, ...data } : p));
+    try {
+      await updateProduct(id, data);
+      setProducts(prev => prev.map(p => p.id === id ? { ...p, ...data } : p));
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Failed to update product', 'error');
+      throw e;
+    }
   };
 
   const removeProduct = async (id: string) => {
-    await deleteProduct(id);
-    setProducts(prev => prev.filter(p => p.id !== id));
-    showToast('Product removed');
+    try {
+      await deleteProduct(id);
+      setProducts(prev => prev.filter(p => p.id !== id));
+      showToast('Product removed');
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Failed to remove product', 'error');
+      throw e;
+    }
   };
 
   const recordSale = async (input: Parameters<typeof createSale>[0]) => {
-    const s = await createSale(input);
-    setSales(prev => [s, ...prev]);
-    showToast('Sale recorded');
-    return s;
+    try {
+      const s = await createSale(input);
+      setSales(prev => [s, ...prev]);
+      showToast('Sale recorded');
+      return s;
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Failed to record sale', 'error');
+      throw e;
+    }
   };
 
   const removeSale = async (id: string) => {
-    await deleteSale(id);
-    setSales(prev => prev.filter(s => s.id !== id));
-    showToast('Sale removed');
+    try {
+      await deleteSale(id);
+      setSales(prev => prev.filter(s => s.id !== id));
+      showToast('Sale removed');
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Failed to remove sale', 'error');
+      throw e;
+    }
   };
 
   return { products, sales, loading, reload, addProduct, patchProduct, removeProduct, recordSale, removeSale };

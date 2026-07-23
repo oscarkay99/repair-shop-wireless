@@ -26,15 +26,11 @@ export async function getExpenses(): Promise<ExpenseRecord[]> {
 
 export async function createExpense(input: Omit<ExpenseRecord, 'id'>): Promise<ExpenseRecord> {
   if (isSupabaseConfigured) {
-    try {
-      const { data, error } = await db.from('expenses').insert(input).select().single();
-      if (error) throw error;
-      const e = data as ExpenseRecord;
-      localStore = [e, ...localStore];
-      return e;
-    } catch (e) {
-      console.warn('[wireless/expenses] unable to create expense in Supabase', e);
-    }
+    const { data, error } = await db.from('expenses').insert(input).select().single();
+    if (error) throw error;
+    const e = data as ExpenseRecord;
+    localStore = [e, ...localStore];
+    return e;
   }
   const e: ExpenseRecord = { ...input, id: `EXP-${Date.now()}` };
   localStore = [e, ...localStore];
@@ -42,15 +38,21 @@ export async function createExpense(input: Omit<ExpenseRecord, 'id'>): Promise<E
 }
 
 export async function updateExpense(id: string, patch: Partial<ExpenseRecord>): Promise<void> {
-  localStore = localStore.map(e => e.id === id ? { ...e, ...patch } : e);
-  if (!isSupabaseConfigured) return;
+  if (!isSupabaseConfigured) {
+    localStore = localStore.map(e => e.id === id ? { ...e, ...patch } : e);
+    return;
+  }
   const { error } = await db.from('expenses').update(patch).eq('id', id);
-  if (error) console.warn('[wireless/expenses] update error', error);
+  if (error) throw error;
+  localStore = localStore.map(e => e.id === id ? { ...e, ...patch } : e);
 }
 
 export async function deleteExpense(id: string): Promise<void> {
-  localStore = localStore.filter(e => e.id !== id);
-  if (!isSupabaseConfigured) return;
+  if (!isSupabaseConfigured) {
+    localStore = localStore.filter(e => e.id !== id);
+    return;
+  }
   const { error } = await db.from('expenses').delete().eq('id', id);
-  if (error) console.warn('[wireless/expenses] delete error', error);
+  if (error) throw error;
+  localStore = localStore.filter(e => e.id !== id);
 }

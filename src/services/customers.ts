@@ -65,39 +65,34 @@ export async function getCustomers(): Promise<Customer[]> {
 }
 
 export async function createCustomer(c: Omit<Customer, 'id'>): Promise<Customer> {
-  const item = { ...c, id: `C${String(store.length + 1).padStart(3, '0')}` } as Customer;
-  store = [item, ...store];
-
   if (isSupabaseConfigured) {
-    try {
-      const { data, error } = await supabase
-        .from('customers')
-        .insert({
-          id: item.id,
-          name: item.name,
-          phone: item.phone,
-          email: item.email,
-          website_auth_user_id: item.websiteAuthUserId ?? null,
-          has_website_account: item.hasWebsiteAccount ?? false,
-          source: item.source ?? 'admin',
-          segment: item.segment,
-          ltv: item.ltv,
-          orders: item.orders,
-          last_order: item.lastOrder,
-          avg_order: item.avgOrder,
-          warranties: item.warranties,
-          repairs: item.repairs,
-          since: item.since,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return normalizeCustomer(data as CustomerRow);
-    } catch (error) {
-      console.warn('Unable to sync customer to Supabase.', error);
-    }
+    const { data, error } = await supabase
+      .from('customers')
+      .insert({
+        name: c.name,
+        phone: c.phone,
+        email: c.email,
+        website_auth_user_id: c.websiteAuthUserId ?? null,
+        has_website_account: c.hasWebsiteAccount ?? false,
+        source: c.source ?? 'admin',
+        segment: c.segment,
+        ltv: c.ltv,
+        orders: c.orders,
+        last_order: c.lastOrder,
+        avg_order: c.avgOrder,
+        warranties: c.warranties,
+        repairs: c.repairs,
+        since: c.since,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    const item = normalizeCustomer(data as CustomerRow);
+    store = [item, ...store];
+    return item;
   }
 
+  const item = { ...c, id: `C${String(store.length + 1).padStart(3, '0')}` } as Customer;
+  store = [item, ...store];
   return item;
 }

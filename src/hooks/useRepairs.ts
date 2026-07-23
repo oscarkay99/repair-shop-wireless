@@ -3,6 +3,10 @@ import { getRepairs, createRepair, updateRepairStatus, updateRepairNotes, addRep
 import type { Repair, RepairStatus, RepairMediaUploadInput } from '@/types/repair';
 import { useToast } from '@/contexts/ToastContext';
 
+function errMessage(e: unknown, fallback: string): string {
+  return e instanceof Error ? e.message : fallback;
+}
+
 export function useRepairs() {
   const [repairs, setRepairs] = useState<Repair[]>([]);
   const [loading, setLoading] = useState(true);
@@ -13,21 +17,36 @@ export function useRepairs() {
   }, []);
 
   const add = async (r: Omit<Repair, 'id'>) => {
-    const created = await createRepair(r);
-    setRepairs(prev => [created, ...prev]);
-    showToast('Repair job created');
-    return created;
+    try {
+      const created = await createRepair(r);
+      setRepairs(prev => [created, ...prev]);
+      showToast('Repair job created');
+      return created;
+    } catch (e) {
+      showToast(errMessage(e, 'Failed to create repair job'), 'error');
+      throw e;
+    }
   };
 
   const setStatus = async (id: string, status: RepairStatus) => {
-    await updateRepairStatus(id, status);
-    setRepairs(prev => prev.map(r => r.id === id ? { ...r, status } : r));
-    showToast('Status updated');
+    try {
+      await updateRepairStatus(id, status);
+      setRepairs(prev => prev.map(r => r.id === id ? { ...r, status } : r));
+      showToast('Status updated');
+    } catch (e) {
+      showToast(errMessage(e, 'Failed to update status'), 'error');
+      throw e;
+    }
   };
 
   const setNotes = async (id: string, notes: string[]) => {
-    await updateRepairNotes(id, notes);
-    setRepairs(prev => prev.map(r => r.id === id ? { ...r, notes } : r));
+    try {
+      await updateRepairNotes(id, notes);
+      setRepairs(prev => prev.map(r => r.id === id ? { ...r, notes } : r));
+    } catch (e) {
+      showToast(errMessage(e, 'Failed to save note'), 'error');
+      throw e;
+    }
   };
 
   const updateStatus = async (id: string, status: RepairStatus) => setStatus(id, status);
@@ -39,38 +58,58 @@ export function useRepairs() {
   };
 
   const addMedia = async (id: string, input: RepairMediaUploadInput) => {
-    const media = await addRepairMedia(id, input);
-    setRepairs(prev => prev.map((repair) => (
-      repair.id === id
-        ? { ...repair, media: [media, ...(repair.media ?? [])] }
-        : repair
-    )));
-    showToast('Media uploaded');
-    return media;
+    try {
+      const media = await addRepairMedia(id, input);
+      setRepairs(prev => prev.map((repair) => (
+        repair.id === id
+          ? { ...repair, media: [media, ...(repair.media ?? [])] }
+          : repair
+      )));
+      showToast('Media uploaded');
+      return media;
+    } catch (e) {
+      showToast(errMessage(e, 'Failed to upload media'), 'error');
+      throw e;
+    }
   };
 
   const removeMedia = async (id: string, mediaId: string) => {
-    await deleteRepairMedia(id, mediaId);
-    setRepairs(prev => prev.map((repair) => (
-      repair.id === id
-        ? { ...repair, media: (repair.media ?? []).filter((item) => item.id !== mediaId) }
-        : repair
-    )));
-    showToast('Photo removed');
+    try {
+      await deleteRepairMedia(id, mediaId);
+      setRepairs(prev => prev.map((repair) => (
+        repair.id === id
+          ? { ...repair, media: (repair.media ?? []).filter((item) => item.id !== mediaId) }
+          : repair
+      )));
+      showToast('Photo removed');
+    } catch (e) {
+      showToast(errMessage(e, 'Failed to remove photo'), 'error');
+      throw e;
+    }
   };
 
   const patchRepair = async (id: string, patch: Partial<Repair>) => {
-    await updateRepair(id, patch);
-    setRepairs(prev => prev.map((repair) => (
-      repair.id === id ? { ...repair, ...patch } : repair
-    )));
-    showToast('Repair updated');
+    try {
+      await updateRepair(id, patch);
+      setRepairs(prev => prev.map((repair) => (
+        repair.id === id ? { ...repair, ...patch } : repair
+      )));
+      showToast('Repair updated');
+    } catch (e) {
+      showToast(errMessage(e, 'Failed to update repair'), 'error');
+      throw e;
+    }
   };
 
   const remove = async (id: string) => {
-    await deleteRepair(id);
-    setRepairs(prev => prev.filter(r => r.id !== id));
-    showToast('Repair deleted');
+    try {
+      await deleteRepair(id);
+      setRepairs(prev => prev.filter(r => r.id !== id));
+      showToast('Repair deleted');
+    } catch (e) {
+      showToast(errMessage(e, 'Failed to delete repair'), 'error');
+      throw e;
+    }
   };
 
   return { repairs, loading, add, setStatus, setNotes, updateStatus, addNote, addMedia, removeMedia, patchRepair, remove };

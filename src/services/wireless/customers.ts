@@ -32,11 +32,10 @@ export async function getCustomers(): Promise<WCustomer[]> {
 export async function createCustomer(input: Omit<WCustomer, 'id' | 'ticket_count' | 'total_spent' | 'created_at' | 'updated_at'>): Promise<WCustomer> {
   if (isSupabaseConfigured) {
     const { data, error } = await db.from('customers').insert(input).select().single();
-    if (!error && data) {
-      const c = data as WCustomer;
-      localStore = [c, ...localStore];
-      return c;
-    }
+    if (error) throw error;
+    const c = data as WCustomer;
+    localStore = [c, ...localStore];
+    return c;
   }
   const c: WCustomer = { ...input, id: crypto.randomUUID(), ticket_count: 0, total_spent: 0, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
   localStore = [c, ...localStore];
@@ -44,15 +43,21 @@ export async function createCustomer(input: Omit<WCustomer, 'id' | 'ticket_count
 }
 
 export async function updateCustomer(id: string, patch: Partial<WCustomer>): Promise<void> {
-  localStore = localStore.map(c => c.id === id ? { ...c, ...patch } : c);
-  if (!isSupabaseConfigured) return;
+  if (!isSupabaseConfigured) {
+    localStore = localStore.map(c => c.id === id ? { ...c, ...patch } : c);
+    return;
+  }
   const { error } = await db.from('customers').update(patch).eq('id', id);
-  if (error) console.warn('[wireless/customers] update error', error);
+  if (error) throw error;
+  localStore = localStore.map(c => c.id === id ? { ...c, ...patch } : c);
 }
 
 export async function deleteCustomer(id: string): Promise<void> {
-  localStore = localStore.filter(c => c.id !== id);
-  if (!isSupabaseConfigured) return;
+  if (!isSupabaseConfigured) {
+    localStore = localStore.filter(c => c.id !== id);
+    return;
+  }
   const { error } = await db.from('customers').delete().eq('id', id);
-  if (error) console.warn('[wireless/customers] delete error', error);
+  if (error) throw error;
+  localStore = localStore.filter(c => c.id !== id);
 }

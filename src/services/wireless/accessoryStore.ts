@@ -147,24 +147,20 @@ export async function getProducts(): Promise<AccessoryProduct[]> {
 
 export async function createProduct(input: Omit<AccessoryProduct, 'id' | 'created_at'>): Promise<AccessoryProduct> {
   if (isSupabaseConfigured) {
-    try {
-      const { data, error } = await db.from('parts').insert({
-        name: input.name,
-        sku: input.sku,
-        compatible_with: input.compatible_with,
-        category: input.category,
-        selling_price: input.price,
-        unit_cost: input.cost,
-        stock: input.stock,
-        min_stock: input.reorder_at,
-      }).select().single();
-      if (error) throw error;
-      const p = toProduct(data as PartRow);
-      productStore = [p, ...productStore];
-      return p;
-    } catch (e) {
-      console.warn('[wireless/accessoryStore] unable to create product in Supabase', e);
-    }
+    const { data, error } = await db.from('parts').insert({
+      name: input.name,
+      sku: input.sku,
+      compatible_with: input.compatible_with,
+      category: input.category,
+      selling_price: input.price,
+      unit_cost: input.cost,
+      stock: input.stock,
+      min_stock: input.reorder_at,
+    }).select().single();
+    if (error) throw error;
+    const p = toProduct(data as PartRow);
+    productStore = [p, ...productStore];
+    return p;
   }
   const p: AccessoryProduct = { ...input, id: crypto.randomUUID(), created_at: new Date().toISOString() };
   productStore = [p, ...productStore];
@@ -172,17 +168,23 @@ export async function createProduct(input: Omit<AccessoryProduct, 'id' | 'create
 }
 
 export async function updateProduct(id: string, patch: Partial<AccessoryProduct>): Promise<void> {
-  productStore = productStore.map(p => p.id === id ? { ...p, ...patch } : p);
-  if (!isSupabaseConfigured) return;
+  if (!isSupabaseConfigured) {
+    productStore = productStore.map(p => p.id === id ? { ...p, ...patch } : p);
+    return;
+  }
   const { error } = await db.from('parts').update(toPartPatch(patch)).eq('id', id);
-  if (error) console.warn('[wireless/accessoryStore] update error', error);
+  if (error) throw error;
+  productStore = productStore.map(p => p.id === id ? { ...p, ...patch } : p);
 }
 
 export async function deleteProduct(id: string): Promise<void> {
-  productStore = productStore.filter(p => p.id !== id);
-  if (!isSupabaseConfigured) return;
+  if (!isSupabaseConfigured) {
+    productStore = productStore.filter(p => p.id !== id);
+    return;
+  }
   const { error } = await db.from('parts').delete().eq('id', id);
-  if (error) console.warn('[wireless/accessoryStore] delete error', error);
+  if (error) throw error;
+  productStore = productStore.filter(p => p.id !== id);
 }
 
 // Sales ────────────────────────────────────────────────────────────────────────
@@ -235,49 +237,45 @@ export async function getSales(): Promise<AccessorySaleRecord[]> {
 
 export async function createSale(input: Omit<AccessorySaleRecord, 'id' | 'sale_number' | 'sold_at' | 'payment_status'>): Promise<AccessorySaleRecord> {
   if (isSupabaseConfigured) {
-    try {
-      const { data: session } = await supabase.auth.getSession();
-      const { data: sale, error: saleError } = await db.from('accessory_sales').insert({
-        customer_id: input.customer_id ?? null,
-        customer_name: input.customer_name || '',
-        subtotal: input.total,
-        discount: 0,
-        tax: 0,
-        total: input.total,
-        payment_method: input.payment_method.toLowerCase(),
-        payment_status: 'paid',
-        amount_paid: input.total,
-        sold_by: session.session?.user?.id ?? null,
-      }).select().single();
-      if (saleError) throw saleError;
+    const { data: session } = await supabase.auth.getSession();
+    const { data: sale, error: saleError } = await db.from('accessory_sales').insert({
+      customer_id: input.customer_id ?? null,
+      customer_name: input.customer_name || '',
+      subtotal: input.total,
+      discount: 0,
+      tax: 0,
+      total: input.total,
+      payment_method: input.payment_method.toLowerCase(),
+      payment_status: 'paid',
+      amount_paid: input.total,
+      sold_by: session.session?.user?.id ?? null,
+    }).select().single();
+    if (saleError) throw saleError;
 
-      const saleRow = sale as SaleRow;
-      const { error: itemError } = await db.from('sale_items').insert({
-        sale_id: saleRow.id,
-        part_id: input.product_id || null,
-        item_name: input.product_name,
-        quantity: input.quantity,
-        unit_price: input.unit_price,
-        total_price: input.total,
-      });
-      if (itemError) throw itemError;
+    const saleRow = sale as SaleRow;
+    const { error: itemError } = await db.from('sale_items').insert({
+      sale_id: saleRow.id,
+      part_id: input.product_id || null,
+      item_name: input.product_name,
+      quantity: input.quantity,
+      unit_price: input.unit_price,
+      total_price: input.total,
+    });
+    if (itemError) throw itemError;
 
-      if (input.product_id) {
-        const { data: partRow, error: partReadError } = await db
-          .from('parts').select('stock').eq('id', input.product_id).single();
-        if (!partReadError && partRow) {
-          const newStock = Math.max(0, (partRow as { stock: number }).stock - input.quantity);
-          const { error: stockError } = await db.from('parts').update({ stock: newStock }).eq('id', input.product_id);
-          if (stockError) console.warn('[wireless/accessoryStore] unable to decrement stock', stockError);
-        }
+    if (input.product_id) {
+      const { data: partRow, error: partReadError } = await db
+        .from('parts').select('stock').eq('id', input.product_id).single();
+      if (!partReadError && partRow) {
+        const newStock = Math.max(0, (partRow as { stock: number }).stock - input.quantity);
+        const { error: stockError } = await db.from('parts').update({ stock: newStock }).eq('id', input.product_id);
+        if (stockError) console.warn('[wireless/accessoryStore] unable to decrement stock', stockError);
       }
-
-      const s: AccessorySaleRecord = { ...input, payment_status: 'paid', id: saleRow.id, sale_number: saleRow.sale_number, sold_at: saleRow.created_at };
-      saleStore = [s, ...saleStore];
-      return s;
-    } catch (e) {
-      console.warn('[wireless/accessoryStore] unable to record sale in Supabase, keeping it local-only', e);
     }
+
+    const s: AccessorySaleRecord = { ...input, payment_status: 'paid', id: saleRow.id, sale_number: saleRow.sale_number, sold_at: saleRow.created_at };
+    saleStore = [s, ...saleStore];
+    return s;
   }
 
   const num = saleStore.length + 1;
@@ -293,15 +291,21 @@ export async function createSale(input: Omit<AccessorySaleRecord, 'id' | 'sale_n
 }
 
 export async function updateSalePaymentStatus(id: string, status: AccessorySaleRecord['payment_status']): Promise<void> {
-  saleStore = saleStore.map(s => s.id === id ? { ...s, payment_status: status } : s);
-  if (!isSupabaseConfigured) return;
+  if (!isSupabaseConfigured) {
+    saleStore = saleStore.map(s => s.id === id ? { ...s, payment_status: status } : s);
+    return;
+  }
   const { error } = await db.from('accessory_sales').update({ payment_status: status }).eq('id', id);
-  if (error) console.warn('[wireless/accessoryStore] update payment status error', error);
+  if (error) throw error;
+  saleStore = saleStore.map(s => s.id === id ? { ...s, payment_status: status } : s);
 }
 
 export async function deleteSale(id: string): Promise<void> {
-  saleStore = saleStore.filter(s => s.id !== id);
-  if (!isSupabaseConfigured) return;
+  if (!isSupabaseConfigured) {
+    saleStore = saleStore.filter(s => s.id !== id);
+    return;
+  }
   const { error } = await db.from('accessory_sales').delete().eq('id', id);
-  if (error) console.warn('[wireless/accessoryStore] delete sale error', error);
+  if (error) throw error;
+  saleStore = saleStore.filter(s => s.id !== id);
 }

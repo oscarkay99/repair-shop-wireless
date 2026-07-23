@@ -13,10 +13,15 @@ export function useCustomers() {
   }, []);
 
   const add = async (c: Omit<Customer, 'id'>) => {
-    const created = await createCustomer(c);
-    setCustomers(prev => [created, ...prev]);
-    showToast(`${c.name} added`);
-    return created;
+    try {
+      const created = await createCustomer(c);
+      setCustomers(prev => [created, ...prev]);
+      showToast(`${c.name} added`);
+      return created;
+    } catch (e) {
+      showToast(`Failed to add customer: ${e instanceof Error ? e.message : 'Something went wrong'}`, 'error');
+      throw e;
+    }
   };
 
   return { customers, loading, add };

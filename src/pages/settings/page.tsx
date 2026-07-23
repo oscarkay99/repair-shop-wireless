@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import AdminLayout from '@/components/feature/AdminLayout';
 import { useWirelessSettings } from '@/hooks/useWirelessSettings';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/contexts/ToastContext';
 import SettingsSidebar from './components/SettingsSidebar';
 import BrandingSection from './components/BrandingSection';
 import OperationsSection from './components/OperationsSection';
@@ -35,6 +36,7 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [dirty, setDirty] = useState(false);
   const { settings, save } = useWirelessSettings();
+  const { showToast } = useToast();
   const [businessName, setBusinessName] = useState('Wireless');
   const [tagline, setTagline] = useState('Premium Gadgets in Accra');
   const [phone, setPhone] = useState('+233 24 000 0000');
@@ -74,9 +76,13 @@ export default function SettingsPage() {
         primary_color: primaryColor,
       });
       setDirty(false);
-    } catch { /* keep local values even if the save call itself errored */ }
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (e) {
+      // Keep `dirty` true and skip the success indicator — the save didn't
+      // actually persist, so the unsaved-changes state must stay visible.
+      showToast(e instanceof Error ? e.message : 'Failed to save settings', 'error');
+    }
   };
 
   return (

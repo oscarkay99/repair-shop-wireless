@@ -42,11 +42,10 @@ export async function getParts(): Promise<Part[]> {
 export async function createPart(input: Omit<Part, 'id' | 'created_at' | 'updated_at'>): Promise<Part> {
   if (isSupabaseConfigured) {
     const { data, error } = await db.from('parts').insert(input).select().single();
-    if (!error && data) {
-      const p = data as Part;
-      localStore = [p, ...localStore];
-      return p;
-    }
+    if (error) throw error;
+    const p = data as Part;
+    localStore = [p, ...localStore];
+    return p;
   }
   const p: Part = { ...input, id: crypto.randomUUID(), created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
   localStore = [p, ...localStore];
@@ -54,17 +53,23 @@ export async function createPart(input: Omit<Part, 'id' | 'created_at' | 'update
 }
 
 export async function updatePart(id: string, patch: Partial<Part>): Promise<void> {
-  localStore = localStore.map(p => p.id === id ? { ...p, ...patch } : p);
-  if (!isSupabaseConfigured) return;
+  if (!isSupabaseConfigured) {
+    localStore = localStore.map(p => p.id === id ? { ...p, ...patch } : p);
+    return;
+  }
   const { error } = await db.from('parts').update(patch).eq('id', id);
-  if (error) console.warn('[wireless/parts] update error', error);
+  if (error) throw error;
+  localStore = localStore.map(p => p.id === id ? { ...p, ...patch } : p);
 }
 
 export async function deletePart(id: string): Promise<void> {
-  localStore = localStore.filter(p => p.id !== id);
-  if (!isSupabaseConfigured) return;
+  if (!isSupabaseConfigured) {
+    localStore = localStore.filter(p => p.id !== id);
+    return;
+  }
   const { error } = await db.from('parts').delete().eq('id', id);
-  if (error) console.warn('[wireless/parts] delete error', error);
+  if (error) throw error;
+  localStore = localStore.filter(p => p.id !== id);
 }
 
 export async function adjustStock(id: string, delta: number): Promise<void> {
