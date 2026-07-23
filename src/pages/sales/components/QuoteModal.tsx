@@ -33,6 +33,22 @@ export default function QuoteModal({ cartItems, customerName, deliveryType, paym
 
   const handlePrint = () => window.print();
 
+  const handleShareWhatsApp = () => {
+    const lines = [
+      `Quote ${quoteId}`,
+      `Client: ${customerName || 'Walk-in Customer'}`,
+      '',
+      ...cartItems.map(item => `${item.name} × ${item.qty} — ${formatGHS(item.lineTotal)}`),
+      '',
+      `Subtotal: ${formatGHS(subtotal)}`,
+      `Delivery: ${deliveryFee > 0 ? formatGHS(deliveryFee) : 'Free'}`,
+      `Total: ${formatGHS(total)}`,
+      '',
+      `Valid until ${validUntil.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`,
+    ];
+    window.open(`https://wa.me/?text=${encodeURIComponent(lines.join('\n'))}`, '_blank');
+  };
+
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-3xl w-full max-w-6xl max-h-[92vh] overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
@@ -151,7 +167,7 @@ export default function QuoteModal({ cartItems, customerName, deliveryType, paym
             <div className="rounded-2xl border border-slate-100 overflow-hidden">
               <div className="px-4 py-3 border-b border-slate-100 text-xs font-bold uppercase tracking-wider text-slate-500">Actions</div>
               <div className="p-4 space-y-2">
-                <button className="w-full py-3 rounded-xl bg-[#25D366] text-white text-sm font-semibold hover:bg-[#20b858] transition-all cursor-pointer flex items-center justify-center gap-2 whitespace-nowrap">
+                <button onClick={handleShareWhatsApp} className="w-full py-3 rounded-xl bg-[#25D366] text-white text-sm font-semibold hover:bg-[#20b858] transition-all cursor-pointer flex items-center justify-center gap-2 whitespace-nowrap">
                   <i className="ri-whatsapp-line text-sm" /> Share via WhatsApp
                 </button>
                 <button onClick={handlePrint} className="w-full py-3 rounded-xl border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50 transition-all cursor-pointer whitespace-nowrap">
