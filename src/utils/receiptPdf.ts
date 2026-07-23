@@ -1,6 +1,6 @@
 import { jsPDF, GState } from 'jspdf';
 import type { Transaction } from '@/types/payment';
-import { loadWirelessLogo } from '@/utils/pdfBranding';
+import { loadWirelessLogo, fmtGHS } from '@/utils/pdfBranding';
 
 const PAGE_W = 210;
 const MARGIN = 14;
@@ -71,7 +71,7 @@ async function buildReceiptPdf(txn: Transaction): Promise<jsPDF> {
   doc.setFontSize(14);
   doc.setTextColor(30);
   doc.text('Total Paid', MARGIN, y);
-  doc.text(txn.amount, RIGHT_X, y, { align: 'right' });
+  doc.text(fmtGHS(txn.amountValue), RIGHT_X, y, { align: 'right' });
 
   doc.setDrawColor(224, 224, 224);
   doc.line(MARGIN, y + 14, RIGHT_X, y + 14);
