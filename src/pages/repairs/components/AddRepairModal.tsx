@@ -209,7 +209,7 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
                     <option key={t.id} value={t.name} disabled={unavailable}>
                       {unavailable
                         ? `${t.name} — Unavailable${t.unavailable_until ? ` until ${new Date(t.unavailable_until + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}`
-                        : `${t.name} — ${load === 0 ? 'free' : `${load} active job${load > 1 ? 's' : ''}`}`}
+                        : `${t.name} — ${load === 0 ? 'Available' : `${load} active job${load > 1 ? 's' : ''}`}`}
                     </option>
                   );
                 })}
