@@ -1,13 +1,13 @@
 import { useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ClipboardList, Package, Clock, Users, ChevronRight, Plus } from 'lucide-react';
+import { FileText, Wallet, UserPlus, AlertCircle, ChevronRight, Plus, Users } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useRepairs } from '@/hooks/useRepairs';
+import { useInvoices } from '@/hooks/useInvoices';
+import { useWirelessCustomers } from '@/hooks/useWirelessCustomers';
 import { usePageTitle } from '@/context/PageTitleContext';
 import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/shared/Pagination';
-import type { Repair } from '@/types/repair';
-import { REPAIR_STATUS_META } from '@/utils/repairStatus';
+import type { Invoice, InvoiceStatus } from '@/types/wireless';
 
 function KPICard({ label, value, sub, icon: Icon, color }: {
   label: string; value: number | string; sub: string;
@@ -32,32 +32,42 @@ function KPICard({ label, value, sub, icon: Icon, color }: {
   );
 }
 
-function RepairRow({ r }: { r: Repair }) {
-  const meta = REPAIR_STATUS_META[r.status];
-  const received = r.createdAt
-    ? new Date(r.createdAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
-    : '—';
+function fmt(n: number) {
+  return n >= 1000 ? `GH₵ ${(n / 1000).toFixed(1)}k` : `GH₵ ${n.toFixed(0)}`;
+}
+
+const STATUS_META: Record<InvoiceStatus, { label: string; color: string }> = {
+  paid:      { label: 'Paid',      color: '#10B981' },
+  partial:   { label: 'Partial',   color: '#6366F1' },
+  unpaid:    { label: 'Unpaid',    color: '#F59E0B' },
+  overdue:   { label: 'Overdue',   color: '#EF4444' },
+  cancelled: { label: 'Cancelled', color: '#64748B' },
+};
+
+function InvoiceRow({ inv }: { inv: Invoice }) {
+  const meta = STATUS_META[inv.status] ?? STATUS_META.unpaid;
+  const time = new Date(inv.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
   return (
     <Link
-      to="/tickets"
+      to="/invoices"
       className="flex items-center gap-4 px-5 py-3.5 transition-colors group"
       style={{ borderBottom: '1px solid hsl(var(--border))' }}
       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}
     >
       <div className="w-24 flex-shrink-0">
-        <span className="text-[11px] font-bold" style={{ color: 'hsl(var(--primary))' }}>{r.id}</span>
+        <span className="text-[11px] font-bold" style={{ color: 'hsl(var(--primary))' }}>{inv.invoice_number}</span>
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-xs font-semibold truncate" style={{ color: 'hsl(var(--foreground))' }}>
-          {r.customer || 'Unknown Customer'}
+          {inv.customer?.name ?? 'Unknown Customer'}
         </p>
         <p className="text-[11px] truncate" style={{ color: 'hsl(var(--muted-foreground))' }}>
-          {r.device} — {r.issue}
+          {fmt(inv.total)}
         </p>
       </div>
       <div className="text-[11px] flex-shrink-0 w-20 text-right" style={{ color: 'hsl(var(--muted-foreground))' }}>
-        {received}
+        {time}
       </div>
       <div className="flex-shrink-0">
         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold"
@@ -73,27 +83,37 @@ function RepairRow({ r }: { r: Repair }) {
 export default function ReceptionistDashboard() {
   const { user } = useAuth();
   const { setPageTitle } = usePageTitle();
-  const { repairs, loading } = useRepairs();
+  const { invoices, loading: iLoading } = useInvoices();
+  const { customers, loading: cLoading } = useWirelessCustomers();
 
   useEffect(() => { setPageTitle({ title: 'Dashboard', hideDefaultAction: false }); }, [setPageTitle]);
 
   const today = new Date().toISOString().slice(0, 10);
 
-  const todayRepairs  = useMemo(() => repairs.filter(r => (r.createdAt ?? r.started)?.slice(0, 10) === today), [repairs, today]);
-  const ready         = useMemo(() => repairs.filter(r => r.status === 'ready'), [repairs]);
-  const inProgress    = useMemo(() => repairs.filter(r => r.status === 'in_progress'), [repairs]);
-  const notStarted    = useMemo(() => repairs.filter(r => ['received', 'diagnosis_paid'].includes(r.status)), [repairs]);
+  const newCustomersToday = useMemo(() =>
+    customers.filter(c => c.created_at.slice(0, 10) === today),
+    [customers, today]);
 
-  // Show today's check-ins + ready for pickup (for handoff)
-  const listRepairs = useMemo(() => {
-    const readyIds = new Set(ready.map(r => r.id));
-    return [...todayRepairs, ...ready.filter(r => !readyIds.has(r.id) || !todayRepairs.find(x => x.id === r.id))]
-      .filter((r, i, arr) => arr.findIndex(x => x.id === r.id) === i)
-      .sort((a, b) => (b.createdAt ?? b.started).localeCompare(a.createdAt ?? a.started));
-  }, [todayRepairs, ready]);
+  const invoicesToday = useMemo(() =>
+    invoices.filter(i => i.created_at.slice(0, 10) === today),
+    [invoices, today]);
 
-  const { paginated: pagedList, page, setPage, totalPages, total } = usePagination(listRepairs, 8);
+  const collectedToday = useMemo(() =>
+    invoices.filter(i => i.status === 'paid' && i.updated_at.slice(0, 10) === today)
+      .reduce((s, i) => s + i.amount_paid, 0),
+    [invoices, today]);
 
+  const outstanding = useMemo(() =>
+    invoices.filter(i => i.status !== 'paid' && i.status !== 'cancelled'),
+    [invoices]);
+
+  const recentInvoices = useMemo(() =>
+    [...invoices].sort((a, b) => b.created_at.localeCompare(a.created_at)),
+    [invoices]);
+
+  const { paginated: pagedList, page, setPage, totalPages, total } = usePagination(recentInvoices, 8);
+
+  const loading = iLoading || cLoading;
   const firstName = user?.name?.split(' ')[0] ?? 'there';
 
   return (
@@ -120,42 +140,42 @@ export default function ReceptionistDashboard() {
             Customers
           </Link>
           <Link
-            to="/tickets"
+            to="/invoices"
             className="px-4 h-8 flex items-center gap-1.5 rounded-lg text-xs font-semibold text-white"
             style={{ background: 'hsl(var(--primary))' }}
           >
             <Plus className="w-3.5 h-3.5" />
-            New Repair
+            New Invoice
           </Link>
         </div>
       </div>
 
       {/* KPI cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard label="Check-ins Today"   value={todayRepairs.length}  sub="Devices received today"     icon={ClipboardList} color="#06B6D4" />
-        <KPICard label="Ready for Pickup"  value={ready.length}         sub="Customers to notify"        icon={Package}       color="#10B981" />
-        <KPICard label="In Progress"       value={inProgress.length}    sub="Currently being worked on"  icon={Clock}         color="#F59E0B" />
-        <KPICard label="Awaiting Start"    value={notStarted.length}    sub="Not yet assigned"           icon={Users}         color="#8B5CF6" />
+        <KPICard label="New Customers Today" value={newCustomersToday.length} sub="Registered today"        icon={UserPlus}   color="#06B6D4" />
+        <KPICard label="Invoices Today"      value={invoicesToday.length}     sub="Issued today"             icon={FileText}   color="#8B5CF6" />
+        <KPICard label="Collected Today"     value={fmt(collectedToday)}      sub="Paid invoices today"      icon={Wallet}     color="#10B981" />
+        <KPICard label="Outstanding"         value={outstanding.length}       sub="Unpaid / partial invoices" icon={AlertCircle} color="#F59E0B" />
       </div>
 
-      {/* Repair list */}
+      {/* Invoice list */}
       <div className="rounded-2xl overflow-hidden" style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', boxShadow: 'var(--shadow-card)' }}>
         <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: 'hsl(var(--border))' }}>
           <div>
-            <p className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>Today's Activity</p>
+            <p className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>Recent Invoices</p>
             <p className="text-[11px] mt-0.5" style={{ color: 'hsl(var(--muted-foreground))' }}>
-              Check-ins &amp; ready for collection
+              Latest activity
             </p>
           </div>
-          <Link to="/tickets" className="text-[11px] font-semibold transition-opacity hover:opacity-70" style={{ color: 'hsl(var(--primary))' }}>
-            All repairs →
+          <Link to="/invoices" className="text-[11px] font-semibold transition-opacity hover:opacity-70" style={{ color: 'hsl(var(--primary))' }}>
+            All invoices →
           </Link>
         </div>
 
         {/* Header row */}
         <div className="flex items-center gap-4 px-5 py-2.5" style={{ background: 'hsl(var(--muted))', borderBottom: '1px solid hsl(var(--border))' }}>
-          <span className="text-[10px] font-bold uppercase tracking-wider w-24 flex-shrink-0" style={{ color: 'hsl(var(--muted-foreground))' }}>Ref</span>
-          <span className="text-[10px] font-bold uppercase tracking-wider flex-1" style={{ color: 'hsl(var(--muted-foreground))' }}>Customer / Device</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider w-24 flex-shrink-0" style={{ color: 'hsl(var(--muted-foreground))' }}>Invoice #</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider flex-1" style={{ color: 'hsl(var(--muted-foreground))' }}>Customer / Amount</span>
           <span className="text-[10px] font-bold uppercase tracking-wider w-20 text-right flex-shrink-0" style={{ color: 'hsl(var(--muted-foreground))' }}>Time</span>
           <span className="text-[10px] font-bold uppercase tracking-wider flex-shrink-0" style={{ color: 'hsl(var(--muted-foreground))' }}>Status</span>
           <span className="w-3.5 flex-shrink-0" />
@@ -165,17 +185,17 @@ export default function ReceptionistDashboard() {
           <div className="flex items-center justify-center py-12">
             <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: 'hsl(var(--primary)) transparent transparent' }} />
           </div>
-        ) : listRepairs.length === 0 ? (
+        ) : recentInvoices.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 gap-2">
-            <ClipboardList className="w-8 h-8 opacity-20" style={{ color: 'hsl(var(--foreground))' }} />
-            <p className="text-sm font-semibold" style={{ color: 'hsl(var(--foreground))' }}>No check-ins yet today</p>
-            <Link to="/tickets" className="text-xs font-semibold" style={{ color: 'hsl(var(--primary))' }}>
-              Create the first repair →
+            <FileText className="w-8 h-8 opacity-20" style={{ color: 'hsl(var(--foreground))' }} />
+            <p className="text-sm font-semibold" style={{ color: 'hsl(var(--foreground))' }}>No invoices yet</p>
+            <Link to="/invoices" className="text-xs font-semibold" style={{ color: 'hsl(var(--primary))' }}>
+              Create the first invoice →
             </Link>
           </div>
         ) : (
           <>
-            {pagedList.map(r => <RepairRow key={r.id} r={r} />)}
+            {pagedList.map(inv => <InvoiceRow key={inv.id} inv={inv} />)}
             <div className="px-5 pb-4">
               <Pagination page={page} pageCount={totalPages} total={total} pageSize={8} onPageChange={setPage} />
             </div>
