@@ -15,7 +15,11 @@ export function useTaxSettings() {
 
   useEffect(() => {
     getWirelessSettings().then(s => {
-      setSettings({ taxEnabled: s.tax_enabled, vatRate: s.vat_rate, nhilGetfundRate: s.nhil_getfund_rate });
+      setSettings({
+        taxEnabled: s.tax_enabled ?? DEFAULTS.taxEnabled,
+        vatRate: s.vat_rate ?? DEFAULTS.vatRate,
+        nhilGetfundRate: s.nhil_getfund_rate ?? DEFAULTS.nhilGetfundRate,
+      });
     }).finally(() => setLoading(false));
   }, []);
 
