@@ -605,9 +605,11 @@ export default function RepairsBoard() {
       if (filter === 'unassigned') {
         if (r.technician) return false;
       } else if (filter === 'in_queue') {
-        // Same bucket as the Technicians module's own "Queue" count —
-        // active and not currently in_progress (this includes 'ready').
-        if (r.status === 'in_progress' || !isActiveRepairStatus(r.status)) return false;
+        // Unlike the Technicians module (which has no separate Ready
+        // bucket, so it lumps Ready into Queue), this page has its own
+        // Ready tab — Queue here means "not yet started and not ready",
+        // or the two tabs would show overlapping tickets.
+        if (r.status === 'in_progress' || r.status === 'ready' || !isActiveRepairStatus(r.status)) return false;
       } else {
         const matchFilter = filter === 'all' || STATUS[r.status]?.filterKey === filter;
         if (!matchFilter) return false;
