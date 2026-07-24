@@ -592,7 +592,7 @@ export default function RepairsBoard() {
 
   const unassigned   = useMemo(() => repairs.filter(r => isActiveRepairStatus(r.status) && !r.technician), [repairs]);
   const inDiagnosis  = useMemo(() => repairs.filter(r => isActiveRepairStatus(r.status) && isDiagnosisStage(r)), [repairs]);
-  const inRepair     = useMemo(() => repairs.filter(r => isActiveRepairStatus(r.status) && !isDiagnosisStage(r)), [repairs]);
+  const inRepair     = useMemo(() => repairs.filter(r => isActiveRepairStatus(r.status) && !isDiagnosisStage(r) && r.status !== 'ready'), [repairs]);
   const ready        = useMemo(() => repairs.filter(r => r.status === 'ready'), [repairs]);
 
   const filterTabs = FILTER_TABS;
