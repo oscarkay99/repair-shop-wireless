@@ -27,6 +27,17 @@ export async function getTechnicians(): Promise<Technician[]> {
   }
 }
 
+// Used when a "technician" role gets attached to a profile outside the
+// Technicians page's own Add/Create-Login flows (e.g. Settings > Users) —
+// lets callers check whether that profile already has a linked technician
+// row before creating a new one, so a role edit can't produce a duplicate.
+export async function findTechnicianByProfileId(profileId: string): Promise<Technician | null> {
+  if (!isSupabaseConfigured) return localStore.find(t => t.profile_id === profileId) ?? null;
+  const { data, error } = await db.from('technicians').select('*').eq('profile_id', profileId).maybeSingle();
+  if (error) throw error;
+  return (data as Technician | null) ?? null;
+}
+
 export async function createTechnician(input: Omit<Technician, 'id' | 'total_completed' | 'rating' | 'created_at' | 'updated_at'>): Promise<Technician> {
   if (isSupabaseConfigured) {
     const { data, error } = await db.from('technicians').insert(input).select().single();

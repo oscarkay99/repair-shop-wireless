@@ -35,6 +35,14 @@ export default function TechPortalPage() {
 
   const myTech = useMemo(() => technicians.find(t => t.profile_id === user?.id), [technicians, user]);
   const unavailableNow = myTech ? isCurrentlyUnavailable(myTech) : false;
+  const today = new Date().toISOString().slice(0, 10);
+  // Off Day and On Break are both stored as status='unavailable' — the only
+  // difference is the range: Off Day is always exactly today, On Break is
+  // whatever range the picker was confirmed with. Distinguish by shape, not
+  // a separate status value, so this reuses the same range-based backend
+  // (and its RLS/self-update fix) that shipped for plain Unavailable.
+  const isOffDayNow = unavailableNow && myTech?.unavailable_from === today && myTech?.unavailable_until === today;
+  const isOnBreakNow = unavailableNow && !isOffDayNow;
 
   // Self-correct: once the marked range has passed, flip back to available
   // rather than relying on the technician remembering to do it themselves.
@@ -76,10 +84,15 @@ export default function TechPortalPage() {
     patchTechnician(myTech.id, { status: 'available', unavailable_from: null, unavailable_until: null });
   };
 
-  const confirmUnavailable = () => {
+  const confirmOnBreak = () => {
     if (!myTech || !fromDate || !toDate) return;
     patchTechnician(myTech.id, { status: 'unavailable', unavailable_from: fromDate, unavailable_until: toDate });
     setShowUnavailablePicker(false);
+  };
+
+  const markOffDay = () => {
+    if (!myTech) return;
+    patchTechnician(myTech.id, { status: 'unavailable', unavailable_from: today, unavailable_until: today });
   };
 
   const handleUpdateStatus = (id: string, status: RepairStatus) => {
@@ -145,27 +158,35 @@ export default function TechPortalPage() {
                 <span className="w-1.5 h-1.5 rounded-full" style={{ background: !unavailableNow ? '#22c55e' : 'hsl(var(--muted-foreground))' }} />
                 Available
               </button>
-              <button onClick={() => { setFromDate(new Date().toISOString().slice(0, 10)); setToDate(''); setShowUnavailablePicker(v => !v); }}
+              <button onClick={() => { setFromDate(today); setToDate(''); setShowUnavailablePicker(v => !v); }}
                 className="flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold transition-colors"
-                style={unavailableNow
+                style={isOnBreakNow
+                  ? { background: 'rgba(245,158,11,0.1)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.35)' }
+                  : { color: 'hsl(var(--muted-foreground))', border: '1px solid hsl(var(--border))' }}>
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: isOnBreakNow ? '#f59e0b' : 'hsl(var(--muted-foreground))' }} />
+                On Break
+              </button>
+              <button onClick={markOffDay}
+                className="flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold transition-colors"
+                style={isOffDayNow
                   ? { background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.35)' }
                   : { color: 'hsl(var(--muted-foreground))', border: '1px solid hsl(var(--border))' }}>
-                <span className="w-1.5 h-1.5 rounded-full" style={{ background: unavailableNow ? '#ef4444' : 'hsl(var(--muted-foreground))' }} />
-                Unavailable
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: isOffDayNow ? '#ef4444' : 'hsl(var(--muted-foreground))' }} />
+                Off Day
               </button>
 
               {showUnavailablePicker && (
                 <div ref={pickerRef} className="absolute top-full left-0 mt-2 z-20 rounded-xl overflow-hidden p-3 w-64"
                   style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', boxShadow: 'var(--shadow-md)' }}>
                   <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                    Which days will you be unavailable?
+                    Which days will you be on break?
                   </p>
                   <div className="space-y-2">
                     <div>
                       <label className="text-[10px] font-semibold block mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>From</label>
                       <div className="relative">
                         <Calendar className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'hsl(var(--muted-foreground))' }} />
-                        <input type="date" value={fromDate} min={new Date().toISOString().slice(0, 10)}
+                        <input type="date" value={fromDate} min={today}
                           onChange={e => setFromDate(e.target.value)}
                           className="w-full h-8 pl-8 pr-2 rounded-lg text-xs outline-none"
                           style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
@@ -175,13 +196,13 @@ export default function TechPortalPage() {
                       <label className="text-[10px] font-semibold block mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>Until</label>
                       <div className="relative">
                         <Calendar className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'hsl(var(--muted-foreground))' }} />
-                        <input type="date" value={toDate} min={fromDate || new Date().toISOString().slice(0, 10)}
+                        <input type="date" value={toDate} min={fromDate || today}
                           onChange={e => setToDate(e.target.value)}
                           className="w-full h-8 pl-8 pr-2 rounded-lg text-xs outline-none"
                           style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
                       </div>
                     </div>
-                    <button disabled={!fromDate || !toDate} onClick={confirmUnavailable}
+                    <button disabled={!fromDate || !toDate} onClick={confirmOnBreak}
                       className="w-full h-8 rounded-lg text-xs font-semibold text-white disabled:opacity-40"
                       style={{ background: 'hsl(var(--primary))' }}>
                       Set
@@ -192,11 +213,11 @@ export default function TechPortalPage() {
             </div>
 
             {unavailableNow && myTech && (
-              <div className="flex items-center justify-between gap-2 mt-3 px-3 py-2 rounded-xl" style={{ background: 'rgba(239,68,68,0.08)' }}>
-                <p className="text-xs font-medium" style={{ color: '#dc2626' }}>
-                  Unavailable{myTech.unavailable_from && myTech.unavailable_until ? ` ${fmtDate(myTech.unavailable_from)} – ${fmtDate(myTech.unavailable_until)}` : ''}
+              <div className="flex items-center justify-between gap-2 mt-3 px-3 py-2 rounded-xl" style={{ background: isOffDayNow ? 'rgba(239,68,68,0.08)' : 'rgba(245,158,11,0.08)' }}>
+                <p className="text-xs font-medium" style={{ color: isOffDayNow ? '#dc2626' : '#b45309' }}>
+                  {isOffDayNow ? 'Off today' : `On break${myTech.unavailable_from && myTech.unavailable_until ? ` ${fmtDate(myTech.unavailable_from)} – ${fmtDate(myTech.unavailable_until)}` : ''}`}
                 </p>
-                <button onClick={returnToWork} className="text-xs font-semibold" style={{ color: '#dc2626' }}>
+                <button onClick={returnToWork} className="text-xs font-semibold" style={{ color: isOffDayNow ? '#dc2626' : '#b45309' }}>
                   Return to work
                 </button>
               </div>

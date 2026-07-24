@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getWirelessUsers, updateWirelessUser, deleteWirelessUser, resetUserPassword, type WirelessProfile } from '@/services/wireless/users';
+import { findTechnicianByProfileId, createTechnician } from '@/services/wireless/technicians';
 import { isSupabaseConfigured } from '@/services/supabase';
 import InviteUserModal from './InviteUserModal';
 
@@ -44,6 +45,15 @@ function EditUserModal({ user, onClose, onSaved }: { user: WirelessProfile; onCl
     setError('');
     try {
       await updateWirelessUser(user.id, { name: name.trim(), role, username: username.trim() || null });
+      // Promoting someone to technician mid-life (not just at invite time)
+      // needs the same Technicians-module link-up — guarded by an existence
+      // check so re-saving an already-linked technician can't duplicate it.
+      if (role === 'technician' && user.role !== 'technician') {
+        const existing = await findTechnicianByProfileId(user.id);
+        if (!existing) {
+          await createTechnician({ profile_id: user.id, name: name.trim(), email: user.email, phone: '', specialty: '', status: 'available' });
+        }
+      }
       onSaved();
       onClose();
     } catch (e: unknown) {

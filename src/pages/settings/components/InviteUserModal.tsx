@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { createWirelessUser } from '@/services/wireless/users';
+import { createTechnician } from '@/services/wireless/technicians';
 
 const ROLE_OPTIONS = [
   { value: 'technician', label: 'Technician' },
@@ -59,7 +60,13 @@ export default function InviteUserModal({ open, onClose, onCreated }: Props) {
     setSaving(true);
     const finalPassword = password.trim() || generatePassword();
     try {
-      await createWirelessUser({ name: name.trim(), email: email.trim(), username: username.trim() || undefined, role, password: finalPassword });
+      const profileId = await createWirelessUser({ name: name.trim(), email: email.trim(), username: username.trim() || undefined, role, password: finalPassword });
+      // The Technicians module reads from its own table, not profiles — a
+      // technician-role account needs a linked row there too, or they'd have
+      // a login but never show up for ticket assignment.
+      if (role === 'technician') {
+        await createTechnician({ profile_id: profileId, name: name.trim(), email: email.trim(), phone: '', specialty: '', status: 'available' });
+      }
       setResult({ name: name.trim(), email: email.trim(), username: username.trim(), password: finalPassword, role });
       onCreated?.();
     } catch (e: unknown) {
