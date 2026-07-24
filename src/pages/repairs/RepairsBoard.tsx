@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { usePageTitle } from '@/context/PageTitleContext';
 import { useRepairs } from '@/hooks/useRepairs';
+import { useTechnicians } from '@/hooks/useTechnicians';
 import { useAuth } from '@/hooks/useAuth';
 import AddRepairModal from './components/AddRepairModal';
 import CreateTicketInvoiceModal from './components/CreateTicketInvoiceModal';
@@ -34,13 +35,18 @@ function fmtStarted(started: string): string {
 const FILTER_TABS: { key: string; label: string }[] = [
   { key: 'all',           label: 'All' },
   { key: 'unassigned',    label: 'Unassigned' },
+  { key: 'in_queue',      label: 'In Queue' },
   { key: 'received',      label: 'Received' },
   { key: 'diagnosed',     label: 'Diagnosed' },
   { key: 'parts_pending', label: 'Parts Pending' },
   { key: 'in_progress',   label: 'In Progress' },
   { key: 'ready',         label: 'Ready' },
-  { key: 'completed',     label: 'Completed' },
+  { key: 'completed',     label: 'Done' },
 ];
+
+// Same bucket as the Tech Portal's own "Queue" section — active work that
+// hasn't reached in_progress yet, i.e. still waiting on diagnosis or parts.
+const QUEUE_STATUSES: RepairStatus[] = ['received', 'diagnosis_paid', 'diagnosing', 'awaiting_approval', 'parts_pending'];
 
 // ── Repair Card ───────────────────────────────────────────────────────────
 
@@ -566,10 +572,12 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
 export default function RepairsBoard() {
   const { setPageTitle } = usePageTitle();
   const { repairs, loading, add, updateStatus, addNote, addMedia, removeMedia, patchRepair, remove } = useRepairs();
+  const { technicians } = useTechnicians();
   const { user } = useAuth();
   const canManageTickets = user?.role === 'admin' || user?.role === 'receptionist';
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all');
+  const [techFilter, setTechFilter] = useState('all');
   const [dateRange, setDateRange] = useState<DateRange>({ from: '', to: '' });
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -578,7 +586,7 @@ export default function RepairsBoard() {
 
   const selected = selectedId ? (repairs.find(r => r.id === selectedId) ?? null) : null;
 
-  useEffect(() => { setPage(1); }, [query, filter, dateRange]);
+  useEffect(() => { setPage(1); }, [query, filter, techFilter, dateRange]);
 
   useEffect(() => {
     setPageTitle({
@@ -603,10 +611,13 @@ export default function RepairsBoard() {
     return repairs.filter(r => {
       if (filter === 'unassigned') {
         if (r.technician) return false;
+      } else if (filter === 'in_queue') {
+        if (!QUEUE_STATUSES.includes(r.status)) return false;
       } else {
         const matchFilter = filter === 'all' || STATUS[r.status]?.filterKey === filter;
         if (!matchFilter) return false;
       }
+      if (techFilter !== 'all' && r.technician !== techFilter) return false;
       if (q && !r.id.toLowerCase().includes(q)
             && !r.device.toLowerCase().includes(q)
             && !r.issue.toLowerCase().includes(q)
@@ -618,7 +629,7 @@ export default function RepairsBoard() {
       }
       return true;
     });
-  }, [repairs, filter, query, dateRange]);
+  }, [repairs, filter, techFilter, query, dateRange]);
 
   const paged = useMemo(() =>
     filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
@@ -707,6 +718,14 @@ export default function RepairsBoard() {
                 {tab.label}
               </button>
             ))}
+            {technicians.length > 0 && (
+              <select value={techFilter} onChange={e => setTechFilter(e.target.value)}
+                className="h-8 px-3 rounded-lg text-xs font-semibold outline-none"
+                style={{ background: 'transparent', border: '1px solid hsl(var(--border))', color: 'hsl(var(--muted-foreground))' }}>
+                <option value="all">All Technicians</option>
+                {technicians.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
+              </select>
+            )}
             <DateRangePicker value={dateRange} onChange={setDateRange} label="Received date" />
           </div>
 
