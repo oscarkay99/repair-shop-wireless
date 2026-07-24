@@ -43,6 +43,16 @@ export default function SettingsPage() {
   const [whatsapp, setWhatsapp] = useState('+233 24 000 0000');
   const [address, setAddress] = useState('Accra Mall, Accra, Ghana');
   const [primaryColor, setPrimaryColor] = useState('#EC0118');
+  const [currency, setCurrency] = useState('GHS');
+  const [warrantyNewLabel, setWarrantyNewLabel] = useState('12 Months');
+  const [warrantyUsedLabel, setWarrantyUsedLabel] = useState('3 Months');
+  const [quoteValidityDays, setQuoteValidityDays] = useState('7');
+  const [lowStockThreshold, setLowStockThreshold] = useState('2');
+  const [repairTurnaroundTarget, setRepairTurnaroundTarget] = useState('Same Day');
+  const [defaultDeliveryFee, setDefaultDeliveryFee] = useState('50');
+  const [businessHoursMonFri, setBusinessHoursMonFri] = useState('8:00 AM – 8:00 PM');
+  const [businessHoursSaturday, setBusinessHoursSaturday] = useState('9:00 AM – 7:00 PM');
+  const [businessHoursSunday, setBusinessHoursSunday] = useState('10:00 AM – 6:00 PM');
   const [showAddRole, setShowAddRole] = useState(false);
   const [editingRole, setEditingRole] = useState<{ id: string; name: string; permissions: string[] } | null>(null);
   const [showInvite, setShowInvite] = useState(false);
@@ -55,14 +65,27 @@ export default function SettingsPage() {
     setWhatsapp(settings.whatsapp);
     setAddress(settings.address);
     setPrimaryColor(settings.primary_color);
+    setCurrency(settings.currency ?? 'GHS');
+    // Fall back to the existing defaults if these columns haven't been
+    // migrated in on the database yet — same failure mode that produced a
+    // ¢NaN total before the levy migration was applied.
+    setWarrantyNewLabel(settings.warranty_new_label ?? '12 Months');
+    setWarrantyUsedLabel(settings.warranty_used_label ?? '3 Months');
+    setQuoteValidityDays(String(settings.quote_validity_days ?? 7));
+    setLowStockThreshold(String(settings.low_stock_threshold ?? 2));
+    setRepairTurnaroundTarget(settings.repair_turnaround_target ?? 'Same Day');
+    setDefaultDeliveryFee(String(settings.default_delivery_fee ?? 50));
+    setBusinessHoursMonFri(settings.business_hours_mon_fri ?? '8:00 AM – 8:00 PM');
+    setBusinessHoursSaturday(settings.business_hours_saturday ?? '9:00 AM – 7:00 PM');
+    setBusinessHoursSunday(settings.business_hours_sunday ?? '10:00 AM – 6:00 PM');
     setDirty(false);
   };
 
   useEffect(applySettings, [settings]);
 
-  // Every branding field routes through this one `dirty` flag, so the save
-  // bar (which only ever persists branding fields) never appears on other
-  // tabs claiming there are unsaved changes there.
+  // Every Branding/Operations field (other than Tax/VAT/Levy, which save
+  // immediately on change) routes through this one `dirty` flag, so the save
+  // bar never appears on tabs whose fields it doesn't actually persist.
   const markDirty = <T,>(setter: (v: T) => void) => (v: T) => { setter(v); setDirty(true); };
 
   const handleSave = async () => {
@@ -74,6 +97,16 @@ export default function SettingsPage() {
         whatsapp,
         address,
         primary_color: primaryColor,
+        currency,
+        warranty_new_label: warrantyNewLabel,
+        warranty_used_label: warrantyUsedLabel,
+        quote_validity_days: parseInt(quoteValidityDays) || 0,
+        low_stock_threshold: parseInt(lowStockThreshold) || 0,
+        repair_turnaround_target: repairTurnaroundTarget,
+        default_delivery_fee: parseFloat(defaultDeliveryFee) || 0,
+        business_hours_mon_fri: businessHoursMonFri,
+        business_hours_saturday: businessHoursSaturday,
+        business_hours_sunday: businessHoursSunday,
       });
       setDirty(false);
       setSaved(true);
@@ -102,7 +135,20 @@ export default function SettingsPage() {
             />
           )}
 
-          {activeSection === 'operations' && <OperationsSection />}
+          {activeSection === 'operations' && (
+            <OperationsSection
+              warrantyNewLabel={warrantyNewLabel} setWarrantyNewLabel={markDirty(setWarrantyNewLabel)}
+              warrantyUsedLabel={warrantyUsedLabel} setWarrantyUsedLabel={markDirty(setWarrantyUsedLabel)}
+              quoteValidityDays={quoteValidityDays} setQuoteValidityDays={markDirty(setQuoteValidityDays)}
+              lowStockThreshold={lowStockThreshold} setLowStockThreshold={markDirty(setLowStockThreshold)}
+              repairTurnaroundTarget={repairTurnaroundTarget} setRepairTurnaroundTarget={markDirty(setRepairTurnaroundTarget)}
+              defaultDeliveryFee={defaultDeliveryFee} setDefaultDeliveryFee={markDirty(setDefaultDeliveryFee)}
+              businessHoursMonFri={businessHoursMonFri} setBusinessHoursMonFri={markDirty(setBusinessHoursMonFri)}
+              businessHoursSaturday={businessHoursSaturday} setBusinessHoursSaturday={markDirty(setBusinessHoursSaturday)}
+              businessHoursSunday={businessHoursSunday} setBusinessHoursSunday={markDirty(setBusinessHoursSunday)}
+              currency={currency} setCurrency={markDirty(setCurrency)}
+            />
+          )}
 
           {activeSection === 'team' && isAdmin && (
             <TeamRolesSection
@@ -119,11 +165,11 @@ export default function SettingsPage() {
 
           {activeSection === 'password' && <ChangePasswordSection />}
 
-          {/* Save bar — Branding is the only tab whose fields route through this;
-              every other section (Operations, Users, Password) saves itself
-              immediately, so showing this bar there would be misleading and
-              its Save button would silently persist stale branding fields. */}
-          {activeSection === 'branding' && (
+          {/* Save bar — Branding and Operations (minus Tax/VAT/Levy, which save
+              immediately on change) route through this dirty flag; the other
+              tabs (Team, Users, Password) save themselves immediately, so
+              showing this bar there would be misleading. */}
+          {(activeSection === 'branding' || activeSection === 'operations') && (
             <div className="sticky bottom-0 rounded-2xl px-5 py-3 flex items-center justify-between"
               style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
               <span className="text-xs font-medium" style={{ color: saved ? '#22c55e' : 'hsl(var(--muted-foreground))' }}>

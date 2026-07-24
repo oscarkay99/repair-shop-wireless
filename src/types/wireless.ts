@@ -135,6 +135,15 @@ export interface WirelessSettings {
   nhil_getfund_rate: number;
   currency: string;
   warranty_days: number;
+  warranty_new_label: string;
+  warranty_used_label: string;
+  quote_validity_days: number;
+  low_stock_threshold: number;
+  repair_turnaround_target: string;
+  default_delivery_fee: number;
+  business_hours_mon_fri: string;
+  business_hours_saturday: string;
+  business_hours_sunday: string;
   primary_color: string;
   tax_enabled: boolean;
   updated_at: string;

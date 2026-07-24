@@ -1,40 +1,85 @@
 import { useTaxSettings } from '@/hooks/useTaxSettings';
 
-export default function OperationsSection() {
+interface OperationsSectionProps {
+  warrantyNewLabel: string; setWarrantyNewLabel: (v: string) => void;
+  warrantyUsedLabel: string; setWarrantyUsedLabel: (v: string) => void;
+  quoteValidityDays: string; setQuoteValidityDays: (v: string) => void;
+  lowStockThreshold: string; setLowStockThreshold: (v: string) => void;
+  repairTurnaroundTarget: string; setRepairTurnaroundTarget: (v: string) => void;
+  defaultDeliveryFee: string; setDefaultDeliveryFee: (v: string) => void;
+  businessHoursMonFri: string; setBusinessHoursMonFri: (v: string) => void;
+  businessHoursSaturday: string; setBusinessHoursSaturday: (v: string) => void;
+  businessHoursSunday: string; setBusinessHoursSunday: (v: string) => void;
+  currency: string; setCurrency: (v: string) => void;
+}
+
+const selectCls = 'w-full border border-[hsl(var(--border))] rounded-xl px-3 py-2.5 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[#EC0118]';
+const inputCls = selectCls;
+
+export default function OperationsSection({
+  warrantyNewLabel, setWarrantyNewLabel,
+  warrantyUsedLabel, setWarrantyUsedLabel,
+  quoteValidityDays, setQuoteValidityDays,
+  lowStockThreshold, setLowStockThreshold,
+  repairTurnaroundTarget, setRepairTurnaroundTarget,
+  defaultDeliveryFee, setDefaultDeliveryFee,
+  businessHoursMonFri, setBusinessHoursMonFri,
+  businessHoursSaturday, setBusinessHoursSaturday,
+  businessHoursSunday, setBusinessHoursSunday,
+  currency, setCurrency,
+}: OperationsSectionProps) {
   const { taxEnabled, vatRate, nhilGetfundRate, save } = useTaxSettings();
+
+  const businessHours = [
+    { day: 'Mon–Fri', value: businessHoursMonFri, set: setBusinessHoursMonFri },
+    { day: 'Saturday', value: businessHoursSaturday, set: setBusinessHoursSaturday },
+    { day: 'Sunday', value: businessHoursSunday, set: setBusinessHoursSunday },
+  ];
 
   return (
     <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-6">
       <h3 className="text-sm font-bold text-[hsl(var(--foreground))] mb-5">Operational Settings</h3>
       <div className="space-y-5">
         <div className="grid grid-cols-2 gap-4">
-          {[
-            { label: 'Default Warranty (New)', type: 'select', options: ['12 Months', '6 Months', '3 Months'], default: '12 Months' },
-            { label: 'Default Warranty (Used)', type: 'select', options: ['3 Months', '6 Months', '1 Month'], default: '3 Months' },
-            { label: 'Quote Validity (Days)', type: 'number', default: 7 },
-            { label: 'Low Stock Threshold', type: 'number', default: 2 },
-            { label: 'Repair Turnaround Target', type: 'select', options: ['Same Day', '24 Hours', '48 Hours', '3 Days'], default: '48 Hours' },
-            { label: 'Default Delivery Fee (GHS)', type: 'number', default: 50 },
-          ].map((field) => (
-            <div key={field.label}>
-              <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] block mb-1.5">{field.label}</label>
-              {field.type === 'select' ? (
-                <select className="w-full border border-[hsl(var(--border))] rounded-xl px-3 py-2.5 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[#EC0118]">
-                  {field.options?.map(o => <option key={o}>{o}</option>)}
-                </select>
-              ) : (
-                <input type="number" defaultValue={field.default as number} className="w-full border border-[hsl(var(--border))] rounded-xl px-3 py-2.5 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[#EC0118]" />
-              )}
-            </div>
-          ))}
+          <div>
+            <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] block mb-1.5">Default Warranty (New)</label>
+            <select value={warrantyNewLabel} onChange={e => setWarrantyNewLabel(e.target.value)} className={selectCls}>
+              {['12 Months', '6 Months', '3 Months'].map(o => <option key={o}>{o}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] block mb-1.5">Default Warranty (Used)</label>
+            <select value={warrantyUsedLabel} onChange={e => setWarrantyUsedLabel(e.target.value)} className={selectCls}>
+              {['3 Months', '6 Months', '1 Month'].map(o => <option key={o}>{o}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] block mb-1.5">Quote Validity (Days)</label>
+            <input type="number" min="1" value={quoteValidityDays} onChange={e => setQuoteValidityDays(e.target.value)} className={inputCls} />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] block mb-1.5">Low Stock Threshold</label>
+            <input type="number" min="0" value={lowStockThreshold} onChange={e => setLowStockThreshold(e.target.value)} className={inputCls} />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] block mb-1.5">Repair Turnaround Target</label>
+            <select value={repairTurnaroundTarget} onChange={e => setRepairTurnaroundTarget(e.target.value)} className={selectCls}>
+              {['Same Day', '24 Hours', '48 Hours', '3 Days'].map(o => <option key={o}>{o}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] block mb-1.5">Default Delivery Fee (GHS)</label>
+            <input type="number" min="0" step="0.01" value={defaultDeliveryFee} onChange={e => setDefaultDeliveryFee(e.target.value)} className={inputCls} />
+          </div>
         </div>
         <div>
           <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] block mb-2">Business Hours</label>
           <div className="space-y-2">
-            {[{ day: 'Mon–Fri', hours: '8:00 AM – 8:00 PM' }, { day: 'Saturday', hours: '9:00 AM – 7:00 PM' }, { day: 'Sunday', hours: '10:00 AM – 6:00 PM' }].map((row) => (
+            {businessHours.map(row => (
               <div key={row.day} className="flex items-center gap-3">
                 <span className="text-xs text-[hsl(var(--muted-foreground))] w-20">{row.day}</span>
-                <input type="text" defaultValue={row.hours} className="flex-1 border border-[hsl(var(--border))] rounded-xl px-3 py-2 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[#EC0118]" />
+                <input type="text" value={row.value} onChange={e => row.set(e.target.value)}
+                  className="flex-1 border border-[hsl(var(--border))] rounded-xl px-3 py-2 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[#EC0118]" />
               </div>
             ))}
           </div>
@@ -61,9 +106,9 @@ export default function OperationsSection() {
           <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="text-[10px] text-[hsl(var(--muted-foreground))] block mb-1">Currency</label>
-              <select className="w-full border border-[hsl(var(--border))] rounded-xl px-3 py-2.5 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[#EC0118]">
-                <option>GHS — Ghana Cedi</option>
-                <option>USD — US Dollar</option>
+              <select value={currency} onChange={e => setCurrency(e.target.value)} className={selectCls}>
+                <option value="GHS">GHS — Ghana Cedi</option>
+                <option value="USD">USD — US Dollar</option>
               </select>
             </div>
             <div>
@@ -88,7 +133,8 @@ export default function OperationsSection() {
             </div>
           </div>
           <p className="text-[10px] text-[hsl(var(--muted-foreground))] mt-2">
-            When disabled, no tax is calculated or shown on Invoices or the Sales checkout.
+            When disabled, no tax is calculated or shown on Invoices or the Sales checkout. VAT/Levy save immediately;
+            everything else on this page saves with the button below.
           </p>
         </div>
       </div>
