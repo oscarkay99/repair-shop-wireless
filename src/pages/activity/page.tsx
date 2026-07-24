@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { usePageTitle } from '@/context/PageTitleContext';
 import { Activity, User, ClipboardList, Package, Settings, Receipt, FileText, HardHat } from 'lucide-react';
 import { getAuditLogs, type AuditLogRecord } from '@/services/wireless/auditLogs';
@@ -42,6 +42,7 @@ export default function ActivityPage() {
   const { setPageTitle } = usePageTitle();
   const [logs, setLogs] = useState<AuditLogRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userFilter, setUserFilter] = useState('all');
 
   useEffect(() => {
     setPageTitle({ title: 'Activity Log', subtitle: 'Real-time audit trail of all system actions' });
@@ -52,14 +53,32 @@ export default function ActivityPage() {
     getAuditLogs(200).then(setLogs).finally(() => setLoading(false));
   }, []);
 
-  const { paginated: pagedLogs, page, setPage, totalPages, total } = usePagination(logs, PAGE_SIZE);
+  const users = useMemo(() => {
+    const names = new Set(logs.map(l => l.actorName || 'System'));
+    return [...names].sort((a, b) => a.localeCompare(b));
+  }, [logs]);
+
+  const filteredLogs = useMemo(() => {
+    if (userFilter === 'all') return logs;
+    return logs.filter(l => (l.actorName || 'System') === userFilter);
+  }, [logs, userFilter]);
+
+  const { paginated: pagedLogs, page, setPage, totalPages, total } = usePagination(filteredLogs, PAGE_SIZE, userFilter);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <p className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>
-          {loading ? 'Loading…' : `Showing ${logs.length} recent events`}
+          {loading ? 'Loading…' : `Showing ${filteredLogs.length} of ${logs.length} recent events`}
         </p>
+        {!loading && users.length > 0 && (
+          <select value={userFilter} onChange={e => setUserFilter(e.target.value)}
+            className="h-8 px-3 rounded-lg text-xs outline-none"
+            style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}>
+            <option value="all">All Users</option>
+            {users.map(name => <option key={name} value={name}>{name}</option>)}
+          </select>
+        )}
       </div>
 
       <div
@@ -70,6 +89,8 @@ export default function ActivityPage() {
           <p className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Loading…</p>
         ) : logs.length === 0 ? (
           <p className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No activity recorded yet.</p>
+        ) : filteredLogs.length === 0 ? (
+          <p className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No activity from {userFilter}.</p>
         ) : pagedLogs.map((entry) => {
           const meta = MODULE_ICON[entry.entityType] ?? { icon: Activity, color: 'hsl(var(--muted-foreground))' };
           return (
@@ -106,7 +127,7 @@ export default function ActivityPage() {
         })}
       </div>
 
-      {!loading && logs.length > 0 && (
+      {!loading && filteredLogs.length > 0 && (
         <Pagination page={page} pageCount={totalPages} total={total} pageSize={PAGE_SIZE} onPageChange={setPage} />
       )}
     </div>
