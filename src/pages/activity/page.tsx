@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { usePageTitle } from '@/context/PageTitleContext';
-import { Activity, User, ClipboardList, Package, Settings, Receipt, FileText, HardHat } from 'lucide-react';
+import { Activity, User, ClipboardList, Package, Settings, Receipt, FileText, HardHat, LogIn, LogOut } from 'lucide-react';
 import { getAuditLogs, type AuditLogRecord } from '@/services/wireless/auditLogs';
 import { getWirelessUsers } from '@/services/wireless/users';
 import { usePagination } from '@/hooks/usePagination';
@@ -20,6 +20,7 @@ const MODULE_ICON: Record<string, { icon: typeof Activity; color: string }> = {
   sale_items:       { icon: Package,       color: 'hsl(var(--status-ready))' },
   expenses:         { icon: Receipt,       color: 'hsl(0 70% 60%)' },
   settings:         { icon: Settings,      color: 'hsl(var(--muted-foreground))' },
+  security:         { icon: LogIn,         color: 'hsl(142 70% 45%)' },
 };
 
 function moduleLabel(entityType: string) {
@@ -37,6 +38,10 @@ function timeAgo(iso: string): string {
   if (days === 1) return 'Yesterday';
   if (days < 7) return `${days} days ago`;
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function exactTime(iso: string): string {
+  return new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
 export default function ActivityPage() {
@@ -98,7 +103,9 @@ export default function ActivityPage() {
         ) : filteredLogs.length === 0 ? (
           <p className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No activity from {userFilter}.</p>
         ) : pagedLogs.map((entry) => {
-          const meta = MODULE_ICON[entry.entityType] ?? { icon: Activity, color: 'hsl(var(--muted-foreground))' };
+          const meta = entry.entityType === 'security' && entry.action === 'signed out'
+            ? { icon: LogOut, color: 'hsl(0 70% 60%)' }
+            : MODULE_ICON[entry.entityType] ?? { icon: Activity, color: 'hsl(var(--muted-foreground))' };
           return (
             <div
               key={entry.id}
@@ -125,7 +132,9 @@ export default function ActivityPage() {
                     {moduleLabel(entry.entityType)}
                   </span>
                   <Activity className="w-2.5 h-2.5" style={{ color: 'hsl(var(--muted-foreground))' }} />
-                  <span className="text-[10px]" style={{ color: 'hsl(var(--muted-foreground))' }}>{timeAgo(entry.createdAt)}</span>
+                  <span className="text-[10px]" style={{ color: 'hsl(var(--muted-foreground))' }} title={new Date(entry.createdAt).toLocaleString()}>
+                    {entry.entityType === 'security' ? exactTime(entry.createdAt) : timeAgo(entry.createdAt)}
+                  </span>
                 </div>
               </div>
             </div>

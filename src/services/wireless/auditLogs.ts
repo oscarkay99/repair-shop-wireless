@@ -66,3 +66,23 @@ export async function getAuditLogs(limit = 200): Promise<AuditLogRecord[]> {
   if (error) throw error;
   return ((data as AuditLogRow[] | null) ?? []).map(toRecord);
 }
+
+// Sign-in/out are never a table mutation, so the trigger-based capture in
+// capture_audit_log() never sees them — this is the one place the client
+// writes its own audit row. RLS (audit_logs_insert) only allows a row whose
+// actor_id matches auth.uid(), so this must run while the caller still has a
+// live session — logout has to log *before* supabase.auth.signOut(), not after.
+export async function logAuthEvent(action: 'login' | 'logout', actor: { id: string; name: string }): Promise<void> {
+  try {
+    const { error } = await db.from('audit_logs').insert({
+      action,
+      table_name: 'security',
+      entity_id: actor.id,
+      actor_id: actor.id,
+      actor_name: actor.name,
+    });
+    if (error) throw error;
+  } catch (e) {
+    console.warn('[auditLogs] failed to log auth event', e);
+  }
+}

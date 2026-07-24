@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { isSupabaseConfigured, supabase } from '@/services/supabase';
+import { logAuthEvent } from '@/services/wireless/auditLogs';
 
 export type UserRole = 'admin' | 'sales_manager' | 'technician' | 'receptionist';
 
@@ -70,10 +71,17 @@ if (isSupabaseConfigured) {
   });
 
   // Listen for auth state changes
-  supabase.auth.onAuthStateChange((_event, session) => {
+  supabase.auth.onAuthStateChange((event, session) => {
     if (session?.user) {
       loadProfileFromSession(session.user.id, session.user.email ?? '').then(user => {
-        if (user) { writeStoredUser(user); setState({ user }); }
+        if (user) {
+          writeStoredUser(user);
+          setState({ user });
+          // SIGNED_IN only fires for a genuine new sign-in (password, OAuth
+          // redirect, magic link) — a page refresh restoring an existing
+          // session fires INITIAL_SESSION instead, so this can't double-log.
+          if (event === 'SIGNED_IN') logAuthEvent('login', { id: user.id, name: user.name });
+        }
         else { handleUnrecognizedSession(); }
       });
     } else {
@@ -221,7 +229,12 @@ export function useAuth() {
   };
 
   const logout = async () => {
-    if (isSupabaseConfigured && !snap.user?._isMock) await supabase.auth.signOut();
+    if (isSupabaseConfigured && !snap.user?._isMock) {
+      // Must log before signOut() — the RLS insert check needs auth.uid(),
+      // which goes away the instant the session is torn down.
+      if (snap.user) await logAuthEvent('logout', { id: snap.user.id, name: snap.user.name });
+      await supabase.auth.signOut();
+    }
     writeStoredUser(null);
     setState({ user: null });
   };
