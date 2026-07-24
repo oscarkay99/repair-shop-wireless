@@ -13,22 +13,34 @@ type InventoryTab = 'parts' | 'accessories';
 
 const CATEGORIES = ['Screens', 'Batteries', 'Keyboards', 'Connectors', 'Trackpads', 'Other'];
 
+function categoryPrefix(category: string): string {
+  const words = category.trim().split(/\s+/).filter(Boolean);
+  if (words.length > 1) return words.map(w => w[0]?.toUpperCase() ?? '').join('').slice(0, 4);
+  return (category.replace(/[^a-zA-Z]/g, '').slice(0, 3).toUpperCase() || 'GEN');
+}
+
+function nextSku(category: string, existingParts: Part[]): string {
+  const countInCategory = existingParts.filter(p => p.category === category).length;
+  return `${categoryPrefix(category)}-${String(countInCategory + 1).padStart(3, '0')}`;
+}
+
 function AddPartModal({
   onSave,
   onClose,
   initial,
-  existingCategories = [],
+  existingParts = [],
 }: {
   onSave: (d: Omit<Part, 'id' | 'created_at' | 'updated_at'>) => Promise<unknown>;
   onClose: () => void;
   initial?: Part;
-  existingCategories?: string[];
+  existingParts?: Part[];
 }) {
-  const categoryOptions = [...new Set([...CATEGORIES, ...existingCategories])].sort();
+  const categoryOptions = [...new Set([...CATEGORIES, ...existingParts.map(p => p.category)])].sort();
+  const defaultCategory = initial?.category ?? 'Screens';
   const [form, setForm] = useState({
     name: initial?.name ?? '',
-    sku: initial?.sku ?? '',
-    category: initial?.category ?? 'Screens',
+    sku: initial?.sku ?? nextSku(defaultCategory, existingParts),
+    category: defaultCategory,
     unit_cost: String(initial?.unit_cost ?? ''),
     selling_price: String(initial?.selling_price ?? ''),
     stock: String(initial?.stock ?? ''),
@@ -36,8 +48,15 @@ function AddPartModal({
     supplier: initial?.supplier ?? '',
   });
   const [addingCategory, setAddingCategory] = useState(initial ? !categoryOptions.includes(initial.category) : false);
+  const [skuTouched, setSkuTouched] = useState(false);
 
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+
+  // Keep the SKU auto-matched to the chosen category — right up until the
+  // user edits it themselves, at which point their choice always wins.
+  const setCategory = (category: string) => {
+    setForm(f => ({ ...f, category, sku: (!initial && !skuTouched) ? nextSku(category, existingParts) : f.sku }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,18 +99,18 @@ function AddPartModal({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-[11px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Product Code</label>
-              <input required value={form.sku} onChange={e => set('sku', e.target.value)} placeholder="SCR-IP15P"
+              <input required value={form.sku} onChange={e => { set('sku', e.target.value); setSkuTouched(true); }} placeholder="SCR-IP15P"
                 className="w-full h-9 px-3 rounded-lg text-sm outline-none font-mono" style={inputStyle} />
             </div>
             <div>
               <label className="text-[11px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Category</label>
               {addingCategory ? (
                 <div className="flex gap-1.5">
-                  <input required autoFocus value={form.category} onChange={e => set('category', e.target.value)}
+                  <input required autoFocus value={form.category} onChange={e => setCategory(e.target.value)}
                     placeholder="New category name"
                     className="w-full h-9 px-3 rounded-lg text-sm outline-none" style={inputStyle} />
                   <button type="button"
-                    onClick={() => { setAddingCategory(false); set('category', categoryOptions[0] ?? ''); }}
+                    onClick={() => { setAddingCategory(false); setCategory(categoryOptions[0] ?? ''); }}
                     title="Choose from list instead"
                     className="h-9 w-9 flex items-center justify-center rounded-lg flex-shrink-0"
                     style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--muted-foreground))' }}>
@@ -101,8 +120,8 @@ function AddPartModal({
               ) : (
                 <select required value={form.category}
                   onChange={e => {
-                    if (e.target.value === '__new__') { setAddingCategory(true); set('category', ''); }
-                    else set('category', e.target.value);
+                    if (e.target.value === '__new__') { setAddingCategory(true); setCategory(''); }
+                    else setCategory(e.target.value);
                   }}
                   className="w-full h-9 px-3 rounded-lg text-sm outline-none" style={inputStyle}>
                   {categoryOptions.map(c => <option key={c} value={c}>{c}</option>)}
@@ -335,14 +354,14 @@ export default function InventoryPage() {
       />
 
       {showAdd && (
-        <AddPartModal onSave={add} onClose={() => setShowAdd(false)} existingCategories={parts.map(p => p.category)} />
+        <AddPartModal onSave={add} onClose={() => setShowAdd(false)} existingParts={parts} />
       )}
       {editing && (
         <AddPartModal
           initial={editing}
           onSave={data => patch(editing.id, data)}
           onClose={() => setEditing(null)}
-          existingCategories={parts.map(p => p.category)}
+          existingParts={parts}
         />
       )}
       </>
