@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { usePageTitle } from '@/context/PageTitleContext';
 import { Activity, User, ClipboardList, Package, Settings, Receipt, FileText, HardHat } from 'lucide-react';
 import { getAuditLogs, type AuditLogRecord } from '@/services/wireless/auditLogs';
+import { getWirelessUsers } from '@/services/wireless/users';
 import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/shared/Pagination';
 
@@ -41,6 +42,7 @@ function timeAgo(iso: string): string {
 export default function ActivityPage() {
   const { setPageTitle } = usePageTitle();
   const [logs, setLogs] = useState<AuditLogRecord[]>([]);
+  const [userNames, setUserNames] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [userFilter, setUserFilter] = useState('all');
 
@@ -51,12 +53,16 @@ export default function ActivityPage() {
 
   useEffect(() => {
     getAuditLogs(200).then(setLogs).finally(() => setLoading(false));
+    // The filter list is every registered user, not just ones who've already
+    // logged an action — a brand-new user with no activity yet still needs
+    // to show up so staff can confirm "yep, nothing from them."
+    getWirelessUsers().then(rows => setUserNames(rows.map(u => u.name))).catch(() => setUserNames([]));
   }, []);
 
   const users = useMemo(() => {
-    const names = new Set(logs.map(l => l.actorName || 'System'));
+    const names = new Set([...userNames, ...logs.map(l => l.actorName || 'System')]);
     return [...names].sort((a, b) => a.localeCompare(b));
-  }, [logs]);
+  }, [userNames, logs]);
 
   const filteredLogs = useMemo(() => {
     if (userFilter === 'all') return logs;
