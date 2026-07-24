@@ -31,7 +31,7 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
     cost: initial?.cost ?? 'TBD',
     eta: initial?.eta ?? '',
     warranty: initial?.warranty ?? false,
-    diagnosisFee: initial?.diagnosisFee ?? 200,
+    diagnosisFee: String(initial?.diagnosisFee ?? 200),
     jobType: (initial?.jobType ?? defaultJobType ?? 'diagnosis_to_repair') as 'diagnosis_only' | 'diagnosis_to_repair' | 'straight_repair',
   });
   const [selectedCustomer, setSelectedCustomer] = useState<WCustomer | null>(null);
@@ -68,6 +68,7 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
     setSaving(true);
     try {
       const costNum = parseFloat(form.cost.replace(/[^0-9.]/g, '')) || 0;
+      const diagnosisFeeNum = parseFloat(form.diagnosisFee) || 0;
       // technicians is the roster; technicianId is the FK the backend/RLS
       // actually uses to scope a technician to their own tickets — the
       // name string alone (kept for display) isn't enough for that.
@@ -89,7 +90,7 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
           costNum,
           eta: form.eta,
           warranty: form.warranty,
-          diagnosisFee: form.diagnosisFee,
+          diagnosisFee: diagnosisFeeNum,
           jobType: form.jobType,
         });
       } else if (form.jobType === 'straight_repair') {
@@ -123,7 +124,7 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
           jobType: form.jobType,
           serviceStage: 'diagnosis',
           quoteStatus: 'not_sent',
-          diagnosisFee: form.diagnosisFee,
+          diagnosisFee: diagnosisFeeNum,
           diagnosisPaidAt: new Date().toISOString(),
           quoteAmount: costNum || undefined,
           costNum,
@@ -134,8 +135,8 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
             {
               id: crypto.randomUUID(),
               type: 'diagnosis_fee',
-              amount: form.diagnosisFee,
-              amountLabel: `GHS ${form.diagnosisFee}`,
+              amount: diagnosisFeeNum,
+              amountLabel: `GHS ${diagnosisFeeNum}`,
               status: 'paid',
               paidAt: new Date().toISOString(),
             },
@@ -261,7 +262,7 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
             ) : (
               <div>
                 <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Diagnosis Fee</label>
-                <input value={form.diagnosisFee} onChange={e => set('diagnosisFee', Number(e.target.value) || 200)}
+                <input type="number" min="0" step="0.01" value={form.diagnosisFee} onChange={e => set('diagnosisFee', e.target.value)}
                   className="w-full text-sm rounded-xl px-3 py-2 outline-none"
                   style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }}
                   placeholder="200" />
