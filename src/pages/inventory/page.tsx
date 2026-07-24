@@ -17,11 +17,14 @@ function AddPartModal({
   onSave,
   onClose,
   initial,
+  existingCategories = [],
 }: {
   onSave: (d: Omit<Part, 'id' | 'created_at' | 'updated_at'>) => Promise<unknown>;
   onClose: () => void;
   initial?: Part;
+  existingCategories?: string[];
 }) {
+  const categoryOptions = [...new Set([...CATEGORIES, ...existingCategories])].sort();
   const [form, setForm] = useState({
     name: initial?.name ?? '',
     sku: initial?.sku ?? '',
@@ -81,10 +84,12 @@ function AddPartModal({
             </div>
             <div>
               <label className="text-[11px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Category</label>
-              <select value={form.category} onChange={e => set('category', e.target.value)}
-                className="w-full h-9 px-3 rounded-lg text-sm outline-none" style={inputStyle}>
-                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+              <input required list="part-category-options" value={form.category} onChange={e => set('category', e.target.value)}
+                placeholder="e.g. Screens, or type a new one"
+                className="w-full h-9 px-3 rounded-lg text-sm outline-none" style={inputStyle} />
+              <datalist id="part-category-options">
+                {categoryOptions.map(c => <option key={c} value={c} />)}
+              </datalist>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -311,13 +316,14 @@ export default function InventoryPage() {
       />
 
       {showAdd && (
-        <AddPartModal onSave={add} onClose={() => setShowAdd(false)} />
+        <AddPartModal onSave={add} onClose={() => setShowAdd(false)} existingCategories={parts.map(p => p.category)} />
       )}
       {editing && (
         <AddPartModal
           initial={editing}
           onSave={data => patch(editing.id, data)}
           onClose={() => setEditing(null)}
+          existingCategories={parts.map(p => p.category)}
         />
       )}
       </>
