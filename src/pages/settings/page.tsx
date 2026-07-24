@@ -52,7 +52,7 @@ export default function SettingsPage() {
   const [defaultDeliveryFee, setDefaultDeliveryFee] = useState('50');
   const [businessHoursMonFri, setBusinessHoursMonFri] = useState('8:00 AM – 8:00 PM');
   const [businessHoursSaturday, setBusinessHoursSaturday] = useState('9:00 AM – 7:00 PM');
-  const [businessHoursSunday, setBusinessHoursSunday] = useState('10:00 AM – 6:00 PM');
+  const [businessHoursSunday, setBusinessHoursSunday] = useState('Closed');
   const [showAddRole, setShowAddRole] = useState(false);
   const [editingRole, setEditingRole] = useState<{ id: string; name: string; permissions: string[] } | null>(null);
   const [showInvite, setShowInvite] = useState(false);
@@ -77,7 +77,7 @@ export default function SettingsPage() {
     setDefaultDeliveryFee(String(settings.default_delivery_fee ?? 50));
     setBusinessHoursMonFri(settings.business_hours_mon_fri ?? '8:00 AM – 8:00 PM');
     setBusinessHoursSaturday(settings.business_hours_saturday ?? '9:00 AM – 7:00 PM');
-    setBusinessHoursSunday(settings.business_hours_sunday ?? '10:00 AM – 6:00 PM');
+    setBusinessHoursSunday(settings.business_hours_sunday ?? 'Closed');
     setDirty(false);
   };
 

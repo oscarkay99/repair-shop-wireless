@@ -21,7 +21,7 @@ const DEFAULT: WirelessSettings = {
   default_delivery_fee: 50,
   business_hours_mon_fri: '8:00 AM – 8:00 PM',
   business_hours_saturday: '9:00 AM – 7:00 PM',
-  business_hours_sunday: '10:00 AM – 6:00 PM',
+  business_hours_sunday: 'Closed',
   primary_color: '#EC0118',
   tax_enabled: true,
   updated_at: new Date().toISOString(),
