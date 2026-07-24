@@ -88,7 +88,7 @@ export function nextAction(status: RepairStatus, jobType?: RepairJobType): strin
     return 'Close';
   }
   if (['received', 'diagnosis_paid'].includes(status)) return 'Mark Diagnosed';
-  if (status === 'diagnosing')                         return 'Send Quote to Customer';
+  if (status === 'diagnosing')                         return 'Diagnosis Complete';
   if (status === 'parts_pending')                      return 'Mark In Progress';
   if (status === 'in_progress')                        return 'Mark Ready';
   if (status === 'ready')                              return 'Mark Collected';
