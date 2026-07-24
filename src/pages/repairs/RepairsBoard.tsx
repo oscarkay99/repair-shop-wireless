@@ -44,10 +44,6 @@ const FILTER_TABS: { key: string; label: string }[] = [
   { key: 'completed',     label: 'Done' },
 ];
 
-// Same bucket as the Tech Portal's own "Queue" section — active work that
-// hasn't reached in_progress yet, i.e. still waiting on diagnosis or parts.
-const QUEUE_STATUSES: RepairStatus[] = ['received', 'diagnosis_paid', 'diagnosing', 'awaiting_approval', 'parts_pending'];
-
 // ── Repair Card ───────────────────────────────────────────────────────────
 
 function RepairCard({ repair, onClick, selected }: {
@@ -612,7 +608,9 @@ export default function RepairsBoard() {
       if (filter === 'unassigned') {
         if (r.technician) return false;
       } else if (filter === 'in_queue') {
-        if (!QUEUE_STATUSES.includes(r.status)) return false;
+        // Same bucket as the Technicians module's own "Queue" count —
+        // active and not currently in_progress (this includes 'ready').
+        if (r.status === 'in_progress' || !isActiveRepairStatus(r.status)) return false;
       } else {
         const matchFilter = filter === 'all' || STATUS[r.status]?.filterKey === filter;
         if (!matchFilter) return false;
