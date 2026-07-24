@@ -21,22 +21,35 @@ export const REPAIR_STATUS_META: Record<RepairStatus, RepairStatusMeta> = {
   cancelled:             { label: 'Cancelled',     dot: '#ef4444', bg: 'rgba(239,68,68,0.15)',   color: '#ef4444', filterKey: 'completed' },
 };
 
-export const PIPELINE_FULL   = ['Received', 'Diagnosed', 'Parts Pending', 'In Progress', 'Quality Check', 'Ready'];
-export const PIPELINE_CLOSED = ['Received', 'Diagnosed', 'Closed'];
+export const PIPELINE_FULL     = ['Received', 'Diagnosed', 'Parts Pending', 'In Progress', 'Quality Check', 'Ready'];
+export const PIPELINE_CLOSED   = ['Received', 'Diagnosed', 'Closed'];
+export const PIPELINE_STRAIGHT = ['Received', 'In Progress', 'Ready', 'Completed'];
 
 /**
  * A ticket's status transitions are unified (the decision to close or continue to repair
  * happens at `awaiting_approval`, not at intake) — but the pipeline *preview* shown to staff
  * should still reflect the job's declared intent: a "Diagnosis Only" ticket shows the short
  * Received → Diagnosed → Closed path, not the full 6-step repair pipeline, until it's actually
- * converted to a repair (at which point jobType flips to 'diagnosis_to_repair').
+ * converted to a repair (at which point jobType flips to 'diagnosis_to_repair'). A "Straight
+ * Repair" ticket skips diagnosis entirely and shows its own short pipeline.
  */
 export function activePipeline(status: RepairStatus, jobType?: RepairJobType): string[] {
+  if (jobType === 'straight_repair') return PIPELINE_STRAIGHT;
   if (status === 'diagnosis_only_closed' || jobType === 'diagnosis_only') return PIPELINE_CLOSED;
   return PIPELINE_FULL;
 }
 
 export function pipelineStep(status: RepairStatus, jobType?: RepairJobType): number {
+  if (jobType === 'straight_repair') {
+    switch (status) {
+      case 'received':      return 0;
+      case 'parts_pending':
+      case 'in_progress':   return 1;
+      case 'ready':         return 2;
+      case 'completed':     return 3;
+      default:              return 0;
+    }
+  }
   if (status === 'diagnosis_only_closed' || jobType === 'diagnosis_only') {
     switch (status) {
       case 'received':
@@ -63,9 +76,17 @@ export function pipelineStep(status: RepairStatus, jobType?: RepairJobType): num
 /**
  * Status advance for the single-button "next step" flow. `awaiting_approval` is deliberately
  * excluded — that's a decision point with two explicit outcomes (proceed to repair or close),
- * handled separately in the UI rather than as a single "next" action.
+ * handled separately in the UI rather than as a single "next" action. A "Straight Repair" job
+ * never enters `diagnosing`/`awaiting_approval` at all — it goes straight from intake to repair.
  */
-export function nextAction(status: RepairStatus): string {
+export function nextAction(status: RepairStatus, jobType?: RepairJobType): string {
+  if (jobType === 'straight_repair') {
+    if (status === 'received')      return 'Start Repair';
+    if (status === 'parts_pending') return 'Mark In Progress';
+    if (status === 'in_progress')   return 'Mark Ready';
+    if (status === 'ready')         return 'Mark Collected';
+    return 'Close';
+  }
   if (['received', 'diagnosis_paid'].includes(status)) return 'Mark Diagnosed';
   if (status === 'diagnosing')                         return 'Send Quote to Customer';
   if (status === 'parts_pending')                      return 'Mark In Progress';
@@ -74,7 +95,14 @@ export function nextAction(status: RepairStatus): string {
   return 'Close';
 }
 
-export function nextStatus(status: RepairStatus): RepairStatus {
+export function nextStatus(status: RepairStatus, jobType?: RepairJobType): RepairStatus {
+  if (jobType === 'straight_repair') {
+    if (status === 'received')      return 'in_progress';
+    if (status === 'parts_pending') return 'in_progress';
+    if (status === 'in_progress')   return 'ready';
+    if (status === 'ready')         return 'completed';
+    return 'completed';
+  }
   if (['received', 'diagnosis_paid'].includes(status)) return 'diagnosing';
   if (status === 'diagnosing')                         return 'awaiting_approval';
   if (status === 'parts_pending')                      return 'in_progress';
@@ -95,9 +123,11 @@ const DIAGNOSIS_STAGE_STATUSES = new Set<RepairStatus>([
 /**
  * Splits the Diagnosis module from the Repairs module. `cancelled` has no stage-at-cancellation
  * field to key off, so it buckets by jobType instead (diagnosis-only cancellations stay in
- * Diagnosis, everything else counts as a cancelled Repair).
+ * Diagnosis, everything else counts as a cancelled Repair). A "Straight Repair" job never has a
+ * diagnosis stage at all, regardless of status.
  */
 export function isDiagnosisStage(repair: Pick<Repair, 'status' | 'jobType'>): boolean {
+  if (repair.jobType === 'straight_repair') return false;
   if (repair.status === 'cancelled') return repair.jobType === 'diagnosis_only';
   return DIAGNOSIS_STAGE_STATUSES.has(repair.status);
 }

@@ -8,7 +8,7 @@ import Pagination from '@/components/shared/Pagination';
 import DateRangePicker, { type DateRange } from '@/components/shared/DateRangePicker';
 import {
   X, Clock, Shield, Plus, Pencil, Trash2, Camera, Video, AlertCircle, Loader2,
-  CheckCircle2, Scissors, Stethoscope, ArrowRightCircle, UserX, XCircle,
+  CheckCircle2, Scissors, Stethoscope, ArrowRightCircle, UserX, XCircle, Zap,
 } from 'lucide-react';
 import type { Repair, RepairStatus, RepairMediaStage, RepairMediaUploadInput } from '@/types/repair';
 import {
@@ -96,6 +96,12 @@ function RepairCard({ repair, onClick, selected }: {
             <span className="text-[10px] font-semibold" style={{ color: '#0ea5e9' }}>Dx Only</span>
           </div>
         )}
+        {repair.jobType === 'straight_repair' && (
+          <div className="flex items-center gap-1">
+            <Zap className="w-3 h-3" style={{ color: '#22c55e' }} />
+            <span className="text-[10px] font-semibold" style={{ color: '#22c55e' }}>Straight Repair</span>
+          </div>
+        )}
         {repair.warranty && (
           <div className="flex items-center gap-1">
             <Shield className="w-3 h-3" style={{ color: '#6366f1' }} />
@@ -131,6 +137,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const s = STATUS[repair.status] ?? STATUS.received;
   const isDxOnly = repair.jobType === 'diagnosis_only';
+  const isStraightRepair = repair.jobType === 'straight_repair';
   const pipeline = activePipeline(repair.status, repair.jobType);
   const currentStep = pipelineStep(repair.status, repair.jobType);
   const isDone = ['completed', 'cancelled'].includes(repair.status);
@@ -138,7 +145,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   const isClosedDiagnosis = repair.status === 'diagnosis_only_closed';
   const media = repair.media ?? [];
 
-  const upcomingStatus = nextStatus(repair.status);
+  const upcomingStatus = nextStatus(repair.status, repair.jobType);
   const requiredStage = requiredMediaStageForAdvance(repair.status, upcomingStatus);
   const hasRequiredPhoto = !requiredStage || media.some(m => m.stage === requiredStage);
 
@@ -233,9 +240,13 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
               {s.label}
             </span>
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold"
-              style={{ background: isDxOnly ? 'rgba(14,165,233,0.12)' : 'rgba(99,102,241,0.12)', color: isDxOnly ? '#0ea5e9' : '#6366f1' }}>
-              {isDxOnly ? <Stethoscope className="w-3 h-3" /> : <Scissors className="w-3 h-3" />}
-              {isDxOnly ? 'Diagnosis Only' : 'Full Repair'}
+              style={isDxOnly
+                ? { background: 'rgba(14,165,233,0.12)', color: '#0ea5e9' }
+                : isStraightRepair
+                ? { background: 'rgba(34,197,94,0.12)', color: '#22c55e' }
+                : { background: 'rgba(99,102,241,0.12)', color: '#6366f1' }}>
+              {isDxOnly ? <Stethoscope className="w-3 h-3" /> : isStraightRepair ? <Zap className="w-3 h-3" /> : <Scissors className="w-3 h-3" />}
+              {isDxOnly ? 'Diagnosis Only' : isStraightRepair ? 'Straight Repair' : 'Full Repair'}
             </span>
           </div>
         </div>
@@ -319,7 +330,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
               style={{ background: 'rgba(245,158,11,0.1)', color: '#b45309' }}>
               <AlertCircle className="w-3.5 h-3.5 shrink-0" />
               <span className="text-[11px] font-medium">
-                Attach a {(requiredStage && REQUIRED_MEDIA_STAGE_LABEL[requiredStage]) || 'required'} photo before you can {nextAction(repair.status).toLowerCase()}.
+                Attach a {(requiredStage && REQUIRED_MEDIA_STAGE_LABEL[requiredStage]) || 'required'} photo before you can {nextAction(repair.status, repair.jobType).toLowerCase()}.
               </span>
             </div>
           )}
@@ -471,7 +482,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
               ? { background: 'rgba(245,158,11,0.15)', color: '#b45309' }
               : { background: 'hsl(var(--foreground))', color: 'hsl(var(--background))' }}>
             {requiredStage && !hasRequiredPhoto ? <Camera className="w-4 h-4" /> : null}
-            {requiredStage && !hasRequiredPhoto ? 'Add Photo to Continue' : nextAction(repair.status)}
+            {requiredStage && !hasRequiredPhoto ? 'Add Photo to Continue' : nextAction(repair.status, repair.jobType)}
           </button>
           <button onClick={() => setAddingNote(true)}
             className="w-full h-9 rounded-xl text-xs font-semibold"

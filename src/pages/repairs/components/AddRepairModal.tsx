@@ -10,7 +10,7 @@ interface Props {
   onSave: (r: Omit<Repair, 'id'>) => Promise<unknown>;
   onClose: () => void;
   repairs: Repair[];
-  defaultJobType?: 'diagnosis_only' | 'diagnosis_to_repair';
+  defaultJobType?: 'diagnosis_only' | 'diagnosis_to_repair' | 'straight_repair';
   initial?: Repair;
   onUpdate?: (id: string, patch: Partial<Repair>) => Promise<unknown>;
 }
@@ -32,7 +32,7 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
     eta: initial?.eta ?? '',
     warranty: initial?.warranty ?? false,
     diagnosisFee: initial?.diagnosisFee ?? 200,
-    jobType: (initial?.jobType ?? defaultJobType ?? 'diagnosis_to_repair') as 'diagnosis_only' | 'diagnosis_to_repair',
+    jobType: (initial?.jobType ?? defaultJobType ?? 'diagnosis_to_repair') as 'diagnosis_only' | 'diagnosis_to_repair' | 'straight_repair',
   });
   const [selectedCustomer, setSelectedCustomer] = useState<WCustomer | null>(null);
   const [customerError, setCustomerError] = useState('');
@@ -91,6 +91,26 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
           warranty: form.warranty,
           diagnosisFee: form.diagnosisFee,
           jobType: form.jobType,
+        });
+      } else if (form.jobType === 'straight_repair') {
+        // No diagnosis stage, no diagnosis fee — straight to the repair queue.
+        await onSave({
+          ...form,
+          technicianId,
+          customerId: selectedCustomer?.id,
+          customerEmail: form.customerEmail || selectedCustomer?.email,
+          customerPhone: form.customerPhone || selectedCustomer?.phone,
+          status: 'received',
+          jobType: 'straight_repair',
+          serviceStage: 'repair',
+          quoteStatus: 'not_sent',
+          diagnosisFee: 0,
+          quoteAmount: costNum || undefined,
+          costNum,
+          started: new Date().toISOString().split('T')[0],
+          parts: [],
+          notes: [],
+          payments: [],
         });
       } else {
         await onSave({
@@ -231,13 +251,22 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
                 style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }}
                 placeholder="Apr 26" />
             </div>
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Diagnosis Fee</label>
-              <input value={form.diagnosisFee} onChange={e => set('diagnosisFee', Number(e.target.value) || 200)}
-                className="w-full text-sm rounded-xl px-3 py-2 outline-none"
-                style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }}
-                placeholder="200" />
-            </div>
+            {form.jobType === 'straight_repair' ? (
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Diagnosis Fee</label>
+                <div className="w-full text-sm rounded-xl px-3 py-2" style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' }}>
+                  None — straight repair
+                </div>
+              </div>
+            ) : (
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Diagnosis Fee</label>
+                <input value={form.diagnosisFee} onChange={e => set('diagnosisFee', Number(e.target.value) || 200)}
+                  className="w-full text-sm rounded-xl px-3 py-2 outline-none"
+                  style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }}
+                  placeholder="200" />
+              </div>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -245,7 +274,7 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
               {lockJobType ? (
                 <div className="w-full text-sm rounded-xl px-3 py-2"
                   style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' }}>
-                  {defaultJobType === 'diagnosis_only' ? 'Diagnosis only' : 'Diagnosis then repair quote'}
+                  {defaultJobType === 'diagnosis_only' ? 'Diagnosis only' : defaultJobType === 'straight_repair' ? 'Straight repair (no diagnosis)' : 'Diagnosis then repair quote'}
                 </div>
               ) : (
                 <select value={form.jobType} onChange={e => set('jobType', e.target.value)}
@@ -253,6 +282,7 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
                   style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }}>
                   <option value="diagnosis_to_repair">Diagnosis then repair quote</option>
                   <option value="diagnosis_only">Diagnosis only</option>
+                  <option value="straight_repair">Straight repair (no diagnosis)</option>
                 </select>
               )}
             </div>

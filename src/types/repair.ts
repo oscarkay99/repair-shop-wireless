@@ -11,7 +11,7 @@ export type RepairStatus =
   | 'cancelled';
 export type RepairMediaStage = 'received' | 'diagnosed' | 'parts_pending' | 'in_progress' | 'quality_check' | 'ready' | 'completed';
 export type RepairMediaType = 'image' | 'video';
-export type RepairJobType = 'diagnosis_only' | 'diagnosis_to_repair';
+export type RepairJobType = 'diagnosis_only' | 'diagnosis_to_repair' | 'straight_repair';
 export type RepairQuoteStatus = 'not_sent' | 'pending' | 'approved' | 'declined';
 export type RepairServiceStage = 'intake' | 'diagnosis' | 'approval' | 'repair' | 'pickup' | 'closed';
 
