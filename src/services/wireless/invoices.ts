@@ -105,6 +105,20 @@ export async function getInvoices(): Promise<Invoice[]> {
   }
 }
 
+/** The invoice already issued for a ticket, if any — used to avoid re-prompting
+ *  "Create Invoice" once one exists for that ticket. */
+export async function getInvoiceForTicket(ticketId: string): Promise<Pick<Invoice, 'id' | 'invoice_number'> | null> {
+  if (!isSupabaseConfigured || !ticketId) return null;
+  const { data, error } = await db
+    .from('invoices')
+    .select('id, invoice_number')
+    .eq('ticket_id', ticketId)
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data as Pick<Invoice, 'id' | 'invoice_number'> | null;
+}
+
 export async function createInvoice(
   input: Omit<Invoice, 'id' | 'invoice_number' | 'created_at' | 'updated_at'>,
   items: Omit<InvoiceItem, 'id' | 'invoice_id'>[] = []

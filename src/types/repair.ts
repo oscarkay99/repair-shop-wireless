@@ -56,6 +56,11 @@ export interface RepairMediaUploadInput {
 
 export interface Repair {
   id: string;
+  /** The real `wireless.tickets` uuid primary key — `id` above is the ticket_number
+   *  (e.g. "TK-0001") used everywhere for display/routing. Payments target a ticket
+   *  by this uuid, not the ticket_number, so anything recording/looking up a
+   *  ticket-linked payment or invoice needs this field, not `id`. */
+  ticketDbId?: string;
   createdAt?: string;
   customerId?: string;
   customer: string;

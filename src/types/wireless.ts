@@ -83,6 +83,7 @@ export interface Invoice {
   invoice_number: string;
   customer_id: string;
   customer?: WCustomer;
+  ticket_id?: string;
   subtotal: number;
   tax: number;
   discount: number;

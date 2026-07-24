@@ -12,6 +12,7 @@ const DIAGNOSIS_PAYMENT_TYPES = new Set(['diagnosis_fee']);
 // it's DB-generated and unique, so every read/write below filters on it directly
 // instead of the internal uuid primary key.
 type TicketRow = {
+  id: string;
   ticket_number: string;
   customer_id?: string | null;
   customer_name: string;
@@ -151,6 +152,7 @@ function normalizeMediaRow(row: TicketMediaRow): RepairMedia {
 function normalizeTicketRow(row: TicketRow, media: RepairMedia[]): Repair {
   return {
     id: row.ticket_number,
+    ticketDbId: row.id,
     createdAt: row.created_at ?? undefined,
     customerId: row.customer_id ?? undefined,
     customer: row.customer_name,
@@ -331,12 +333,13 @@ export async function createRepair(r: Omit<Repair, 'id'>): Promise<Repair> {
       parts_json: item.parts,
       notes_json: item.notes,
       payments_json: item.payments ?? [],
-    }).select('ticket_number, received_at, created_at').single();
+    }).select('id, ticket_number, received_at, created_at').single();
 
     if (error) throw error;
     item = normalizeRepair({
       ...item,
       id: inserted.ticket_number,
+      ticketDbId: inserted.id,
       started: inserted.received_at,
       createdAt: inserted.created_at ?? undefined,
     });

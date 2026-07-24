@@ -63,7 +63,10 @@ export default function RecordPaymentModal({ onClose, onSaved }: { onClose: () =
         amount: parseFloat(amount),
         method,
         invoiceId: target === 'invoice' ? selectedId : undefined,
-        ticketId: target === 'ticket' ? selectedId : undefined,
+        // Tickets are searched/selected by ticket_number (e.g. "TK-0002"), but the
+        // payments table's ticket_id column is the ticket's real uuid — sending the
+        // ticket_number there would fail (or silently mismatch) against a uuid column.
+        ticketId: target === 'ticket' ? selectedTicket?.ticketDbId : undefined,
         customerName: target === 'invoice' ? selectedInvoice?.customer?.name : target === 'ticket' ? selectedTicket?.customer : customerName,
         reference: reference.trim() || undefined,
         notes: notes.trim() || undefined,

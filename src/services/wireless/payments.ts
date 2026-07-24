@@ -12,6 +12,18 @@ export async function getPayments(): Promise<Payment[]> {
   return (data as Payment[] | null) ?? [];
 }
 
+/** Payments recorded directly against a ticket (e.g. a deposit paid before work begins). */
+export async function getPaymentsForTicket(ticketId: string): Promise<Payment[]> {
+  if (!isSupabaseConfigured || !ticketId) return [];
+  const { data, error } = await db
+    .from('payments')
+    .select('*')
+    .eq('ticket_id', ticketId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data as Payment[] | null) ?? [];
+}
+
 export async function recordPayment(input: {
   amount: number;
   method: PaymentMethod;
