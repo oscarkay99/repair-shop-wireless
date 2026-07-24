@@ -35,6 +35,7 @@ function AddPartModal({
     min_stock: String(initial?.min_stock ?? ''),
     supplier: initial?.supplier ?? '',
   });
+  const [addingCategory, setAddingCategory] = useState(initial ? !categoryOptions.includes(initial.category) : false);
 
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
@@ -84,12 +85,30 @@ function AddPartModal({
             </div>
             <div>
               <label className="text-[11px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Category</label>
-              <input required list="part-category-options" value={form.category} onChange={e => set('category', e.target.value)}
-                placeholder="e.g. Screens, or type a new one"
-                className="w-full h-9 px-3 rounded-lg text-sm outline-none" style={inputStyle} />
-              <datalist id="part-category-options">
-                {categoryOptions.map(c => <option key={c} value={c} />)}
-              </datalist>
+              {addingCategory ? (
+                <div className="flex gap-1.5">
+                  <input required autoFocus value={form.category} onChange={e => set('category', e.target.value)}
+                    placeholder="New category name"
+                    className="w-full h-9 px-3 rounded-lg text-sm outline-none" style={inputStyle} />
+                  <button type="button"
+                    onClick={() => { setAddingCategory(false); set('category', categoryOptions[0] ?? ''); }}
+                    title="Choose from list instead"
+                    className="h-9 w-9 flex items-center justify-center rounded-lg flex-shrink-0"
+                    style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--muted-foreground))' }}>
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <select required value={form.category}
+                  onChange={e => {
+                    if (e.target.value === '__new__') { setAddingCategory(true); set('category', ''); }
+                    else set('category', e.target.value);
+                  }}
+                  className="w-full h-9 px-3 rounded-lg text-sm outline-none" style={inputStyle}>
+                  {categoryOptions.map(c => <option key={c} value={c}>{c}</option>)}
+                  <option value="__new__">+ Add new category…</option>
+                </select>
+              )}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
