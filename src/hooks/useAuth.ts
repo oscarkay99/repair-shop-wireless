@@ -72,15 +72,18 @@ if (isSupabaseConfigured) {
 
   // Listen for auth state changes
   supabase.auth.onAuthStateChange((event, session) => {
+    // Captured before the async profile lookup resolves (and before setState
+    // below updates it) — SIGNED_IN isn't only fired for a genuine new
+    // sign-in, it can also refire when another open tab's session syncs in,
+    // or on a silent token refresh. Only a real transition from signed-out
+    // to signed-in in THIS tab counts as a login worth logging.
+    const wasSignedOut = !state.user;
     if (session?.user) {
       loadProfileFromSession(session.user.id, session.user.email ?? '').then(user => {
         if (user) {
           writeStoredUser(user);
           setState({ user });
-          // SIGNED_IN only fires for a genuine new sign-in (password, OAuth
-          // redirect, magic link) — a page refresh restoring an existing
-          // session fires INITIAL_SESSION instead, so this can't double-log.
-          if (event === 'SIGNED_IN') logAuthEvent('login', { id: user.id, name: user.name });
+          if (event === 'SIGNED_IN' && wasSignedOut) logAuthEvent('login', { id: user.id, name: user.name });
         }
         else { handleUnrecognizedSession(); }
       });
