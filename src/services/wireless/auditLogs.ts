@@ -74,6 +74,25 @@ export async function getAuditLogs(limit = 200): Promise<AuditLogRecord[]> {
 // live session — logout has to log *before* supabase.auth.signOut(), not after.
 export async function logAuthEvent(action: 'login' | 'logout', actor: { id: string; name: string }): Promise<void> {
   try {
+    // Supabase syncs auth state across every open tab of the app (and can
+    // re-fire SIGNED_IN on its own, e.g. when another tab's session becomes
+    // visible) — without this check, one real login shows up as several
+    // duplicate entries. Checked server-side, not with an in-memory flag,
+    // since the duplicate firing happens across separate tabs/JS contexts
+    // that don't share memory.
+    const { data: recent } = await db
+      .from('audit_logs')
+      .select('action, created_at')
+      .eq('actor_id', actor.id)
+      .eq('table_name', 'security')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const recentRow = recent as { action: string; created_at: string } | null;
+    if (recentRow && recentRow.action === action && Date.now() - new Date(recentRow.created_at).getTime() < 60_000) {
+      return;
+    }
+
     const { error } = await db.from('audit_logs').insert({
       action,
       table_name: 'security',
