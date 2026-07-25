@@ -343,7 +343,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
         <div className="pt-3" style={{ borderTop: '1px solid hsl(var(--border))' }}>
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs font-bold" style={{ color: 'hsl(var(--foreground))' }}>Photos</p>
-            {!isDone && (
+            {!isDone && canUpdateProgress && (
               <button
                 onClick={() => openPhotoPicker(statusToMediaStage(repair.status))}
                 disabled={uploading}
@@ -376,7 +376,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
           {media.length > 0 ? (
             <div className="grid grid-cols-3 gap-2">
               {media.map(m => {
-                const canDelete = canManageTickets || (!!uploaderName && m.uploadedBy === uploaderName);
+                const canDelete = canUpdateProgress || (!!uploaderName && m.uploadedBy === uploaderName);
                 return (
                   <a key={m.id} href={m.url} target="_blank" rel="noreferrer"
                     className="relative aspect-square rounded-lg overflow-hidden block group/photo"
@@ -430,10 +430,12 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
         <div className="pt-3" style={{ borderTop: '1px solid hsl(var(--border))' }}>
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs font-bold" style={{ color: 'hsl(var(--foreground))' }}>Technician Notes</p>
-            <button onClick={() => setAddingNote(true)} className="text-xs font-medium flex items-center gap-1"
-              style={{ color: 'hsl(var(--primary))' }}>
-              <Plus className="w-3 h-3" />Add Note
-            </button>
+            {canUpdateProgress && (
+              <button onClick={() => setAddingNote(true)} className="text-xs font-medium flex items-center gap-1"
+                style={{ color: 'hsl(var(--primary))' }}>
+                <Plus className="w-3 h-3" />Add Note
+              </button>
+            )}
           </div>
           {(repair.notes ?? []).length > 0 && (
             <ul className="space-y-1.5 mb-3">
@@ -562,13 +564,15 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
               Only a technician or admin can update this ticket's progress.
             </p>
           )}
-          <button onClick={() => setAddingNote(true)}
-            className="w-full h-9 rounded-xl text-xs font-semibold"
-            style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}>
-            Add Note
-          </button>
+          {canUpdateProgress && (
+            <button onClick={() => setAddingNote(true)}
+              className="w-full h-9 rounded-xl text-xs font-semibold"
+              style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}>
+              Add Note
+            </button>
+          )}
         </div>
       )}
 
