@@ -235,9 +235,9 @@ function CustomerDetailPanel({ customer, lastRepair, canEdit, onEdit, onClose }:
             {[
               { label: 'Email',        value: customer.email || '—' },
               { label: 'Address',      value: customer.address || '—' },
-              { label: '# Repairs',    value: String(customer.ticket_count) },
+              { label: '# Jobs',       value: String(customer.ticket_count) },
               { label: 'Total Spent',  value: `GHS ${customer.total_spent.toFixed(2)}` },
-              { label: 'Last Repair',  value: lastRepair ?? '—' },
+              { label: 'Last Job',     value: lastRepair ?? '—' },
               { label: 'Member Since', value: new Date(customer.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) },
             ].map(r => (
               <div key={r.label} className="flex items-start justify-between py-2 border-b last:border-b-0" style={{ borderColor: 'hsl(var(--border))' }}>
@@ -363,7 +363,7 @@ export default function CustomersPage() {
             id: c.id,
             primary: c.name,
             secondary: `${c.phone}${c.email ? ' · ' + c.email : ''}`,
-            meta: `${c.ticket_count} repair${c.ticket_count !== 1 ? 's' : ''}`,
+            meta: `${c.ticket_count} job${c.ticket_count !== 1 ? 's' : ''}`,
           })) : []}
           onSelect={item => setSearch(item.primary)}
           placeholder="Search customers…"
@@ -397,7 +397,7 @@ export default function CustomersPage() {
         <table className="w-full text-sm">
           <thead>
             <tr style={{ borderBottom: '1px solid hsl(var(--border))' }}>
-              {['Name', 'Phone', 'Email', '# Repairs', 'Last Repair'].map(h => (
+              {['Name', 'Phone', 'Email', '# Jobs', 'Last Job'].map(h => (
                 <th key={h} className="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-wider"
                   style={{ color: 'hsl(var(--muted-foreground))' }}>
                   {h}
