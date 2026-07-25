@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTechnicians } from '@/hooks/useTechnicians';
+import { useWirelessCustomers } from '@/hooks/useWirelessCustomers';
 import type { Repair } from '@/types/repair';
 import type { WCustomer } from '@/types/wireless';
 import CustomerPicker from '@/components/shared/CustomerPicker';
@@ -38,6 +39,12 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
   const [customerError, setCustomerError] = useState('');
   const [saving, setSaving] = useState(false);
   const { technicians } = useTechnicians();
+  // Walk-ins with no existing record shouldn't need a separate trip to the
+  // Customers module first — "New" creates the real customer record inline,
+  // right when the ticket is submitted, same as CustomerPicker's own
+  // create-new suggestion already does, just as an explicit up-front choice.
+  const [customerMode, setCustomerMode] = useState<'existing' | 'new'>('existing');
+  const { add: addCustomer } = useWirelessCustomers();
   const lockJobType = !!defaultJobType && !initial;
 
   const activeLoadByName = repairs
@@ -55,18 +62,35 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.customer || !form.device || !form.issue) return;
+    if (!form.device || !form.issue) return;
+    if (customerMode === 'new' && !initial) {
+      if (!form.customer.trim() || !form.customerPhone.trim()) {
+        setCustomerError('Name and phone are required to create a new customer.');
+        return;
+      }
+    } else if (!form.customer) {
+      return;
+    }
     // A typed customer name must be linked to a real customer record — either
-    // picked from the dropdown, created inline through it, or (when editing)
-    // left untouched from an already-linked ticket.
-    const hasLinkedCustomer = !!selectedCustomer || (!!initial?.customerId && form.customer === initial.customer);
+    // picked from the dropdown, created inline through it, freshly created
+    // via the New tab, or (when editing) left untouched from an already-
+    // linked ticket.
+    const hasLinkedCustomer = (customerMode === 'new' && !initial)
+      || !!selectedCustomer
+      || (!!initial?.customerId && form.customer === initial.customer);
     if (!hasLinkedCustomer) {
-      setCustomerError('Select an existing customer or create a new one from the dropdown.');
+      setCustomerError('Select an existing customer or create a new one.');
       return;
     }
     setCustomerError('');
     setSaving(true);
     try {
+      // A brand-new walk-in customer is created here, right as the ticket is
+      // submitted, rather than requiring a separate trip to Customers first.
+      const customer = customerMode === 'new' && !initial
+        ? await addCustomer({ name: form.customer.trim(), phone: form.customerPhone.trim(), email: form.customerEmail.trim(), address: '' })
+        : selectedCustomer;
+
       const costNum = parseFloat(form.cost.replace(/[^0-9.]/g, '')) || 0;
       const diagnosisFeeNum = parseFloat(form.diagnosisFee) || 0;
       // technicians is the roster; technicianId is the FK the backend/RLS
@@ -77,10 +101,10 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
       if (initial && onUpdate) {
         await onUpdate(initial.id, {
           customer: form.customer,
-          customerId: selectedCustomer?.id ?? initial.customerId,
+          customerId: customer?.id ?? initial.customerId,
           websiteAuthUserId: initial.websiteAuthUserId,
-          customerEmail: form.customerEmail || selectedCustomer?.email || initial.customerEmail,
-          customerPhone: form.customerPhone || selectedCustomer?.phone || initial.customerPhone,
+          customerEmail: form.customerEmail || customer?.email || initial.customerEmail,
+          customerPhone: form.customerPhone || customer?.phone || initial.customerPhone,
           device: form.device,
           deviceType: form.deviceType,
           issue: form.issue,
@@ -98,9 +122,9 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
         await onSave({
           ...form,
           technicianId,
-          customerId: selectedCustomer?.id,
-          customerEmail: form.customerEmail || selectedCustomer?.email,
-          customerPhone: form.customerPhone || selectedCustomer?.phone,
+          customerId: customer?.id,
+          customerEmail: form.customerEmail || customer?.email,
+          customerPhone: form.customerPhone || customer?.phone,
           status: 'received',
           jobType: 'straight_repair',
           serviceStage: 'repair',
@@ -117,9 +141,9 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
         await onSave({
           ...form,
           technicianId,
-          customerId: selectedCustomer?.id,
-          customerEmail: form.customerEmail || selectedCustomer?.email,
-          customerPhone: form.customerPhone || selectedCustomer?.phone,
+          customerId: customer?.id,
+          customerEmail: form.customerEmail || customer?.email,
+          customerPhone: form.customerPhone || customer?.phone,
           status: 'diagnosis_paid',
           jobType: form.jobType,
           serviceStage: 'diagnosis',
@@ -161,19 +185,56 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
           </button>
         </div>
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+          {!initial && (
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Customer</label>
+              <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid hsl(var(--border))' }}>
+                {(['existing', 'new'] as const).map(mode => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => {
+                      setCustomerMode(mode);
+                      setCustomerError('');
+                      setSelectedCustomer(null);
+                      set('customer', '');
+                      set('customerPhone', '');
+                      set('customerEmail', '');
+                    }}
+                    className="flex-1 text-xs font-bold py-2 transition-colors"
+                    style={customerMode === mode
+                      ? { background: 'hsl(var(--primary))', color: 'white' }
+                      : { background: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' }}
+                  >
+                    {mode === 'existing' ? 'Existing' : 'New'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
-            <CustomerPicker
-              value={form.customer}
-              phone={form.customerPhone}
-              onChange={(name, phone, customer) => {
-                set('customer', name);
-                set('customerPhone', phone);
-                set('customerEmail', customer?.email ?? '');
-                setSelectedCustomer(customer ?? null);
-              }}
-              required
-              label="Customer"
-            />
+            {customerMode === 'new' && !initial ? (
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Customer Name *</label>
+                <input required value={form.customer} onChange={e => set('customer', e.target.value)}
+                  className="w-full text-sm rounded-xl px-3 py-2 outline-none"
+                  style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }}
+                  placeholder="Full name" />
+              </div>
+            ) : (
+              <CustomerPicker
+                value={form.customer}
+                phone={form.customerPhone}
+                onChange={(name, phone, customer) => {
+                  set('customer', name);
+                  set('customerPhone', phone);
+                  set('customerEmail', customer?.email ?? '');
+                  setSelectedCustomer(customer ?? null);
+                }}
+                required
+                label="Customer"
+              />
+            )}
             <div>
               <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Device *</label>
               <input required value={form.device} onChange={e => set('device', e.target.value)}
@@ -201,8 +262,10 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
                 placeholder="customer@email.com" />
             </div>
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Customer Phone</label>
-              <input value={form.customerPhone} onChange={e => set('customerPhone', e.target.value)}
+              <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                Customer Phone{customerMode === 'new' && !initial ? ' *' : ''}
+              </label>
+              <input required={customerMode === 'new' && !initial} value={form.customerPhone} onChange={e => set('customerPhone', e.target.value)}
                 className="w-full text-sm rounded-xl px-3 py-2 outline-none"
                 style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }}
                 placeholder="+233..." />
