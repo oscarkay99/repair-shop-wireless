@@ -64,8 +64,12 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
     [parts]
   );
 
+  // Not gated to "only when creating" — a Diagnosis Only ticket has no cost
+  // yet when it later proceeds to repair (Edit Ticket, `initial` set), so
+  // this needs to run there too. Still safe either way: it only ever
+  // touches a cost that's still 'TBD' or was auto-filled by this same
+  // effect, never something someone actually typed in.
   useEffect(() => {
-    if (initial) return;
     const exact = parts.find(p => p.name.trim().toLowerCase() === form.device.trim().toLowerCase());
     if (exact && (form.cost === 'TBD' || costAutoFilled)) {
       set('cost', String(exact.selling_price));
