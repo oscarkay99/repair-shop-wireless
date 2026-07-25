@@ -4,7 +4,7 @@ import { useTechnicians } from '@/hooks/useTechnicians';
 import { useWirelessCustomers } from '@/hooks/useWirelessCustomers';
 import { useParts } from '@/hooks/useParts';
 import type { Repair } from '@/types/repair';
-import type { WCustomer, Part } from '@/types/wireless';
+import type { WCustomer } from '@/types/wireless';
 import CustomerPicker from '@/components/shared/CustomerPicker';
 import DevicePicker from '@/components/shared/DevicePicker';
 import { isCurrentlyUnavailable } from '@/utils/technicianAvailability';
@@ -21,23 +21,6 @@ interface Props {
 const ACTIVE_STATUSES = new Set<Repair['status']>([
   'received', 'diagnosis_paid', 'diagnosing', 'awaiting_approval', 'parts_pending', 'in_progress', 'ready',
 ]);
-
-const ISSUE_STOPWORDS = new Set(['replacement', 'repair', 'issue', 'with', 'from', 'broken', 'damaged']);
-
-/** Free-text device/issue vs. free-text part names — no exact schema to join
- *  on, so this narrows by device-name substring first, then further by any
- *  non-generic word shared with the issue text (falling back to the device-only
- *  matches if that narrowing leaves nothing, rather than showing no suggestion
- *  at all). */
-function findMatchingParts(parts: Part[], device: string, issue: string): Part[] {
-  const deviceQ = device.trim().toLowerCase();
-  if (deviceQ.length < 3) return [];
-  const deviceMatches = parts.filter(p => p.name.toLowerCase().includes(deviceQ));
-  const issueWords = issue.toLowerCase().split(/\s+/).filter(w => w.length > 3 && !ISSUE_STOPWORDS.has(w));
-  if (issueWords.length === 0) return deviceMatches;
-  const narrowed = deviceMatches.filter(p => issueWords.some(w => p.name.toLowerCase().includes(w)));
-  return narrowed.length > 0 ? narrowed : deviceMatches;
-}
 
 export default function AddRepairModal({ onSave, onClose, repairs, defaultJobType, initial, onUpdate }: Props) {
   const [form, setForm] = useState({
@@ -71,24 +54,25 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
   const [costAutoFilled, setCostAutoFilled] = useState(false);
   const lockJobType = !!defaultJobType && !initial;
 
+  // Inventory is the device catalog here — each part is a distinct, exact
+  // device model with its own price (e.g. "iPhone 11", "iPhone 11 Pro",
+  // "iPhone 11 Pro max" are three separate entries), so picking the precise
+  // one from the dropdown is what disambiguates the price, not a fuzzy
+  // match afterwards.
   const knownDevices = useMemo(
-    () => Array.from(new Set(repairs.map(r => r.device).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
-    [repairs]
-  );
-
-  const matchingParts = useMemo(
-    () => initial ? [] : findMatchingParts(parts, form.device, form.issue),
-    [parts, form.device, form.issue, initial]
+    () => Array.from(new Set(parts.map(p => p.name).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
+    [parts]
   );
 
   useEffect(() => {
-    if (initial || matchingParts.length !== 1) return;
-    if (form.cost === 'TBD' || costAutoFilled) {
-      set('cost', String(matchingParts[0].selling_price));
+    if (initial) return;
+    const exact = parts.find(p => p.name.trim().toLowerCase() === form.device.trim().toLowerCase());
+    if (exact && (form.cost === 'TBD' || costAutoFilled)) {
+      set('cost', String(exact.selling_price));
       setCostAutoFilled(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [matchingParts]);
+  }, [form.device, parts]);
 
   const activeLoadByName = repairs
     .filter(r => ACTIVE_STATUSES.has(r.status))
@@ -350,21 +334,6 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
                 className="w-full text-sm rounded-xl px-3 py-2 outline-none"
                 style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }}
                 placeholder="GHS 850 or TBD" />
-              {matchingParts.length > 1 && (
-                <div className="flex flex-wrap gap-1.5 mt-1.5">
-                  {matchingParts.slice(0, 4).map(p => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => { set('cost', String(p.selling_price)); setCostAutoFilled(true); }}
-                      className="text-[10px] px-2 py-1 rounded-lg"
-                      style={{ background: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))', border: '1px solid hsl(var(--border))' }}
-                    >
-                      {p.name} — GHS {p.selling_price.toFixed(2)}
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
