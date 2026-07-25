@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import AdminLayout from '@/components/feature/AdminLayout';
 import { getAuditLogs, type AuditLogRecord } from '@/services/wireless/auditLogs';
+import { errMessage } from '@/utils/errors';
 import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/shared/Pagination';
 
@@ -63,7 +64,7 @@ export default function AuditLogsPage() {
         }
       } catch (err) {
         if (active) {
-          setError(err instanceof Error ? err.message : 'Failed to load audit logs');
+          setError(errMessage(err, 'Failed to load audit logs'));
         }
       } finally {
         if (active) setLoading(false);

@@ -7,6 +7,7 @@ import { getAuditLogs, type AuditLogRecord } from '@/services/wireless/auditLogs
 import { getMyProfile, updateMyProfile, changePassword as changePasswordReal } from '@/services/wireless/users';
 import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/shared/Pagination';
+import { errMessage } from '@/utils/errors';
 
 const ACTIVITY_PAGE_SIZE = 15;
 
@@ -70,7 +71,7 @@ export default function ProfilePage() {
       setEditMode(false);
       setTimeout(() => setSaved(false), 3000);
     } catch (e) {
-      setPasswordError(e instanceof Error ? e.message : 'Failed to save profile');
+      setPasswordError(errMessage(e, 'Failed to save profile'));
     }
   };
 
@@ -88,7 +89,7 @@ export default function ProfilePage() {
       setConfirmPassword('');
       setTimeout(() => setPasswordSuccess(false), 3000);
     } catch (e) {
-      setPasswordError(e instanceof Error ? e.message : 'Failed to change password');
+      setPasswordError(errMessage(e, 'Failed to change password'));
     } finally {
       setPasswordLoading(false);
     }

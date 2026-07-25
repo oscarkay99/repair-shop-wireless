@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getParts, createPart, updatePart, deletePart, adjustStock } from '@/services/wireless/parts';
 import type { Part } from '@/types/wireless';
 import { useToast } from '@/contexts/ToastContext';
+import { errMessage } from '@/utils/errors';
 
 export function useParts() {
   const [parts, setParts] = useState<Part[]>([]);
@@ -23,7 +24,7 @@ export function useParts() {
       showToast('Part added');
       return p;
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Failed to add part', 'error');
+      showToast(errMessage(e, 'Failed to add part'), 'error');
       throw e;
     }
   };
@@ -33,7 +34,7 @@ export function useParts() {
       await updatePart(id, data);
       setParts(prev => prev.map(p => p.id === id ? { ...p, ...data } : p));
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Failed to update part', 'error');
+      showToast(errMessage(e, 'Failed to update part'), 'error');
       throw e;
     }
   };
@@ -44,7 +45,7 @@ export function useParts() {
       setParts(prev => prev.filter(p => p.id !== id));
       showToast('Part removed');
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Failed to remove part', 'error');
+      showToast(errMessage(e, 'Failed to remove part'), 'error');
       throw e;
     }
   };
@@ -54,7 +55,7 @@ export function useParts() {
       await adjustStock(id, delta);
       setParts(prev => prev.map(p => p.id === id ? { ...p, stock: Math.max(0, p.stock + delta) } : p));
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Failed to adjust stock', 'error');
+      showToast(errMessage(e, 'Failed to adjust stock'), 'error');
       throw e;
     }
   };

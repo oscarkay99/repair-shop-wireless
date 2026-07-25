@@ -3,6 +3,7 @@ import AdminLayout from '@/components/feature/AdminLayout';
 import { useWirelessSettings } from '@/hooks/useWirelessSettings';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/contexts/ToastContext';
+import { errMessage } from '@/utils/errors';
 import SettingsSidebar from './components/SettingsSidebar';
 import BrandingSection from './components/BrandingSection';
 import OperationsSection from './components/OperationsSection';
@@ -114,7 +115,7 @@ export default function SettingsPage() {
     } catch (e) {
       // Keep `dirty` true and skip the success indicator — the save didn't
       // actually persist, so the unsaved-changes state must stay visible.
-      showToast(e instanceof Error ? e.message : 'Failed to save settings', 'error');
+      showToast(errMessage(e, 'Failed to save settings'), 'error');
     }
   };
 

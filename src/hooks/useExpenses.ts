@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getExpenses, createExpense, updateExpense, deleteExpense } from '@/services/wireless/expenses';
 import type { ExpenseRecord } from '@/services/wireless/expenses';
 import { useToast } from '@/contexts/ToastContext';
+import { errMessage } from '@/utils/errors';
 
 export function useExpenses() {
   const [expenses, setExpenses] = useState<ExpenseRecord[]>([]);
@@ -19,7 +20,7 @@ export function useExpenses() {
       showToast('Expense recorded');
       return created;
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Failed to record expense', 'error');
+      showToast(errMessage(err, 'Failed to record expense'), 'error');
       throw err;
     }
   };
@@ -30,7 +31,7 @@ export function useExpenses() {
       setExpenses(prev => prev.map(e => e.id === id ? { ...e, ...changes } : e));
       showToast('Expense updated');
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Failed to update expense', 'error');
+      showToast(errMessage(err, 'Failed to update expense'), 'error');
       throw err;
     }
   };
@@ -41,7 +42,7 @@ export function useExpenses() {
       setExpenses(prev => prev.filter(e => e.id !== id));
       showToast('Expense deleted');
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Failed to delete expense', 'error');
+      showToast(errMessage(err, 'Failed to delete expense'), 'error');
       throw err;
     }
   };

@@ -4,10 +4,7 @@ import { recordPayment } from '@/services/wireless/payments';
 import type { Invoice } from '@/types/wireless';
 import type { PaymentMethod } from '@/types/sale';
 import { useToast } from '@/contexts/ToastContext';
-
-function errMessage(e: unknown): string {
-  return e instanceof Error ? e.message : 'Something went wrong';
-}
+import { errMessage } from '@/utils/errors';
 
 export function useInvoices() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);

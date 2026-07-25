@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getCustomers, createCustomer } from '@/services/customers';
 import type { Customer } from '@/types/customer';
 import { useToast } from '@/contexts/ToastContext';
+import { errMessage } from '@/utils/errors';
 
 export function useCustomers() {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -19,7 +20,7 @@ export function useCustomers() {
       showToast(`${c.name} added`);
       return created;
     } catch (e) {
-      showToast(`Failed to add customer: ${e instanceof Error ? e.message : 'Something went wrong'}`, 'error');
+      showToast(`Failed to add customer: ${errMessage(e)}`, 'error');
       throw e;
     }
   };

@@ -22,6 +22,7 @@ import {
 import { formatDate } from '@/utils/date';
 import { getPaymentsForTicket } from '@/services/wireless/payments';
 import { getInvoiceForTicket } from '@/services/wireless/invoices';
+import { errMessage } from '@/utils/errors';
 
 const PAGE_SIZE = 12;
 
@@ -203,7 +204,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
     try {
       await onAddMedia(repair.id, { file, stage, uploadedBy: uploaderName });
     } catch (err) {
-      setUploadError(err instanceof Error ? err.message : 'Upload failed. Try again.');
+      setUploadError(errMessage(err, 'Upload failed. Try again.'));
     } finally {
       setUploading(false);
       setPromptStage(null);

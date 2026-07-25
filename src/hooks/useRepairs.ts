@@ -2,10 +2,7 @@ import { useState, useEffect } from 'react';
 import { getRepairs, createRepair, updateRepairStatus, updateRepairNotes, addRepairMedia, deleteRepairMedia, updateRepair, deleteRepair } from '@/services/repairs';
 import type { Repair, RepairStatus, RepairMediaUploadInput } from '@/types/repair';
 import { useToast } from '@/contexts/ToastContext';
-
-function errMessage(e: unknown, fallback: string): string {
-  return e instanceof Error ? e.message : fallback;
-}
+import { errMessage } from '@/utils/errors';
 
 export function useRepairs() {
   const [repairs, setRepairs] = useState<Repair[]>([]);

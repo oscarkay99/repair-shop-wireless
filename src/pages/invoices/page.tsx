@@ -13,6 +13,7 @@ import DateRangePicker, { type DateRange } from '@/components/shared/DateRangePi
 import { Check, Share2, Printer, Download, Mail, Loader2, ChevronLeft, X, Pencil, Plus } from 'lucide-react';
 import type { Invoice, InvoiceItem, InvoiceStatus } from '@/types/wireless';
 import type { PaymentMethod } from '@/types/sale';
+import { errMessage } from '@/utils/errors';
 import { downloadInvoicePdf, invoicePdfBase64 } from '@/utils/invoicePdf';
 
 const PAYMENT_METHODS: PaymentMethod[] = ['Cash', 'Card', 'MoMo', 'Bank Transfer'];
@@ -403,7 +404,7 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
       setEmailStatus('sent');
       setTimeout(() => setEmailStatus('idle'), 3000);
     } catch (e) {
-      setEmailError(e instanceof Error ? e.message : 'Failed to send email');
+      setEmailError(errMessage(e, 'Failed to send email'));
       setEmailStatus('error');
     }
   };

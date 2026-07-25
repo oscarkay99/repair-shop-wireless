@@ -9,6 +9,7 @@ import type { Technician } from '@/types/wireless';
 import { REPAIR_STATUS_META, isActiveRepairStatus } from '@/utils/repairStatus';
 import { createWirelessUser } from '@/services/wireless/users';
 import { isCurrentlyUnavailable } from '@/utils/technicianAvailability';
+import { errMessage } from '@/utils/errors';
 
 const PAGE_SIZE = 9;
 
@@ -83,7 +84,7 @@ function AddTechnicianModal({ onSave, onClose }: {
       await onSave({ ...form, profile_id: profileId, status: 'available' });
       setResult({ name: form.name.trim(), email: form.email.trim(), username: username.trim(), password: finalPassword });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add technician');
+      setError(errMessage(err, 'Failed to add technician'));
     } finally {
       setSaving(false);
     }
@@ -247,7 +248,7 @@ function CreateLoginModal({ technician, onLinked, onClose }: {
       await onLinked(profileId, email.trim());
       setResult({ email: email.trim(), username: username.trim(), password: finalPassword });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create login');
+      setError(errMessage(err, 'Failed to create login'));
     } finally {
       setSaving(false);
     }

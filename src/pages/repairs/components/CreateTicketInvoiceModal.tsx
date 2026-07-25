@@ -5,6 +5,7 @@ import type { Repair } from '@/types/repair';
 import { useAuth } from '@/hooks/useAuth';
 import { useTaxSettings } from '@/hooks/useTaxSettings';
 import { createInvoice } from '@/services/wireless/invoices';
+import { errMessage } from '@/utils/errors';
 
 function fmt(n: number) {
   return `GHS ${n.toLocaleString('en-GH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -59,7 +60,7 @@ export default function CreateTicketInvoiceModal({ repair, depositPaid, onClose,
       onCreated(inv.invoice_number);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create invoice');
+      setError(errMessage(err, 'Failed to create invoice'));
     } finally {
       setSaving(false);
     }

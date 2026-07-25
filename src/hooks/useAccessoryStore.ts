@@ -5,6 +5,7 @@ import {
   type AccessoryProduct, type AccessorySaleRecord,
 } from '@/services/wireless/accessoryStore';
 import { useToast } from '@/contexts/ToastContext';
+import { errMessage } from '@/utils/errors';
 
 export function useAccessoryStore() {
   const [products, setProducts] = useState<AccessoryProduct[]>([]);
@@ -32,7 +33,7 @@ export function useAccessoryStore() {
       showToast('Product added');
       return p;
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Failed to add product', 'error');
+      showToast(errMessage(e, 'Failed to add product'), 'error');
       throw e;
     }
   };
@@ -42,7 +43,7 @@ export function useAccessoryStore() {
       await updateProduct(id, data);
       setProducts(prev => prev.map(p => p.id === id ? { ...p, ...data } : p));
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Failed to update product', 'error');
+      showToast(errMessage(e, 'Failed to update product'), 'error');
       throw e;
     }
   };
@@ -53,7 +54,7 @@ export function useAccessoryStore() {
       setProducts(prev => prev.filter(p => p.id !== id));
       showToast('Product removed');
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Failed to remove product', 'error');
+      showToast(errMessage(e, 'Failed to remove product'), 'error');
       throw e;
     }
   };
@@ -65,7 +66,7 @@ export function useAccessoryStore() {
       showToast('Sale recorded');
       return s;
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Failed to record sale', 'error');
+      showToast(errMessage(e, 'Failed to record sale'), 'error');
       throw e;
     }
   };
@@ -76,7 +77,7 @@ export function useAccessoryStore() {
       setSales(prev => prev.filter(s => s.id !== id));
       showToast('Sale removed');
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Failed to remove sale', 'error');
+      showToast(errMessage(e, 'Failed to remove sale'), 'error');
       throw e;
     }
   };

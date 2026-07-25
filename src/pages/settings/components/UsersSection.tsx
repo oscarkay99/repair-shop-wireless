@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getWirelessUsers, updateWirelessUser, deleteWirelessUser, resetUserPassword, type WirelessProfile } from '@/services/wireless/users';
 import { findTechnicianByProfileId, createTechnician } from '@/services/wireless/technicians';
 import { isSupabaseConfigured } from '@/services/supabase';
+import { errMessage } from '@/utils/errors';
 import InviteUserModal from './InviteUserModal';
 
 function generatePassword(): string {
@@ -57,7 +58,7 @@ function EditUserModal({ user, onClose, onSaved }: { user: WirelessProfile; onCl
       onSaved();
       onClose();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to save changes');
+      setError(errMessage(e, 'Failed to save changes'));
     } finally {
       setSaving(false);
     }
@@ -71,7 +72,7 @@ function EditUserModal({ user, onClose, onSaved }: { user: WirelessProfile; onCl
       await resetUserPassword(user.id, newPassword);
       setResetDone(true);
     } catch (e: unknown) {
-      setResetError(e instanceof Error ? e.message : 'Failed to reset password');
+      setResetError(errMessage(e, 'Failed to reset password'));
     } finally {
       setResetting(false);
     }
@@ -223,7 +224,7 @@ export default function UsersSection() {
       await deleteWirelessUser(user.id);
       setUsers(prev => prev.filter(u => u.id !== user.id));
     } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : 'Failed to delete user');
+      alert(errMessage(e, 'Failed to delete user'));
     } finally {
       setDeletingId(null);
     }

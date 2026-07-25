@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getTechnicians, createTechnician, updateTechnician, deleteTechnician } from '@/services/wireless/technicians';
 import type { Technician } from '@/types/wireless';
 import { useToast } from '@/contexts/ToastContext';
+import { errMessage } from '@/utils/errors';
 
 export function useTechnicians() {
   const [technicians, setTechnicians] = useState<Technician[]>([]);
@@ -23,7 +24,7 @@ export function useTechnicians() {
       showToast('Technician added');
       return t;
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Failed to add technician', 'error');
+      showToast(errMessage(e, 'Failed to add technician'), 'error');
       throw e;
     }
   };
@@ -33,7 +34,7 @@ export function useTechnicians() {
       await updateTechnician(id, data);
       setTechnicians(prev => prev.map(t => t.id === id ? { ...t, ...data } : t));
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Failed to update technician', 'error');
+      showToast(errMessage(e, 'Failed to update technician'), 'error');
       throw e;
     }
   };
@@ -44,7 +45,7 @@ export function useTechnicians() {
       setTechnicians(prev => prev.filter(t => t.id !== id));
       showToast('Technician removed');
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Failed to remove technician', 'error');
+      showToast(errMessage(e, 'Failed to remove technician'), 'error');
       throw e;
     }
   };

@@ -2,10 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getCustomers, createCustomer, updateCustomer, deleteCustomer } from '@/services/wireless/customers';
 import type { WCustomer } from '@/types/wireless';
 import { useToast } from '@/contexts/ToastContext';
-
-function errMessage(e: unknown): string {
-  return e instanceof Error ? e.message : 'Something went wrong';
-}
+import { errMessage } from '@/utils/errors';
 
 export function useWirelessCustomers() {
   const [customers, setCustomers] = useState<WCustomer[]>([]);

@@ -6,6 +6,7 @@ import { useRepairs } from '@/hooks/useRepairs';
 import { recordPayment } from '@/services/wireless/payments';
 import SearchDropdown, { type SearchItem } from '@/components/shared/SearchDropdown';
 import type { PaymentMethod } from '@/types/sale';
+import { errMessage } from '@/utils/errors';
 
 const PAYMENT_METHODS: PaymentMethod[] = ['Cash', 'Card', 'MoMo', 'Bank Transfer'];
 
@@ -74,7 +75,7 @@ export default function RecordPaymentModal({ onClose, onSaved }: { onClose: () =
       onSaved();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to record payment');
+      setError(errMessage(err, 'Failed to record payment'));
     } finally {
       setSaving(false);
     }

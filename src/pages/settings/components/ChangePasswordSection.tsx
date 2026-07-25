@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { changePassword } from '@/services/wireless/users';
 import { isSupabaseConfigured } from '@/services/supabase';
+import { errMessage } from '@/utils/errors';
 
 export default function ChangePasswordSection() {
   const [newPw, setNewPw] = useState('');
@@ -22,7 +23,7 @@ export default function ChangePasswordSection() {
       setNewPw('');
       setConfirmPw('');
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to update password');
+      setError(errMessage(e, 'Failed to update password'));
     } finally {
       setSaving(false);
     }

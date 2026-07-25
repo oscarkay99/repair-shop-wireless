@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { createWirelessUser } from '@/services/wireless/users';
 import { createTechnician } from '@/services/wireless/technicians';
+import { errMessage } from '@/utils/errors';
 
 const ROLE_OPTIONS = [
   { value: 'technician', label: 'Technician' },
@@ -70,7 +71,7 @@ export default function InviteUserModal({ open, onClose, onCreated }: Props) {
       setResult({ name: name.trim(), email: email.trim(), username: username.trim(), password: finalPassword, role });
       onCreated?.();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to create account');
+      setError(errMessage(e, 'Failed to create account'));
     } finally {
       setSaving(false);
     }
