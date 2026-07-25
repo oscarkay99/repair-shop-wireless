@@ -6,6 +6,7 @@ import { useParts } from '@/hooks/useParts';
 import type { Repair } from '@/types/repair';
 import type { WCustomer, Part } from '@/types/wireless';
 import CustomerPicker from '@/components/shared/CustomerPicker';
+import DevicePicker from '@/components/shared/DevicePicker';
 import { isCurrentlyUnavailable } from '@/utils/technicianAvailability';
 
 interface Props {
@@ -69,6 +70,11 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
   // this stops overwriting it even if device/issue keep changing.
   const [costAutoFilled, setCostAutoFilled] = useState(false);
   const lockJobType = !!defaultJobType && !initial;
+
+  const knownDevices = useMemo(
+    () => Array.from(new Set(repairs.map(r => r.device).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
+    [repairs]
+  );
 
   const matchingParts = useMemo(
     () => initial ? [] : findMatchingParts(parts, form.device, form.issue),
@@ -272,13 +278,13 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
                 label="Customer"
               />
             )}
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Device *</label>
-              <input required value={form.device} onChange={e => set('device', e.target.value)}
-                className="w-full text-sm rounded-xl px-3 py-2 outline-none"
-                style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }}
-                placeholder="e.g. Galaxy S24, MacBook Air..." />
-            </div>
+            <DevicePicker
+              value={form.device}
+              onChange={v => set('device', v)}
+              suggestions={knownDevices}
+              required
+              label="Device"
+            />
           </div>
           {customerError && (
             <p className="text-xs -mt-2" style={{ color: '#dc2626' }}>{customerError}</p>
