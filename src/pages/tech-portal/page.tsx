@@ -312,6 +312,7 @@ export default function TechPortalPage() {
               uploaderName={user?.name}
               canManageTickets={false}
               canUpdateProgress={true}
+              canDeleteTickets={false}
               onProceedToRepair={handleProceedToRepair}
               onCloseDiagnosisOnly={handleCloseDiagnosisOnly}
               onEdit={() => {}}

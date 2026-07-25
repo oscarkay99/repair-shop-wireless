@@ -118,7 +118,7 @@ function RepairCard({ repair, onClick, selected }: {
 
 // ── Detail Panel ──────────────────────────────────────────────────────────
 
-export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, onAddMedia, onRemoveMedia, uploaderName, canManageTickets, canUpdateProgress, onProceedToRepair, onCloseDiagnosisOnly, onEdit, onDelete }: {
+export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, onAddMedia, onRemoveMedia, uploaderName, canManageTickets, canUpdateProgress, canDeleteTickets, onProceedToRepair, onCloseDiagnosisOnly, onEdit, onDelete }: {
   repair: Repair;
   onClose: () => void;
   onUpdateStatus: (id: string, s: RepairStatus) => void;
@@ -129,6 +129,8 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   canManageTickets: boolean;
   /** Receptionists can create/edit/assign a ticket but never advance its status — that's reserved for the assigned technician and admin. */
   canUpdateProgress: boolean;
+  /** Deleting a ticket is admin-only — receptionist can create/edit but not delete. */
+  canDeleteTickets: boolean;
   onProceedToRepair: (id: string) => void;
   onCloseDiagnosisOnly: (id: string) => void;
   onEdit: () => void;
@@ -237,7 +239,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
               <Pencil className="w-3.5 h-3.5" />
             </button>
           )}
-          {canManageTickets && (
+          {canDeleteTickets && (
             <button onClick={onDelete} className="w-7 h-7 flex items-center justify-center rounded-lg"
               style={{ color: 'hsl(var(--muted-foreground))' }}
               title="Delete"
@@ -597,6 +599,7 @@ export default function RepairsBoard() {
   const { user } = useAuth();
   const canManageTickets = user?.role === 'admin' || user?.role === 'receptionist';
   const canUpdateProgress = user?.role === 'admin' || user?.role === 'technician';
+  const canDeleteTickets = user?.role === 'admin';
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all');
   const [techFilter, setTechFilter] = useState('all');
@@ -809,6 +812,7 @@ export default function RepairsBoard() {
             uploaderName={user?.name}
             canManageTickets={canManageTickets}
             canUpdateProgress={canUpdateProgress}
+            canDeleteTickets={canDeleteTickets}
             onProceedToRepair={handleProceedToRepair}
             onCloseDiagnosisOnly={handleCloseDiagnosisOnly}
             onEdit={() => setEditingRepair(selected)}
