@@ -307,7 +307,7 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
             </select>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div>
+            <div className={form.jobType === 'diagnosis_only' ? 'col-span-2' : ''}>
               <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Technician</label>
               <select value={form.technician} onChange={e => set('technician', e.target.value)}
                 className="w-full text-sm rounded-xl px-3 py-2 outline-none"
@@ -326,15 +326,19 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
                 })}
               </select>
             </div>
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                Quoted Repair Cost{costAutoFilled && <span style={{ color: 'hsl(var(--primary))' }}> · from inventory</span>}
-              </label>
-              <input value={form.cost} onChange={e => { setCostAutoFilled(false); set('cost', e.target.value); }}
-                className="w-full text-sm rounded-xl px-3 py-2 outline-none"
-                style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }}
-                placeholder="GHS 850 or TBD" />
-            </div>
+            {/* Repair cost isn't actionable yet for a diagnosis-only job — nothing
+                to quote until the diagnosis is done and a decision is made. */}
+            {form.jobType !== 'diagnosis_only' && (
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                  Quoted Repair Cost{costAutoFilled && <span style={{ color: 'hsl(var(--primary))' }}> · from inventory</span>}
+                </label>
+                <input value={form.cost} onChange={e => { setCostAutoFilled(false); set('cost', e.target.value); }}
+                  className="w-full text-sm rounded-xl px-3 py-2 outline-none"
+                  style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }}
+                  placeholder="GHS 850 or TBD" />
+              </div>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
