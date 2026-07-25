@@ -54,6 +54,7 @@ export function useNotifications() {
   const [toasts, setToasts] = useState<Notification[]>([]);
   const seenIds = useRef<Set<string>>(new Set());
   const readIds = useRef<Set<string>>(new Set());
+  const clearedIds = useRef<Set<string>>(new Set());
   const isFirstLoad = useRef(true);
 
   const poll = useCallback(async () => {
@@ -66,13 +67,17 @@ export function useNotifications() {
 
     const wasFirstLoad = isFirstLoad.current;
     const freshlySeen: Notification[] = [];
-    const mapped = rows.map(row => {
-      const firstTimeSeen = !seenIds.current.has(row.id);
-      if (firstTimeSeen) seenIds.current.add(row.id);
-      const notif = toNotification(row, wasFirstLoad || readIds.current.has(row.id));
-      if (firstTimeSeen && !wasFirstLoad) freshlySeen.push(notif);
-      return notif;
-    });
+    const mapped = rows
+      // A cleared notification stays cleared across polls — otherwise it'd
+      // just reappear 45s later since it's still sitting in the source data.
+      .filter(row => !clearedIds.current.has(row.id))
+      .map(row => {
+        const firstTimeSeen = !seenIds.current.has(row.id);
+        if (firstTimeSeen) seenIds.current.add(row.id);
+        const notif = toNotification(row, wasFirstLoad || readIds.current.has(row.id));
+        if (firstTimeSeen && !wasFirstLoad) freshlySeen.push(notif);
+        return notif;
+      });
 
     setNotifications(mapped);
     isFirstLoad.current = false;
@@ -110,7 +115,22 @@ export function useNotifications() {
     setToasts([]);
   }, []);
 
+  const clearNotification = useCallback((id: string) => {
+    clearedIds.current.add(id);
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  }, []);
+
+  const clearAllNotifications = useCallback(() => {
+    setNotifications(prev => {
+      prev.forEach(n => clearedIds.current.add(n.id));
+      return [];
+    });
+  }, []);
+
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  return { notifications, toasts, unreadCount, markAllRead, dismissToast, clearToasts };
+  return {
+    notifications, toasts, unreadCount, markAllRead, dismissToast, clearToasts,
+    clearNotification, clearAllNotifications,
+  };
 }

@@ -67,10 +67,10 @@ const typeBg: Record<Notification['type'], string> = {
   alert:   'hsl(354 60% 94%)',
 };
 
-function NotifRow({ n }: { n: Notification }) {
+function NotifRow({ n, onClear }: { n: Notification; onClear: (id: string) => void }) {
   return (
     <div
-      className="flex items-start gap-3 px-4 py-3 transition-colors"
+      className="group flex items-start gap-3 px-4 py-3 transition-colors"
       style={{ background: n.read ? 'transparent' : 'hsl(354 60% 98.5%)' }}
       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = n.read ? 'transparent' : 'hsl(354 60% 98.5%)'; }}
@@ -96,6 +96,14 @@ function NotifRow({ n }: { n: Notification }) {
       {!n.read && (
         <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-2" style={{ background: 'hsl(354 60% 45%)' }} />
       )}
+      <button
+        onClick={e => { e.stopPropagation(); onClear(n.id); }}
+        title="Clear"
+        className="flex-shrink-0 w-5 h-5 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+        style={{ color: 'hsl(var(--muted-foreground))' }}
+      >
+        <X className="w-3 h-3" />
+      </button>
     </div>
   );
 }
@@ -166,7 +174,7 @@ export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: T
   const [showAllNotifs, setShowAllNotifs] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const bellRef = useRef<HTMLDivElement>(null);
-  const { notifications, toasts, unreadCount, markAllRead, dismissToast, clearToasts } = useNotifications();
+  const { notifications, toasts, unreadCount, markAllRead, dismissToast, clearToasts, clearNotification, clearAllNotifications } = useNotifications();
   const upcomingBirthdays = useUpcomingBirthdays();
   const { theme, toggleTheme } = useTheme();
 
@@ -421,13 +429,23 @@ export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: T
                     )}
                   </div>
                   {notifications.length > 0 && (
-                    <button
-                      onClick={markAllRead}
-                      className="flex items-center gap-1 text-[11px] font-medium transition-opacity hover:opacity-70 text-brand-500"
-                    >
-                      <CheckCheck className="w-3 h-3" />
-                      Mark all read
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={markAllRead}
+                        className="flex items-center gap-1 text-[11px] font-medium transition-opacity hover:opacity-70 text-brand-500"
+                      >
+                        <CheckCheck className="w-3 h-3" />
+                        Mark all read
+                      </button>
+                      <button
+                        onClick={clearAllNotifications}
+                        className="flex items-center gap-1 text-[11px] font-medium transition-opacity hover:opacity-70"
+                        style={{ color: 'hsl(var(--muted-foreground))' }}
+                      >
+                        <X className="w-3 h-3" />
+                        Clear all
+                      </button>
+                    </div>
                   )}
                 </div>
 
@@ -452,7 +470,7 @@ export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: T
                   ) : (
                     <>
                       <div className="divide-y" style={{ borderColor: 'hsl(var(--border))' }}>
-                        {(showAllNotifs ? notifications : notifications.slice(0, NOTIF_PREVIEW_COUNT)).map(n => <NotifRow key={n.id} n={n} />)}
+                        {(showAllNotifs ? notifications : notifications.slice(0, NOTIF_PREVIEW_COUNT)).map(n => <NotifRow key={n.id} n={n} onClear={clearNotification} />)}
                       </div>
                       {notifications.length > NOTIF_PREVIEW_COUNT && (
                         <button
