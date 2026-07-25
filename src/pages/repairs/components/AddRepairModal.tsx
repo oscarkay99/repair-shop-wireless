@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useTechnicians } from '@/hooks/useTechnicians';
 import { useWirelessCustomers } from '@/hooks/useWirelessCustomers';
-import { usePriceList } from '@/hooks/usePriceList';
-import { findPrice } from '@/services/wireless/priceList';
+import { useParts } from '@/hooks/useParts';
 import type { Repair } from '@/types/repair';
-import type { WCustomer } from '@/types/wireless';
+import type { WCustomer, Part } from '@/types/wireless';
 import CustomerPicker from '@/components/shared/CustomerPicker';
 import { isCurrentlyUnavailable } from '@/utils/technicianAvailability';
 
@@ -21,6 +20,23 @@ interface Props {
 const ACTIVE_STATUSES = new Set<Repair['status']>([
   'received', 'diagnosis_paid', 'diagnosing', 'awaiting_approval', 'parts_pending', 'in_progress', 'ready',
 ]);
+
+const ISSUE_STOPWORDS = new Set(['replacement', 'repair', 'issue', 'with', 'from', 'broken', 'damaged']);
+
+/** Free-text device/issue vs. free-text part names — no exact schema to join
+ *  on, so this narrows by device-name substring first, then further by any
+ *  non-generic word shared with the issue text (falling back to the device-only
+ *  matches if that narrowing leaves nothing, rather than showing no suggestion
+ *  at all). */
+function findMatchingParts(parts: Part[], device: string, issue: string): Part[] {
+  const deviceQ = device.trim().toLowerCase();
+  if (deviceQ.length < 3) return [];
+  const deviceMatches = parts.filter(p => p.name.toLowerCase().includes(deviceQ));
+  const issueWords = issue.toLowerCase().split(/\s+/).filter(w => w.length > 3 && !ISSUE_STOPWORDS.has(w));
+  if (issueWords.length === 0) return deviceMatches;
+  const narrowed = deviceMatches.filter(p => issueWords.some(w => p.name.toLowerCase().includes(w)));
+  return narrowed.length > 0 ? narrowed : deviceMatches;
+}
 
 export default function AddRepairModal({ onSave, onClose, repairs, defaultJobType, initial, onUpdate }: Props) {
   const [form, setForm] = useState({
@@ -47,22 +63,26 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
   // create-new suggestion already does, just as an explicit up-front choice.
   const [customerMode, setCustomerMode] = useState<'existing' | 'new'>('existing');
   const { add: addCustomer } = useWirelessCustomers();
-  const { priceList } = usePriceList();
+  const { parts } = useParts();
   // Only auto-fills while the cost is still untouched (default 'TBD' or a
   // value we auto-filled ourselves) — once staff types their own number,
   // this stops overwriting it even if device/issue keep changing.
   const [costAutoFilled, setCostAutoFilled] = useState(false);
   const lockJobType = !!defaultJobType && !initial;
 
+  const matchingParts = useMemo(
+    () => initial ? [] : findMatchingParts(parts, form.device, form.issue),
+    [parts, form.device, form.issue, initial]
+  );
+
   useEffect(() => {
-    if (initial) return; // don't touch cost on an existing ticket being edited
-    const match = findPrice(priceList, form.device, form.issue);
-    if (match && (form.cost === 'TBD' || costAutoFilled)) {
-      set('cost', String(match.price));
+    if (initial || matchingParts.length !== 1) return;
+    if (form.cost === 'TBD' || costAutoFilled) {
+      set('cost', String(matchingParts[0].selling_price));
       setCostAutoFilled(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.device, form.issue, priceList]);
+  }, [matchingParts]);
 
   const activeLoadByName = repairs
     .filter(r => ACTIVE_STATUSES.has(r.status))
@@ -318,12 +338,27 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
             </div>
             <div>
               <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                Quoted Repair Cost{costAutoFilled && <span style={{ color: 'hsl(var(--primary))' }}> · from price list</span>}
+                Quoted Repair Cost{costAutoFilled && <span style={{ color: 'hsl(var(--primary))' }}> · from inventory</span>}
               </label>
               <input value={form.cost} onChange={e => { setCostAutoFilled(false); set('cost', e.target.value); }}
                 className="w-full text-sm rounded-xl px-3 py-2 outline-none"
                 style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }}
                 placeholder="GHS 850 or TBD" />
+              {matchingParts.length > 1 && (
+                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                  {matchingParts.slice(0, 4).map(p => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => { set('cost', String(p.selling_price)); setCostAutoFilled(true); }}
+                      className="text-[10px] px-2 py-1 rounded-lg"
+                      style={{ background: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))', border: '1px solid hsl(var(--border))' }}
+                    >
+                      {p.name} — GHS {p.selling_price.toFixed(2)}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">

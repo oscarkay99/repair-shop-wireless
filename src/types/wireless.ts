@@ -102,15 +102,6 @@ export interface Invoice {
   warranty_days?: number;
 }
 
-export interface PriceListEntry {
-  id: string;
-  device_model: string;
-  issue: string;
-  price: number;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface Payment {
   id: string;
   amount: number;
