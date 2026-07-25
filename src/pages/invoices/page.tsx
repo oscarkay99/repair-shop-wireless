@@ -148,6 +148,7 @@ function IssueInvoiceModal({ onSave, onClose }: {
         due_date: dueDate || undefined,
         notes: notes || undefined,
         created_by: user?.id,
+        warranty: false,
       }, parsedItems);
       onClose();
     } catch { /* error toast already shown by useInvoices */ }
@@ -657,7 +658,15 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
           )}
 
           <div className="text-center text-xs pt-6" style={{ borderTop: '1px solid #e0e0e0', color: '#999' }}>
-            Thank you for choosing {settings?.business_name || 'WIRELESS'}. All repairs are backed by a 90-day warranty.
+            {inv.warranty && inv.warranty_days ? (
+              <>
+                Thank you for choosing {settings?.business_name || 'WIRELESS'}. This repair is covered by a {inv.warranty_days}-day
+                warranty from the date of completion, covering the specific repair performed only — it does not cover physical
+                damage, water damage, or unrelated issues.
+              </>
+            ) : (
+              <>Thank you for choosing {settings?.business_name || 'WIRELESS'}.</>
+            )}
           </div>
         </div>
       </div>

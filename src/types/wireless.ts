@@ -96,6 +96,19 @@ export interface Invoice {
   created_by?: string;
   created_at: string;
   updated_at: string;
+  /** Snapshotted at creation from the linked ticket/Settings, not a live join —
+   *  so the invoice keeps showing the terms that applied when it was issued. */
+  warranty: boolean;
+  warranty_days?: number;
+}
+
+export interface PriceListEntry {
+  id: string;
+  device_model: string;
+  issue: string;
+  price: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Payment {

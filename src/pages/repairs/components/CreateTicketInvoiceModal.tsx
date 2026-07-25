@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import type { Repair } from '@/types/repair';
 import { useAuth } from '@/hooks/useAuth';
 import { useTaxSettings } from '@/hooks/useTaxSettings';
+import { useWirelessSettings } from '@/hooks/useWirelessSettings';
 import { createInvoice } from '@/services/wireless/invoices';
 import { errMessage } from '@/utils/errors';
 
@@ -22,6 +23,7 @@ export default function CreateTicketInvoiceModal({ repair, depositPaid, onClose,
 }) {
   const { user } = useAuth();
   const { taxEnabled, vatRate, nhilGetfundRate } = useTaxSettings();
+  const { settings } = useWirelessSettings();
   const [description, setDescription] = useState(`${repair.device} — ${repair.issue}`);
   const [amount, setAmount] = useState(String(repair.costNum ?? ''));
   const [saving, setSaving] = useState(false);
@@ -54,6 +56,8 @@ export default function CreateTicketInvoiceModal({ repair, depositPaid, onClose,
         status: amountPaid >= total ? 'paid' : amountPaid > 0 ? 'partial' : 'unpaid',
         notes: `Ticket ${repair.id}`,
         created_by: user?.id,
+        warranty: repair.warranty ?? false,
+        warranty_days: repair.warranty ? settings?.warranty_days : undefined,
       }, [
         { description, quantity: 1, unit_price: subtotal, total_price: subtotal },
       ]);

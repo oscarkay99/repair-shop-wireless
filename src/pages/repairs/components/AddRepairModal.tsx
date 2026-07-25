@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTechnicians } from '@/hooks/useTechnicians';
 import { useWirelessCustomers } from '@/hooks/useWirelessCustomers';
+import { usePriceList } from '@/hooks/usePriceList';
+import { findPrice } from '@/services/wireless/priceList';
 import type { Repair } from '@/types/repair';
 import type { WCustomer } from '@/types/wireless';
 import CustomerPicker from '@/components/shared/CustomerPicker';
@@ -45,7 +47,22 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
   // create-new suggestion already does, just as an explicit up-front choice.
   const [customerMode, setCustomerMode] = useState<'existing' | 'new'>('existing');
   const { add: addCustomer } = useWirelessCustomers();
+  const { priceList } = usePriceList();
+  // Only auto-fills while the cost is still untouched (default 'TBD' or a
+  // value we auto-filled ourselves) — once staff types their own number,
+  // this stops overwriting it even if device/issue keep changing.
+  const [costAutoFilled, setCostAutoFilled] = useState(false);
   const lockJobType = !!defaultJobType && !initial;
+
+  useEffect(() => {
+    if (initial) return; // don't touch cost on an existing ticket being edited
+    const match = findPrice(priceList, form.device, form.issue);
+    if (match && (form.cost === 'TBD' || costAutoFilled)) {
+      set('cost', String(match.price));
+      setCostAutoFilled(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.device, form.issue, priceList]);
 
   const activeLoadByName = repairs
     .filter(r => ACTIVE_STATUSES.has(r.status))
@@ -300,8 +317,10 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
               </select>
             </div>
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Quoted Repair Cost</label>
-              <input value={form.cost} onChange={e => set('cost', e.target.value)}
+              <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                Quoted Repair Cost{costAutoFilled && <span style={{ color: 'hsl(var(--primary))' }}> · from price list</span>}
+              </label>
+              <input value={form.cost} onChange={e => { setCostAutoFilled(false); set('cost', e.target.value); }}
                 className="w-full text-sm rounded-xl px-3 py-2 outline-none"
                 style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }}
                 placeholder="GHS 850 or TBD" />

@@ -53,6 +53,7 @@ const SEED: Invoice[] = [
     due_date: '2026-06-16',
     created_at: '2026-06-09T08:00:00Z',
     updated_at: '2026-06-09T08:00:00Z',
+    warranty: false,
   },
   {
     id: 'inv2',
@@ -78,6 +79,8 @@ const SEED: Invoice[] = [
     due_date: '2026-06-13',
     created_at: '2026-06-06T10:00:00Z',
     updated_at: '2026-06-10T14:00:00Z',
+    warranty: true,
+    warranty_days: 90,
   },
 ];
 let localStore = [...SEED];

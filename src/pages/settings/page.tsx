@@ -11,12 +11,14 @@ import TeamRolesSection from './components/TeamRolesSection';
 import SecuritySection from './components/SecuritySection';
 import UsersSection from './components/UsersSection';
 import ChangePasswordSection from './components/ChangePasswordSection';
+import PriceListSection from './components/PriceListSection';
 import AddRoleModal from './components/AddRoleModal';
 import InviteUserModal from './components/InviteUserModal';
 
 const allSections = [
   { id: 'branding', label: 'Branding', icon: 'ri-palette-line', adminOnly: false },
   { id: 'operations', label: 'Operations', icon: 'ri-settings-4-line', adminOnly: false },
+  { id: 'pricelist', label: 'Price List', icon: 'ri-price-tag-3-line', adminOnly: false },
   { id: 'team', label: 'Team & Roles', icon: 'ri-team-line', adminOnly: true },
   { id: 'users', label: 'Users', icon: 'ri-user-settings-line', adminOnly: true },
   { id: 'security', label: 'Security', icon: 'ri-shield-keyhole-line', adminOnly: false },
@@ -150,6 +152,8 @@ export default function SettingsPage() {
               currency={currency} setCurrency={markDirty(setCurrency)}
             />
           )}
+
+          {activeSection === 'pricelist' && <PriceListSection />}
 
           {activeSection === 'team' && isAdmin && (
             <TeamRolesSection
