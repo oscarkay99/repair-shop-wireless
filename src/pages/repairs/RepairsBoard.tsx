@@ -118,7 +118,7 @@ function RepairCard({ repair, onClick, selected }: {
 
 // ── Detail Panel ──────────────────────────────────────────────────────────
 
-export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, onAddMedia, onRemoveMedia, uploaderName, canManageTickets, onProceedToRepair, onCloseDiagnosisOnly, onEdit, onDelete }: {
+export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, onAddMedia, onRemoveMedia, uploaderName, canManageTickets, canUpdateProgress, onProceedToRepair, onCloseDiagnosisOnly, onEdit, onDelete }: {
   repair: Repair;
   onClose: () => void;
   onUpdateStatus: (id: string, s: RepairStatus) => void;
@@ -127,6 +127,8 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   onRemoveMedia: (id: string, mediaId: string) => Promise<unknown>;
   uploaderName?: string;
   canManageTickets: boolean;
+  /** Receptionists can create/edit/assign a ticket but never advance its status — that's reserved for the assigned technician and admin. */
+  canUpdateProgress: boolean;
   onProceedToRepair: (id: string) => void;
   onCloseDiagnosisOnly: (id: string) => void;
   onEdit: () => void;
@@ -479,38 +481,54 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
               Create Invoice
             </button>
           )}
-          <button
-            onClick={() => onProceedToRepair(repair.id)}
-            className="w-full h-10 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2"
-            style={{ background: '#0ea5e9' }}>
-            <ArrowRightCircle className="w-4 h-4" />
-            Reopen for Repair
-          </button>
-          <p className="text-[10px] text-center" style={{ color: 'hsl(var(--muted-foreground))' }}>
-            Customer changed their mind and wants to go ahead with the repair.
-          </p>
+          {canUpdateProgress ? (
+            <>
+              <button
+                onClick={() => onProceedToRepair(repair.id)}
+                className="w-full h-10 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2"
+                style={{ background: '#0ea5e9' }}>
+                <ArrowRightCircle className="w-4 h-4" />
+                Reopen for Repair
+              </button>
+              <p className="text-[10px] text-center" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                Customer changed their mind and wants to go ahead with the repair.
+              </p>
+            </>
+          ) : (
+            <p className="text-[11px] text-center" style={{ color: 'hsl(var(--muted-foreground))' }}>
+              Only a technician or admin can reopen this for repair.
+            </p>
+          )}
         </div>
       ) : isAwaitingDecision ? (
         <div className="px-5 py-4 space-y-2 shrink-0" style={{ borderTop: '1px solid hsl(var(--border))' }}>
-          <p className="text-[11px] text-center mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>
-            Diagnosis complete — what's next?
-          </p>
-          <button
-            onClick={() => onProceedToRepair(repair.id)}
-            className="w-full h-10 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2"
-            style={{ background: 'hsl(var(--primary))' }}>
-            <ArrowRightCircle className="w-4 h-4" />
-            Proceed to Repair
-          </button>
-          <button
-            onClick={() => onCloseDiagnosisOnly(repair.id)}
-            className="w-full h-9 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5"
-            style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}>
-            <XCircle className="w-3.5 h-3.5" />
-            Close — Diagnosis Only
-          </button>
+          {canUpdateProgress ? (
+            <>
+              <p className="text-[11px] text-center mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                Diagnosis complete — what's next?
+              </p>
+              <button
+                onClick={() => onProceedToRepair(repair.id)}
+                className="w-full h-10 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2"
+                style={{ background: 'hsl(var(--primary))' }}>
+                <ArrowRightCircle className="w-4 h-4" />
+                Proceed to Repair
+              </button>
+              <button
+                onClick={() => onCloseDiagnosisOnly(repair.id)}
+                className="w-full h-9 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5"
+                style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}>
+                <XCircle className="w-3.5 h-3.5" />
+                Close — Diagnosis Only
+              </button>
+            </>
+          ) : (
+            <p className="text-[11px] text-center" style={{ color: 'hsl(var(--muted-foreground))' }}>
+              Diagnosis complete — awaiting a technician or admin to proceed to repair or close it.
+            </p>
+          )}
         </div>
       ) : !isDone && (
         <div className="px-5 py-4 space-y-2 shrink-0" style={{ borderTop: '1px solid hsl(var(--border))' }}>
@@ -528,16 +546,22 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
               </button>
             )
           )}
-          <button
-            onClick={handleAdvanceClick}
-            disabled={uploading}
-            className="w-full h-10 rounded-xl text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-60"
-            style={requiredStage && !hasRequiredPhoto
-              ? { background: 'rgba(245,158,11,0.15)', color: '#b45309' }
-              : { background: 'hsl(var(--foreground))', color: 'hsl(var(--background))' }}>
-            {requiredStage && !hasRequiredPhoto ? <Camera className="w-4 h-4" /> : null}
-            {requiredStage && !hasRequiredPhoto ? 'Add Photo to Continue' : nextAction(repair.status, repair.jobType)}
-          </button>
+          {canUpdateProgress ? (
+            <button
+              onClick={handleAdvanceClick}
+              disabled={uploading}
+              className="w-full h-10 rounded-xl text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-60"
+              style={requiredStage && !hasRequiredPhoto
+                ? { background: 'rgba(245,158,11,0.15)', color: '#b45309' }
+                : { background: 'hsl(var(--foreground))', color: 'hsl(var(--background))' }}>
+              {requiredStage && !hasRequiredPhoto ? <Camera className="w-4 h-4" /> : null}
+              {requiredStage && !hasRequiredPhoto ? 'Add Photo to Continue' : nextAction(repair.status, repair.jobType)}
+            </button>
+          ) : (
+            <p className="text-[11px] text-center py-1" style={{ color: 'hsl(var(--muted-foreground))' }}>
+              Only a technician or admin can update this ticket's progress.
+            </p>
+          )}
           <button onClick={() => setAddingNote(true)}
             className="w-full h-9 rounded-xl text-xs font-semibold"
             style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
@@ -568,6 +592,7 @@ export default function RepairsBoard() {
   const { technicians } = useTechnicians();
   const { user } = useAuth();
   const canManageTickets = user?.role === 'admin' || user?.role === 'receptionist';
+  const canUpdateProgress = user?.role === 'admin' || user?.role === 'technician';
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all');
   const [techFilter, setTechFilter] = useState('all');
@@ -779,6 +804,7 @@ export default function RepairsBoard() {
             onRemoveMedia={removeMedia}
             uploaderName={user?.name}
             canManageTickets={canManageTickets}
+            canUpdateProgress={canUpdateProgress}
             onProceedToRepair={handleProceedToRepair}
             onCloseDiagnosisOnly={handleCloseDiagnosisOnly}
             onEdit={() => setEditingRepair(selected)}

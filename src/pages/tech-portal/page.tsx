@@ -311,6 +311,7 @@ export default function TechPortalPage() {
               onRemoveMedia={removeMedia}
               uploaderName={user?.name}
               canManageTickets={false}
+              canUpdateProgress={true}
               onProceedToRepair={handleProceedToRepair}
               onCloseDiagnosisOnly={handleCloseDiagnosisOnly}
               onEdit={() => {}}
