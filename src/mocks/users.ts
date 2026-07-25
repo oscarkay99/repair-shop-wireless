@@ -19,7 +19,7 @@ export const rolePermissions: Record<UserRole, string[]> = {
   admin:             ['Dashboard', 'Analytics', 'Audit Logs', 'Inventory', 'Payments', 'Customers', 'Tickets', 'Technicians', 'Invoices', 'Sales', 'Activity', 'Portal', 'Warranty', 'Delivery', 'Expenses', 'Reports', 'Loyalty', 'Team', 'Settings', 'Authentication', 'AI Studio', 'Users'],
   sales_manager:     ['Dashboard', 'Analytics', 'Inventory', 'Delivery', 'Payments', 'Customers', 'Invoices', 'Sales', 'Reports', 'Loyalty', 'Team'],
   technician:        ['Dashboard', 'Tickets', 'Warranty'],
-  receptionist:      ['Dashboard', 'Customers', 'Payments', 'Invoices'],
+  receptionist:      ['Dashboard', 'Customers', 'Payments', 'Invoices', 'Tickets'],
 };
 
 export const roleLabels: Record<UserRole, string> = {
