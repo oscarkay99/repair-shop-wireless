@@ -527,9 +527,6 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
             <div className="flex items-start gap-3">
               <img src="/wireless-logo.png" alt="" className="w-9 h-9 object-contain mt-0.5" />
               <div>
-                <div className="text-base font-bold tracking-wide" style={{ color: '#1e1e1e' }}>
-                  {(settings?.business_name || 'Wireless').toUpperCase()}
-                </div>
                 <div className="text-xs mt-0.5" style={{ color: '#888' }}>{settings?.tagline || 'Repair & Service System'}</div>
                 {settings?.address && <div className="text-[11px] mt-1.5" style={{ color: '#999' }}>{settings.address}</div>}
                 {settings?.phone && <div className="text-[11px]" style={{ color: '#999' }}>{settings.phone}</div>}

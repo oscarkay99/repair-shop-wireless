@@ -83,15 +83,13 @@ export async function buildInvoicePdf({ invoice, items, taxEnabled, vatRate, lev
   }
 
   // ── Header: logo + business block (left), title + invoice # (right) ──
+  // The logo image already carries the business name — a redundant text
+  // heading next to it just repeated it.
   if (logo) doc.addImage(logo, 'PNG', MARGIN, 14, 32, 32 * (261 / 1280));
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.setTextColor(30);
-  doc.text(businessName.toUpperCase(), MARGIN, 26);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
   doc.setTextColor(136);
-  let headerY = 30.5;
+  let headerY = 24;
   doc.text(tagline, MARGIN, headerY);
   doc.setTextColor(153);
   doc.setFontSize(7.5);
