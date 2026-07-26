@@ -11,8 +11,8 @@ import TeamRolesSection from './components/TeamRolesSection';
 import SecuritySection from './components/SecuritySection';
 import UsersSection from './components/UsersSection';
 import ChangePasswordSection from './components/ChangePasswordSection';
-import AddRoleModal from './components/AddRoleModal';
 import InviteUserModal from './components/InviteUserModal';
+import { getWirelessUsers, type WirelessProfile } from '@/services/wireless/users';
 
 const allSections = [
   { id: 'branding', label: 'Branding', icon: 'ri-palette-line', adminOnly: false },
@@ -23,11 +23,14 @@ const allSections = [
   { id: 'password', label: 'Change Password', icon: 'ri-lock-password-line', adminOnly: false },
 ];
 
-const teamRoles = [
-  { id: 'r1', name: 'Admin', members: 0, permissions: ['All access', 'Settings', 'Financial reports', 'Team management', 'Delete records'] },
-  { id: 'r2', name: 'Sales Manager', members: 0, permissions: ['Sales', 'Leads', 'Customers', 'Inventory view', 'Reports view', 'Team view'] },
-  { id: 'r4', name: 'Technician', members: 0, permissions: ['Tickets', 'Inventory view', 'Customers view'] },
-  { id: 'r5', name: 'Inventory Manager', members: 0, permissions: ['Inventory', 'Purchase Orders', 'Suppliers', 'Reports view'] },
+// Roles are a fixed 4-value set (see UserRole in useAuth.ts and the DB's
+// profiles_role_check constraint) — there is no custom-role system, so this
+// is just display metadata, not something an admin can add to.
+const roleMeta: { id: string; name: string; permissions: string[] }[] = [
+  { id: 'admin', name: 'Admin', permissions: ['All access', 'Settings', 'Financial reports', 'Team management', 'Delete records'] },
+  { id: 'sales_manager', name: 'Sales Manager', permissions: ['Sales', 'Leads', 'Customers', 'Inventory view', 'Reports view', 'Team view'] },
+  { id: 'technician', name: 'Technician', permissions: ['Tickets', 'Inventory view', 'Customers view'] },
+  { id: 'receptionist', name: 'Receptionist', permissions: ['Customers', 'Payments', 'Tickets', 'Invoices'] },
 ];
 
 export default function SettingsPage() {
@@ -54,9 +57,9 @@ export default function SettingsPage() {
   const [businessHoursMonFri, setBusinessHoursMonFri] = useState('8:00 AM – 8:00 PM');
   const [businessHoursSaturday, setBusinessHoursSaturday] = useState('9:00 AM – 7:00 PM');
   const [businessHoursSunday, setBusinessHoursSunday] = useState('Closed');
-  const [showAddRole, setShowAddRole] = useState(false);
-  const [editingRole, setEditingRole] = useState<{ id: string; name: string; permissions: string[] } | null>(null);
   const [showInvite, setShowInvite] = useState(false);
+  const [staff, setStaff] = useState<WirelessProfile[]>([]);
+  const [staffLoading, setStaffLoading] = useState(true);
 
   const applySettings = () => {
     if (!settings) return;
@@ -83,6 +86,23 @@ export default function SettingsPage() {
   };
 
   useEffect(applySettings, [settings]);
+
+  const loadStaff = () => {
+    setStaffLoading(true);
+    getWirelessUsers()
+      .then(setStaff)
+      .catch(() => setStaff([]))
+      .finally(() => setStaffLoading(false));
+  };
+
+  useEffect(() => {
+    if (activeSection === 'team') loadStaff();
+  }, [activeSection]);
+
+  const teamRoles = roleMeta.map(r => ({
+    ...r,
+    members: staff.filter(s => s.role === r.id).length,
+  }));
 
   // Every Branding/Operations field (other than Tax/VAT/Levy, which save
   // immediately on change) routes through this one `dirty` flag, so the save
@@ -154,8 +174,8 @@ export default function SettingsPage() {
           {activeSection === 'team' && isAdmin && (
             <TeamRolesSection
               roles={teamRoles}
-              onAddRole={() => { setEditingRole(null); setShowAddRole(true); }}
-              onEditRole={(role) => { setEditingRole(role); setShowAddRole(true); }}
+              members={staff}
+              loading={staffLoading}
               onInviteMember={() => setShowInvite(true)}
             />
           )}
@@ -200,8 +220,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <AddRoleModal open={showAddRole} onClose={() => { setShowAddRole(false); setEditingRole(null); }} editRole={editingRole} />
-      <InviteUserModal open={showInvite} onClose={() => setShowInvite(false)} />
+      <InviteUserModal open={showInvite} onClose={() => setShowInvite(false)} onCreated={loadStaff} />
     </AdminLayout>
   );
 }
