@@ -237,7 +237,7 @@ export async function buildInvoicePdf({ invoice, items, taxEnabled, vatRate, lev
   doc.setFontSize(8);
   doc.setTextColor(153);
   const footerText = invoice.warranty && invoice.warranty_days
-    ? `Thank you for choosing ${businessName}. This repair is covered by a ${invoice.warranty_days}-day warranty from the date of completion, covering the specific repair performed only — it does not cover physical damage, water damage, or unrelated issues.`
+    ? `Thank you for choosing ${businessName}. This repair is covered by a ${invoice.warranty_days}-day warranty from the date of completion, covering the specific repair performed only, it does not cover physical damage, water damage, or unrelated issues.`
     : `Thank you for choosing ${businessName}.`;
   const footerWrapped = doc.splitTextToSize(footerText, RIGHT_X - MARGIN - 20);
   doc.text(footerWrapped, PAGE_W / 2, noteY + 12, { align: 'center' });

@@ -666,7 +666,7 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
             {inv.warranty && inv.warranty_days ? (
               <>
                 Thank you for choosing {settings?.business_name || 'WIRELESS'}. This repair is covered by a {inv.warranty_days}-day
-                warranty from the date of completion, covering the specific repair performed only — it does not cover physical
+                warranty from the date of completion, covering the specific repair performed only, it does not cover physical
                 damage, water damage, or unrelated issues.
               </>
             ) : (

@@ -125,7 +125,7 @@ export async function buildTicketReceiptPdf({ repair, warrantyDays, settings }: 
   // the ticket's own "Under Warranty" checkbox, just on a period actually
   // being configured in Settings.
   const footerText = warrantyDays
-    ? `Thank you for choosing ${businessName}. This repair is covered by a ${warrantyDays}-day warranty from the date of completion, covering the specific repair performed only — it does not cover physical damage, water damage, or unrelated issues.`
+    ? `Thank you for choosing ${businessName}. This repair is covered by a ${warrantyDays}-day warranty from the date of completion, covering the specific repair performed only, it does not cover physical damage, water damage, or unrelated issues.`
     : `Thank you for choosing ${businessName}.`;
   const footerWrapped = doc.splitTextToSize(footerText, RIGHT_X - MARGIN - 20);
   doc.text(footerWrapped, PAGE_W / 2, noteY + 8, { align: 'center' });
