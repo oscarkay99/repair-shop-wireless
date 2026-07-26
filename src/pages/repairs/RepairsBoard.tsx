@@ -10,7 +10,7 @@ import Pagination from '@/components/shared/Pagination';
 import DateRangePicker, { type DateRange } from '@/components/shared/DateRangePicker';
 import {
   X, Clock, Shield, Plus, Pencil, Trash2, Camera, Video, AlertCircle, Loader2,
-  CheckCircle2, Scissors, Stethoscope, ArrowRightCircle, UserX, XCircle, Zap,
+  CheckCircle2, Scissors, Stethoscope, ArrowRightCircle, UserX, XCircle, Zap, Printer,
 } from 'lucide-react';
 import type { Repair, RepairStatus, RepairMediaStage, RepairMediaUploadInput } from '@/types/repair';
 import type { Payment } from '@/types/wireless';
@@ -23,6 +23,8 @@ import { formatDate } from '@/utils/date';
 import { getPaymentsForTicket } from '@/services/wireless/payments';
 import { getInvoiceForTicket } from '@/services/wireless/invoices';
 import { errMessage } from '@/utils/errors';
+import { useWirelessSettings } from '@/hooks/useWirelessSettings';
+import { downloadTicketReceiptPdf } from '@/utils/ticketReceiptPdf';
 
 const PAGE_SIZE = 12;
 
@@ -155,6 +157,15 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   const isAwaitingDecision = repair.status === 'awaiting_approval';
   const isClosedDiagnosis = repair.status === 'diagnosis_only_closed';
   const media = repair.media ?? [];
+  const { settings } = useWirelessSettings();
+  // Only meaningful once there's actually a finished job to hand back —
+  // matches the same "ready or later" window Create Invoice already uses.
+  const canPrintReceipt = ['ready', 'completed', 'diagnosis_only_closed'].includes(repair.status);
+  const handlePrintReceipt = () => downloadTicketReceiptPdf({
+    repair,
+    warrantyDays: repair.warranty ? settings?.warranty_days : undefined,
+    settings: settings ?? undefined,
+  });
 
   const upcomingStatus = nextStatus(repair.status, repair.jobType);
   const requiredStage = requiredMediaStageForAdvance(repair.status, upcomingStatus);
@@ -231,6 +242,15 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
         style={{ borderBottom: '1px solid hsl(var(--border))' }}>
         <span className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>Ticket Details</span>
         <div className="flex items-center gap-1.5">
+          {canPrintReceipt && (
+            <button onClick={handlePrintReceipt} className="w-7 h-7 flex items-center justify-center rounded-lg"
+              style={{ color: 'hsl(var(--muted-foreground))' }}
+              title="Print pickup receipt"
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}>
+              <Printer className="w-3.5 h-3.5" />
+            </button>
+          )}
           {canManageTickets && (
             <button onClick={onEdit} className="w-7 h-7 flex items-center justify-center rounded-lg"
               style={{ color: 'hsl(var(--muted-foreground))' }}
