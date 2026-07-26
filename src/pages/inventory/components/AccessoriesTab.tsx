@@ -1,6 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useAccessoryStore } from '@/hooks/useAccessoryStore';
+import { getProductsPage } from '@/services/wireless/accessoryStore';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import SearchDropdown from '@/components/shared/SearchDropdown';
 import Pagination from '@/components/shared/Pagination';
 import { Pencil, Trash2, X } from 'lucide-react';
@@ -156,26 +158,32 @@ interface Props {
 }
 
 export default function AccessoriesTab({ showAddModal, onCloseAddModal }: Props) {
-  const { products, loading, addProduct, patchProduct, removeProduct } = useAccessoryStore();
+  const { addProduct, patchProduct, removeProduct } = useAccessoryStore();
   const [query, setQuery] = useState('');
+  const debouncedQuery = useDebouncedValue(query, 300);
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<AccessoryProduct | null>(null);
 
-  useEffect(() => { setPage(1); }, [query]);
+  const [paged, setPaged] = useState<AccessoryProduct[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return products;
-    return products.filter(p =>
-      p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
-  }, [products, query]);
+  useEffect(() => { setPage(1); }, [debouncedQuery]);
 
-  const paged = useMemo(() =>
-    filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-  [filtered, page]);
+  const reload = () => {
+    setLoading(true);
+    return getProductsPage({ page, pageSize: PAGE_SIZE, search: debouncedQuery })
+      .then(({ products: rows, total: count }) => { setPaged(rows); setTotal(count); })
+      .finally(() => setLoading(false));
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { reload(); }, [page, debouncedQuery]);
+
+  const filtered = paged;
 
   const handleDelete = (p: AccessoryProduct) => {
-    if (confirm(`Delete "${p.name}"?`)) removeProduct(p.id);
+    if (confirm(`Delete "${p.name}"?`)) removeProduct(p.id).then(reload);
   };
 
   return (
@@ -270,17 +278,17 @@ export default function AccessoriesTab({ showAddModal, onCloseAddModal }: Props)
 
       <Pagination
         page={page}
-        pageCount={Math.ceil(filtered.length / PAGE_SIZE)}
-        total={filtered.length}
+        pageCount={Math.max(1, Math.ceil(total / PAGE_SIZE))}
+        total={total}
         pageSize={PAGE_SIZE}
         onPageChange={setPage}
       />
 
-      {showAddModal && <AccessoryModal onSave={addProduct} onClose={onCloseAddModal} />}
+      {showAddModal && <AccessoryModal onSave={data => addProduct(data).then(reload)} onClose={onCloseAddModal} />}
       {editing && (
         <AccessoryModal
           initial={editing}
-          onSave={data => patchProduct(editing.id, data)}
+          onSave={data => patchProduct(editing.id, data).then(reload)}
           onClose={() => setEditing(null)}
         />
       )}

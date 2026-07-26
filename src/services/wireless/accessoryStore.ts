@@ -145,6 +145,43 @@ export async function getProducts(): Promise<AccessoryProduct[]> {
   }
 }
 
+export interface ProductsPageQuery {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+}
+
+export interface ProductsPageResult {
+  products: AccessoryProduct[];
+  total: number;
+}
+
+// Additive, separate from getProducts() — that one is relied on elsewhere
+// (Sales page's product picker, dashboards) for the *full* accessory catalog.
+// This is only for the Accessories tab's own paginated table.
+export async function getProductsPage(query: ProductsPageQuery = {}): Promise<ProductsPageResult> {
+  const { page = 1, pageSize = 10, search } = query;
+  if (!isSupabaseConfigured) {
+    return { products: productStore.slice((page - 1) * pageSize, page * pageSize), total: productStore.length };
+  }
+
+  let q = db
+    .from('parts')
+    .select('*', { count: 'exact' })
+    .in('category', ACCESSORY_CATEGORIES)
+    .order('name');
+
+  if (search?.trim()) {
+    const term = `%${search.trim()}%`;
+    q = q.or(`name.ilike.${term},sku.ilike.${term},category.ilike.${term},compatible_with.ilike.${term}`);
+  }
+
+  const from = (page - 1) * pageSize;
+  const { data, error, count } = await q.range(from, from + pageSize - 1);
+  if (error) throw error;
+  return { products: ((data as PartRow[] | null) ?? []).map(toProduct), total: count ?? 0 };
+}
+
 export async function createProduct(input: Omit<AccessoryProduct, 'id' | 'created_at'>): Promise<AccessoryProduct> {
   if (isSupabaseConfigured) {
     const { data, error } = await db.from('parts').insert({

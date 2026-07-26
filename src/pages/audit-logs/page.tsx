@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import AdminLayout from '@/components/feature/AdminLayout';
 import { getAuditLogs, type AuditLogRecord } from '@/services/wireless/auditLogs';
 import { errMessage } from '@/utils/errors';
-import { usePagination } from '@/hooks/usePagination';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import Pagination from '@/components/shared/Pagination';
+
+const PAGE_SIZE = 25;
 
 const statusTone: Record<string, string> = {
   success: 'bg-emerald-50 text-emerald-700 border-emerald-100',
@@ -41,6 +43,7 @@ function previewJson(value: unknown) {
 
 export default function AuditLogsPage() {
   const [logs, setLogs] = useState<AuditLogRecord[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -48,6 +51,15 @@ export default function AuditLogsPage() {
   const [sourceFilter, setSourceFilter] = useState('all');
   const [layerFilter, setLayerFilter] = useState('all');
   const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const debouncedSearch = useDebouncedValue(search, 300);
+
+  // Status/source/layer are currently constant for every real row (every
+  // audit_logs entry comes from the same DB-trigger capture, always
+  // 'success'/'backend'/'database') — filtering them client-side over just
+  // the loaded page is equivalent to filtering the full table today. Search
+  // and pagination are the two things that actually need server support.
+  useEffect(() => { setPage(1); }, [debouncedSearch]);
 
   useEffect(() => {
     let active = true;
@@ -57,9 +69,10 @@ export default function AuditLogsPage() {
       setError(null);
 
       try {
-        const records = await getAuditLogs();
+        const { logs: records, total: count } = await getAuditLogs({ page, pageSize: PAGE_SIZE, search: debouncedSearch });
         if (active) {
           setLogs(records);
+          setTotal(count);
           setSelectedLogId(records[0]?.id ?? null);
         }
       } catch (err) {
@@ -75,34 +88,23 @@ export default function AuditLogsPage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [page, debouncedSearch]);
 
   const filteredLogs = useMemo(() => {
-    const query = search.trim().toLowerCase();
-
     return logs.filter((log) => {
-      const matchesSearch = !query || [
-        log.action,
-        log.entityType,
-        log.entityId,
-        log.actorEmail,
-        log.actorName,
-        log.summary,
-      ].some((value) => value?.toLowerCase().includes(query));
-
       const matchesStatus = statusFilter === 'all' || log.status === statusFilter;
       const matchesSource = sourceFilter === 'all' || log.source === sourceFilter;
       const matchesLayer = layerFilter === 'all' || log.layer === layerFilter;
-
-      return matchesSearch && matchesStatus && matchesSource && matchesLayer;
+      return matchesStatus && matchesSource && matchesLayer;
     });
-  }, [layerFilter, logs, search, sourceFilter, statusFilter]);
+  }, [layerFilter, logs, sourceFilter, statusFilter]);
 
-  const { paginated: pagedLogs, page, setPage, totalPages, total, from, to } = usePagination(filteredLogs, 25, `${search}|${statusFilter}|${sourceFilter}|${layerFilter}`);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const pagedLogs = filteredLogs;
   const selectedLog = pagedLogs.find((log) => log.id === selectedLogId) ?? pagedLogs[0] ?? null;
 
   const summaryStats = [
-    { label: 'Total Events', value: String(logs.length), icon: 'ri-file-list-3-line', accent: 'bg-[#EC0118]' },
+    { label: 'Total Events', value: String(total), icon: 'ri-file-list-3-line', accent: 'bg-[#EC0118]' },
     { label: 'Failed Actions', value: String(logs.filter((log) => log.status === 'failure').length), icon: 'ri-error-warning-line', accent: 'bg-red-500' },
     { label: 'Frontend Events', value: String(logs.filter((log) => log.source === 'frontend').length), icon: 'ri-cursor-line', accent: 'bg-sky-500' },
     { label: 'Backend Events', value: String(logs.filter((log) => log.source === 'backend').length), icon: 'ri-database-2-line', accent: 'bg-amber-500' },
@@ -172,7 +174,7 @@ export default function AuditLogsPage() {
           <div className="px-5 py-4 border-b border-[hsl(var(--border))] flex items-center justify-between">
             <div>
               <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">Recent Audit Trail</h3>
-              <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">{filteredLogs.length} matching events</p>
+              <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">{total} matching events</p>
             </div>
           </div>
 
@@ -233,7 +235,7 @@ export default function AuditLogsPage() {
                 );
               })}
             </div>
-            <Pagination page={page} pageCount={totalPages} total={total} pageSize={25} onPageChange={setPage} />
+            <Pagination page={page} pageCount={totalPages} total={total} pageSize={PAGE_SIZE} onPageChange={setPage} />
             </>
           )}
         </div>

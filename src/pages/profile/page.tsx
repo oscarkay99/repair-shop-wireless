@@ -5,7 +5,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { roleLabels, roleColors, rolePermissions } from '@/mocks/users';
 import { getAuditLogs, type AuditLogRecord } from '@/services/wireless/auditLogs';
 import { getMyProfile, updateMyProfile, changePassword as changePasswordReal } from '@/services/wireless/users';
-import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/shared/Pagination';
 import { errMessage } from '@/utils/errors';
 
@@ -19,6 +18,8 @@ export default function ProfilePage() {
 
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'activity'>('profile');
   const [auditLogs, setAuditLogs] = useState<AuditLogRecord[]>([]);
+  const [auditTotal, setAuditTotal] = useState(0);
+  const [auditPage, setAuditPage] = useState(1);
   const [auditLoading, setAuditLoading] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -43,11 +44,14 @@ export default function ProfilePage() {
   useEffect(() => {
     if (activeTab === 'activity') {
       setAuditLoading(true);
-      getAuditLogs(200).then(logs => { setAuditLogs(logs); setAuditLoading(false); }).catch(() => setAuditLoading(false));
+      getAuditLogs({ page: auditPage, pageSize: ACTIVITY_PAGE_SIZE })
+        .then(({ logs, total }) => { setAuditLogs(logs); setAuditTotal(total); })
+        .finally(() => setAuditLoading(false));
     }
-  }, [activeTab]);
+  }, [activeTab, auditPage]);
 
-  const { paginated: pagedAuditLogs, page: auditPage, setPage: setAuditPage, totalPages: auditTotalPages, total: auditTotal } = usePagination(auditLogs, ACTIVITY_PAGE_SIZE);
+  const pagedAuditLogs = auditLogs;
+  const auditTotalPages = Math.max(1, Math.ceil(auditTotal / ACTIVITY_PAGE_SIZE));
 
   useEffect(() => {
     getMyProfile().then(profile => {
@@ -437,7 +441,7 @@ export default function ProfilePage() {
             <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] overflow-hidden">
               <div className="p-5 border-b border-[hsl(var(--border))] flex items-center justify-between">
                 <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">System Activity Log</h3>
-                <span className="text-xs text-[hsl(var(--muted-foreground))]">All roles · Last 100 events</span>
+                <span className="text-xs text-[hsl(var(--muted-foreground))]">All roles · {auditTotal} event{auditTotal !== 1 ? 's' : ''}</span>
               </div>
               <div className="divide-y divide-[hsl(var(--border))]">
                 {auditLoading ? (
@@ -445,7 +449,7 @@ export default function ProfilePage() {
                     <i className="ri-loader-4-line text-2xl text-[hsl(var(--muted-foreground))] mb-2 animate-spin" />
                     <p className="text-xs text-[hsl(var(--muted-foreground))]">Loading activity…</p>
                   </div>
-                ) : auditLogs.length === 0 ? (
+                ) : auditTotal === 0 ? (
                   <div className="flex flex-col items-center justify-center py-10 text-center">
                     <i className="ri-history-line text-2xl text-[hsl(var(--muted-foreground))] mb-2" />
                     <p className="text-xs text-[hsl(var(--muted-foreground))]">No activity recorded yet</p>
@@ -480,7 +484,7 @@ export default function ProfilePage() {
                   );
                 })}
               </div>
-              {!auditLoading && auditLogs.length > 0 && (
+              {!auditLoading && auditTotal > 0 && (
                 <div className="px-5 pb-4">
                   <Pagination page={auditPage} pageCount={auditTotalPages} total={auditTotal} pageSize={ACTIVITY_PAGE_SIZE} onPageChange={setAuditPage} />
                 </div>

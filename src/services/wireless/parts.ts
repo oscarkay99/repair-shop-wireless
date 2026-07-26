@@ -39,6 +39,44 @@ export async function getParts(): Promise<Part[]> {
   }
 }
 
+export interface PartsPageQuery {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+}
+
+export interface PartsPageResult {
+  parts: Part[];
+  total: number;
+}
+
+// Additive, separate from getParts() — that one is relied on elsewhere (the
+// repair-ticket part picker, dashboard low-stock widget) for the *full*
+// catalog. This is only for the Inventory list view's own paginated table.
+export async function getPartsPage(query: PartsPageQuery = {}): Promise<PartsPageResult> {
+  const { page = 1, pageSize = 10, search } = query;
+  if (!isSupabaseConfigured) {
+    const rows = localStore.filter(isRepairPart);
+    return { parts: rows.slice((page - 1) * pageSize, page * pageSize), total: rows.length };
+  }
+
+  let q = db
+    .from('parts')
+    .select('*', { count: 'exact' })
+    .not('category', 'in', `(${ACCESSORY_CATEGORIES.map(c => `"${c}"`).join(',')})`)
+    .order('name');
+
+  if (search?.trim()) {
+    const term = `%${search.trim()}%`;
+    q = q.or(`name.ilike.${term},sku.ilike.${term},category.ilike.${term},supplier.ilike.${term}`);
+  }
+
+  const from = (page - 1) * pageSize;
+  const { data, error, count } = await q.range(from, from + pageSize - 1);
+  if (error) throw error;
+  return { parts: (data as Part[] | null) ?? [], total: count ?? 0 };
+}
+
 export async function createPart(input: Omit<Part, 'id' | 'created_at' | 'updated_at'>): Promise<Part> {
   if (isSupabaseConfigured) {
     const { data, error } = await db.from('parts').insert(input).select().single();

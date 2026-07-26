@@ -1,12 +1,17 @@
 import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { usePageTitle } from '@/context/PageTitleContext';
-import { useInvoices } from '@/hooks/useInvoices';
 import { useWirelessCustomers } from '@/hooks/useWirelessCustomers';
 import { useAuth } from '@/hooks/useAuth';
 import { useWirelessSettings } from '@/hooks/useWirelessSettings';
 import { useTaxSettings } from '@/hooks/useTaxSettings';
-import { getInvoiceItems, sendInvoiceEmail } from '@/services/wireless/invoices';
+import { useToast } from '@/contexts/ToastContext';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import {
+  getInvoiceItems, sendInvoiceEmail, createInvoice, patchInvoice,
+  getInvoicesPage, getInvoiceTotals, type InvoiceTotals,
+} from '@/services/wireless/invoices';
+import { recordPayment } from '@/services/wireless/payments';
 import SearchDropdown from '@/components/shared/SearchDropdown';
 import Pagination from '@/components/shared/Pagination';
 import DateRangePicker, { type DateRange } from '@/components/shared/DateRangePicker';
@@ -680,19 +685,78 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
 
 export default function InvoicesPage() {
   const { setPageTitle } = usePageTitle();
-  const { invoices, loading, add, markPaid, patch } = useInvoices();
+  const { showToast } = useToast();
   const { user } = useAuth();
   const [query, setQuery] = useState('');
+  const debouncedQuery = useDebouncedValue(query, 300);
   const [dateRange, setDateRange] = useState<DateRange>({ from: '', to: '' });
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showIssue, setShowIssue] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
 
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [totals, setTotals] = useState<InvoiceTotals>({ total: 0, collected: 0, outstanding: 0, overdue: 0 });
+
   const canIssue = user?.role === 'admin' || user?.role === 'sales_manager' || user?.role === 'receptionist';
   const canEdit  = user?.role === 'admin' || user?.role === 'sales_manager' || user?.role === 'receptionist';
 
-  useEffect(() => { setPage(1); }, [query, dateRange]);
+  useEffect(() => { setPage(1); }, [debouncedQuery, dateRange]);
+
+  const reloadList = () => {
+    setLoading(true);
+    return getInvoicesPage({ page, pageSize: PAGE_SIZE, search: debouncedQuery, dateFrom: dateRange.from || undefined, dateTo: dateRange.to || undefined })
+      .then(({ invoices: rows, total: count }) => { setInvoices(rows); setTotal(count); })
+      .finally(() => setLoading(false));
+  };
+
+  const reloadTotals = () => getInvoiceTotals().then(setTotals).catch(() => {});
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { reloadList(); }, [page, debouncedQuery, dateRange]);
+  useEffect(() => { reloadTotals(); }, []);
+
+  const add = async (...args: Parameters<typeof createInvoice>) => {
+    try {
+      const inv = await createInvoice(...args);
+      showToast('Invoice created');
+      await Promise.all([reloadList(), reloadTotals()]);
+      return inv;
+    } catch (e) {
+      showToast(`Failed to create invoice: ${errMessage(e)}`, 'error');
+      throw e;
+    }
+  };
+
+  const patch = async (id: string, data: Parameters<typeof patchInvoice>[1]) => {
+    try {
+      await patchInvoice(id, data);
+      setInvoices(prev => prev.map(i => i.id === id ? { ...i, ...data } : i));
+      showToast('Invoice updated');
+      await reloadTotals();
+    } catch (e) {
+      showToast(`Failed to update invoice: ${errMessage(e)}`, 'error');
+      throw e;
+    }
+  };
+
+  const markPaid = async (id: string, amount: number, method: PaymentMethod, customerName?: string) => {
+    try {
+      await recordPayment({ amount, method, invoiceId: id, customerName });
+      setInvoices(prev => prev.map(i => {
+        if (i.id !== id) return i;
+        const amount_paid = i.amount_paid + amount;
+        return { ...i, amount_paid, status: amount_paid >= i.total ? 'paid' : 'partial', payment_method: method };
+      }));
+      showToast('Invoice marked paid');
+      await reloadTotals();
+    } catch (e) {
+      showToast(`Failed to mark invoice paid: ${errMessage(e)}`, 'error');
+      throw e;
+    }
+  };
 
   const selected = selectedId ? invoices.find(i => i.id === selectedId) ?? null : null;
 
@@ -707,34 +771,16 @@ export default function InvoicesPage() {
     } else {
       setPageTitle({
         title: 'Invoices',
-        subtitle: `${invoices.length} invoice${invoices.length !== 1 ? 's' : ''}`,
+        subtitle: `${total} invoice${total !== 1 ? 's' : ''}`,
         hideDefaultAction: true,
         ...(canIssue ? { action: { label: 'New Invoice', onClick: () => setShowIssue(true) } } : {}),
       });
     }
     return () => setPageTitle({ title: 'Dashboard' });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setPageTitle, selected?.id, selected?.status, invoices.length, canIssue]);
+  }, [setPageTitle, selected?.id, selected?.status, total, canIssue]);
 
-  const filtered = useMemo(() => {
-    const q = query.toLowerCase();
-    const from = dateRange.from ? new Date(dateRange.from + 'T00:00') : null;
-    const to   = dateRange.to   ? new Date(dateRange.to   + 'T23:59:59') : null;
-    return invoices.filter(inv => {
-      if (q && !inv.invoice_number.toLowerCase().includes(q)
-            && !(inv.customer?.name ?? '').toLowerCase().includes(q)) return false;
-      if (from || to) {
-        const d = new Date(inv.created_at);
-        if (from && d < from) return false;
-        if (to   && d > to)   return false;
-      }
-      return true;
-    });
-  }, [invoices, query, dateRange]);
-
-  const paged = useMemo(() =>
-    filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-  [filtered, page]);
+  const paged = invoices;
 
   if (selected) {
     return (
@@ -757,26 +803,21 @@ export default function InvoicesPage() {
     );
   }
 
-  const paid        = invoices.filter(i => i.status === 'paid');
-  const outstanding = invoices.filter(i => i.status !== 'paid' && i.status !== 'cancelled');
-  const collected   = paid.reduce((s, i) => s + i.amount_paid, 0);
-  const outstandingAmt = outstanding.reduce((s, i) => s + (i.total - i.amount_paid), 0);
-
   return (
     <div className="space-y-5">
       {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-xl p-5" style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
           <div className="text-xs mb-2" style={{ color: 'hsl(var(--muted-foreground))' }}>Total Invoices</div>
-          <div className="text-2xl font-bold" style={{ color: 'hsl(var(--foreground))' }}>{invoices.length}</div>
+          <div className="text-2xl font-bold" style={{ color: 'hsl(var(--foreground))' }}>{total}</div>
         </div>
         <div className="rounded-xl p-5" style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
           <div className="text-xs mb-2" style={{ color: 'hsl(var(--muted-foreground))' }}>Revenue Collected</div>
-          <div className="text-2xl font-bold" style={{ color: '#22c55e' }}>{fmt(collected)}</div>
+          <div className="text-2xl font-bold" style={{ color: '#22c55e' }}>{fmt(totals.collected)}</div>
         </div>
         <div className="rounded-xl p-5" style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
           <div className="text-xs mb-2" style={{ color: 'hsl(var(--muted-foreground))' }}>Outstanding</div>
-          <div className="text-2xl font-bold" style={{ color: '#f59e0b' }}>{fmt(outstandingAmt)}</div>
+          <div className="text-2xl font-bold" style={{ color: '#f59e0b' }}>{fmt(totals.outstanding)}</div>
         </div>
       </div>
 
@@ -786,7 +827,7 @@ export default function InvoicesPage() {
           <SearchDropdown
             query={query}
             onQueryChange={setQuery}
-            suggestions={query.trim() ? filtered.map(inv => {
+            suggestions={query.trim() ? invoices.map(inv => {
               const BADGE: Record<string, { bg: string; color: string }> = {
                 paid:    { bg: 'rgba(34,197,94,0.12)',  color: '#22c55e' },
                 unpaid:  { bg: 'rgba(245,158,11,0.15)', color: '#f59e0b' },
@@ -863,8 +904,8 @@ export default function InvoicesPage() {
 
       <Pagination
         page={page}
-        pageCount={Math.ceil(filtered.length / PAGE_SIZE)}
-        total={filtered.length}
+        pageCount={Math.max(1, Math.ceil(total / PAGE_SIZE))}
+        total={total}
         pageSize={PAGE_SIZE}
         onPageChange={setPage}
       />

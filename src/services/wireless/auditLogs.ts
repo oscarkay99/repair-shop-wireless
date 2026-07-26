@@ -57,14 +57,53 @@ function toRecord(row: AuditLogRow): AuditLogRecord {
   };
 }
 
-export async function getAuditLogs(limit = 200): Promise<AuditLogRecord[]> {
-  const { data, error } = await db
+// Sentinel for "no actor" rows (automated/trigger-only events where
+// actor_name is genuinely NULL in the DB) — the UI displays these as
+// "System", which isn't a real value stored anywhere to filter by directly.
+export const SYSTEM_ACTOR = '__system__';
+
+export interface AuditLogQuery {
+  page?: number;
+  pageSize?: number;
+  /** Free-text search — matches against the raw action/table/actor/entity
+   *  columns server-side. Not a perfect match for the human-readable
+   *  summary shown in the UI (that's generated client-side), but it
+   *  searches the *entire* table instead of whatever page happened to be
+   *  loaded, which matters more than an exact text match. */
+  search?: string;
+  actorName?: string;
+}
+
+export interface AuditLogPage {
+  logs: AuditLogRecord[];
+  total: number;
+}
+
+// Was previously a hard `.limit(200)` with no offset — anything past the
+// 200 most recent rows was silently unreachable (not just slow to load,
+// genuinely invisible: no filter, search, or page control could ever surface
+// it). This now does real range-based pagination so older history stays
+// reachable no matter how large the table grows.
+export async function getAuditLogs(query: AuditLogQuery = {}): Promise<AuditLogPage> {
+  const { page = 1, pageSize = 50, search, actorName } = query;
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  let q = db
     .from('audit_logs')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(limit);
+    .select('*', { count: 'exact' })
+    .order('created_at', { ascending: false });
+
+  if (actorName === SYSTEM_ACTOR) q = q.is('actor_name', null);
+  else if (actorName) q = q.eq('actor_name', actorName);
+  if (search?.trim()) {
+    const term = `%${search.trim()}%`;
+    q = q.or(`action.ilike.${term},table_name.ilike.${term},actor_name.ilike.${term},entity_id.ilike.${term}`);
+  }
+
+  const { data, error, count } = await q.range(from, to);
   if (error) throw error;
-  return ((data as AuditLogRow[] | null) ?? []).map(toRecord);
+  return { logs: ((data as AuditLogRow[] | null) ?? []).map(toRecord), total: count ?? 0 };
 }
 
 // Sign-in/out are never a table mutation, so the trigger-based capture in

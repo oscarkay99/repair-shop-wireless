@@ -108,6 +108,83 @@ export async function getInvoices(): Promise<Invoice[]> {
   }
 }
 
+export interface InvoicesPageQuery {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+export interface InvoicesPageResult {
+  invoices: Invoice[];
+  total: number;
+}
+
+// Additive, separate from getInvoices() on purpose — getInvoices() is a
+// full-table fetch relied on by several unrelated consumers (payment stats
+// totals, the record-payment invoice picker, TopBar search, dashboards),
+// none of which want a single page. This is only for the Invoices list view.
+export async function getInvoicesPage(query: InvoicesPageQuery = {}): Promise<InvoicesPageResult> {
+  const { page = 1, pageSize = 10, search, dateFrom, dateTo } = query;
+  if (!isSupabaseConfigured) {
+    return { invoices: localStore.slice((page - 1) * pageSize, page * pageSize), total: localStore.length };
+  }
+
+  let q = db
+    .from('invoices')
+    .select('*, customer:customers(id,name,phone,email,address,ticket_count,total_spent,created_at,updated_at)', { count: 'exact' })
+    .order('created_at', { ascending: false });
+
+  if (search?.trim()) {
+    const term = search.trim();
+    // Invoice number matches directly; customer name needs its id resolved
+    // first since PostgREST can't reliably OR-filter across an embedded join.
+    const { data: matchingCustomers } = await db.from('customers').select('id').ilike('name', `%${term}%`);
+    const customerIds = (matchingCustomers ?? []).map((c: { id: string }) => c.id);
+    const orParts = [`invoice_number.ilike.%${term}%`];
+    if (customerIds.length) orParts.push(`customer_id.in.(${customerIds.join(',')})`);
+    q = q.or(orParts.join(','));
+  }
+  if (dateFrom) q = q.gte('created_at', `${dateFrom}T00:00:00`);
+  if (dateTo) q = q.lte('created_at', `${dateTo}T23:59:59`);
+
+  const from = (page - 1) * pageSize;
+  const { data, error, count } = await q.range(from, from + pageSize - 1);
+  if (error) throw error;
+  return { invoices: (data as Invoice[] | null) ?? [], total: count ?? 0 };
+}
+
+export interface InvoiceTotals {
+  total: number;
+  collected: number;
+  outstanding: number;
+  overdue: number;
+}
+
+// Narrow column projection across the whole table — much cheaper than the
+// full joined row fetch getInvoices() does, and needed so revenue totals
+// stay accurate once the list itself is paginated.
+export async function getInvoiceTotals(): Promise<InvoiceTotals> {
+  if (!isSupabaseConfigured) {
+    return {
+      total: localStore.reduce((s, i) => s + i.total, 0),
+      collected: localStore.filter(i => i.status === 'paid').reduce((s, i) => s + i.amount_paid, 0),
+      outstanding: localStore.filter(i => i.status !== 'paid' && i.status !== 'cancelled').reduce((s, i) => s + (i.total - i.amount_paid), 0),
+      overdue: localStore.filter(i => i.status === 'overdue').reduce((s, i) => s + i.total, 0),
+    };
+  }
+  const { data, error } = await db.from('invoices').select('total, amount_paid, status');
+  if (error) throw error;
+  const rows = (data as Pick<Invoice, 'total' | 'amount_paid' | 'status'>[] | null) ?? [];
+  return {
+    total: rows.reduce((s, i) => s + i.total, 0),
+    collected: rows.filter(i => i.status === 'paid').reduce((s, i) => s + i.amount_paid, 0),
+    outstanding: rows.filter(i => i.status !== 'paid' && i.status !== 'cancelled').reduce((s, i) => s + (i.total - i.amount_paid), 0),
+    overdue: rows.filter(i => i.status === 'overdue').reduce((s, i) => s + i.total, 0),
+  };
+}
+
 /** The invoice already issued for a ticket, if any — used to avoid re-prompting
  *  "Create Invoice" once one exists for that ticket. */
 export async function getInvoiceForTicket(ticketId: string): Promise<Pick<Invoice, 'id' | 'invoice_number'> | null> {

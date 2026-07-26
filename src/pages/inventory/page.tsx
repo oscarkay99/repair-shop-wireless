@@ -1,7 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { usePageTitle } from '@/context/PageTitleContext';
 import { useParts } from '@/hooks/useParts';
+import { getPartsPage } from '@/services/wireless/parts';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import SearchDropdown from '@/components/shared/SearchDropdown';
 import Pagination from '@/components/shared/Pagination';
 import AccessoriesTab from './components/AccessoriesTab';
@@ -180,15 +182,33 @@ function AddPartModal({
 
 export default function InventoryPage() {
   const { setPageTitle } = usePageTitle();
+  // Kept for existingParts validation (needs the full catalog), mutations,
+  // and the low-stock/total counts in the subtitle — the table itself below
+  // uses a separate paginated fetch so the list view doesn't pull every row.
   const { parts, loading, add, patch, remove, lowStock } = useParts();
   const [tab, setTab] = useState<InventoryTab>('parts');
   const [query, setQuery] = useState('');
+  const debouncedQuery = useDebouncedValue(query, 300);
   const [page, setPage] = useState(1);
   const [showAdd, setShowAdd] = useState(false);
   const [showAddAccessory, setShowAddAccessory] = useState(false);
   const [editing, setEditing] = useState<Part | null>(null);
 
-  useEffect(() => { setPage(1); }, [query]);
+  const [pagedParts, setPagedParts] = useState<Part[]>([]);
+  const [total, setTotal] = useState(0);
+  const [tableLoading, setTableLoading] = useState(true);
+
+  useEffect(() => { setPage(1); }, [debouncedQuery]);
+
+  const reloadTable = () => {
+    setTableLoading(true);
+    return getPartsPage({ page, pageSize: PAGE_SIZE, search: debouncedQuery })
+      .then(({ parts: rows, total: count }) => { setPagedParts(rows); setTotal(count); })
+      .finally(() => setTableLoading(false));
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { reloadTable(); }, [page, debouncedQuery]);
 
   useEffect(() => {
     setPageTitle({
@@ -201,20 +221,11 @@ export default function InventoryPage() {
     return () => setPageTitle({ title: 'Dashboard' });
   }, [setPageTitle, tab, parts.length, lowStock.length]);
 
-  const filtered = useMemo(() => {
-    if (!query) return parts;
-    const q = query.toLowerCase();
-    return parts.filter(p =>
-      p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q) || p.category.toLowerCase().includes(q)
-    );
-  }, [parts, query]);
-
-  const paged = useMemo(() =>
-    filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-  [filtered, page]);
+  const filtered = pagedParts;
+  const paged = pagedParts;
 
   const handleDelete = (p: Part) => {
-    if (confirm(`Delete "${p.name}"?`)) remove(p.id);
+    if (confirm(`Delete "${p.name}"?`)) remove(p.id).then(reloadTable);
   };
 
   return (
@@ -259,7 +270,7 @@ export default function InventoryPage() {
 
       {/* Table */}
       <div className="rounded-xl overflow-hidden" style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
-        {loading ? (
+        {tableLoading ? (
           <div className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Loading…</div>
         ) : (
           <div className="overflow-x-auto">
@@ -347,19 +358,19 @@ export default function InventoryPage() {
 
       <Pagination
         page={page}
-        pageCount={Math.ceil(filtered.length / PAGE_SIZE)}
-        total={filtered.length}
+        pageCount={Math.max(1, Math.ceil(total / PAGE_SIZE))}
+        total={total}
         pageSize={PAGE_SIZE}
         onPageChange={setPage}
       />
 
       {showAdd && (
-        <AddPartModal onSave={add} onClose={() => setShowAdd(false)} existingParts={parts} />
+        <AddPartModal onSave={data => add(data).then(reloadTable)} onClose={() => setShowAdd(false)} existingParts={parts} />
       )}
       {editing && (
         <AddPartModal
           initial={editing}
-          onSave={data => patch(editing.id, data)}
+          onSave={data => patch(editing.id, data).then(reloadTable)}
           onClose={() => setEditing(null)}
           existingParts={parts}
         />

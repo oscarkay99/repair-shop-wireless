@@ -848,8 +848,8 @@ export default function TechniciansPage() {
       {!loading && (
         <Pagination
           page={page}
-          pageCount={Math.ceil(technicians.length / PAGE_SIZE)}
-          total={technicians.length}
+          pageCount={Math.max(1, Math.ceil(techStats.length / PAGE_SIZE))}
+          total={techStats.length}
           pageSize={PAGE_SIZE}
           onPageChange={setPage}
         />

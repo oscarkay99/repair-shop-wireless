@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { usePageTitle } from '@/context/PageTitleContext';
 import { Activity, User, ClipboardList, Package, Settings, Receipt, FileText, HardHat, LogIn, LogOut } from 'lucide-react';
-import { getAuditLogs, type AuditLogRecord } from '@/services/wireless/auditLogs';
+import { getAuditLogs, SYSTEM_ACTOR, type AuditLogRecord } from '@/services/wireless/auditLogs';
 import { getWirelessUsers } from '@/services/wireless/users';
-import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/shared/Pagination';
 
 const PAGE_SIZE = 20;
@@ -47,46 +46,49 @@ function exactTime(iso: string): string {
 export default function ActivityPage() {
   const { setPageTitle } = usePageTitle();
   const [logs, setLogs] = useState<AuditLogRecord[]>([]);
+  const [total, setTotal] = useState(0);
   const [userNames, setUserNames] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [userFilter, setUserFilter] = useState('all');
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     setPageTitle({ title: 'Activity Log', subtitle: 'Real-time audit trail of all system actions' });
     return () => setPageTitle({ title: 'Dashboard' });
   }, [setPageTitle]);
 
+  useEffect(() => { setPage(1); }, [userFilter]);
+
   useEffect(() => {
-    getAuditLogs(200).then(setLogs).finally(() => setLoading(false));
+    setLoading(true);
+    getAuditLogs({ page, pageSize: PAGE_SIZE, actorName: userFilter === 'all' ? undefined : userFilter })
+      .then(({ logs: records, total: count }) => { setLogs(records); setTotal(count); })
+      .finally(() => setLoading(false));
+  }, [page, userFilter]);
+
+  useEffect(() => {
     // The filter list is every registered user, not just ones who've already
     // logged an action — a brand-new user with no activity yet still needs
     // to show up so staff can confirm "yep, nothing from them."
     getWirelessUsers().then(rows => setUserNames(rows.map(u => u.name))).catch(() => setUserNames([]));
   }, []);
 
-  const users = useMemo(() => {
-    const names = new Set([...userNames, ...logs.map(l => l.actorName || 'System')]);
-    return [...names].sort((a, b) => a.localeCompare(b));
-  }, [userNames, logs]);
-
-  const filteredLogs = useMemo(() => {
-    if (userFilter === 'all') return logs;
-    return logs.filter(l => (l.actorName || 'System') === userFilter);
-  }, [logs, userFilter]);
-
-  const { paginated: pagedLogs, page, setPage, totalPages, total } = usePagination(filteredLogs, PAGE_SIZE, userFilter);
+  const users = useMemo(() => [...userNames].sort((a, b) => a.localeCompare(b)), [userNames]);
+  const pagedLogs = logs;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <p className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>
-          {loading ? 'Loading…' : `Showing ${filteredLogs.length} of ${logs.length} recent events`}
+          {loading ? 'Loading…' : `${total} recent event${total !== 1 ? 's' : ''}`}
         </p>
         {!loading && users.length > 0 && (
           <select value={userFilter} onChange={e => setUserFilter(e.target.value)}
             className="h-8 px-3 rounded-lg text-xs outline-none"
             style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}>
             <option value="all">All Users</option>
+            <option value={SYSTEM_ACTOR}>System</option>
             {users.map(name => <option key={name} value={name}>{name}</option>)}
           </select>
         )}
@@ -98,10 +100,10 @@ export default function ActivityPage() {
       >
         {loading ? (
           <p className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Loading…</p>
-        ) : logs.length === 0 ? (
-          <p className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No activity recorded yet.</p>
-        ) : filteredLogs.length === 0 ? (
-          <p className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No activity from {userFilter}.</p>
+        ) : total === 0 ? (
+          <p className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>
+            {userFilter === 'all' ? 'No activity recorded yet.' : `No activity from ${userFilter === SYSTEM_ACTOR ? 'System' : userFilter}.`}
+          </p>
         ) : pagedLogs.map((entry) => {
           const meta = entry.entityType === 'security' && entry.action === 'signed out'
             ? { icon: LogOut, color: 'hsl(0 70% 60%)' }
@@ -142,7 +144,7 @@ export default function ActivityPage() {
         })}
       </div>
 
-      {!loading && filteredLogs.length > 0 && (
+      {!loading && total > 0 && (
         <Pagination page={page} pageCount={totalPages} total={total} pageSize={PAGE_SIZE} onPageChange={setPage} />
       )}
     </div>
