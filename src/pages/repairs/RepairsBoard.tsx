@@ -500,13 +500,17 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
             <div className="w-full h-9 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5" style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e' }}>
               <CheckCircle2 className="w-3.5 h-3.5" /> Invoice {linkedInvoiceNumber} created
             </div>
-          ) : (
+          ) : canManageTickets ? (
             <button
               onClick={() => setShowInvoiceModal(true)}
               className="w-full h-10 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2"
               style={{ background: '#22c55e' }}>
               Create Invoice
             </button>
+          ) : (
+            <p className="text-[11px] text-center py-1" style={{ color: 'hsl(var(--muted-foreground))' }}>
+              Only a receptionist or admin can create the invoice for this ticket.
+            </p>
           )}
           {canUpdateProgress ? (
             <>
@@ -564,13 +568,17 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
               <div className="w-full h-9 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5" style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e' }}>
                 <CheckCircle2 className="w-3.5 h-3.5" /> Invoice {linkedInvoiceNumber} created
               </div>
-            ) : (
+            ) : canManageTickets ? (
               <button
                 onClick={() => setShowInvoiceModal(true)}
                 className="w-full h-10 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2"
                 style={{ background: '#22c55e' }}>
                 Create Invoice
               </button>
+            ) : (
+              <p className="text-[11px] text-center py-1" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                Only a receptionist or admin can create the invoice for this ticket.
+              </p>
             )
           )}
           {canUpdateProgress ? (
