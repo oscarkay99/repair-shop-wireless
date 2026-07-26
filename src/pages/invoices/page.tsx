@@ -93,6 +93,7 @@ function IssueInvoiceModal({ onSave, onClose }: {
   const { customers } = useWirelessCustomers();
   const { user } = useAuth();
   const { taxEnabled, vatRate, nhilGetfundRate } = useTaxSettings();
+  const { settings } = useWirelessSettings();
   const [customerSearch, setCustomerSearch] = useState('');
   const [customerId, setCustomerId] = useState('');
   const [lineItems, setLineItems] = useState<DraftLineItem[]>([{ description: '', quantity: '1', unit_price: '' }]);
@@ -148,7 +149,11 @@ function IssueInvoiceModal({ onSave, onClose }: {
         due_date: dueDate || undefined,
         notes: notes || undefined,
         created_by: user?.id,
-        warranty: false,
+        // Every repair carries the shop's standard warranty — not a per-
+        // invoice toggle, so this is unconditional rather than something
+        // staff can opt out of.
+        warranty: true,
+        warranty_days: settings?.warranty_days,
       }, parsedItems);
       onClose();
     } catch { /* error toast already shown by useInvoices */ }

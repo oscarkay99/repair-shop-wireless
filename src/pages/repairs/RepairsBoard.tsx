@@ -161,9 +161,11 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   // Only meaningful once there's actually a finished job to hand back —
   // matches the same "ready or later" window Create Invoice already uses.
   const canPrintReceipt = ['ready', 'completed', 'diagnosis_only_closed'].includes(repair.status);
+  // Same unconditional policy as invoices — every repair carries the
+  // shop's standard warranty, not a per-ticket toggle.
   const handlePrintReceipt = () => downloadTicketReceiptPdf({
     repair,
-    warrantyDays: repair.warranty ? settings?.warranty_days : undefined,
+    warrantyDays: settings?.warranty_days,
     settings: settings ?? undefined,
   });
 

@@ -56,8 +56,11 @@ export default function CreateTicketInvoiceModal({ repair, depositPaid, onClose,
         status: amountPaid >= total ? 'paid' : amountPaid > 0 ? 'partial' : 'unpaid',
         notes: `Ticket ${repair.id}`,
         created_by: user?.id,
-        warranty: repair.warranty ?? false,
-        warranty_days: repair.warranty ? settings?.warranty_days : undefined,
+        // Every repair carries the shop's standard warranty — not a per-
+        // invoice toggle, so this is unconditional rather than something
+        // staff can opt out of.
+        warranty: true,
+        warranty_days: settings?.warranty_days,
       }, [
         { description, quantity: 1, unit_price: subtotal, total_price: subtotal },
       ]);
