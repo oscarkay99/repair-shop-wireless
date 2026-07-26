@@ -187,16 +187,16 @@ export async function getInvoiceTotals(): Promise<InvoiceTotals> {
 
 /** The invoice already issued for a ticket, if any — used to avoid re-prompting
  *  "Create Invoice" once one exists for that ticket. */
-export async function getInvoiceForTicket(ticketId: string): Promise<Pick<Invoice, 'id' | 'invoice_number'> | null> {
+export async function getInvoiceForTicket(ticketId: string): Promise<Pick<Invoice, 'id' | 'invoice_number' | 'amount_paid'> | null> {
   if (!isSupabaseConfigured || !ticketId) return null;
   const { data, error } = await db
     .from('invoices')
-    .select('id, invoice_number')
+    .select('id, invoice_number, amount_paid')
     .eq('ticket_id', ticketId)
     .limit(1)
     .maybeSingle();
   if (error) throw error;
-  return data as Pick<Invoice, 'id' | 'invoice_number'> | null;
+  return data as Pick<Invoice, 'id' | 'invoice_number' | 'amount_paid'> | null;
 }
 
 export async function createInvoice(
@@ -236,6 +236,29 @@ export async function patchInvoice(id: string, data: Partial<Pick<Invoice, 'stat
   const { error } = await db.from('invoices').update(patch).eq('id', id);
   if (error) throw error;
   localStore = localStore.map(i => i.id === id ? { ...i, ...patch } : i);
+}
+
+// Separate from patchInvoice — these fields only ever change when a ticket's
+// auto-invoice needs re-totaling (e.g. a diagnosis-only job later reopened
+// into a full repair), never from ordinary invoice editing.
+export async function updateInvoiceAmounts(id: string, data: Pick<Invoice, 'subtotal' | 'tax' | 'total' | 'status'>): Promise<void> {
+  const patch = { ...data, updated_at: new Date().toISOString() };
+  if (!isSupabaseConfigured) {
+    localStore = localStore.map(i => i.id === id ? { ...i, ...patch } : i);
+    return;
+  }
+  const { error } = await db.from('invoices').update(patch).eq('id', id);
+  if (error) throw error;
+  localStore = localStore.map(i => i.id === id ? { ...i, ...patch } : i);
+}
+
+export async function updateInvoiceItem(id: string, data: { description: string; unit_price: number; total_price: number }): Promise<void> {
+  if (!isSupabaseConfigured) {
+    itemsStore = itemsStore.map(i => i.id === id ? { ...i, ...data } : i);
+    return;
+  }
+  const { error } = await db.from('invoice_items').update(data).eq('id', id);
+  if (error) throw error;
 }
 
 export async function sendInvoiceEmail(payload: {

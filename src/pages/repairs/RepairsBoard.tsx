@@ -23,7 +23,9 @@ import {
 } from '@/utils/repairStatus';
 import { formatDate } from '@/utils/date';
 import { getPaymentsForTicket } from '@/services/wireless/payments';
-import { getInvoiceForTicket } from '@/services/wireless/invoices';
+import { ensureTicketInvoice } from '@/services/wireless/autoInvoice';
+import { useTaxSettings } from '@/hooks/useTaxSettings';
+import { hasConfirmedDiagnosisPayment } from '@/services/repairs';
 import { errMessage } from '@/utils/errors';
 import { useWirelessSettings } from '@/hooks/useWirelessSettings';
 import { downloadTicketReceiptPdf } from '@/utils/ticketReceiptPdf';
@@ -151,6 +153,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [ticketParts, setTicketParts] = useState<TicketPart[]>([]);
   const [showAddPart, setShowAddPart] = useState(false);
+  const [checkingInvoice, setCheckingInvoice] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const s = STATUS[repair.status] ?? STATUS.received;
   const isDxOnly = repair.jobType === 'diagnosis_only';
@@ -162,6 +165,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   const isClosedDiagnosis = repair.status === 'diagnosis_only_closed';
   const media = repair.media ?? [];
   const { settings } = useWirelessSettings();
+  const { taxEnabled, vatRate, nhilGetfundRate } = useTaxSettings();
   // Only meaningful once there's actually a finished job to hand back —
   // matches the same "ready or later" window Create Invoice already uses.
   const canPrintReceipt = ['ready', 'completed', 'diagnosis_only_closed'].includes(repair.status);
@@ -180,7 +184,8 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   // Ready-for-invoice = the job's reached its "customer needs to pay & collect"
   // terminal state — status 'ready' for the two repair flows, or
   // 'diagnosis_only_closed' for a diagnosis-only job (no repair to wait on).
-  const readyForInvoice = repair.status === 'ready' || repair.status === 'diagnosis_only_closed';
+  const readyForInvoice = repair.status === 'ready' || repair.status === 'diagnosis_only_closed'
+    || (repair.status === 'cancelled' && hasConfirmedDiagnosisPayment(repair));
 
   useEffect(() => {
     let cancelled = false;
@@ -209,11 +214,14 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   useEffect(() => {
     let cancelled = false;
     if (!repair.ticketDbId || !readyForInvoice) { setLinkedInvoiceNumber(null); return; }
-    getInvoiceForTicket(repair.ticketDbId)
-      .then(inv => { if (!cancelled) setLinkedInvoiceNumber(inv?.invoice_number ?? null); })
-      .catch(() => { if (!cancelled) setLinkedInvoiceNumber(null); });
+    setCheckingInvoice(true);
+    ensureTicketInvoice(repair, { depositPaid, taxEnabled, vatRate, nhilGetfundRate, warrantyDays: settings?.warranty_days })
+      .then(invoiceNumber => { if (!cancelled) setLinkedInvoiceNumber(invoiceNumber); })
+      .catch(() => { if (!cancelled) setLinkedInvoiceNumber(null); })
+      .finally(() => { if (!cancelled) setCheckingInvoice(false); });
     return () => { cancelled = true; };
-  }, [repair.ticketDbId, readyForInvoice]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [repair.ticketDbId, readyForInvoice, depositPaid, taxEnabled, vatRate, nhilGetfundRate, settings?.warranty_days]);
 
   const handleAddNote = () => {
     if (!noteText.trim()) return;
@@ -560,6 +568,10 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
             <div className="w-full h-9 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5" style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e' }}>
               <CheckCircle2 className="w-3.5 h-3.5" /> Invoice {linkedInvoiceNumber} created
             </div>
+          ) : checkingInvoice ? (
+            <div className="w-full h-9 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5" style={{ color: 'hsl(var(--muted-foreground))' }}>
+              <Loader2 className="w-3.5 h-3.5 animate-spin" /> Preparing invoice…
+            </div>
           ) : canManageTickets ? (
             <button
               onClick={() => setShowInvoiceModal(true)}
@@ -627,6 +639,10 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
             linkedInvoiceNumber ? (
               <div className="w-full h-9 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5" style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e' }}>
                 <CheckCircle2 className="w-3.5 h-3.5" /> Invoice {linkedInvoiceNumber} created
+              </div>
+            ) : checkingInvoice ? (
+              <div className="w-full h-9 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Preparing invoice…
               </div>
             ) : canManageTickets ? (
               <button
