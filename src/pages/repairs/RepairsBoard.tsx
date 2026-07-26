@@ -938,7 +938,7 @@ export default function RepairsBoard() {
 
       {showAddModal && (
         <AddRepairModal
-          onSave={async (r) => { await add(r); }}
+          onSave={add}
           onClose={() => setShowAddModal(false)}
           repairs={repairs}
         />
@@ -946,7 +946,7 @@ export default function RepairsBoard() {
 
       {editingRepair && (
         <AddRepairModal
-          onSave={async (r) => { await add(r); }}
+          onSave={add}
           onUpdate={patchRepair}
           initial={editingRepair}
           onClose={() => setEditingRepair(null)}

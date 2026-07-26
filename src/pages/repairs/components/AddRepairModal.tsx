@@ -8,9 +8,11 @@ import type { WCustomer } from '@/types/wireless';
 import CustomerPicker from '@/components/shared/CustomerPicker';
 import DevicePicker from '@/components/shared/DevicePicker';
 import { isCurrentlyUnavailable } from '@/utils/technicianAvailability';
+import { addTicketPart } from '@/services/wireless/ticketParts';
+import { errMessage } from '@/utils/errors';
 
 interface Props {
-  onSave: (r: Omit<Repair, 'id'>) => Promise<unknown>;
+  onSave: (r: Omit<Repair, 'id'>) => Promise<Repair>;
   onClose: () => void;
   repairs: Repair[];
   defaultJobType?: 'diagnosis_only' | 'diagnosis_to_repair' | 'straight_repair';
@@ -54,6 +56,22 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
   const [costAutoFilled, setCostAutoFilled] = useState(false);
   const lockJobType = !!defaultJobType && !initial;
 
+  // The part being replaced is only knowable up front for a repair job where
+  // the fix is already obvious (straight repair, or a repair quote following
+  // diagnosis) — a diagnosis-only job by definition doesn't know this yet.
+  // Only offered when creating a new ticket; editing an existing one already
+  // has its own "Add Part" flow in the ticket detail panel.
+  const showPartField = !initial && form.jobType !== 'diagnosis_only';
+  const [partSearch, setPartSearch] = useState('');
+  const [selectedPartId, setSelectedPartId] = useState('');
+  const [partQuantity, setPartQuantity] = useState('1');
+  const selectedPart = parts.find(p => p.id === selectedPartId) ?? null;
+  const partSuggestions = useMemo(() => {
+    const q = partSearch.trim().toLowerCase();
+    if (!q) return [];
+    return parts.filter(p => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)).slice(0, 8);
+  }, [parts, partSearch]);
+
   // Inventory is the device catalog here — each part is a distinct, exact
   // device model with its own price (e.g. "iPhone 11", "iPhone 11 Pro",
   // "iPhone 11 Pro max" are three separate entries), so picking the precise
@@ -90,6 +108,24 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
   );
 
   const set = (k: string, v: unknown) => setForm(p => ({ ...p, [k]: v }));
+
+  // The ticket is already created by the time this runs — a failure here
+  // shouldn't undo that or block the flow, just surface that stock wasn't
+  // deducted so staff know to add the part manually from the ticket panel.
+  const attachSelectedPart = async (created: Repair) => {
+    if (!showPartField || !selectedPart || !created.ticketDbId) return;
+    try {
+      await addTicketPart({
+        ticketDbId: created.ticketDbId,
+        partId: selectedPart.id,
+        partName: selectedPart.name,
+        quantity: parseInt(partQuantity, 10) || 1,
+        unitCost: selectedPart.unit_cost,
+      });
+    } catch (err) {
+      alert(errMessage(err, `Ticket created, but failed to attach ${selectedPart.name} — add it manually from the ticket.`));
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -150,7 +186,7 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
         });
       } else if (form.jobType === 'straight_repair') {
         // No diagnosis stage, no diagnosis fee — straight to the repair queue.
-        await onSave({
+        const created = await onSave({
           ...form,
           technicianId,
           customerId: customer?.id,
@@ -168,8 +204,9 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
           notes: [],
           payments: [],
         });
+        await attachSelectedPart(created);
       } else {
-        await onSave({
+        const created = await onSave({
           ...form,
           technicianId,
           customerId: customer?.id,
@@ -197,6 +234,7 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
             },
           ],
         });
+        await attachSelectedPart(created);
       }
       onClose();
     } finally {
@@ -243,6 +281,23 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
               </div>
             </div>
           )}
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Job Flow</label>
+            {lockJobType ? (
+              <div className="w-full text-sm rounded-xl px-3 py-2"
+                style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' }}>
+                {defaultJobType === 'diagnosis_only' ? 'Diagnosis only' : defaultJobType === 'straight_repair' ? 'Straight repair (no diagnosis)' : 'Diagnosis then repair quote'}
+              </div>
+            ) : (
+              <select value={form.jobType} onChange={e => set('jobType', e.target.value)}
+                className="w-full text-sm rounded-xl px-3 py-2 outline-none"
+                style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }}>
+                <option value="diagnosis_to_repair">Diagnosis then repair quote</option>
+                <option value="diagnosis_only">Diagnosis only</option>
+                <option value="straight_repair">Straight repair (no diagnosis)</option>
+              </select>
+            )}
+          </div>
           <div className="grid grid-cols-2 gap-3">
             {customerMode === 'new' && !initial ? (
               <div>
@@ -284,6 +339,51 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
               style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }}
               placeholder="Screen cracked, battery dead..." />
           </div>
+          {showPartField && (
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                Part Being Replaced <span className="normal-case font-normal opacity-70">(optional — skip if not sure yet)</span>
+              </label>
+              {selectedPart ? (
+                <div className="w-full flex items-center justify-between text-sm rounded-xl px-3 py-2"
+                  style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }}>
+                  <span>{selectedPart.name} <span style={{ color: 'hsl(var(--muted-foreground))' }}>({selectedPart.stock} in stock)</span></span>
+                  <button type="button" onClick={() => { setSelectedPartId(''); setPartSearch(''); }}
+                    className="text-xs font-semibold cursor-pointer" style={{ color: '#dc2626' }}>
+                    Clear
+                  </button>
+                </div>
+              ) : (
+                <input value={partSearch} onChange={e => setPartSearch(e.target.value)}
+                  className="w-full text-sm rounded-xl px-3 py-2 outline-none"
+                  style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }}
+                  placeholder="Search inventory parts…" />
+              )}
+              {!selectedPart && partSearch.trim() && (
+                <div className="mt-1 max-h-36 overflow-y-auto rounded-lg" style={{ border: '1px solid hsl(var(--border))' }}>
+                  {partSuggestions.length === 0 ? (
+                    <div className="px-3 py-2 text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No matching parts.</div>
+                  ) : partSuggestions.map(p => (
+                    <button key={p.id} type="button"
+                      onClick={() => { setSelectedPartId(p.id); setPartSearch(''); }}
+                      className="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-[hsl(var(--muted))]"
+                      style={{ color: 'hsl(var(--foreground))' }}>
+                      <span>{p.name} <span style={{ color: 'hsl(var(--muted-foreground))' }}>({p.sku})</span></span>
+                      <span style={{ color: 'hsl(var(--muted-foreground))' }}>{p.stock} in stock</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {selectedPart && (
+                <div className="mt-2 flex items-center gap-2">
+                  <label className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Quantity</label>
+                  <input type="number" min={1} value={partQuantity} onChange={e => setPartQuantity(e.target.value)}
+                    className="w-20 text-sm rounded-xl px-3 py-1.5 outline-none"
+                    style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }} />
+                </div>
+              )}
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Customer Email</label>
@@ -369,28 +469,9 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
               </div>
             )}
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Job Flow</label>
-              {lockJobType ? (
-                <div className="w-full text-sm rounded-xl px-3 py-2"
-                  style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' }}>
-                  {defaultJobType === 'diagnosis_only' ? 'Diagnosis only' : defaultJobType === 'straight_repair' ? 'Straight repair (no diagnosis)' : 'Diagnosis then repair quote'}
-                </div>
-              ) : (
-                <select value={form.jobType} onChange={e => set('jobType', e.target.value)}
-                  className="w-full text-sm rounded-xl px-3 py-2 outline-none"
-                  style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }}>
-                  <option value="diagnosis_to_repair">Diagnosis then repair quote</option>
-                  <option value="diagnosis_only">Diagnosis only</option>
-                  <option value="straight_repair">Straight repair (no diagnosis)</option>
-                </select>
-              )}
-            </div>
-            <div className="flex items-center gap-2 pt-5">
-              <input type="checkbox" id="warranty" checked={form.warranty} onChange={e => set('warranty', e.target.checked)} className="cursor-pointer" />
-              <label htmlFor="warranty" className="text-sm text-[hsl(var(--muted-foreground))] cursor-pointer">Under Warranty</label>
-            </div>
+          <div className="flex items-center gap-2">
+            <input type="checkbox" id="warranty" checked={form.warranty} onChange={e => set('warranty', e.target.checked)} className="cursor-pointer" />
+            <label htmlFor="warranty" className="text-sm text-[hsl(var(--muted-foreground))] cursor-pointer">Under Warranty</label>
           </div>
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose}
