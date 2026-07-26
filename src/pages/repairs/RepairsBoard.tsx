@@ -5,6 +5,8 @@ import { useTechnicians } from '@/hooks/useTechnicians';
 import { useAuth } from '@/hooks/useAuth';
 import AddRepairModal from './components/AddRepairModal';
 import CreateTicketInvoiceModal from './components/CreateTicketInvoiceModal';
+import AddTicketPartModal from './components/AddTicketPartModal';
+import { getTicketParts, removeTicketPart, type TicketPart } from '@/services/wireless/ticketParts';
 import SearchDropdown from '@/components/shared/SearchDropdown';
 import Pagination from '@/components/shared/Pagination';
 import DateRangePicker, { type DateRange } from '@/components/shared/DateRangePicker';
@@ -147,6 +149,8 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   const [ticketPayments, setTicketPayments] = useState<Payment[]>([]);
   const [linkedInvoiceNumber, setLinkedInvoiceNumber] = useState<string | null>(null);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [ticketParts, setTicketParts] = useState<TicketPart[]>([]);
+  const [showAddPart, setShowAddPart] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const s = STATUS[repair.status] ?? STATUS.received;
   const isDxOnly = repair.jobType === 'diagnosis_only';
@@ -184,6 +188,23 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
     getPaymentsForTicket(repair.ticketDbId).then(rows => { if (!cancelled) setTicketPayments(rows); }).catch(() => { if (!cancelled) setTicketPayments([]); });
     return () => { cancelled = true; };
   }, [repair.ticketDbId]);
+
+  const loadTicketParts = () => {
+    if (!repair.ticketDbId) { setTicketParts([]); return; }
+    getTicketParts(repair.ticketDbId).then(setTicketParts).catch(() => setTicketParts([]));
+  };
+
+  useEffect(loadTicketParts, [repair.ticketDbId]);
+
+  const handleRemoveTicketPart = async (part: TicketPart) => {
+    if (!confirm(`Remove ${part.part_name} (×${part.quantity})? This restores the stock deducted for it.`)) return;
+    try {
+      await removeTicketPart(part.id);
+      loadTicketParts();
+    } catch (e) {
+      alert(errMessage(e, 'Failed to remove part'));
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -363,6 +384,45 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
             </div>
           </div>
         )}
+
+        {/* Parts Used — real inventory-linked consumption, deducts stock */}
+        <div className="pt-3" style={{ borderTop: '1px solid hsl(var(--border))' }}>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-bold" style={{ color: 'hsl(var(--foreground))' }}>Parts Used</p>
+            {!isDone && canUpdateProgress && (
+              <button
+                onClick={() => setShowAddPart(true)}
+                className="text-xs font-medium flex items-center gap-1"
+                style={{ color: 'hsl(var(--primary))' }}>
+                <Plus className="w-3 h-3" /> Add Part
+              </button>
+            )}
+          </div>
+          {ticketParts.length === 0 ? (
+            <p className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No parts used yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {ticketParts.map(part => (
+                <div key={part.id} className="flex items-center justify-between px-3 py-2 rounded-xl"
+                  style={{ background: 'hsl(var(--muted))' }}>
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium truncate" style={{ color: 'hsl(var(--foreground))' }}>{part.part_name}</p>
+                    <p className="text-[11px]" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                      ×{part.quantity} @ ¢{part.unit_cost.toFixed(2)} = ¢{(part.quantity * part.unit_cost).toFixed(2)}
+                    </p>
+                  </div>
+                  {canUpdateProgress && (
+                    <button onClick={() => handleRemoveTicketPart(part)}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg flex-shrink-0"
+                      style={{ color: 'hsl(var(--muted-foreground))' }}>
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Photos */}
         <div className="pt-3" style={{ borderTop: '1px solid hsl(var(--border))' }}>
@@ -615,6 +675,14 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
           depositPaid={depositPaid}
           onClose={() => setShowInvoiceModal(false)}
           onCreated={invoiceNumber => setLinkedInvoiceNumber(invoiceNumber)}
+        />
+      )}
+
+      {showAddPart && repair.ticketDbId && (
+        <AddTicketPartModal
+          ticketDbId={repair.ticketDbId}
+          onClose={() => setShowAddPart(false)}
+          onAdded={loadTicketParts}
         />
       )}
     </div>

@@ -1,4 +1,4 @@
-import { isSupabaseConfigured, supabase, db } from '@/services/supabase';
+import { isSupabaseConfigured, db } from '@/services/supabase';
 
 // Types ────────────────────────────────────────────────────────────────────────
 
@@ -274,42 +274,25 @@ export async function getSales(): Promise<AccessorySaleRecord[]> {
 
 export async function createSale(input: Omit<AccessorySaleRecord, 'id' | 'sale_number' | 'sold_at' | 'payment_status'>): Promise<AccessorySaleRecord> {
   if (isSupabaseConfigured) {
-    const { data: session } = await supabase.auth.getSession();
-    const { data: sale, error: saleError } = await db.from('accessory_sales').insert({
-      customer_id: input.customer_id ?? null,
-      customer_name: input.customer_name || '',
-      subtotal: input.total,
-      discount: 0,
-      tax: 0,
-      total: input.total,
-      payment_method: input.payment_method.toLowerCase(),
-      payment_status: 'paid',
-      amount_paid: input.total,
-      sold_by: session.session?.user?.id ?? null,
-    }).select().single();
-    if (saleError) throw saleError;
+    // record_accessory_sale bundles the sale row, its line item, and the
+    // stock decrement into one atomic DB transaction — previously this was
+    // 3 separate client-side calls (read stock, then two writes), which
+    // could leave a sale recorded with no stock change if any step failed,
+    // and raced two concurrent sales of the same last unit against each
+    // other since the stock read-then-write wasn't locked.
+    const { data, error } = await db.rpc('record_accessory_sale', {
+      p_product_id: input.product_id || null,
+      p_product_name: input.product_name,
+      p_quantity: input.quantity,
+      p_unit_price: input.unit_price,
+      p_total: input.total,
+      p_payment_method: input.payment_method.toLowerCase(),
+      p_customer_id: input.customer_id ?? null,
+      p_customer_name: input.customer_name || '',
+    }).single();
+    if (error) throw error;
 
-    const saleRow = sale as SaleRow;
-    const { error: itemError } = await db.from('sale_items').insert({
-      sale_id: saleRow.id,
-      part_id: input.product_id || null,
-      item_name: input.product_name,
-      quantity: input.quantity,
-      unit_price: input.unit_price,
-      total_price: input.total,
-    });
-    if (itemError) throw itemError;
-
-    if (input.product_id) {
-      const { data: partRow, error: partReadError } = await db
-        .from('parts').select('stock').eq('id', input.product_id).single();
-      if (!partReadError && partRow) {
-        const newStock = Math.max(0, (partRow as { stock: number }).stock - input.quantity);
-        const { error: stockError } = await db.from('parts').update({ stock: newStock }).eq('id', input.product_id);
-        if (stockError) console.warn('[wireless/accessoryStore] unable to decrement stock', stockError);
-      }
-    }
-
+    const saleRow = data as { id: string; sale_number: string; created_at: string };
     const s: AccessorySaleRecord = { ...input, payment_status: 'paid', id: saleRow.id, sale_number: saleRow.sale_number, sold_at: saleRow.created_at };
     saleStore = [s, ...saleStore];
     return s;
