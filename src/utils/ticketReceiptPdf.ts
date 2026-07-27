@@ -1,6 +1,6 @@
 import { jsPDF, GState } from 'jspdf';
 import type { Repair } from '@/types/repair';
-import { loadWirelessLogo, fmtGHS } from '@/utils/pdfBranding';
+import { loadWirelessLogo, fmtGHS, SERVICE_TERMS_URL } from '@/utils/pdfBranding';
 
 export interface ReceiptBrandSettings {
   business_name?: string;
@@ -127,6 +127,16 @@ export async function buildTicketReceiptPdf({ repair, warrantyDays, settings }: 
     : `Thank you for choosing ${businessName}.`;
   const footerWrapped = doc.splitTextToSize(footerText, RIGHT_X - MARGIN - 20);
   doc.text(footerWrapped, PAGE_W / 2, noteY + 8, { align: 'center' });
+
+  // Repair-service terms (warranty, liability, payment) live on the
+  // customer portal — distinct from that site's own terms for using the
+  // tracking tool itself. Clickable in any PDF viewer that supports links.
+  const linkY = noteY + 8 + footerWrapped.length * 3.8 + 5;
+  doc.setTextColor(37, 99, 235);
+  doc.textWithLink('Terms and Conditions', PAGE_W / 2, linkY, {
+    url: SERVICE_TERMS_URL,
+    align: 'center',
+  });
 
   return doc;
 }

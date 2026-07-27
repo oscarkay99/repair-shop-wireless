@@ -20,6 +20,7 @@ import type { Invoice, InvoiceItem, InvoiceStatus } from '@/types/wireless';
 import type { PaymentMethod } from '@/types/sale';
 import { errMessage } from '@/utils/errors';
 import { downloadInvoicePdf, invoicePdfBase64 } from '@/utils/invoicePdf';
+import { SERVICE_TERMS_URL } from '@/utils/pdfBranding';
 
 const PAYMENT_METHODS: PaymentMethod[] = ['Cash', 'Card', 'MoMo', 'Bank Transfer'];
 
@@ -674,6 +675,11 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
             ) : (
               <>Thank you for choosing {settings?.business_name || 'WIRELESS'}.</>
             )}
+            <div className="mt-2">
+              <a href={SERVICE_TERMS_URL} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: '#999' }}>
+                Terms and Conditions
+              </a>
+            </div>
           </div>
         </div>
       </div>
