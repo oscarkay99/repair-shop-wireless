@@ -20,6 +20,14 @@ export function loadWirelessLogo(overrideUrl?: string | null): Promise<string> {
   return logoDataUrlPromises.get(url)!;
 }
 
+/** Scales to fit within a maxW x maxH box without distorting the image's own aspect ratio (like CSS object-fit: contain). */
+export function fitLogoBox(ratio: number, maxW: number, maxH: number): { w: number; h: number } {
+  let w = maxW;
+  let h = w * ratio;
+  if (h > maxH) { h = maxH; w = h / ratio; }
+  return { w, h };
+}
+
 export function fmtGHS(n: number): string {
   return `GHS ${n.toLocaleString('en-GH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }

@@ -1,3 +1,48 @@
+interface LogoSlotProps {
+  id: string;
+  label: string;
+  hint: string;
+  previewBg: string;
+  logoUrl?: string | null;
+  uploading: boolean;
+  onChange: (file: File) => void;
+}
+
+// The image itself is never distorted here or in generated PDFs — both use
+// object-fit: contain / an aspect-ratio-preserving fit, so whatever size and
+// shape logo an admin uploads renders the same way it looked on disk.
+function LogoSlot({ id, label, hint, previewBg, logoUrl, uploading, onChange }: LogoSlotProps) {
+  return (
+    <div>
+      <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] block mb-2">{label}</label>
+      <div className="flex items-center gap-4">
+        <div className="w-16 h-16 rounded-2xl border border-[hsl(var(--border))] flex items-center justify-center overflow-hidden" style={logoUrl ? { background: previewBg } : { background: 'linear-gradient(135deg, #0A1F4A, #1E5FBE)' }}>
+          {logoUrl
+            ? <img src={logoUrl} alt={label} className="w-full h-full object-contain p-1" />
+            : <i className="ri-smartphone-line text-2xl text-white" />}
+        </div>
+        <div>
+          <input
+            type="file"
+            accept="image/*"
+            id={id}
+            className="hidden"
+            onChange={e => { const f = e.target.files?.[0]; if (f) onChange(f); e.target.value = ''; }}
+          />
+          <button
+            onClick={() => document.getElementById(id)?.click()}
+            disabled={uploading}
+            className="px-4 py-2 border border-[hsl(var(--border))] rounded-xl text-xs text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] cursor-pointer whitespace-nowrap disabled:opacity-50"
+          >
+            {uploading ? 'Uploading…' : logoUrl ? 'Change Logo' : 'Upload Logo'}
+          </button>
+          <p className="text-[10px] text-[hsl(var(--muted-foreground))] mt-1.5 max-w-[220px]">{hint}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface BrandingSectionProps {
   businessName: string;
   setBusinessName: (v: string) => void;
@@ -14,6 +59,9 @@ interface BrandingSectionProps {
   logoUrl?: string | null;
   onLogoChange: (file: File) => void;
   logoUploading: boolean;
+  logoUrlDark?: string | null;
+  onLogoDarkChange: (file: File) => void;
+  logoDarkUploading: boolean;
 }
 
 export default function BrandingSection({
@@ -24,34 +72,31 @@ export default function BrandingSection({
   address, setAddress,
   primaryColor, setPrimaryColor,
   logoUrl, onLogoChange, logoUploading,
+  logoUrlDark, onLogoDarkChange, logoDarkUploading,
 }: BrandingSectionProps) {
   return (
     <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-6">
       <h3 className="text-sm font-bold text-[hsl(var(--foreground))] mb-5">Brand Identity</h3>
       <div className="space-y-5">
-        <div>
-          <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] block mb-2">Logo</label>
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl border border-[hsl(var(--border))] flex items-center justify-center overflow-hidden" style={logoUrl ? undefined : { background: 'linear-gradient(135deg, #0A1F4A, #1E5FBE)' }}>
-              {logoUrl
-                ? <img src={logoUrl} alt="Business logo" className="w-full h-full object-contain" />
-                : <i className="ri-smartphone-line text-2xl text-white" />}
-            </div>
-            <input
-              type="file"
-              accept="image/*"
-              id="logo-upload"
-              className="hidden"
-              onChange={e => { const f = e.target.files?.[0]; if (f) onLogoChange(f); e.target.value = ''; }}
-            />
-            <button
-              onClick={() => document.getElementById('logo-upload')?.click()}
-              disabled={logoUploading}
-              className="px-4 py-2 border border-[hsl(var(--border))] rounded-xl text-xs text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] cursor-pointer whitespace-nowrap disabled:opacity-50"
-            >
-              {logoUploading ? 'Uploading…' : 'Change Logo'}
-            </button>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <LogoSlot
+            id="logo-upload-light"
+            label="Logo"
+            hint="Used on invoices/receipts and the light-theme sidebar."
+            previewBg="#f4f4f5"
+            logoUrl={logoUrl}
+            uploading={logoUploading}
+            onChange={onLogoChange}
+          />
+          <LogoSlot
+            id="logo-upload-dark"
+            label="Logo (Dark Mode)"
+            hint="Shown in the sidebar when dark mode is on. Falls back to the logo above if not set."
+            previewBg="#18181b"
+            logoUrl={logoUrlDark}
+            uploading={logoDarkUploading}
+            onChange={onLogoDarkChange}
+          />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>

@@ -119,7 +119,11 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         <div>
           <div className="flex items-center gap-3">
             <img
-              src={settings?.logo_url || (theme === 'dark' ? '/wireless-logo-dark.png' : '/wireless-logo-light.png')}
+              src={
+                theme === 'dark'
+                  ? settings?.logo_url_dark || settings?.logo_url || '/wireless-logo-dark.png'
+                  : settings?.logo_url || '/wireless-logo-light.png'
+              }
               alt={settings?.business_name || 'WIRELESS'}
               style={{ height: 22, width: 'auto', objectFit: 'contain' }}
             />

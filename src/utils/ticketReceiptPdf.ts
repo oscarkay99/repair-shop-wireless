@@ -1,6 +1,6 @@
 import { jsPDF, GState } from 'jspdf';
 import type { Repair } from '@/types/repair';
-import { loadWirelessLogo, fmtGHS, SERVICE_TERMS_URL } from '@/utils/pdfBranding';
+import { loadWirelessLogo, fitLogoBox, fmtGHS, SERVICE_TERMS_URL } from '@/utils/pdfBranding';
 
 export interface ReceiptBrandSettings {
   business_name?: string;
@@ -33,21 +33,34 @@ export async function buildTicketReceiptPdf({ repair, warrantyDays, settings }: 
   const tagline = settings?.tagline?.trim() || 'Repair & Service System';
 
   let logo: string | null = null;
-  try { logo = await loadWirelessLogo(settings?.logo_url); } catch { logo = null; }
+  let logoRatio = 261 / 1280; // fallback: the bundled logo's own aspect ratio
+  let logoType: string = 'PNG';
+  try {
+    logo = await loadWirelessLogo(settings?.logo_url);
+    // Computed from the actual loaded image (default or an uploaded custom
+    // logo) rather than assumed, so a differently-shaped upload doesn't get
+    // stretched to the bundled logo's proportions.
+    const props = doc.getImageProperties(logo);
+    logoRatio = props.height / props.width;
+    logoType = props.fileType;
+  } catch { logo = null; }
 
   if (logo) {
-    const wmW = 140;
-    const wmH = wmW * (261 / 1280);
+    const { w: wmW, h: wmH } = fitLogoBox(logoRatio, 140, 90);
     doc.saveGraphicsState();
     doc.setGState(new GState({ opacity: 0.06 }));
-    doc.addImage(logo, 'PNG', (PAGE_W - wmW) / 2, (297 - wmH) / 2, wmW, wmH, undefined, undefined, -25);
+    doc.addImage(logo, logoType, (PAGE_W - wmW) / 2, (297 - wmH) / 2, wmW, wmH, undefined, undefined, -25);
     doc.restoreGraphicsState();
   }
 
   // ── Header ──
   // The logo image already carries the business name — a redundant text
-  // heading next to it just repeated it.
-  if (logo) doc.addImage(logo, 'PNG', MARGIN, 14, 32, 32 * (261 / 1280));
+  // heading next to it just repeated it. Fit within a fixed box (like
+  // object-fit: contain) so a custom logo of any shape lines up the same.
+  if (logo) {
+    const { w: hdrW, h: hdrH } = fitLogoBox(logoRatio, 32, 12);
+    doc.addImage(logo, logoType, MARGIN, 14, hdrW, hdrH);
+  }
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
   doc.setTextColor(136);

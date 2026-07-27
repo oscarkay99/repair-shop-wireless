@@ -57,6 +57,7 @@ export default function SettingsPage() {
   const [rolesLoading, setRolesLoading] = useState(true);
   const [roleModal, setRoleModal] = useState<{ open: boolean; role: WirelessRole | null }>({ open: false, role: null });
   const [logoUploading, setLogoUploading] = useState(false);
+  const [logoDarkUploading, setLogoDarkUploading] = useState(false);
 
   const applySettings = () => {
     if (!settings) return;
@@ -136,6 +137,19 @@ export default function SettingsPage() {
     }
   };
 
+  const handleLogoDarkChange = async (file: File) => {
+    setLogoDarkUploading(true);
+    try {
+      const logo_url_dark = await uploadLogo(file);
+      await save({ logo_url_dark });
+      showToast('Dark-mode logo updated', 'success');
+    } catch (e) {
+      showToast(errMessage(e, 'Failed to upload logo'), 'error');
+    } finally {
+      setLogoDarkUploading(false);
+    }
+  };
+
   const handleSave = async () => {
     try {
       await save({
@@ -183,6 +197,9 @@ export default function SettingsPage() {
               logoUrl={settings?.logo_url}
               onLogoChange={handleLogoChange}
               logoUploading={logoUploading}
+              logoUrlDark={settings?.logo_url_dark}
+              onLogoDarkChange={handleLogoDarkChange}
+              logoDarkUploading={logoDarkUploading}
             />
           )}
 
