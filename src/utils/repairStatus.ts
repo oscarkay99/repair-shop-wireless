@@ -1,4 +1,4 @@
-import type { Repair, RepairStatus, RepairMediaStage, RepairJobType } from '@/types/repair';
+import type { Repair, RepairStatus, RepairMediaStage, RepairJobType, RepairServiceStage } from '@/types/repair';
 
 export interface RepairStatusMeta {
   label: string;
@@ -143,6 +143,47 @@ export function statusToMediaStage(status: RepairStatus): RepairMediaStage {
     case 'in_progress':          return 'in_progress';
     case 'ready':                return 'ready';
     default:                     return 'completed';
+  }
+}
+
+/**
+ * Maps the internal status to the customer-facing stage shown on the tracker portal
+ * (wireless-customer-portal reads this straight off `service_stage`). Every status-changing
+ * action needs to pass this through — the field isn't derived server-side, so a caller that
+ * updates `status` without also updating `serviceStage` leaves the customer tracker frozen at
+ * whatever stage the ticket was created in.
+ */
+export function statusToServiceStage(status: RepairStatus, jobType?: RepairJobType): RepairServiceStage {
+  if (jobType === 'straight_repair') {
+    switch (status) {
+      case 'received':          return 'intake';
+      case 'parts_pending':
+      case 'in_progress':       return 'repair';
+      case 'ready':
+      case 'completed':         return 'pickup';
+      default:                  return 'repair';
+    }
+  }
+  if (jobType === 'diagnosis_only' || status === 'diagnosis_only_closed') {
+    switch (status) {
+      case 'received':
+      case 'diagnosis_paid':    return 'intake';
+      case 'diagnosing':        return 'diagnosis';
+      case 'awaiting_approval': return 'approval';
+      case 'diagnosis_only_closed': return 'closed';
+      default:                  return 'diagnosis';
+    }
+  }
+  switch (status) {
+    case 'received':
+    case 'diagnosis_paid':      return 'intake';
+    case 'diagnosing':          return 'diagnosis';
+    case 'awaiting_approval':   return 'approval';
+    case 'parts_pending':
+    case 'in_progress':         return 'repair';
+    case 'ready':
+    case 'completed':           return 'pickup';
+    default:                    return 'diagnosis';
   }
 }
 

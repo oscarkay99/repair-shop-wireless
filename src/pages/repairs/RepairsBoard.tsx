@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { usePageTitle } from '@/context/PageTitleContext';
 import { useRepairs } from '@/hooks/useRepairs';
 import { useTechnicians } from '@/hooks/useTechnicians';
+import { useParts } from '@/hooks/useParts';
 import { useAuth } from '@/hooks/useAuth';
 import AddRepairModal from './components/AddRepairModal';
 import CreateTicketInvoiceModal from './components/CreateTicketInvoiceModal';
@@ -19,7 +20,7 @@ import type { Payment } from '@/types/wireless';
 import {
   REPAIR_STATUS_META as STATUS, activePipeline, pipelineStep,
   nextAction, nextStatus, isActiveRepairStatus, isDiagnosisStage,
-  statusToMediaStage, requiredMediaStageForAdvance, REQUIRED_MEDIA_STAGE_LABEL,
+  statusToMediaStage, statusToServiceStage, requiredMediaStageForAdvance, REQUIRED_MEDIA_STAGE_LABEL,
 } from '@/utils/repairStatus';
 import { formatDate } from '@/utils/date';
 import { getPaymentsForTicket } from '@/services/wireless/payments';
@@ -125,7 +126,7 @@ function RepairCard({ repair, onClick, selected }: {
 
 // ── Detail Panel ──────────────────────────────────────────────────────────
 
-export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, onAddMedia, onRemoveMedia, uploaderName, canManageTickets, canUpdateProgress, canDeleteTickets, onProceedToRepair, onCloseDiagnosisOnly, onEdit, onDelete }: {
+export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, onAddMedia, onRemoveMedia, uploaderName, canManageTickets, canUpdateProgress, canDeleteTickets, onProceedToRepair, onCloseDiagnosisOnly, onPatchParts, onEdit, onDelete }: {
   repair: Repair;
   onClose: () => void;
   onUpdateStatus: (id: string, s: RepairStatus) => void;
@@ -140,6 +141,9 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   canDeleteTickets: boolean;
   onProceedToRepair: (id: string) => void;
   onCloseDiagnosisOnly: (id: string) => void;
+  /** Parts a technician flags as likely needed — a lightweight suggestion
+   *  list, distinct from the stock-deducting "Parts Used" section below it. */
+  onPatchParts: (id: string, parts: NonNullable<Repair['parts']>) => void;
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -153,6 +157,8 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [ticketParts, setTicketParts] = useState<TicketPart[]>([]);
   const [showAddPart, setShowAddPart] = useState(false);
+  const [addingRecommendedPart, setAddingRecommendedPart] = useState(false);
+  const [recommendedPartName, setRecommendedPartName] = useState('');
   const [checkingInvoice, setCheckingInvoice] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const s = STATUS[repair.status] ?? STATUS.received;
@@ -165,6 +171,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   const isClosedDiagnosis = repair.status === 'diagnosis_only_closed';
   const media = repair.media ?? [];
   const { settings } = useWirelessSettings();
+  const { parts: inventoryParts } = useParts();
   const { taxEnabled, vatRate, nhilGetfundRate } = useTaxSettings();
   // Only meaningful once there's actually a finished job to hand back —
   // matches the same "ready or later" window Create Invoice already uses.
@@ -209,6 +216,20 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
     } catch (e) {
       alert(errMessage(e, 'Failed to remove part'));
     }
+  };
+
+  // A recommendation is just a name + status flag, not linked to a real
+  // inventory row — unlike "Parts Used" below, it never touches stock.
+  const handleAddRecommendedPart = () => {
+    const name = recommendedPartName.trim();
+    if (!name) return;
+    onPatchParts(repair.id, [...(repair.parts ?? []), { name, status: 'pending' }]);
+    setRecommendedPartName('');
+    setAddingRecommendedPart(false);
+  };
+
+  const handleRemoveRecommendedPart = (index: number) => {
+    onPatchParts(repair.id, (repair.parts ?? []).filter((_, i) => i !== index));
   };
 
   useEffect(() => {
@@ -371,10 +392,48 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
           ))}
         </div>
 
-        {/* Parts */}
-        {repair.parts?.length > 0 && (
-          <div className="pt-3" style={{ borderTop: '1px solid hsl(var(--border))' }}>
-            <p className="text-xs font-bold mb-3" style={{ color: 'hsl(var(--foreground))' }}>Parts Status</p>
+        {/* Parts Needed — a technician's suggestion/request list, no stock impact */}
+        <div className="pt-3" style={{ borderTop: '1px solid hsl(var(--border))' }}>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-bold" style={{ color: 'hsl(var(--foreground))' }}>Parts Needed</p>
+            {!isDone && canUpdateProgress && !addingRecommendedPart && (
+              <button
+                onClick={() => setAddingRecommendedPart(true)}
+                className="text-xs font-medium flex items-center gap-1"
+                style={{ color: 'hsl(var(--primary))' }}>
+                <Plus className="w-3 h-3" /> Recommend Part
+              </button>
+            )}
+          </div>
+          {addingRecommendedPart && (
+            <div className="flex gap-2 mb-2">
+              <input
+                autoFocus
+                list="inventory-part-names"
+                value={recommendedPartName}
+                onChange={e => setRecommendedPartName(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddRecommendedPart(); } }}
+                placeholder="e.g. Screen, Battery…"
+                className="flex-1 h-9 px-3 rounded-lg text-xs outline-none"
+                style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
+              <datalist id="inventory-part-names">
+                {inventoryParts.map(p => <option key={p.id} value={p.name} />)}
+              </datalist>
+              <button onClick={handleAddRecommendedPart}
+                className="px-3 h-9 rounded-lg text-xs font-semibold text-white"
+                style={{ background: 'hsl(var(--primary))' }}>
+                Add
+              </button>
+              <button onClick={() => { setAddingRecommendedPart(false); setRecommendedPartName(''); }}
+                className="w-9 h-9 flex items-center justify-center rounded-lg"
+                style={{ color: 'hsl(var(--muted-foreground))' }}>
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+          {!repair.parts || repair.parts.length === 0 ? (
+            <p className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No parts recommended yet.</p>
+          ) : (
             <div className="space-y-2">
               {repair.parts.map((part, i) => {
                 const pc = PART_COLORS[part.status] ?? PART_COLORS.pending;
@@ -382,16 +441,25 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
                   <div key={i} className="flex items-center justify-between px-3 py-2 rounded-xl"
                     style={{ background: 'hsl(var(--muted))' }}>
                     <span className="text-xs font-medium" style={{ color: 'hsl(var(--foreground))' }}>{part.name}</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize"
-                      style={{ background: pc.bg, color: pc.color }}>
-                      {part.status.charAt(0).toUpperCase() + part.status.slice(1)}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize"
+                        style={{ background: pc.bg, color: pc.color }}>
+                        {part.status.charAt(0).toUpperCase() + part.status.slice(1)}
+                      </span>
+                      {canUpdateProgress && (
+                        <button onClick={() => handleRemoveRecommendedPart(i)}
+                          className="w-5 h-5 flex items-center justify-center rounded"
+                          style={{ color: 'hsl(var(--muted-foreground))' }}>
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 );
               })}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Parts Used — real inventory-linked consumption, deducts stock */}
         <div className="pt-3" style={{ borderTop: '1px solid hsl(var(--border))' }}>
@@ -785,11 +853,19 @@ export default function RepairsBoard() {
   };
 
   const handleProceedToRepair = (id: string) => {
-    patchRepair(id, { jobType: 'diagnosis_to_repair', status: 'parts_pending' });
+    patchRepair(id, {
+      jobType: 'diagnosis_to_repair',
+      status: 'parts_pending',
+      serviceStage: statusToServiceStage('parts_pending', 'diagnosis_to_repair'),
+    });
   };
 
   const handleCloseDiagnosisOnly = (id: string) => {
-    patchRepair(id, { jobType: 'diagnosis_only', status: 'diagnosis_only_closed' });
+    patchRepair(id, {
+      jobType: 'diagnosis_only',
+      status: 'diagnosis_only_closed',
+      serviceStage: statusToServiceStage('diagnosis_only_closed', 'diagnosis_only'),
+    });
   };
 
   const handleDelete = (repair: Repair) => {
@@ -930,6 +1006,7 @@ export default function RepairsBoard() {
             canDeleteTickets={canDeleteTickets}
             onProceedToRepair={handleProceedToRepair}
             onCloseDiagnosisOnly={handleCloseDiagnosisOnly}
+            onPatchParts={(id, parts) => patchRepair(id, { parts })}
             onEdit={() => setEditingRepair(selected)}
             onDelete={() => handleDelete(selected)}
           />

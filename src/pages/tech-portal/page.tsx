@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTechnicians } from '@/hooks/useTechnicians';
 import { useRepairs } from '@/hooks/useRepairs';
 import { RepairDetailPanel } from '@/pages/repairs/RepairsBoard';
-import { REPAIR_STATUS_META } from '@/utils/repairStatus';
+import { REPAIR_STATUS_META, statusToServiceStage } from '@/utils/repairStatus';
 import { roleColors, roleLabels } from '@/mocks/users';
 import { isCurrentlyUnavailable } from '@/utils/technicianAvailability';
 import BirthdayBanner from '@/components/shared/BirthdayBanner';
@@ -99,8 +99,16 @@ export default function TechPortalPage() {
     updateStatus(id, status);
     if (status === 'completed') setSelectedId(null);
   };
-  const handleProceedToRepair = (id: string) => patchRepair(id, { jobType: 'diagnosis_to_repair', status: 'parts_pending' });
-  const handleCloseDiagnosisOnly = (id: string) => patchRepair(id, { jobType: 'diagnosis_only', status: 'diagnosis_only_closed' });
+  const handleProceedToRepair = (id: string) => patchRepair(id, {
+    jobType: 'diagnosis_to_repair',
+    status: 'parts_pending',
+    serviceStage: statusToServiceStage('parts_pending', 'diagnosis_to_repair'),
+  });
+  const handleCloseDiagnosisOnly = (id: string) => patchRepair(id, {
+    jobType: 'diagnosis_only',
+    status: 'diagnosis_only_closed',
+    serviceStage: statusToServiceStage('diagnosis_only_closed', 'diagnosis_only'),
+  });
 
   return (
     <div className="h-screen flex flex-col" style={{ background: 'hsl(var(--background))' }}>
@@ -315,6 +323,7 @@ export default function TechPortalPage() {
               canDeleteTickets={false}
               onProceedToRepair={handleProceedToRepair}
               onCloseDiagnosisOnly={handleCloseDiagnosisOnly}
+              onPatchParts={(id, parts) => patchRepair(id, { parts })}
               onEdit={() => {}}
               onDelete={() => {}}
             />

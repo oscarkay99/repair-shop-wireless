@@ -1,6 +1,7 @@
 import { repairs as seedData } from '@/mocks/repairs';
 import type { Repair, RepairMedia, RepairMediaType, RepairStatus, RepairMediaUploadInput } from '@/types/repair';
 import { isSupabaseConfigured, supabase, db } from './supabase';
+import { statusToServiceStage } from '@/utils/repairStatus';
 
 export const MAX_REPAIR_MEDIA_BYTES = 5 * 1024 * 1024;
 export const MAX_REPAIR_VIDEO_DURATION_SECONDS = 30;
@@ -360,12 +361,13 @@ export async function updateRepairStatus(id: string, status: RepairStatus): Prom
   }
 
   assertCanMoveToStatus(repair, status);
+  const serviceStage = statusToServiceStage(status, repair.jobType);
 
   if (isSupabaseConfigured) {
-    const { error } = await db.from('tickets').update({ status }).eq('ticket_number', id);
+    const { error } = await db.from('tickets').update({ status, service_stage: serviceStage }).eq('ticket_number', id);
     if (error) throw error;
   }
-  updateLocalRepair(id, (currentRepair) => ({ ...currentRepair, status }));
+  updateLocalRepair(id, (currentRepair) => ({ ...currentRepair, status, serviceStage }));
 }
 
 export async function updateRepairNotes(id: string, notes: string[]): Promise<void> {
