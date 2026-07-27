@@ -50,6 +50,7 @@ export default function SettingsPage() {
   const [businessHoursMonFri, setBusinessHoursMonFri] = useState('8:00 AM – 8:00 PM');
   const [businessHoursSaturday, setBusinessHoursSaturday] = useState('9:00 AM – 7:00 PM');
   const [businessHoursSunday, setBusinessHoursSunday] = useState('Closed');
+  const [termsAndConditions, setTermsAndConditions] = useState('');
   const [showInvite, setShowInvite] = useState(false);
   const [staff, setStaff] = useState<WirelessProfile[]>([]);
   const [staffLoading, setStaffLoading] = useState(true);
@@ -80,6 +81,7 @@ export default function SettingsPage() {
     setBusinessHoursMonFri(settings.business_hours_mon_fri ?? '8:00 AM – 8:00 PM');
     setBusinessHoursSaturday(settings.business_hours_saturday ?? '9:00 AM – 7:00 PM');
     setBusinessHoursSunday(settings.business_hours_sunday ?? 'Closed');
+    setTermsAndConditions(settings.terms_and_conditions ?? '');
     setDirty(false);
   };
 
@@ -169,6 +171,7 @@ export default function SettingsPage() {
         business_hours_mon_fri: businessHoursMonFri,
         business_hours_saturday: businessHoursSaturday,
         business_hours_sunday: businessHoursSunday,
+        terms_and_conditions: termsAndConditions,
       });
       setDirty(false);
       setSaved(true);
@@ -215,6 +218,7 @@ export default function SettingsPage() {
               businessHoursSaturday={businessHoursSaturday} setBusinessHoursSaturday={markDirty(setBusinessHoursSaturday)}
               businessHoursSunday={businessHoursSunday} setBusinessHoursSunday={markDirty(setBusinessHoursSunday)}
               currency={currency} setCurrency={markDirty(setCurrency)}
+              termsAndConditions={termsAndConditions} setTermsAndConditions={markDirty(setTermsAndConditions)}
             />
           )}
 

@@ -152,5 +152,6 @@ export interface WirelessSettings {
   tax_enabled: boolean;
   logo_url?: string | null;
   logo_url_dark?: string | null;
+  terms_and_conditions?: string;
   updated_at: string;
 }

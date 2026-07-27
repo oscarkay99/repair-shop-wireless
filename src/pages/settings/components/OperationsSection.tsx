@@ -11,6 +11,7 @@ interface OperationsSectionProps {
   businessHoursSaturday: string; setBusinessHoursSaturday: (v: string) => void;
   businessHoursSunday: string; setBusinessHoursSunday: (v: string) => void;
   currency: string; setCurrency: (v: string) => void;
+  termsAndConditions: string; setTermsAndConditions: (v: string) => void;
 }
 
 const selectCls = 'w-full border border-[hsl(var(--border))] rounded-xl px-3 py-2.5 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[#EC0118]';
@@ -27,6 +28,7 @@ export default function OperationsSection({
   businessHoursSaturday, setBusinessHoursSaturday,
   businessHoursSunday, setBusinessHoursSunday,
   currency, setCurrency,
+  termsAndConditions, setTermsAndConditions,
 }: OperationsSectionProps) {
   const { taxEnabled, vatRate, nhilGetfundRate, save } = useTaxSettings();
 
@@ -135,6 +137,19 @@ export default function OperationsSection({
           <p className="text-[10px] text-[hsl(var(--muted-foreground))] mt-2">
             When disabled, no tax is calculated or shown on Invoices or the Sales checkout. VAT/Levy save immediately;
             everything else on this page saves with the button below.
+          </p>
+        </div>
+        <div>
+          <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] block mb-1.5">Repair Service Terms</label>
+          <textarea
+            rows={8}
+            value={termsAndConditions}
+            onChange={e => setTermsAndConditions(e.target.value)}
+            className="w-full border border-[hsl(var(--border))] rounded-xl px-3 py-2.5 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[#EC0118] font-mono"
+          />
+          <p className="text-[10px] text-[hsl(var(--muted-foreground))] mt-1.5">
+            Shown on the customer portal's Repair Service Terms page, linked from every invoice and pickup receipt.
+            Start a line with <code>## </code> to make it a section heading; separate paragraphs with a blank line.
           </p>
         </div>
       </div>
