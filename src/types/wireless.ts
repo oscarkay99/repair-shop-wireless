@@ -150,5 +150,6 @@ export interface WirelessSettings {
   business_hours_sunday: string;
   primary_color: string;
   tax_enabled: boolean;
+  logo_url?: string | null;
   updated_at: string;
 }

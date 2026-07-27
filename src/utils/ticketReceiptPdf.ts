@@ -7,6 +7,7 @@ export interface ReceiptBrandSettings {
   tagline?: string;
   phone?: string;
   address?: string;
+  logo_url?: string | null;
 }
 
 export interface TicketReceiptPdfOptions {
@@ -32,7 +33,7 @@ export async function buildTicketReceiptPdf({ repair, warrantyDays, settings }: 
   const tagline = settings?.tagline?.trim() || 'Repair & Service System';
 
   let logo: string | null = null;
-  try { logo = await loadWirelessLogo(); } catch { logo = null; }
+  try { logo = await loadWirelessLogo(settings?.logo_url); } catch { logo = null; }
 
   if (logo) {
     const wmW = 140;

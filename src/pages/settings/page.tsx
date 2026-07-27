@@ -8,11 +8,14 @@ import SettingsSidebar from './components/SettingsSidebar';
 import BrandingSection from './components/BrandingSection';
 import OperationsSection from './components/OperationsSection';
 import TeamRolesSection from './components/TeamRolesSection';
+import RoleFormModal from './components/RoleFormModal';
 import SecuritySection from './components/SecuritySection';
 import UsersSection from './components/UsersSection';
 import ChangePasswordSection from './components/ChangePasswordSection';
 import InviteUserModal from './components/InviteUserModal';
 import { getWirelessUsers, type WirelessProfile } from '@/services/wireless/users';
+import { getRoles, createRole, updateRole, deleteRole, type WirelessRole } from '@/services/wireless/roles';
+import { uploadLogo } from '@/services/wireless/settings';
 
 const allSections = [
   { id: 'branding', label: 'Branding', icon: 'ri-palette-line', adminOnly: false },
@@ -21,16 +24,6 @@ const allSections = [
   { id: 'users', label: 'Users', icon: 'ri-user-settings-line', adminOnly: true },
   { id: 'security', label: 'Security', icon: 'ri-shield-keyhole-line', adminOnly: false },
   { id: 'password', label: 'Change Password', icon: 'ri-lock-password-line', adminOnly: false },
-];
-
-// Roles are a fixed 4-value set (see UserRole in useAuth.ts and the DB's
-// profiles_role_check constraint) — there is no custom-role system, so this
-// is just display metadata, not something an admin can add to.
-const roleMeta: { id: string; name: string; permissions: string[] }[] = [
-  { id: 'admin', name: 'Admin', permissions: ['All access', 'Settings', 'Financial reports', 'Team management', 'Delete records'] },
-  { id: 'sales_manager', name: 'Sales Manager', permissions: ['Sales', 'Leads', 'Customers', 'Inventory view', 'Reports view', 'Team view'] },
-  { id: 'technician', name: 'Technician', permissions: ['Tickets', 'Inventory view', 'Customers view'] },
-  { id: 'receptionist', name: 'Receptionist', permissions: ['Customers', 'Payments', 'Tickets', 'Invoices'] },
 ];
 
 export default function SettingsPage() {
@@ -60,6 +53,10 @@ export default function SettingsPage() {
   const [showInvite, setShowInvite] = useState(false);
   const [staff, setStaff] = useState<WirelessProfile[]>([]);
   const [staffLoading, setStaffLoading] = useState(true);
+  const [roles, setRoles] = useState<WirelessRole[]>([]);
+  const [rolesLoading, setRolesLoading] = useState(true);
+  const [roleModal, setRoleModal] = useState<{ open: boolean; role: WirelessRole | null }>({ open: false, role: null });
+  const [logoUploading, setLogoUploading] = useState(false);
 
   const applySettings = () => {
     if (!settings) return;
@@ -95,19 +92,49 @@ export default function SettingsPage() {
       .finally(() => setStaffLoading(false));
   };
 
+  const loadRoles = () => {
+    setRolesLoading(true);
+    getRoles()
+      .then(setRoles)
+      .catch(() => setRoles([]))
+      .finally(() => setRolesLoading(false));
+  };
+
   useEffect(() => {
-    if (activeSection === 'team') loadStaff();
+    if (activeSection === 'team') { loadStaff(); loadRoles(); }
   }, [activeSection]);
 
-  const teamRoles = roleMeta.map(r => ({
-    ...r,
-    members: staff.filter(s => s.role === r.id).length,
-  }));
+  const handleSaveRole = async (id: string, input: Parameters<typeof createRole>[0]) => {
+    if (roleModal.role) await updateRole(id, input);
+    else await createRole(input);
+    loadRoles();
+  };
+
+  const handleDeleteRole = async (role: WirelessRole) => {
+    await deleteRole(role.id);
+    loadRoles();
+  };
 
   // Every Branding/Operations field (other than Tax/VAT/Levy, which save
   // immediately on change) routes through this one `dirty` flag, so the save
   // bar never appears on tabs whose fields it doesn't actually persist.
   const markDirty = <T,>(setter: (v: T) => void) => (v: T) => { setter(v); setDirty(true); };
+
+  // Saves immediately, like Tax/VAT/Levy — a logo upload already has its own
+  // async round-trip and loading state, so bundling it into the Save
+  // Changes bar would just mean a second, redundant wait.
+  const handleLogoChange = async (file: File) => {
+    setLogoUploading(true);
+    try {
+      const logo_url = await uploadLogo(file);
+      await save({ logo_url });
+      showToast('Logo updated', 'success');
+    } catch (e) {
+      showToast(errMessage(e, 'Failed to upload logo'), 'error');
+    } finally {
+      setLogoUploading(false);
+    }
+  };
 
   const handleSave = async () => {
     try {
@@ -153,6 +180,9 @@ export default function SettingsPage() {
               whatsapp={whatsapp} setWhatsapp={markDirty(setWhatsapp)}
               address={address} setAddress={markDirty(setAddress)}
               primaryColor={primaryColor} setPrimaryColor={markDirty(setPrimaryColor)}
+              logoUrl={settings?.logo_url}
+              onLogoChange={handleLogoChange}
+              logoUploading={logoUploading}
             />
           )}
 
@@ -173,10 +203,13 @@ export default function SettingsPage() {
 
           {activeSection === 'team' && isAdmin && (
             <TeamRolesSection
-              roles={teamRoles}
+              roles={roles}
               members={staff}
-              loading={staffLoading}
+              loading={staffLoading || rolesLoading}
               onInviteMember={() => setShowInvite(true)}
+              onAddRole={() => setRoleModal({ open: true, role: null })}
+              onEditRole={(role) => setRoleModal({ open: true, role })}
+              onDeleteRole={handleDeleteRole}
             />
           )}
 
@@ -220,7 +253,14 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <InviteUserModal open={showInvite} onClose={() => setShowInvite(false)} onCreated={loadStaff} />
+      <InviteUserModal open={showInvite} onClose={() => setShowInvite(false)} onCreated={loadStaff} roles={roles} />
+      {roleModal.open && (
+        <RoleFormModal
+          role={roleModal.role}
+          onClose={() => setRoleModal({ open: false, role: null })}
+          onSave={handleSaveRole}
+        />
+      )}
     </AdminLayout>
   );
 }

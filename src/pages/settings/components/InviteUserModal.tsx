@@ -1,14 +1,8 @@
 import { useState } from 'react';
 import { createWirelessUser } from '@/services/wireless/users';
 import { createTechnician } from '@/services/wireless/technicians';
+import type { WirelessRole } from '@/services/wireless/roles';
 import { errMessage } from '@/utils/errors';
-
-const ROLE_OPTIONS = [
-  { value: 'technician', label: 'Technician' },
-  { value: 'receptionist', label: 'Receptionist' },
-  { value: 'sales_manager', label: 'Sales Manager' },
-  { value: 'admin', label: 'Admin' },
-];
 
 function generatePassword(): string {
   const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
@@ -21,9 +15,10 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onCreated?: () => void;
+  roles: WirelessRole[];
 }
 
-export default function InviteUserModal({ open, onClose, onCreated }: Props) {
+export default function InviteUserModal({ open, onClose, onCreated, roles }: Props) {
   const [role, setRole] = useState('technician');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -116,7 +111,7 @@ export default function InviteUserModal({ open, onClose, onCreated }: Props) {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground text-xs">Role</span>
-                <span className="text-foreground">{ROLE_OPTIONS.find(r => r.value === result.role)?.label ?? result.role}</span>
+                <span className="text-foreground">{roles.find(r => r.id === result.role)?.name ?? result.role}</span>
               </div>
             </div>
 
@@ -151,7 +146,7 @@ export default function InviteUserModal({ open, onClose, onCreated }: Props) {
                   onChange={e => setRole(e.target.value)}
                   className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
                 >
-                  {ROLE_OPTIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                  {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                 </select>
               </div>
               <div>

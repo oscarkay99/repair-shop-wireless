@@ -15,6 +15,7 @@ export interface InvoiceBrandSettings {
   tagline?: string;
   phone?: string;
   address?: string;
+  logo_url?: string | null;
 }
 
 export interface InvoicePdfOptions {
@@ -70,7 +71,7 @@ export async function buildInvoicePdf({ invoice, items, taxEnabled, vatRate, lev
   const balanceDue = Math.max(0, invoice.total - invoice.amount_paid);
 
   let logo: string | null = null;
-  try { logo = await loadWirelessLogo(); } catch { logo = null; }
+  try { logo = await loadWirelessLogo(settings?.logo_url); } catch { logo = null; }
 
   // Watermark — drawn first so header/table content layers on top of it.
   if (logo) {

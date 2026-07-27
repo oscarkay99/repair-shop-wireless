@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getWirelessUsers, updateWirelessUser, deleteWirelessUser, resetUserPassword, type WirelessProfile } from '@/services/wireless/users';
 import { findTechnicianByProfileId, createTechnician } from '@/services/wireless/technicians';
+import { getRoles, type WirelessRole } from '@/services/wireless/roles';
 import { isSupabaseConfigured } from '@/services/supabase';
 import { errMessage } from '@/utils/errors';
 import InviteUserModal from './InviteUserModal';
@@ -12,21 +13,7 @@ function generatePassword(): string {
   return out;
 }
 
-const ROLE_LABELS: Record<string, string> = {
-  admin: 'Admin',
-  sales_manager: 'Sales Manager',
-  technician: 'Technician',
-  receptionist: 'Receptionist',
-};
-
-const ROLE_COLORS: Record<string, string> = {
-  admin: 'bg-red-500/20 text-red-400',
-  sales_manager: 'bg-blue-500/20 text-blue-400',
-  technician: 'bg-amber-500/20 text-amber-400',
-  receptionist: 'bg-cyan-500/20 text-cyan-400',
-};
-
-function EditUserModal({ user, onClose, onSaved }: { user: WirelessProfile; onClose: () => void; onSaved: () => void }) {
+function EditUserModal({ user, roles, onClose, onSaved }: { user: WirelessProfile; roles: WirelessRole[]; onClose: () => void; onSaved: () => void }) {
   const [name, setName] = useState(user.name);
   const [role, setRole] = useState(user.role);
   const [username, setUsername] = useState(user.username ?? '');
@@ -113,8 +100,8 @@ function EditUserModal({ user, onClose, onSaved }: { user: WirelessProfile; onCl
               onChange={e => setRole(e.target.value)}
               className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
             >
-              {Object.entries(ROLE_LABELS).map(([val, label]) => (
-                <option key={val} value={val}>{label}</option>
+              {roles.map(r => (
+                <option key={r.id} value={r.id}>{r.name}</option>
               ))}
             </select>
           </div>
@@ -203,6 +190,7 @@ function EditUserModal({ user, onClose, onSaved }: { user: WirelessProfile; onCl
 export default function UsersSection() {
   const [users, setUsers] = useState<WirelessProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [roles, setRoles] = useState<WirelessRole[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [editingUser, setEditingUser] = useState<WirelessProfile | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -215,7 +203,10 @@ export default function UsersSection() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    getRoles().then(setRoles).catch(() => setRoles([]));
+  }, []);
 
   const handleDelete = async (user: WirelessProfile) => {
     if (!confirm(`Delete ${user.name}? This cannot be undone.`)) return;
@@ -263,7 +254,9 @@ export default function UsersSection() {
           <div className="text-sm text-muted-foreground py-8 text-center">No users found</div>
         ) : (
           <div className="space-y-2">
-            {users.map(u => (
+            {users.map(u => {
+              const role = roles.find(r => r.id === u.role);
+              return (
               <div key={u.id} className="flex items-center gap-4 p-3 rounded-xl bg-background/50 hover:bg-background transition-colors">
                 <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary text-sm font-bold flex-shrink-0">
                   {u.avatar || u.name[0]?.toUpperCase()}
@@ -272,8 +265,8 @@ export default function UsersSection() {
                   <p className="text-sm font-medium text-foreground truncate">{u.name}</p>
                   <p className="text-xs text-muted-foreground truncate">{u.email}{u.username ? ` · @${u.username}` : ''}</p>
                 </div>
-                <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${ROLE_COLORS[u.role] ?? 'bg-muted text-muted-foreground'}`}>
-                  {ROLE_LABELS[u.role] ?? u.role}
+                <span className="text-xs font-medium px-2.5 py-1 rounded-full" style={{ background: `${role?.color ?? '#64748b'}33`, color: role?.color ?? '#64748b' }}>
+                  {role?.name ?? u.role}
                 </span>
                 <p className="text-xs text-muted-foreground w-24 text-right hidden sm:block">
                   {u.last_login ? new Date(u.last_login).toLocaleDateString() : 'Never'}
@@ -296,14 +289,15 @@ export default function UsersSection() {
                   </svg>
                 </button>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
 
-      <InviteUserModal open={showAdd} onClose={() => setShowAdd(false)} onCreated={load} />
+      <InviteUserModal open={showAdd} onClose={() => setShowAdd(false)} onCreated={load} roles={roles} />
       {editingUser && (
-        <EditUserModal user={editingUser} onClose={() => setEditingUser(null)} onSaved={load} />
+        <EditUserModal user={editingUser} roles={roles} onClose={() => setEditingUser(null)} onSaved={load} />
       )}
     </div>
   );

@@ -11,6 +11,9 @@ interface BrandingSectionProps {
   setAddress: (v: string) => void;
   primaryColor: string;
   setPrimaryColor: (v: string) => void;
+  logoUrl?: string | null;
+  onLogoChange: (file: File) => void;
+  logoUploading: boolean;
 }
 
 export default function BrandingSection({
@@ -20,6 +23,7 @@ export default function BrandingSection({
   whatsapp, setWhatsapp,
   address, setAddress,
   primaryColor, setPrimaryColor,
+  logoUrl, onLogoChange, logoUploading,
 }: BrandingSectionProps) {
   return (
     <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-6">
@@ -28,11 +32,25 @@ export default function BrandingSection({
         <div>
           <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] block mb-2">Logo</label>
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl border border-[hsl(var(--border))] flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #0A1F4A, #1E5FBE)' }}>
-              <i className="ri-smartphone-line text-2xl text-white" />
+            <div className="w-16 h-16 rounded-2xl border border-[hsl(var(--border))] flex items-center justify-center overflow-hidden" style={logoUrl ? undefined : { background: 'linear-gradient(135deg, #0A1F4A, #1E5FBE)' }}>
+              {logoUrl
+                ? <img src={logoUrl} alt="Business logo" className="w-full h-full object-contain" />
+                : <i className="ri-smartphone-line text-2xl text-white" />}
             </div>
-            <input type="file" accept="image/*" id="logo-upload" className="hidden" onChange={() => {}} />
-            <button onClick={() => document.getElementById('logo-upload')?.click()} className="px-4 py-2 border border-[hsl(var(--border))] rounded-xl text-xs text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] cursor-pointer whitespace-nowrap">Change Logo</button>
+            <input
+              type="file"
+              accept="image/*"
+              id="logo-upload"
+              className="hidden"
+              onChange={e => { const f = e.target.files?.[0]; if (f) onLogoChange(f); e.target.value = ''; }}
+            />
+            <button
+              onClick={() => document.getElementById('logo-upload')?.click()}
+              disabled={logoUploading}
+              className="px-4 py-2 border border-[hsl(var(--border))] rounded-xl text-xs text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] cursor-pointer whitespace-nowrap disabled:opacity-50"
+            >
+              {logoUploading ? 'Uploading…' : 'Change Logo'}
+            </button>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4">

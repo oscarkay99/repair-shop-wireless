@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { isSupabaseConfigured, supabase } from '@/services/supabase';
 import { logAuthEvent } from '@/services/wireless/auditLogs';
+import { getRoleById } from '@/services/wireless/roles';
 
-export type UserRole = 'admin' | 'sales_manager' | 'technician' | 'receptionist';
+// No longer a fixed union — roles are rows in wireless.roles, and an admin
+// can create new ones with any id at runtime.
+export type UserRole = string;
 
 export interface AuthUser {
   id: string;
@@ -11,7 +14,29 @@ export interface AuthUser {
   role: UserRole;
   avatar: string;
   lastLogin: string;
+  // Absent on the bare mockUsers seed rows — resolved via resolveRoleMeta()
+  // and merged in at actual login time, both for real and demo accounts.
+  permissions?: string[];
+  scopeTicketsToTechnician?: boolean;
+  dashboardVariant?: string;
+  roleName?: string;
+  roleColor?: string;
   _isMock?: boolean;
+}
+
+async function resolveRoleMeta(role: string): Promise<Pick<AuthUser, 'permissions' | 'scopeTicketsToTechnician' | 'dashboardVariant' | 'roleName' | 'roleColor'>> {
+  try {
+    const meta = await getRoleById(role);
+    return {
+      permissions: meta?.permissions ?? [],
+      scopeTicketsToTechnician: meta?.scope_tickets_to_technician ?? false,
+      dashboardVariant: meta?.dashboard_variant ?? 'admin',
+      roleName: meta?.name,
+      roleColor: meta?.color,
+    };
+  } catch {
+    return { permissions: [], scopeTicketsToTechnician: false, dashboardVariant: 'admin' };
+  }
 }
 
 type AuthResult = { success: boolean; error?: string };
@@ -135,7 +160,8 @@ async function loadProfileFromSession(userId: string, email: string): Promise<Au
       // through the admin invite flow) may actually sign in.
       if (data.status !== 'active') return null;
       await supabase.schema('wireless').from('profiles').update({ last_login: new Date().toISOString() }).eq('id', userId);
-      return { id: userId, email, name: data.name, role: data.role as UserRole, avatar: data.avatar, lastLogin: data.last_login ?? '' };
+      const roleMeta = await resolveRoleMeta(data.role);
+      return { id: userId, email, name: data.name, role: data.role as UserRole, avatar: data.avatar, lastLogin: data.last_login ?? '', ...roleMeta };
     }
 
     // No profile row under this exact auth id — this happens the first time
@@ -162,7 +188,8 @@ async function loadProfileFromSession(userId: string, email: string): Promise<Au
     await supabase.schema('wireless').from('profiles').upsert({
       id: userId, email, name, role, avatar, status: 'active', last_login: new Date().toISOString(),
     });
-    return { id: userId, email, name, role, avatar, lastLogin: '' };
+    const roleMeta = await resolveRoleMeta(role);
+    return { id: userId, email, name, role, avatar, lastLogin: '', ...roleMeta };
   } catch (e) {
     console.warn('[useAuth] failed to load profile', e);
     return null;
@@ -196,7 +223,7 @@ export function useAuth() {
           // Load profile; fall back to demo data if DB query fails
           const profile = await loadProfileFromSession(data.session.user.id, data.session.user.email ?? '');
           const { password: _pw, ...fallback } = demoMatch;
-          const user = profile ?? { ...fallback, id: data.session.user.id };
+          const user = profile ?? { ...fallback, ...(await resolveRoleMeta(fallback.role)), id: data.session.user.id };
           writeStoredUser(user);
           setState({ user, loading: false });
           return { success: true };
@@ -225,7 +252,8 @@ export function useAuth() {
     // Mock auth — all demo accounts reach here (non-admin always, admin if Supabase failed)
     if (!demoMatch) { setState({ loading: false }); return { success: false, error: 'Invalid email/username or password' }; }
     const { password: _pw, ...userFields } = demoMatch;
-    const user: AuthUser = { ...userFields, _isMock: true };
+    const roleMeta = await resolveRoleMeta(userFields.role);
+    const user: AuthUser = { ...userFields, ...roleMeta, _isMock: true };
     writeStoredUser(user);
     setState({ user, loading: false });
     return { success: true };

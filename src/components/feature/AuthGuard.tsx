@@ -12,7 +12,7 @@ export default function AuthGuard({ children, requiredModule }: AuthGuardProps) 
   const { isAuthenticated, isLoading, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const hasModuleAccess = requiredModule ? canAccessModule(user?.role, requiredModule) : true;
+  const hasModuleAccess = requiredModule ? canAccessModule(user, requiredModule) : true;
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated && location.pathname !== '/signin') {

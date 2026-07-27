@@ -1,5 +1,4 @@
-import { rolePermissions } from '@/mocks/users';
-import type { UserRole } from '@/hooks/useAuth';
+import type { AuthUser } from '@/hooks/useAuth';
 
 export type AppModule =
   | 'Dashboard'
@@ -10,6 +9,7 @@ export type AppModule =
   | 'Payments'
   | 'Customers'
   | 'Tickets'
+  | 'Repairs'
   | 'Technicians'
   | 'Invoices'
   | 'Sales'
@@ -25,7 +25,61 @@ export type AppModule =
   | 'Authentication'
   | 'Users';
 
-export function canAccessModule(role: UserRole | null | undefined, module: AppModule) {
-  if (!role) return false;
-  return rolePermissions[role].includes(module);
+// A handful of nav items (Analytics, Reports, AI Studio, etc.) are
+// demo/template pages with no backing wireless.* table or RLS policy — there
+// is no real permission to derive their visibility from, so it's preserved
+// exactly as it was under the old fixed 4-role map. Custom roles simply
+// don't see them (only admin/sales_manager/technician get what they always
+// had). Everything else below is genuinely permission-driven.
+const LEGACY_MODULE_VISIBILITY: Partial<Record<AppModule, string[]>> = {
+  Analytics: ['admin', 'sales_manager'],
+  'AI Studio': ['admin'],
+  Reports: ['admin', 'sales_manager'],
+  Loyalty: ['admin', 'sales_manager'],
+  Delivery: ['admin', 'sales_manager'],
+  Warranty: ['admin', 'technician'],
+  Authentication: ['admin'],
+  Portal: ['admin'],
+  Activity: ['admin'],
+  Users: ['admin'],
+  // Frontend gating for /technicians has always been stricter than the
+  // technicians_write RLS policy (which also allows sales_manager) — kept
+  // as-is rather than "fixed" to stay byte-for-byte faithful to prior behavior.
+  Technicians: ['admin'],
+};
+
+type PermCtx = Pick<AuthUser, 'role' | 'permissions' | 'scopeTicketsToTechnician'> | null | undefined;
+
+export function canAccessModule(user: PermCtx, module: AppModule): boolean {
+  if (!user?.role) return false;
+  const perms = new Set(user.permissions ?? []);
+  const has = (p: string) => perms.has(p);
+
+  switch (module) {
+    case 'Dashboard':
+      return true;
+    case 'Tickets':
+    case 'Repairs':
+      return !!user.scopeTicketsToTechnician || has('tickets:view') || has('tickets:create') || has('tickets:edit') || has('tickets:delete');
+    case 'Customers':
+      return has('customers:create') || has('customers:edit') || has('customers:delete');
+    case 'Inventory':
+      return has('parts:edit');
+    case 'Payments':
+      return has('payments:create');
+    case 'Invoices':
+      return has('invoices:create') || has('invoices:edit') || has('invoices:delete') || has('invoices:items_edit');
+    case 'Sales':
+      return has('sales:create');
+    case 'Expenses':
+      return has('expenses:view') || has('expenses:edit');
+    case 'Team':
+      return has('team:view') || has('team:edit') || has('team:delete');
+    case 'Settings':
+      return has('settings:edit');
+    case 'Audit Logs':
+      return has('audit_logs:view');
+    default:
+      return LEGACY_MODULE_VISIBILITY[module]?.includes(user.role) ?? false;
+  }
 }

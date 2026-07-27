@@ -1,18 +1,23 @@
-let logoDataUrlPromise: Promise<string> | null = null;
+const logoDataUrlPromises = new Map<string, Promise<string>>();
 
-/** Fetches the light-background logo lockup once and caches it for reuse across PDF builders. */
-export function loadWirelessLogo(): Promise<string> {
-  if (!logoDataUrlPromise) {
-    logoDataUrlPromise = fetch('/wireless-logo-light.png')
+/**
+ * Fetches a logo image once per URL and caches it for reuse across PDF
+ * builders. Pass the business's uploaded `settings.logo_url` when available;
+ * falls back to the bundled light-background lockup otherwise.
+ */
+export function loadWirelessLogo(overrideUrl?: string | null): Promise<string> {
+  const url = overrideUrl || '/wireless-logo-light.png';
+  if (!logoDataUrlPromises.has(url)) {
+    logoDataUrlPromises.set(url, fetch(url)
       .then(res => res.blob())
       .then(blob => new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onloadend = () => resolve(reader.result as string);
         reader.onerror = reject;
         reader.readAsDataURL(blob);
-      }));
+      })));
   }
-  return logoDataUrlPromise;
+  return logoDataUrlPromises.get(url)!;
 }
 
 export function fmtGHS(n: number): string {

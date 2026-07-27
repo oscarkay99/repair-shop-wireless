@@ -1,5 +1,7 @@
-import { isSupabaseConfigured, db } from '@/services/supabase';
+import { isSupabaseConfigured, db, supabase } from '@/services/supabase';
 import type { WirelessSettings } from '@/types/wireless';
+
+const LOGO_BUCKET = 'branding';
 
 const DEFAULT: WirelessSettings = {
   id: 'store',
@@ -39,6 +41,22 @@ export async function getWirelessSettings(): Promise<WirelessSettings> {
     console.warn('[wireless/settings] falling back to local store', e);
     return { ...localSettings };
   }
+}
+
+// Uploaded under a fresh, unique filename each time (rather than overwriting
+// one fixed path) so the browser/CDN never serves a stale cached copy right
+// after a change — same reasoning as the ticket-media upload path.
+export async function uploadLogo(file: File): Promise<string> {
+  if (!isSupabaseConfigured) throw new Error('Uploading a logo requires a live Supabase connection.');
+  const ext = file.name.split('.').pop() || 'png';
+  const filePath = `logo-${Date.now()}.${ext}`;
+  const { error } = await supabase.storage.from(LOGO_BUCKET).upload(filePath, file, {
+    cacheControl: '3600',
+    contentType: file.type,
+    upsert: false,
+  });
+  if (error) throw error;
+  return supabase.storage.from(LOGO_BUCKET).getPublicUrl(filePath).data.publicUrl;
 }
 
 export async function updateWirelessSettings(patch: Partial<WirelessSettings>): Promise<WirelessSettings> {

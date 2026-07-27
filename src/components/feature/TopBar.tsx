@@ -205,10 +205,9 @@ export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: T
   const searchResults = useMemo<NavItem[]>(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
-    const role = user?.role;
     const results: NavItem[] = [];
 
-    if (canAccessModule(role, 'Tickets')) {
+    if (canAccessModule(user, 'Tickets')) {
       for (const r of repairs) {
         if (`${r.id} ${r.customer} ${r.device} ${r.issue}`.toLowerCase().includes(q)) {
           results.push({
@@ -221,7 +220,7 @@ export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: T
         }
       }
     }
-    if (canAccessModule(role, 'Customers')) {
+    if (canAccessModule(user, 'Customers')) {
       for (const c of customers) {
         if (`${c.name} ${c.phone} ${c.email}`.toLowerCase().includes(q)) {
           results.push({
@@ -234,7 +233,7 @@ export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: T
         }
       }
     }
-    if (canAccessModule(role, 'Inventory')) {
+    if (canAccessModule(user, 'Inventory')) {
       for (const p of products) {
         if (`${p.name} ${p.category}`.toLowerCase().includes(q)) {
           results.push({
@@ -247,7 +246,7 @@ export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: T
         }
       }
     }
-    if (canAccessModule(role, 'Invoices')) {
+    if (canAccessModule(user, 'Invoices')) {
       for (const inv of invoices) {
         if (`${inv.invoice_number} ${inv.customer?.name ?? ''}`.toLowerCase().includes(q)) {
           results.push({
@@ -261,7 +260,7 @@ export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: T
       }
     }
     return results.slice(0, 20);
-  }, [query, user?.role, repairs, customers, products, invoices]);
+  }, [query, user, repairs, customers, products, invoices]);
 
   const handleSelect = (item: SearchItem) => {
     const to = (item as NavItem).to;

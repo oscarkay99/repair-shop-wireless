@@ -887,14 +887,16 @@ function AdminDashboard() {
 export default function DashboardPage() {
   const { user } = useAuth();
   if (!user) return null;
-  // Technicians get a dedicated full-screen portal (no sidebar/topbar) —
-  // never the shared shell's dashboard.
-  if (user.role === 'technician') return <Navigate to="/tech-portal" replace />;
+  // Any role scoped to its own tickets gets the dedicated full-screen
+  // technician portal (no sidebar/topbar) — never the shared shell's
+  // dashboard. Distinguishing by the scope flag (not the literal 'technician'
+  // role id) means a renamed or custom technician-like role still lands here.
+  if (user.scopeTicketsToTechnician) return <Navigate to="/tech-portal" replace />;
   return (
     <>
       <BirthdayBanner />
       {(() => {
-        switch (user.role) {
+        switch (user.dashboardVariant) {
           case 'receptionist':      return <ReceptionistDashboard />;
           case 'sales_manager':     return <SalesManagerDashboard />;
           default:                  return <AdminDashboard />;
