@@ -244,8 +244,8 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(7,16,31,0.5)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
-      <div className="w-full max-w-md rounded-2xl overflow-hidden" style={{ background: 'hsl(var(--card))', boxShadow: '0 24px 80px rgba(7,16,31,0.2)' }} onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid hsl(var(--border))' }}>
+      <div className="w-full max-w-md max-h-[90vh] rounded-2xl overflow-hidden flex flex-col" style={{ background: 'hsl(var(--card))', boxShadow: '0 24px 80px rgba(7,16,31,0.2)' }} onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-6 py-4 flex-shrink-0" style={{ borderBottom: '1px solid hsl(var(--border))' }}>
           <h3 className="text-[14px] font-bold" style={{ color: 'hsl(var(--foreground))' }}>
             {initial ? 'Edit Ticket' : defaultJobType === 'diagnosis_only' ? 'New Diagnosis' : 'New Ticket'}
           </h3>
@@ -253,7 +253,8 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
             <i className="ri-close-line text-sm" style={{ color: 'hsl(var(--muted-foreground))' }} />
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+        <div className="px-6 py-5 space-y-4 overflow-y-auto">
           {!initial && (
             <div>
               <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Customer</label>
@@ -473,17 +474,18 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
             <input type="checkbox" id="warranty" checked={form.warranty} onChange={e => set('warranty', e.target.checked)} className="cursor-pointer" />
             <label htmlFor="warranty" className="text-sm text-[hsl(var(--muted-foreground))] cursor-pointer">Under Warranty</label>
           </div>
-          <div className="flex gap-3 pt-1">
-            <button type="button" onClick={onClose}
-              className="flex-1 py-2.5 rounded-xl text-sm font-semibold cursor-pointer"
-              style={{ background: 'rgba(236,1,24,0.08)', color: 'hsl(var(--muted-foreground))' }}>
-              Cancel
-            </button>
-            <button type="submit" disabled={saving}
-              className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white cursor-pointer bg-[#EC0118] hover:bg-[#BD0113] disabled:opacity-70 transition-colors duration-150">
-              {saving ? 'Saving…' : initial ? 'Save Changes' : defaultJobType === 'diagnosis_only' ? 'Create Diagnosis' : 'Create Ticket'}
-            </button>
-          </div>
+        </div>
+        <div className="flex gap-3 px-6 py-4 flex-shrink-0" style={{ borderTop: '1px solid hsl(var(--border))' }}>
+          <button type="button" onClick={onClose}
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold cursor-pointer"
+            style={{ background: 'rgba(236,1,24,0.08)', color: 'hsl(var(--muted-foreground))' }}>
+            Cancel
+          </button>
+          <button type="submit" disabled={saving}
+            className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white cursor-pointer bg-[#EC0118] hover:bg-[#BD0113] disabled:opacity-70 transition-colors duration-150">
+            {saving ? 'Saving…' : initial ? 'Save Changes' : defaultJobType === 'diagnosis_only' ? 'Create Diagnosis' : 'Create Ticket'}
+          </button>
+        </div>
         </form>
       </div>
     </div>,
