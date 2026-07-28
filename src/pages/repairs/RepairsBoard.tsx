@@ -14,7 +14,7 @@ import Pagination from '@/components/shared/Pagination';
 import DateRangePicker, { type DateRange } from '@/components/shared/DateRangePicker';
 import {
   X, Clock, Shield, Plus, Pencil, Trash2, Camera, Video, AlertCircle, Loader2,
-  CheckCircle2, Scissors, Stethoscope, ArrowRightCircle, UserX, XCircle, Zap, Printer,
+  CheckCircle2, Scissors, Stethoscope, ArrowRightCircle, UserX, Users, XCircle, Zap, Printer,
 } from 'lucide-react';
 import type { Repair, RepairStatus, RepairMediaStage, RepairMediaUploadInput } from '@/types/repair';
 import type { Payment } from '@/types/wireless';
@@ -183,6 +183,9 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   const [commentSaving, setCommentSaving] = useState(false);
   const [discontinuing, setDiscontinuing] = useState(false);
   const [discontinueReason, setDiscontinueReason] = useState('');
+  const [requestingReassign, setRequestingReassign] = useState(false);
+  const [reassignReason, setReassignReason] = useState('');
+  const [reassignSaving, setReassignSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const s = STATUS[repair.status] ?? STATUS.received;
@@ -262,6 +265,26 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
     onDiscontinue(repair.id, reason);
     setDiscontinuing(false);
     setDiscontinueReason('');
+  };
+
+  // A technician can't reassign a ticket themselves — this just logs the ask
+  // to Internal Notes so reception/admin sees it and applies it via the
+  // Technician field in Edit Ticket, same "request, someone else applies it"
+  // shape as Discontinue.
+  const handleRequestReassign = async () => {
+    const reason = reassignReason.trim();
+    if (!reason || !repair.ticketDbId) return;
+    setReassignSaving(true);
+    try {
+      await addTicketComment(repair.ticketDbId, `Reassignment requested: ${reason}`, user?.name ?? 'Staff');
+      setRequestingReassign(false);
+      setReassignReason('');
+      loadComments();
+    } catch (e) {
+      alert(errMessage(e, 'Failed to send reassignment request'));
+    } finally {
+      setReassignSaving(false);
+    }
   };
 
   const handleRemoveTicketPart = async (part: TicketPart) => {
@@ -885,6 +908,39 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
                 className="w-full h-9 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5"
                 style={{ border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444' }}>
                 <XCircle className="w-3.5 h-3.5" /> Discontinue
+              </button>
+            )
+          )}
+          {canUpdateProgress && (
+            requestingReassign ? (
+              <div className="space-y-2 pt-1">
+                <p className="text-[11px] font-semibold" style={{ color: 'hsl(var(--foreground))' }}>
+                  Why does this need reassigning?
+                </p>
+                <textarea autoFocus rows={2} value={reassignReason} onChange={e => setReassignReason(e.target.value)}
+                  placeholder="e.g. I'm swamped today — can Kofi take this one over?"
+                  className="w-full px-3 py-2 rounded-xl text-xs outline-none resize-none"
+                  style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
+                <div className="flex gap-2 justify-end">
+                  <button onClick={() => { setRequestingReassign(false); setReassignReason(''); }}
+                    className="px-3 py-1.5 text-xs rounded-lg"
+                    style={{ color: 'hsl(var(--muted-foreground))', border: '1px solid hsl(var(--border))' }}>
+                    Cancel
+                  </button>
+                  <button onClick={handleRequestReassign} disabled={!reassignReason.trim() || reassignSaving}
+                    className="px-3 py-1.5 text-xs font-semibold text-white rounded-lg disabled:opacity-50"
+                    style={{ background: 'hsl(var(--primary))' }}>
+                    {reassignSaving ? 'Sending…' : 'Send Request'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button onClick={() => setRequestingReassign(true)}
+                className="w-full h-9 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5"
+                style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}>
+                <Users className="w-3.5 h-3.5" /> Request Reassignment
               </button>
             )
           )}

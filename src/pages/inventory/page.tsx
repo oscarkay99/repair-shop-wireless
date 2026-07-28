@@ -9,6 +9,7 @@ import Pagination from '@/components/shared/Pagination';
 import AccessoriesTab from './components/AccessoriesTab';
 import { AlertTriangle, Pencil, Trash2, X } from 'lucide-react';
 import type { Part } from '@/types/wireless';
+import { useAuth } from '@/hooks/useAuth';
 
 const PAGE_SIZE = 10;
 type InventoryTab = 'parts' | 'accessories';
@@ -31,11 +32,17 @@ function AddPartModal({
   onClose,
   initial,
   existingParts = [],
+  canSeeCost,
 }: {
   onSave: (d: Omit<Part, 'id' | 'created_at' | 'updated_at'>) => Promise<unknown>;
   onClose: () => void;
   initial?: Part;
   existingParts?: Part[];
+  /** Wholesale cost and supplier are restricted to admin/stock_manager —
+   *  everyone else who can otherwise edit parts (sales_manager) never sees
+   *  or sets them; a restricted user's save preserves whatever was already
+   *  there rather than silently blanking/zeroing it. */
+  canSeeCost: boolean;
 }) {
   const categoryOptions = [...new Set([...CATEGORIES, ...existingParts.map(p => p.category)])].sort();
   const defaultCategory = initial?.category ?? 'Screens';
@@ -66,11 +73,15 @@ function AddPartModal({
       name: form.name,
       sku: form.sku,
       category: form.category,
-      unit_cost: parseFloat(form.unit_cost) || 0,
+      // A restricted user never sees these fields below, so their form state
+      // is whatever it started as (0 / '' for a new part, unchanged for an
+      // edit) — always resolve from `initial` here rather than trusting form
+      // state, so a restricted edit can't accidentally zero out a real cost.
+      unit_cost: canSeeCost ? (parseFloat(form.unit_cost) || 0) : (initial?.unit_cost ?? 0),
       selling_price: parseFloat(form.selling_price) || 0,
       stock: parseInt(form.stock) || 0,
       min_stock: parseInt(form.min_stock) || 0,
-      supplier: form.supplier,
+      supplier: canSeeCost ? form.supplier : (initial?.supplier ?? ''),
     });
     onClose();
   };
@@ -132,12 +143,14 @@ function AddPartModal({
               )}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[11px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Unit Cost (¢)</label>
-              <input type="number" min="0" step="0.01" required value={form.unit_cost} onChange={e => set('unit_cost', e.target.value)}
-                className="w-full h-9 px-3 rounded-lg text-sm outline-none" style={inputStyle} />
-            </div>
+          <div className={canSeeCost ? 'grid grid-cols-2 gap-3' : ''}>
+            {canSeeCost && (
+              <div>
+                <label className="text-[11px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Unit Cost (¢)</label>
+                <input type="number" min="0" step="0.01" required value={form.unit_cost} onChange={e => set('unit_cost', e.target.value)}
+                  className="w-full h-9 px-3 rounded-lg text-sm outline-none" style={inputStyle} />
+              </div>
+            )}
             <div>
               <label className="text-[11px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Selling Price (¢)</label>
               <input type="number" min="0" step="0.01" value={form.selling_price} onChange={e => set('selling_price', e.target.value)}
@@ -156,11 +169,13 @@ function AddPartModal({
                 className="w-full h-9 px-3 rounded-lg text-sm outline-none" style={inputStyle} />
             </div>
           </div>
-          <div>
-            <label className="text-[11px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Supplier</label>
-            <input value={form.supplier} onChange={e => set('supplier', e.target.value)} placeholder="iFixit GH"
-              className="w-full h-9 px-3 rounded-lg text-sm outline-none" style={inputStyle} />
-          </div>
+          {canSeeCost && (
+            <div>
+              <label className="text-[11px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Supplier</label>
+              <input value={form.supplier} onChange={e => set('supplier', e.target.value)} placeholder="iFixit GH"
+                className="w-full h-9 px-3 rounded-lg text-sm outline-none" style={inputStyle} />
+            </div>
+          )}
           <div className="flex gap-2 justify-end pt-2">
             <button type="button" onClick={onClose}
               className="px-4 py-2 text-xs font-semibold rounded-lg"
@@ -186,6 +201,8 @@ export default function InventoryPage() {
   // and the low-stock/total counts in the subtitle — the table itself below
   // uses a separate paginated fetch so the list view doesn't pull every row.
   const { parts, loading, add, patch, remove, lowStock } = useParts();
+  const { user } = useAuth();
+  const canSeeCost = user?.role === 'admin' || user?.role === 'stock_manager';
   const [tab, setTab] = useState<InventoryTab>('parts');
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebouncedValue(query, 300);
@@ -277,7 +294,11 @@ export default function InventoryPage() {
           <table className="w-full">
             <thead>
               <tr style={{ borderBottom: '1px solid hsl(var(--border))' }}>
-                {['Part Name', 'Product Code', 'Category', 'Stock', 'Unit Cost', 'Selling Price', ''].map(h => (
+                {[
+                  'Part Name', 'Product Code', 'Category', 'Stock',
+                  ...(canSeeCost ? ['Unit Cost'] : []),
+                  'Selling Price', '',
+                ].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider"
                     style={{ color: 'hsl(var(--muted-foreground))' }}>
                     {h}
@@ -288,7 +309,7 @@ export default function InventoryPage() {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-16 text-center text-sm" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                  <td colSpan={canSeeCost ? 7 : 6} className="px-4 py-16 text-center text-sm" style={{ color: 'hsl(var(--muted-foreground))' }}>
                     No parts found.
                   </td>
                 </tr>
@@ -324,9 +345,11 @@ export default function InventoryPage() {
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-sm font-medium" style={{ color: 'hsl(var(--foreground))' }}>
-                      ¢{p.unit_cost.toFixed(2)}
-                    </td>
+                    {canSeeCost && (
+                      <td className="px-4 py-3 text-sm font-medium" style={{ color: 'hsl(var(--foreground))' }}>
+                        ¢{p.unit_cost.toFixed(2)}
+                      </td>
+                    )}
                     <td className="px-4 py-3 text-sm font-semibold" style={{ color: 'hsl(var(--primary))' }}>
                       ¢{p.selling_price.toFixed(2)}
                     </td>
@@ -368,7 +391,7 @@ export default function InventoryPage() {
       />
 
       {showAdd && (
-        <AddPartModal onSave={data => add(data).then(reloadTable)} onClose={() => setShowAdd(false)} existingParts={parts} />
+        <AddPartModal onSave={data => add(data).then(reloadTable)} onClose={() => setShowAdd(false)} existingParts={parts} canSeeCost={canSeeCost} />
       )}
       {editing && (
         <AddPartModal
@@ -376,6 +399,7 @@ export default function InventoryPage() {
           onSave={data => patch(editing.id, data).then(reloadTable)}
           onClose={() => setEditing(null)}
           existingParts={parts}
+          canSeeCost={canSeeCost}
         />
       )}
       </>

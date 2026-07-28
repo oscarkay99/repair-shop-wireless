@@ -42,10 +42,11 @@ const LEGACY_MODULE_VISIBILITY: Partial<Record<AppModule, string[]>> = {
   Portal: ['admin'],
   Activity: ['admin'],
   Users: ['admin'],
-  // Frontend gating for /technicians has always been stricter than the
-  // technicians_write RLS policy (which also allows sales_manager) — kept
-  // as-is rather than "fixed" to stay byte-for-byte faithful to prior behavior.
-  Technicians: ['admin'],
+  // Reception needs to see who's available before assigning a ticket —
+  // matches technicians:edit already being granted to receptionist at the
+  // RLS layer (this was previously the one module where frontend gating was
+  // stricter than the backend actually allowed).
+  Technicians: ['admin', 'receptionist'],
 };
 
 type PermCtx = Pick<AuthUser, 'role' | 'permissions' | 'scopeTicketsToTechnician'> | null | undefined;

@@ -19,6 +19,16 @@ const METHOD_COLORS: Record<PaymentMethod, { bg: string; color: string }> = {
 
 type Target = 'invoice' | 'ticket' | 'standalone';
 
+// One customer payment can be split across more than one method — part cash,
+// part MoMo for the same invoice — rather than forcing two separate trips
+// to Record Payment. Each split is recorded as its own ledger entry via the
+// same recordPayment() call, just looped; the invoice's amount_paid already
+// accumulates correctly across repeated calls.
+interface PaymentSplit {
+  amount: string;
+  method: PaymentMethod;
+}
+
 const inputCls = "w-full h-9 px-3 rounded-lg text-sm outline-none";
 const inputStyle = { background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' };
 
@@ -29,12 +39,17 @@ export default function RecordPaymentModal({ onClose, onSaved }: { onClose: () =
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState('');
   const [customerName, setCustomerName] = useState('');
-  const [amount, setAmount] = useState('');
-  const [method, setMethod] = useState<PaymentMethod>('Cash');
+  const [splits, setSplits] = useState<PaymentSplit[]>([{ amount: '', method: 'Cash' }]);
   const [reference, setReference] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  const totalAmount = splits.reduce((sum, s) => sum + (parseFloat(s.amount) || 0), 0);
+  const addSplit = () => setSplits(prev => [...prev, { amount: '', method: 'Cash' }]);
+  const removeSplit = (i: number) => setSplits(prev => prev.filter((_, idx) => idx !== i));
+  const updateSplit = (i: number, patch: Partial<PaymentSplit>) =>
+    setSplits(prev => prev.map((s, idx) => (idx === i ? { ...s, ...patch } : s)));
 
   const invoiceSuggestions: SearchItem[] = query.trim()
     ? invoices
@@ -51,7 +66,7 @@ export default function RecordPaymentModal({ onClose, onSaved }: { onClose: () =
   const selectedInvoice = invoices.find(i => i.id === selectedId);
   const selectedTicket = repairs.find(r => r.id === selectedId);
 
-  const canSubmit = amount.trim().length > 0 && parseFloat(amount) > 0 &&
+  const canSubmit = splits.length > 0 && splits.every(s => parseFloat(s.amount) > 0) &&
     (target === 'standalone' ? customerName.trim().length > 0 : !!selectedId);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -60,9 +75,7 @@ export default function RecordPaymentModal({ onClose, onSaved }: { onClose: () =
     setSaving(true);
     setError('');
     try {
-      await recordPayment({
-        amount: parseFloat(amount),
-        method,
+      const sharedFields = {
         invoiceId: target === 'invoice' ? selectedId : undefined,
         // Tickets are searched/selected by ticket_number (e.g. "TK-0002"), but the
         // payments table's ticket_id column is the ticket's real uuid — sending the
@@ -71,7 +84,13 @@ export default function RecordPaymentModal({ onClose, onSaved }: { onClose: () =
         customerName: target === 'invoice' ? selectedInvoice?.customer?.name : target === 'ticket' ? selectedTicket?.customer : customerName,
         reference: reference.trim() || undefined,
         notes: notes.trim() || undefined,
-      });
+      };
+      // Sequential, not Promise.all — each call reads the invoice's current
+      // amount_paid before updating it, so recording split lines concurrently
+      // could race and lose one of them.
+      for (const split of splits) {
+        await recordPayment({ amount: parseFloat(split.amount), method: split.method, ...sharedFields });
+      }
       onSaved();
       onClose();
     } catch (err) {
@@ -132,23 +151,43 @@ export default function RecordPaymentModal({ onClose, onSaved }: { onClose: () =
           )}
 
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>Amount (GHS)</label>
-            <input type="number" step="0.01" min="0" value={amount} onChange={e => setAmount(e.target.value)} className={inputCls} style={inputStyle} placeholder="0.00" />
-          </div>
-
-          <div>
-            <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1.5" style={{ color: 'hsl(var(--muted-foreground))' }}>Payment Method</label>
-            <div className="grid grid-cols-2 gap-2">
-              {PAYMENT_METHODS.map(m => (
-                <button key={m} type="button" onClick={() => setMethod(m)}
-                  className="h-9 rounded-lg text-xs font-semibold transition-colors"
-                  style={method === m
-                    ? { background: METHOD_COLORS[m].bg, color: METHOD_COLORS[m].color, border: `1px solid ${METHOD_COLORS[m].color}55` }
-                    : { color: 'hsl(var(--muted-foreground))', border: '1px solid hsl(var(--border))' }}>
-                  {m}
-                </button>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                Amount &amp; Method
+              </label>
+              {splits.length > 1 && (
+                <span className="text-[10px] font-semibold" style={{ color: 'hsl(var(--foreground))' }}>
+                  Total: GHS {totalAmount.toFixed(2)}
+                </span>
+              )}
+            </div>
+            <div className="space-y-2">
+              {splits.map((split, i) => (
+                <div key={i} className="flex items-center gap-1.5">
+                  <input type="number" step="0.01" min="0" value={split.amount}
+                    onChange={e => updateSplit(i, { amount: e.target.value })}
+                    className="flex-1 h-9 px-3 rounded-lg text-sm outline-none" style={inputStyle} placeholder="0.00" />
+                  <div className="relative flex-shrink-0">
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full pointer-events-none"
+                      style={{ background: METHOD_COLORS[split.method].color }} />
+                    <select value={split.method} onChange={e => updateSplit(i, { method: e.target.value as PaymentMethod })}
+                      className="h-9 pl-6 pr-2 rounded-lg text-xs outline-none appearance-none" style={inputStyle}>
+                      {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
+                    </select>
+                  </div>
+                  {splits.length > 1 && (
+                    <button type="button" onClick={() => removeSplit(i)}
+                      className="w-9 h-9 flex items-center justify-center rounded-lg flex-shrink-0"
+                      style={{ color: '#ef4444' }}>
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
               ))}
             </div>
+            <button type="button" onClick={addSplit} className="mt-2 text-xs font-semibold cursor-pointer" style={{ color: 'hsl(var(--primary))' }}>
+              + Split into another payment method
+            </button>
           </div>
 
           <div>
