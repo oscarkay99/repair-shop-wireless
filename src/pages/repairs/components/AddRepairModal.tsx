@@ -32,7 +32,6 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
     device: initial?.device ?? '',
     deviceType: (initial?.deviceType ?? 'Other') as string,
     issue: initial?.issue ?? '',
-    technician: initial?.technician ?? '',
     cost: initial?.cost ?? 'TBD',
     eta: initial?.eta ?? '',
     warranty: initial?.warranty ?? false,
@@ -40,6 +39,13 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
     jobType: (initial?.jobType ?? defaultJobType ?? 'diagnosis_to_repair') as 'diagnosis_only' | 'diagnosis_to_repair' | 'straight_repair',
   });
   const [selectedCustomer, setSelectedCustomer] = useState<WCustomer | null>(null);
+  // All equal — no "primary" technician, just a set of assignees.
+  const [selectedTechnicianIds, setSelectedTechnicianIds] = useState<string[]>(
+    initial?.technicians?.map(t => t.id) ?? []
+  );
+  const toggleTechnician = (id: string) => {
+    setSelectedTechnicianIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
   const [customerError, setCustomerError] = useState('');
   const [saving, setSaving] = useState(false);
   const { technicians } = useTechnicians();
@@ -139,15 +145,17 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.device, parts, selectedPart]);
 
-  const activeLoadByName = repairs
+  // A ticket assigned to 2 technicians counts once toward each of their
+  // loads — both are actually working it, no "primary" owner to credit alone.
+  const activeLoadById = repairs
     .filter(r => ACTIVE_STATUSES.has(r.status))
     .reduce<Record<string, number>>((acc, r) => {
-      if (r.technician) acc[r.technician] = (acc[r.technician] ?? 0) + 1;
+      for (const t of r.technicians) acc[t.id] = (acc[t.id] ?? 0) + 1;
       return acc;
     }, {});
 
   const sortedTechnicians = [...technicians].sort((a, b) =>
-    (activeLoadByName[a.name] ?? 0) - (activeLoadByName[b.name] ?? 0)
+    (activeLoadById[a.id] ?? 0) - (activeLoadById[b.id] ?? 0)
   );
 
   const set = (k: string, v: unknown) => setForm(p => ({ ...p, [k]: v }));
@@ -205,10 +213,9 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
 
       const costNum = parseFloat(form.cost.replace(/[^0-9.]/g, '')) || 0;
       const diagnosisFeeNum = parseFloat(form.diagnosisFee) || 0;
-      // technicians is the roster; technicianId is the FK the backend/RLS
-      // actually uses to scope a technician to their own tickets — the
-      // name string alone (kept for display) isn't enough for that.
-      const technicianId = technicians.find(t => t.name === form.technician)?.id;
+      const selectedTechnicians = technicians
+        .filter(t => selectedTechnicianIds.includes(t.id))
+        .map(t => ({ id: t.id, name: t.name }));
 
       if (initial && onUpdate) {
         await onUpdate(initial.id, {
@@ -220,8 +227,7 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
           device: form.device,
           deviceType: form.deviceType,
           issue: form.issue,
-          technician: form.technician,
-          technicianId,
+          technicians: selectedTechnicians,
           cost: form.cost,
           costNum,
           eta: form.eta,
@@ -233,7 +239,7 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
         // No diagnosis stage, no diagnosis fee — straight to the repair queue.
         const created = await onSave({
           ...form,
-          technicianId,
+          technicians: selectedTechnicians,
           customerId: customer?.id,
           customerEmail: form.customerEmail || customer?.email,
           customerPhone: form.customerPhone || customer?.phone,
@@ -253,7 +259,7 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
       } else {
         const created = await onSave({
           ...form,
-          technicianId,
+          technicians: selectedTechnicians,
           customerId: customer?.id,
           customerEmail: form.customerEmail || customer?.email,
           customerPhone: form.customerPhone || customer?.phone,
@@ -489,23 +495,38 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className={form.jobType === 'diagnosis_only' ? 'col-span-2' : ''}>
-              <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Technician</label>
-              <select value={form.technician} onChange={e => set('technician', e.target.value)}
-                className="w-full text-sm rounded-xl px-3 py-2 outline-none"
-                style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }}>
-                <option value="">Unassigned</option>
-                {sortedTechnicians.map(t => {
-                  const load = activeLoadByName[t.name] ?? 0;
+              <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                Technician{selectedTechnicianIds.length > 0 && ` (${selectedTechnicianIds.length})`}
+              </label>
+              <div className="rounded-xl overflow-hidden max-h-40 overflow-y-auto" style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))' }}>
+                {sortedTechnicians.length === 0 ? (
+                  <div className="px-3 py-2 text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No technicians on roster.</div>
+                ) : sortedTechnicians.map(t => {
+                  const load = activeLoadById[t.id] ?? 0;
                   const unavailable = isCurrentlyUnavailable(t);
+                  const checked = selectedTechnicianIds.includes(t.id);
                   return (
-                    <option key={t.id} value={t.name} disabled={unavailable}>
-                      {unavailable
-                        ? `${t.name} — Unavailable${t.unavailable_until ? ` until ${new Date(t.unavailable_until + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}`
-                        : `${t.name} — ${load === 0 ? 'Available' : `${load} active job${load > 1 ? 's' : ''}`}`}
-                    </option>
+                    <button
+                      key={t.id}
+                      type="button"
+                      disabled={unavailable && !checked}
+                      onClick={() => toggleTechnician(t.id)}
+                      className="w-full flex items-center justify-between gap-2 px-3 py-2 text-left text-xs hover:bg-[hsl(var(--muted))] disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{ color: 'hsl(var(--foreground))', background: checked ? 'hsl(var(--primary)/0.12)' : undefined }}
+                    >
+                      <span className="flex items-center gap-2 min-w-0">
+                        <i className={checked ? 'ri-checkbox-fill' : 'ri-checkbox-blank-line'} style={{ color: checked ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))' }} />
+                        <span className="truncate">{t.name}</span>
+                      </span>
+                      <span className="flex-shrink-0" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                        {unavailable
+                          ? `Unavailable${t.unavailable_until ? ` until ${new Date(t.unavailable_until + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}`
+                          : load === 0 ? 'Available' : `${load} active job${load > 1 ? 's' : ''}`}
+                      </span>
+                    </button>
                   );
                 })}
-              </select>
+              </div>
             </div>
             {/* Repair cost isn't actionable yet for a diagnosis-only job — nothing
                 to quote until the diagnosis is done and a decision is made. */}

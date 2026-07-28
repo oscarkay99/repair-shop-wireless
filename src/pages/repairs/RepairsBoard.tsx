@@ -40,6 +40,15 @@ function fmtStarted(started: string): string {
   return formatDate(hasTime ? started : `${started}T00:00`);
 }
 
+// All assignees are equal — no "primary" to single out — so this just joins
+// names, truncating to keep the tight card layout from overflowing.
+function formatTechnicians(technicians: Repair['technicians'], maxNames = 2): string {
+  if (!technicians.length) return '';
+  if (technicians.length <= maxNames) return technicians.map(t => t.name).join(', ');
+  const shown = technicians.slice(0, maxNames).map(t => t.name).join(', ');
+  return `${shown} +${technicians.length - maxNames}`;
+}
+
 const FILTER_TABS: { key: string; label: string }[] = [
   { key: 'all',           label: 'All' },
   { key: 'unassigned',    label: 'Unassigned' },
@@ -81,8 +90,8 @@ function RepairCard({ repair, onClick, selected }: {
 
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>{repair.customer}</span>
-        {repair.technician ? (
-          <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Tech: {repair.technician}</span>
+        {repair.technicians.length > 0 ? (
+          <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Tech: {formatTechnicians(repair.technicians)}</span>
         ) : (
           <span className="inline-flex items-center gap-1 text-[10px] font-semibold" style={{ color: '#f59e0b' }}>
             <UserX className="w-3 h-3" /> Unassigned
@@ -375,7 +384,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
         <div className="space-y-2.5 pt-3" style={{ borderTop: '1px solid hsl(var(--border))' }}>
           {[
             ['Customer',       repair.customer],
-            ['Technician',     repair.technician || '—'],
+            ['Technician',     repair.technicians.length ? repair.technicians.map(t => t.name).join(', ') : '—'],
             ['Started',        fmtStarted(repair.started)],
             ['ETA',            repair.eta || '—'],
             ['Estimated Cost', repair.cost || '—'],
@@ -805,7 +814,7 @@ export default function RepairsBoard() {
     return () => setPageTitle({ title: 'Dashboard' });
   }, [setPageTitle]);
 
-  const unassigned   = useMemo(() => repairs.filter(r => isActiveRepairStatus(r.status) && !r.technician), [repairs]);
+  const unassigned   = useMemo(() => repairs.filter(r => isActiveRepairStatus(r.status) && !r.technicians.length), [repairs]);
   const inDiagnosis  = useMemo(() => repairs.filter(r => isActiveRepairStatus(r.status) && isDiagnosisStage(r)), [repairs]);
   const inRepair     = useMemo(() => repairs.filter(r => isActiveRepairStatus(r.status) && !isDiagnosisStage(r) && r.status !== 'ready'), [repairs]);
   const ready        = useMemo(() => repairs.filter(r => r.status === 'ready'), [repairs]);
@@ -818,7 +827,7 @@ export default function RepairsBoard() {
     const to   = dateRange.to   ? new Date(dateRange.to   + 'T23:59:59') : null;
     return repairs.filter(r => {
       if (filter === 'unassigned') {
-        if (r.technician) return false;
+        if (r.technicians.length) return false;
       } else if (filter === 'in_queue') {
         // Unlike the Technicians module (which has no separate Ready
         // bucket, so it lumps Ready into Queue), this page has its own
@@ -829,7 +838,7 @@ export default function RepairsBoard() {
         const matchFilter = filter === 'all' || STATUS[r.status]?.filterKey === filter;
         if (!matchFilter) return false;
       }
-      if (techFilter !== 'all' && r.technician !== techFilter) return false;
+      if (techFilter !== 'all' && !r.technicians.some(t => t.id === techFilter)) return false;
       if (q && !r.id.toLowerCase().includes(q)
             && !r.device.toLowerCase().includes(q)
             && !r.issue.toLowerCase().includes(q)
@@ -943,7 +952,7 @@ export default function RepairsBoard() {
                 className="h-8 px-3 rounded-lg text-xs font-semibold outline-none"
                 style={{ background: 'transparent', border: '1px solid hsl(var(--border))', color: 'hsl(var(--muted-foreground))' }}>
                 <option value="all">All Technicians</option>
-                {technicians.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
+                {technicians.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
             )}
             <DateRangePicker value={dateRange} onChange={setDateRange} label="Received date" />

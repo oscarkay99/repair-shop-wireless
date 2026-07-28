@@ -64,7 +64,7 @@ export default function TechPortalPage() {
   }, [showUnavailablePicker]);
 
   const myRepairs = useMemo(() =>
-    myTech ? repairs.filter(r => r.technicianId === myTech.id) : [],
+    myTech ? repairs.filter(r => r.technicians.some(t => t.id === myTech.id)) : [],
     [repairs, myTech]);
 
   const activeRepairs = myRepairs.filter(r => r.status === 'in_progress');

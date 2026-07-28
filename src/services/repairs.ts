@@ -1,5 +1,5 @@
 import { repairs as seedData } from '@/mocks/repairs';
-import type { Repair, RepairMedia, RepairMediaType, RepairStatus, RepairMediaUploadInput } from '@/types/repair';
+import type { Repair, RepairMedia, RepairMediaType, RepairStatus, RepairMediaUploadInput, RepairTechnician } from '@/types/repair';
 import { isSupabaseConfigured, supabase, db } from './supabase';
 import { statusToServiceStage } from '@/utils/repairStatus';
 
@@ -34,8 +34,6 @@ type TicketRow = {
   quote_sent_at?: string | null;
   approval_decision_at?: string | null;
   repair_started_at?: string | null;
-  technician_name: string;
-  technician_id?: string | null;
   eta: string;
   cost_label: string;
   received_at: string;
@@ -46,6 +44,15 @@ type TicketRow = {
   notes_json: unknown;
   payments_json?: unknown;
   created_at?: string | null;
+};
+
+// One row per assigned technician per ticket. `technicians` comes back as a
+// single joined object (not an array) — each ticket_technicians row points at
+// exactly one technicians row, the one-to-many side lives in there being
+// multiple ticket_technicians rows per ticket, not in this join shape.
+type TicketTechnicianRow = {
+  ticket_id: string;
+  technicians: { id: string; name: string } | null;
 };
 
 type TicketMediaRow = {
@@ -71,6 +78,7 @@ function normalizeRepair(input: Repair): Repair {
     serviceStage: input.serviceStage ?? 'diagnosis',
     quoteStatus: input.quoteStatus ?? 'not_sent',
     diagnosisFee: input.diagnosisFee ?? 200,
+    technicians: Array.isArray(input.technicians) ? input.technicians.map((tech) => ({ ...tech })) : [],
     parts: Array.isArray(input.parts) ? input.parts.map((part) => ({ ...part })) : [],
     notes: Array.isArray(input.notes) ? [...input.notes] : [],
     media: Array.isArray(input.media) ? input.media.map((item) => ({ ...item })) : [],
@@ -150,7 +158,7 @@ function normalizeMediaRow(row: TicketMediaRow): RepairMedia {
   };
 }
 
-function normalizeTicketRow(row: TicketRow, media: RepairMedia[]): Repair {
+function normalizeTicketRow(row: TicketRow, media: RepairMedia[], technicians: RepairTechnician[]): Repair {
   return {
     id: row.ticket_number,
     ticketDbId: row.id,
@@ -174,8 +182,7 @@ function normalizeTicketRow(row: TicketRow, media: RepairMedia[]): Repair {
     quoteSentAt: row.quote_sent_at ?? undefined,
     approvalDecisionAt: row.approval_decision_at ?? undefined,
     repairStartedAt: row.repair_started_at ?? undefined,
-    technician: row.technician_name,
-    technicianId: row.technician_id ?? undefined,
+    technicians,
     eta: row.eta,
     cost: row.cost_label,
     costNum: row.estimated_cost ?? undefined,
@@ -210,8 +217,9 @@ function toTicketPatch(item: Partial<Repair>) {
   if ('quoteSentAt' in item) patch.quote_sent_at = item.quoteSentAt ?? null;
   if ('approvalDecisionAt' in item) patch.approval_decision_at = item.approvalDecisionAt ?? null;
   if ('repairStartedAt' in item) patch.repair_started_at = item.repairStartedAt ?? null;
-  if ('technician' in item) patch.technician_name = item.technician;
-  if ('technicianId' in item) patch.technician_id = item.technicianId ?? null;
+  // 'technicians' is deliberately not handled here — it lives in the
+  // wireless.ticket_technicians join table, not a tickets column, and is
+  // written separately by setTicketTechnicians() (see updateRepair/createRepair).
   if ('eta' in item) patch.eta = item.eta;
   if ('cost' in item) patch.cost_label = item.cost;
   if ('costNum' in item) patch.estimated_cost = item.costNum ?? null;
@@ -232,6 +240,20 @@ async function currentUserId(): Promise<string | null> {
   if (!isSupabaseConfigured) return null;
   const { data } = await supabase.auth.getSession();
   return data.session?.user?.id ?? null;
+}
+
+// Assignment lives in wireless.ticket_technicians, not a tickets column, so
+// it's always a full replace (delete then insert) rather than a patch —
+// there's no partial-update concept for "who's assigned" worth having.
+async function setTicketTechnicians(ticketDbId: string, technicianIds: string[]): Promise<void> {
+  if (!isSupabaseConfigured) return;
+  const { error: deleteError } = await db.from('ticket_technicians').delete().eq('ticket_id', ticketDbId);
+  if (deleteError) throw deleteError;
+  if (technicianIds.length === 0) return;
+  const { error: insertError } = await db.from('ticket_technicians').insert(
+    technicianIds.map((technician_id) => ({ ticket_id: ticketDbId, technician_id })),
+  );
+  if (insertError) throw insertError;
 }
 
 export function hasConfirmedDiagnosisPayment(repair: Repair): boolean {
@@ -271,13 +293,19 @@ export async function getRepairs(): Promise<Repair[]> {
   }
 
   try {
-    const [{ data: tickets, error: ticketsError }, { data: mediaRows, error: mediaError }] = await Promise.all([
+    const [
+      { data: tickets, error: ticketsError },
+      { data: mediaRows, error: mediaError },
+      { data: technicianRows, error: technicianError },
+    ] = await Promise.all([
       db.from('tickets').select('*').order('created_at', { ascending: false }),
       db.from('ticket_media').select('*').order('created_at', { ascending: false }),
+      db.from('ticket_technicians').select('ticket_id, technicians(id, name)'),
     ]);
 
     if (ticketsError) throw ticketsError;
     if (mediaError) throw mediaError;
+    if (technicianError) throw technicianError;
 
     const mediaByTicketNumber = new Map<string, RepairMedia[]>();
     (mediaRows ?? []).forEach((row) => {
@@ -287,13 +315,27 @@ export async function getRepairs(): Promise<Repair[]> {
       mediaByTicketNumber.set(item.repairId, existing);
     });
 
+    const techniciansByTicketId = new Map<string, RepairTechnician[]>();
+    (technicianRows ?? []).forEach((row) => {
+      const { ticket_id, technicians: tech } = row as unknown as TicketTechnicianRow;
+      if (!tech) return;
+      const existing = techniciansByTicketId.get(ticket_id) ?? [];
+      existing.push({ id: tech.id, name: tech.name });
+      techniciansByTicketId.set(ticket_id, existing);
+    });
+
     // Trust a successful (even empty) response completely — don't keep
     // showing seed tickets once the real table is reachable.
-    store = (tickets ?? []).map((row) =>
-      normalizeRepair(
-        normalizeTicketRow(row as TicketRow, mediaByTicketNumber.get((row as TicketRow).ticket_number) ?? []),
-      ),
-    );
+    store = (tickets ?? []).map((row) => {
+      const ticketRow = row as TicketRow;
+      return normalizeRepair(
+        normalizeTicketRow(
+          ticketRow,
+          mediaByTicketNumber.get(ticketRow.ticket_number) ?? [],
+          techniciansByTicketId.get(ticketRow.id) ?? [],
+        ),
+      );
+    });
   } catch (error) {
     console.warn('Falling back to local repair store.', error);
   }
@@ -324,8 +366,6 @@ export async function createRepair(r: Omit<Repair, 'id'>): Promise<Repair> {
       quote_sent_at: item.quoteSentAt ?? null,
       approval_decision_at: item.approvalDecisionAt ?? null,
       repair_started_at: item.repairStartedAt ?? null,
-      technician_name: item.technician,
-      technician_id: item.technicianId ?? null,
       eta: item.eta,
       cost_label: item.cost,
       estimated_cost: item.costNum ?? null,
@@ -337,6 +377,7 @@ export async function createRepair(r: Omit<Repair, 'id'>): Promise<Repair> {
     }).select('id, ticket_number, received_at, created_at').single();
 
     if (error) throw error;
+    await setTicketTechnicians(inserted.id, item.technicians.map((tech) => tech.id));
     item = normalizeRepair({
       ...item,
       id: inserted.ticket_number,
@@ -390,8 +431,14 @@ export async function updateRepair(id: string, patch: Partial<Repair>): Promise<
   }
 
   if (isSupabaseConfigured) {
-    const { error } = await db.from('tickets').update(toTicketPatch(patch)).eq('ticket_number', id);
-    if (error) throw error;
+    const ticketPatch = toTicketPatch(patch);
+    if (Object.keys(ticketPatch).length > 0) {
+      const { error } = await db.from('tickets').update(ticketPatch).eq('ticket_number', id);
+      if (error) throw error;
+    }
+    if (patch.technicians && existingRepair.ticketDbId) {
+      await setTicketTechnicians(existingRepair.ticketDbId, patch.technicians.map((tech) => tech.id));
+    }
   }
   updateLocalRepair(id, () => nextRepair);
 }

@@ -20,6 +20,11 @@ export interface RepairPart {
   status: 'pending' | 'ordered' | 'installed';
 }
 
+export interface RepairTechnician {
+  id: string;
+  name: string;
+}
+
 export interface RepairPayment {
   id: string;
   type: 'diagnosis_fee' | 'repair_deposit' | 'repair_balance' | 'repair_full';
@@ -81,8 +86,9 @@ export interface Repair {
   quoteSentAt?: string;
   approvalDecisionAt?: string;
   repairStartedAt?: string;
-  technician: string;
-  technicianId?: string;
+  /** All equal — no "primary" technician. A ticket can be worked by more than
+   *  one; each gets full access and workload/completion credit for it. */
+  technicians: RepairTechnician[];
   eta: string;
   cost: string;
   costNum?: number;

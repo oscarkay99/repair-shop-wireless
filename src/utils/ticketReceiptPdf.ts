@@ -24,6 +24,15 @@ function fmtDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
 }
 
+// All assignees are equal — no "primary" to print alone — but the meta
+// column here is a fixed, right-aligned width with no wrapping, so more than
+// two names would visibly clip. Truncates the same way the Kanban card does.
+function fmtTechnicians(technicians: Repair['technicians']): string {
+  if (!technicians.length) return 'Unassigned';
+  if (technicians.length <= 2) return technicians.map(t => t.name).join(', ');
+  return `${technicians.slice(0, 2).map(t => t.name).join(', ')} +${technicians.length - 2}`;
+}
+
 /** Handed to the customer at pickup — separate from the Invoice (which is
  *  about billing): this is proof of what was done, when, and what warranty
  *  (if any) applies, regardless of whether an invoice was ever issued. */
@@ -103,7 +112,7 @@ export async function buildTicketReceiptPdf({ repair, warrantyDays, settings }: 
   const metaRows: { label: string; value: string }[] = [
     { label: 'Device', value: repair.device || '—' },
     { label: 'Issue', value: repair.issue || '—' },
-    { label: 'Technician', value: repair.technician || 'Unassigned' },
+    { label: repair.technicians.length > 1 ? 'Technicians' : 'Technician', value: fmtTechnicians(repair.technicians) },
     { label: 'Completed', value: repair.completedDate ? fmtDate(repair.completedDate) : '—' },
     { label: 'Cost', value: repair.cost || 'TBD' },
   ];

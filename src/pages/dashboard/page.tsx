@@ -347,7 +347,7 @@ function AdminDashboard() {
     return Math.round(done.reduce((s, r) => s + (new Date(r.completedDate!).getTime() - new Date(r.createdAt ?? r.started).getTime()) / 86_400_000, 0) / done.length * 10) / 10;
   }, [repairs]);
 
-  const activeTechs = useMemo(() => new Set(activeRepairs.map(r => r.technician).filter(Boolean)).size, [activeRepairs]);
+  const activeTechs = useMemo(() => new Set(activeRepairs.flatMap(r => r.technicians.map(t => t.id))).size, [activeRepairs]);
 
   // ── Revenue chart ─────────────────────────────────────────────────────────
   const revenueData = useMemo(() => {
@@ -381,8 +381,8 @@ function AdminDashboard() {
   const techWorkload = useMemo(() => {
     const m: Record<string, number> = {};
     for (const r of activeRepairs) {
-      if (r.technician) {
-        const short = r.technician.split(' ').map((p, i) => i === 0 ? p : p[0] + '.').join(' ');
+      for (const tech of r.technicians) {
+        const short = tech.name.split(' ').map((p, i) => i === 0 ? p : p[0] + '.').join(' ');
         m[short] = (m[short] ?? 0) + 1;
       }
     }

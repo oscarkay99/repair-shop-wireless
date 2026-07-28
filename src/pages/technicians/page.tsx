@@ -536,7 +536,7 @@ export default function TechniciansPage() {
     repairs.filter(r => isActiveRepairStatus(r.status)).length,
   [repairs]);
   const unassigned = useMemo(() =>
-    repairs.filter(r => isActiveRepairStatus(r.status) && !r.technician).length,
+    repairs.filter(r => isActiveRepairStatus(r.status) && !r.technicians.length).length,
   [repairs]);
 
   useEffect(() => {
@@ -551,16 +551,19 @@ export default function TechniciansPage() {
   const doneHours = filterHours(timeline);
   const doneLabel = timeline === 'All' ? 'Done (all)' : `Done (${timeline})`;
 
+  // A ticket assigned to more than one technician counts toward each of
+  // their loads/stats — both are actually working it, and there's no
+  // "primary" assignee to attribute it to alone instead.
   const maxLoad = useMemo(() => {
     const loads = technicians.map(tech =>
-      repairs.filter(r => r.technician === tech.name && isActiveRepairStatus(r.status)).length
+      repairs.filter(r => r.technicians.some(t => t.id === tech.id) && isActiveRepairStatus(r.status)).length
     );
     return Math.max(1, ...loads);
   }, [technicians, repairs]);
 
   const techStats = useMemo(() => {
     return technicians.map(tech => {
-      const myRepairs  = repairs.filter(r => r.technician === tech.name);
+      const myRepairs  = repairs.filter(r => r.technicians.some(t => t.id === tech.id));
       const current    = myRepairs.find(r => r.status === 'in_progress') ?? null;
       const queue      = myRepairs.filter(r => r.status !== 'in_progress' && isActiveRepairStatus(r.status));
       const activeLoad = myRepairs.filter(r => isActiveRepairStatus(r.status)).length;
