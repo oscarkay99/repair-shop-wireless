@@ -102,12 +102,29 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
     return out.sort((a, b) => a.name.localeCompare(b.name) || a.price - b.price);
   }, [parts]);
 
-  // Not gated to "only when creating" — a Diagnosis Only ticket has no cost
-  // yet when it later proceeds to repair (Edit Ticket, `initial` set), so
-  // this needs to run there too. Still safe either way: it only ever
-  // touches a cost that's still 'TBD' or was auto-filled by this same
-  // effect, never something someone actually typed in.
+  // Picking an exact replacement part (a specific inventory row, id and all)
+  // is a far stronger price signal than matching free-text device names
+  // against the catalog — it's not a guess, it's the literal part being
+  // billed. Once one is chosen, its price is what drives the quote, and it
+  // wins over the device-name match below even if the device text changes
+  // afterwards.
   useEffect(() => {
+    if (!selectedPart) return;
+    if (form.cost === 'TBD' || costAutoFilled) {
+      set('cost', String(selectedPart.selling_price));
+      setCostAutoFilled(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPart]);
+
+  // Fallback for when no specific part has been picked yet (diagnosis-only
+  // jobs don't even show that field). Not gated to "only when creating" — a
+  // Diagnosis Only ticket has no cost yet when it later proceeds to repair
+  // (Edit Ticket, `initial` set), so this needs to run there too. Still safe
+  // either way: it only ever touches a cost that's still 'TBD' or was
+  // auto-filled by this same effect, never something someone actually typed in.
+  useEffect(() => {
+    if (selectedPart) return; // the exact part selection above takes priority
     const exactMatches = parts.filter(p => p.name.trim().toLowerCase() === form.device.trim().toLowerCase());
     if (exactMatches.length === 0) return;
     const prices = new Set(exactMatches.map(p => p.selling_price));
@@ -120,7 +137,7 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
       setCostAutoFilled(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.device, parts]);
+  }, [form.device, parts, selectedPart]);
 
   const activeLoadByName = repairs
     .filter(r => ACTIVE_STATUSES.has(r.status))
@@ -367,8 +384,12 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
               value={form.device}
               onChange={(v, price) => {
                 set('device', v);
-                // Picked straight from inventory, so the price is known here —
-                // no need to wait on the exact-name-match effect below.
+                // An already-chosen replacement part is the authoritative
+                // price (see the selectedPart effect above) — a device pick
+                // shouldn't clobber it, same priority order either way round.
+                if (selectedPart) return;
+                // Otherwise picked straight from inventory, so the price is
+                // known here — no need to wait on the exact-name-match effect.
                 if (price !== undefined) {
                   set('cost', String(price));
                   setCostAutoFilled(true);
@@ -395,11 +416,14 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
                 Part Being Replaced <span className="normal-case font-normal opacity-70">(optional — skip if not sure yet)</span>
               </label>
               {selectedPart ? (
-                <div className="w-full flex items-center justify-between text-sm rounded-xl px-3 py-2"
+                <div className="w-full flex items-center justify-between gap-2 text-sm rounded-xl px-3 py-2"
                   style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }}>
-                  <span>{selectedPart.name} <span style={{ color: 'hsl(var(--muted-foreground))' }}>({selectedPart.stock} in stock)</span></span>
+                  <span className="min-w-0 truncate">
+                    {selectedPart.name} <span style={{ color: 'hsl(var(--muted-foreground))' }}>({selectedPart.sku} · {selectedPart.stock} in stock)</span>
+                  </span>
+                  <span className="flex-shrink-0 font-semibold" style={{ color: 'hsl(var(--primary))' }}>GHS {selectedPart.selling_price}</span>
                   <button type="button" onClick={() => { setSelectedPartId(''); setPartSearch(''); }}
-                    className="text-xs font-semibold cursor-pointer" style={{ color: '#dc2626' }}>
+                    className="flex-shrink-0 text-xs font-semibold cursor-pointer" style={{ color: '#dc2626' }}>
                     Clear
                   </button>
                 </div>
@@ -416,10 +440,13 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
                   ) : partSuggestions.map(p => (
                     <button key={p.id} type="button"
                       onClick={() => { setSelectedPartId(p.id); setPartSearch(''); }}
-                      className="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-[hsl(var(--muted))]"
+                      className="w-full px-3 py-2 text-left text-xs flex items-center justify-between gap-2 hover:bg-[hsl(var(--muted))]"
                       style={{ color: 'hsl(var(--foreground))' }}>
-                      <span>{p.name} <span style={{ color: 'hsl(var(--muted-foreground))' }}>({p.sku})</span></span>
-                      <span style={{ color: 'hsl(var(--muted-foreground))' }}>{p.stock} in stock</span>
+                      <span className="min-w-0 truncate">{p.name} <span style={{ color: 'hsl(var(--muted-foreground))' }}>({p.sku})</span></span>
+                      <span className="flex-shrink-0 flex items-center gap-2">
+                        <span style={{ color: 'hsl(var(--muted-foreground))' }}>{p.stock} in stock</span>
+                        <span className="font-semibold" style={{ color: 'hsl(var(--primary))' }}>GHS {p.selling_price}</span>
+                      </span>
                     </button>
                   ))}
                 </div>
