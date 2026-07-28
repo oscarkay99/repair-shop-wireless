@@ -13,34 +13,42 @@ export interface AutoInvoiceContext {
   warrantyDays?: number;
 }
 
-// Auto-invoices a ticket the moment it reaches a billable terminal state,
-// replacing the old "staff remembers to click Create Invoice" flow. Idempotent
-// by design (safe to call more than once for the same status) — it always
-// checks for an existing invoice on the ticket first:
+// Auto-invoices a ticket the moment it has something billable, replacing the
+// old "staff remembers to click Create Invoice" flow. Idempotent by design
+// (safe to call more than once for the same status) — it always checks for
+// an existing invoice on the ticket first:
 //   - none yet -> create one
-//   - one exists -> re-total it (covers a diagnosis-only job that gets
-//     reopened into a full repair later and reaches 'ready' a second time;
-//     the customer gets one updated invoice, not a second bill)
+//   - one exists -> re-total it (covers a diagnosis fee invoiced at intake
+//     that later grows into the full repair cost once the job reaches
+//     'ready', or a diagnosis-only job reopened into a full repair; the
+//     customer gets one updated invoice, not a second bill)
 export async function ensureTicketInvoice(repair: Repair, ctx: AutoInvoiceContext): Promise<string | null> {
   if (!repair.ticketDbId || !repair.customerId) return null;
 
   const isDiagnosisOnly = repair.status === 'diagnosis_only_closed';
   const isCancelled = repair.status === 'cancelled';
   const isReady = repair.status === 'ready';
+  // A diagnosis fee is charged and paid the moment the ticket is created —
+  // invoice it immediately rather than waiting for the job to reach a
+  // terminal state, so there's always an invoice to track the ticket by
+  // from day one, not just ones that eventually reach Ready.
+  const isAtIntakeWithPaidDiagnosis = !isDiagnosisOnly && !isCancelled && !isReady && hasConfirmedDiagnosisPayment(repair);
 
-  if (!isDiagnosisOnly && !isCancelled && !isReady) return null;
+  if (!isDiagnosisOnly && !isCancelled && !isReady && !isAtIntakeWithPaidDiagnosis) return null;
   // A cancelled job only gets invoiced if a diagnosis fee was actually paid —
   // nothing changed hands otherwise, so there's nothing to bill.
   if (isCancelled && !hasConfirmedDiagnosisPayment(repair)) return null;
 
-  const subtotal = isDiagnosisOnly || isCancelled ? (repair.diagnosisFee ?? 0) : (repair.costNum ?? 0);
+  // Everything except the finished repair itself bills just the diagnosis fee.
+  const billDiagnosisFeeOnly = !isReady;
+  const subtotal = billDiagnosisFeeOnly ? (repair.diagnosisFee ?? 0) : (repair.costNum ?? 0);
   if (subtotal <= 0) return null;
 
   const vat = ctx.taxEnabled ? Math.round(subtotal * (ctx.vatRate / 100) * 100) / 100 : 0;
   const levy = ctx.taxEnabled ? Math.round(subtotal * (ctx.nhilGetfundRate / 100) * 100) / 100 : 0;
   const tax = vat + levy;
   const total = subtotal + tax;
-  const description = isDiagnosisOnly || isCancelled
+  const description = billDiagnosisFeeOnly
     ? `Diagnosis fee — ${repair.device} — ${repair.issue}`
     : `${repair.device} — ${repair.issue}`;
 
@@ -58,7 +66,7 @@ export async function ensureTicketInvoice(repair: Repair, ctx: AutoInvoiceContex
       amount_paid: amountPaid,
       status,
       notes: `Ticket ${repair.id}`,
-      warranty: !isDiagnosisOnly && !isCancelled,
+      warranty: isReady, // only the finished repair itself carries warranty
       warranty_days: ctx.warrantyDays,
     }, [
       { description, quantity: 1, unit_price: subtotal, total_price: subtotal },

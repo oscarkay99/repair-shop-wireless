@@ -1,13 +1,18 @@
 import { useState, useEffect } from 'react';
-import { getRepairs, createRepair, updateRepairStatus, updateRepairNotes, addRepairMedia, deleteRepairMedia, updateRepair, deleteRepair } from '@/services/repairs';
+import { getRepairs, createRepair, updateRepairStatus, updateRepairNotes, addRepairMedia, deleteRepairMedia, updateRepair, deleteRepair, hasConfirmedDiagnosisPayment } from '@/services/repairs';
 import type { Repair, RepairStatus, RepairMediaUploadInput } from '@/types/repair';
 import { useToast } from '@/contexts/ToastContext';
 import { errMessage } from '@/utils/errors';
+import { useTaxSettings } from '@/hooks/useTaxSettings';
+import { useWirelessSettings } from '@/hooks/useWirelessSettings';
+import { ensureTicketInvoice } from '@/services/wireless/autoInvoice';
 
 export function useRepairs() {
   const [repairs, setRepairs] = useState<Repair[]>([]);
   const [loading, setLoading] = useState(true);
   const { showToast } = useToast();
+  const { taxEnabled, vatRate, nhilGetfundRate } = useTaxSettings();
+  const { settings } = useWirelessSettings();
 
   useEffect(() => {
     getRepairs().then(setRepairs).finally(() => setLoading(false));
@@ -18,6 +23,15 @@ export function useRepairs() {
       const created = await createRepair(r);
       setRepairs(prev => [created, ...prev]);
       showToast('Repair job created');
+      // Every ticket with a paid diagnosis fee gets an invoice immediately,
+      // not just ones that later reach Ready — gives staff something to
+      // track the ticket by from the moment it's created. Best-effort: a
+      // failure here shouldn't undo ticket creation; staff can still create
+      // the invoice manually from the ticket panel.
+      if (hasConfirmedDiagnosisPayment(created)) {
+        const depositPaid = (created.payments ?? []).reduce((sum, p) => sum + (p.status === 'paid' ? p.amount : 0), 0);
+        ensureTicketInvoice(created, { depositPaid, taxEnabled, vatRate, nhilGetfundRate, warrantyDays: settings?.warranty_days }).catch(() => {});
+      }
       return created;
     } catch (e) {
       showToast(errMessage(e, 'Failed to create repair job'), 'error');

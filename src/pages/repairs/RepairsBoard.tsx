@@ -212,11 +212,10 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   const requiredStage = requiredMediaStageForAdvance(repair.status, upcomingStatus);
   const hasRequiredPhoto = !requiredStage || media.some(m => m.stage === requiredStage);
   const depositPaid = ticketPayments.reduce((s, p) => s + p.amount, 0);
-  // Ready-for-invoice = the job's reached its "customer needs to pay & collect"
-  // terminal state — status 'ready' for the two repair flows, or
-  // 'diagnosis_only_closed' for a diagnosis-only job (no repair to wait on).
-  const readyForInvoice = repair.status === 'ready' || repair.status === 'diagnosis_only_closed'
-    || (repair.status === 'cancelled' && hasConfirmedDiagnosisPayment(repair));
+  // A paid diagnosis fee is billable the moment it's paid, not just once the
+  // job reaches Ready — subsumes the old diagnosis_only_closed/cancelled
+  // special cases, since neither is reachable without one.
+  const readyForInvoice = repair.status === 'ready' || hasConfirmedDiagnosisPayment(repair);
 
   useEffect(() => {
     let cancelled = false;
@@ -809,7 +808,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
         </div>
       ) : !isDone && (
         <div className="px-5 py-4 space-y-2 shrink-0" style={{ borderTop: '1px solid hsl(var(--border))' }}>
-          {repair.status === 'ready' && (
+          {readyForInvoice && (
             linkedInvoiceNumber ? (
               <div className="w-full h-9 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5" style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e' }}>
                 <CheckCircle2 className="w-3.5 h-3.5" /> Invoice {linkedInvoiceNumber} created
