@@ -1,7 +1,7 @@
 import { jsPDF, GState } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { Invoice } from '@/types/wireless';
-import { loadWirelessLogo, fitLogoBox, fmtGHS, SERVICE_TERMS_URL } from '@/utils/pdfBranding';
+import { loadWirelessLogo, fitLogoBox, fmtGHS, SERVICE_TERMS_URL, loadTrackerQrCode } from '@/utils/pdfBranding';
 
 interface InvoiceLineItem {
   description: string;
@@ -82,6 +82,9 @@ export async function buildInvoicePdf({ invoice, items, taxEnabled, vatRate, lev
     logoRatio = props.height / props.width;
     logoType = props.fileType;
   } catch { logo = null; }
+
+  let trackerQr: string | null = null;
+  try { trackerQr = await loadTrackerQrCode(); } catch { trackerQr = null; }
 
   // Watermark — drawn first so header/table content layers on top of it.
   if (logo) {
@@ -263,6 +266,19 @@ export async function buildInvoicePdf({ invoice, items, taxEnabled, vatRate, lev
     url: SERVICE_TERMS_URL,
     align: 'center',
   });
+
+  // Scannable shortcut to the tracker site — sits beside the terms link
+  // rather than below it, so it doesn't push the page any taller.
+  if (trackerQr) {
+    const qrSize = 15;
+    const qrX = RIGHT_X - qrSize;
+    const qrY = linkY - qrSize + 2;
+    doc.addImage(trackerQr, 'PNG', qrX, qrY, qrSize, qrSize);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6);
+    doc.setTextColor(140);
+    doc.text('Scan to track', qrX + qrSize / 2, qrY + qrSize + 3, { align: 'center' });
+  }
 
   return doc;
 }

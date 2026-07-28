@@ -1,3 +1,5 @@
+import QRCode from 'qrcode';
+
 const logoDataUrlPromises = new Map<string, Promise<string>>();
 
 /**
@@ -36,3 +38,18 @@ export function fmtGHS(n: number): string {
 // customer portal, distinct from that site's own terms for using the
 // tracking tool itself. Shared by invoice and ticket-receipt PDFs/pages.
 export const SERVICE_TERMS_URL = 'https://user.wirelesscares.com/service-terms';
+
+// Same customer-portal domain's tracker home — lets a customer scan the
+// printed receipt/invoice straight into the "enter your ticket + phone"
+// form instead of having to type the site address into a browser by hand.
+export const TRACKER_URL = 'https://user.wirelesscares.com';
+
+const qrDataUrlPromises = new Map<string, Promise<string>>();
+
+/** Generates (and caches) a scannable QR code as a PNG data URL for embedding via doc.addImage(). */
+export function loadTrackerQrCode(url: string = TRACKER_URL): Promise<string> {
+  if (!qrDataUrlPromises.has(url)) {
+    qrDataUrlPromises.set(url, QRCode.toDataURL(url, { margin: 1, width: 240 }));
+  }
+  return qrDataUrlPromises.get(url)!;
+}

@@ -8,6 +8,7 @@ import AddRepairModal from './components/AddRepairModal';
 import CreateTicketInvoiceModal from './components/CreateTicketInvoiceModal';
 import AddTicketPartModal from './components/AddTicketPartModal';
 import { getTicketParts, removeTicketPart, type TicketPart } from '@/services/wireless/ticketParts';
+import { getTicketComments, addTicketComment, type TicketComment } from '@/services/wireless/ticketComments';
 import SearchDropdown from '@/components/shared/SearchDropdown';
 import Pagination from '@/components/shared/Pagination';
 import DateRangePicker, { type DateRange } from '@/components/shared/DateRangePicker';
@@ -19,7 +20,7 @@ import type { Repair, RepairStatus, RepairMediaStage, RepairMediaUploadInput } f
 import type { Payment } from '@/types/wireless';
 import {
   REPAIR_STATUS_META as STATUS, activePipeline, pipelineStep,
-  nextAction, nextStatus, isActiveRepairStatus, isDiagnosisStage,
+  nextAction, nextStatus, isActiveRepairStatus, isDiagnosisStage, isOverdueRepair,
   statusToMediaStage, statusToServiceStage, requiredMediaStageForAdvance, REQUIRED_MEDIA_STAGE_LABEL,
 } from '@/utils/repairStatus';
 import { formatDate } from '@/utils/date';
@@ -101,8 +102,10 @@ function RepairCard({ repair, onClick, selected }: {
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1">
-          <Clock className="w-3 h-3 shrink-0" style={{ color: 'hsl(var(--muted-foreground))' }} />
-          <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>ETA: {repair.eta || '—'}</span>
+          <Clock className="w-3 h-3 shrink-0" style={{ color: isOverdueRepair(repair) ? '#ef4444' : 'hsl(var(--muted-foreground))' }} />
+          <span className="text-xs" style={{ color: isOverdueRepair(repair) ? '#ef4444' : 'hsl(var(--muted-foreground))' }}>
+            {isOverdueRepair(repair) ? 'Overdue: ' : 'ETA: '}{repair.eta || '—'}
+          </span>
         </div>
         <span className="text-xs font-bold" style={{ color: 'hsl(var(--foreground))' }}>
           {repair.cost || 'TBD'}
@@ -135,7 +138,7 @@ function RepairCard({ repair, onClick, selected }: {
 
 // ── Detail Panel ──────────────────────────────────────────────────────────
 
-export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, onAddMedia, onRemoveMedia, uploaderName, canManageTickets, canUpdateProgress, canDeleteTickets, onProceedToRepair, onCloseDiagnosisOnly, onPatchParts, onEdit, onDelete }: {
+export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, onAddMedia, onRemoveMedia, uploaderName, canManageTickets, canUpdateProgress, canDeleteTickets, onProceedToRepair, onCloseDiagnosisOnly, onDiscontinue, onPatchParts, onEdit, onDelete }: {
   repair: Repair;
   onClose: () => void;
   onUpdateStatus: (id: string, s: RepairStatus) => void;
@@ -150,6 +153,11 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   canDeleteTickets: boolean;
   onProceedToRepair: (id: string) => void;
   onCloseDiagnosisOnly: (id: string) => void;
+  /** Ends the job without a completed repair — declined after diagnosis
+   *  mid-repair, or a customer backing out of new work found on a return
+   *  visit. Distinct from "Close — Diagnosis Only" which only applies
+   *  before any repair work starts. */
+  onDiscontinue: (id: string, reason: string) => void;
   /** Parts a technician flags as likely needed — a lightweight suggestion
    *  list, distinct from the stock-deducting "Parts Used" section below it. */
   onPatchParts: (id: string, parts: NonNullable<Repair['parts']>) => void;
@@ -169,7 +177,14 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   const [addingRecommendedPart, setAddingRecommendedPart] = useState(false);
   const [recommendedPartName, setRecommendedPartName] = useState('');
   const [checkingInvoice, setCheckingInvoice] = useState(false);
+  const [internalComments, setInternalComments] = useState<TicketComment[]>([]);
+  const [addingComment, setAddingComment] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [commentSaving, setCommentSaving] = useState(false);
+  const [discontinuing, setDiscontinuing] = useState(false);
+  const [discontinueReason, setDiscontinueReason] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuth();
   const s = STATUS[repair.status] ?? STATUS.received;
   const isDxOnly = repair.jobType === 'diagnosis_only';
   const isStraightRepair = repair.jobType === 'straight_repair';
@@ -216,6 +231,37 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   };
 
   useEffect(loadTicketParts, [repair.ticketDbId]);
+
+  const loadComments = () => {
+    if (!repair.ticketDbId) { setInternalComments([]); return; }
+    getTicketComments(repair.ticketDbId).then(setInternalComments).catch(() => setInternalComments([]));
+  };
+
+  useEffect(loadComments, [repair.ticketDbId]);
+
+  const handleAddComment = async () => {
+    const body = commentText.trim();
+    if (!body || !repair.ticketDbId) return;
+    setCommentSaving(true);
+    try {
+      await addTicketComment(repair.ticketDbId, body, user?.name ?? 'Staff');
+      setCommentText('');
+      setAddingComment(false);
+      loadComments();
+    } catch (e) {
+      alert(errMessage(e, 'Failed to add note'));
+    } finally {
+      setCommentSaving(false);
+    }
+  };
+
+  const handleConfirmDiscontinue = () => {
+    const reason = discontinueReason.trim();
+    if (!reason) return;
+    onDiscontinue(repair.id, reason);
+    setDiscontinuing(false);
+    setDiscontinueReason('');
+  };
 
   const handleRemoveTicketPart = async (part: TicketPart) => {
     if (!confirm(`Remove ${part.part_name} (×${part.quantity})? This restores the stock deducted for it.`)) return;
@@ -386,15 +432,15 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
             ['Customer',       repair.customer],
             ['Technician',     repair.technicians.length ? repair.technicians.map(t => t.name).join(', ') : '—'],
             ['Started',        fmtStarted(repair.started)],
-            ['ETA',            repair.eta || '—'],
+            [isOverdueRepair(repair) ? 'Overdue' : 'ETA', repair.eta || '—'],
             ['Estimated Cost', repair.cost || '—'],
             ...(depositPaid > 0 ? [['Deposit Paid', `GHS ${depositPaid.toFixed(2)}`]] : []),
             ['Warranty',       repair.warranty ? 'Yes' : 'No'],
           ].map(([label, value]) => (
             <div key={label} className="flex items-center justify-between">
-              <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>{label}</span>
+              <span className="text-xs" style={{ color: label === 'Overdue' ? '#ef4444' : 'hsl(var(--muted-foreground))' }}>{label}</span>
               <span className="text-xs font-medium"
-                style={{ color: label === 'Warranty' && value === 'No' ? 'hsl(var(--muted-foreground))' : 'hsl(var(--foreground))' }}>
+                style={{ color: label === 'Overdue' ? '#ef4444' : label === 'Warranty' && value === 'No' ? 'hsl(var(--muted-foreground))' : 'hsl(var(--foreground))' }}>
                 {value}
               </span>
             </div>
@@ -636,6 +682,57 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
             </div>
           )}
         </div>
+
+        {/* Internal Notes — staff-to-staff only, never shown to the customer.
+            For flagging something mid-job (an extra issue found, a part
+            that'll cost more) so reception can decide on pricing and be the
+            one to tell the customer — technicians don't contact customers
+            directly. */}
+        <div className="pt-3" style={{ borderTop: '1px solid hsl(var(--border))' }}>
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-xs font-bold" style={{ color: 'hsl(var(--foreground))' }}>Internal Notes</p>
+              <p className="text-[10px]" style={{ color: 'hsl(var(--muted-foreground))' }}>Staff only — never shown to the customer</p>
+            </div>
+            <button onClick={() => setAddingComment(true)} className="text-xs font-medium flex items-center gap-1"
+              style={{ color: 'hsl(var(--primary))' }}>
+              <Plus className="w-3 h-3" />Add Note
+            </button>
+          </div>
+          {internalComments.length > 0 && (
+            <ul className="space-y-2 mb-3">
+              {internalComments.map(c => (
+                <li key={c.id} className="text-xs rounded-lg px-3 py-2" style={{ background: 'hsl(var(--muted))' }}>
+                  <div className="flex items-center justify-between gap-2 mb-0.5">
+                    <span className="font-semibold" style={{ color: 'hsl(var(--foreground))' }}>{c.authorName}</span>
+                    <span className="shrink-0" style={{ color: 'hsl(var(--muted-foreground))' }}>{fmtStarted(c.createdAt)}</span>
+                  </div>
+                  <p style={{ color: 'hsl(var(--muted-foreground))' }}>{c.body}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+          {addingComment && (
+            <div className="space-y-2">
+              <textarea autoFocus rows={3} value={commentText} onChange={e => setCommentText(e.target.value)}
+                placeholder="e.g. Found a cracked digitizer under the screen too — needs an extra part, let the customer know before we proceed…"
+                className="w-full px-3 py-2 rounded-xl text-xs outline-none resize-none"
+                style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
+              <div className="flex gap-2 justify-end">
+                <button onClick={() => { setAddingComment(false); setCommentText(''); }}
+                  className="px-3 py-1.5 text-xs rounded-lg"
+                  style={{ color: 'hsl(var(--muted-foreground))', border: '1px solid hsl(var(--border))' }}>
+                  Cancel
+                </button>
+                <button onClick={handleAddComment} disabled={commentSaving}
+                  className="px-3 py-1.5 text-xs font-semibold text-white rounded-lg disabled:opacity-60"
+                  style={{ background: 'hsl(var(--primary))' }}>
+                  {commentSaving ? 'Saving…' : 'Save'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Footer */}
@@ -759,6 +856,37 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
               Add Note
             </button>
           )}
+          {(canUpdateProgress || canManageTickets) && (
+            discontinuing ? (
+              <div className="space-y-2 pt-1">
+                <p className="text-[11px] font-semibold" style={{ color: 'hsl(var(--foreground))' }}>
+                  Why is this being discontinued?
+                </p>
+                <textarea autoFocus rows={2} value={discontinueReason} onChange={e => setDiscontinueReason(e.target.value)}
+                  placeholder="e.g. Customer declined the repair after we found a cracked board mid-job…"
+                  className="w-full px-3 py-2 rounded-xl text-xs outline-none resize-none"
+                  style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
+                <div className="flex gap-2 justify-end">
+                  <button onClick={() => { setDiscontinuing(false); setDiscontinueReason(''); }}
+                    className="px-3 py-1.5 text-xs rounded-lg"
+                    style={{ color: 'hsl(var(--muted-foreground))', border: '1px solid hsl(var(--border))' }}>
+                    Cancel
+                  </button>
+                  <button onClick={handleConfirmDiscontinue} disabled={!discontinueReason.trim()}
+                    className="px-3 py-1.5 text-xs font-semibold text-white rounded-lg disabled:opacity-50"
+                    style={{ background: '#ef4444' }}>
+                    Confirm Discontinue
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button onClick={() => setDiscontinuing(true)}
+                className="w-full h-9 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5"
+                style={{ border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444' }}>
+                <XCircle className="w-3.5 h-3.5" /> Discontinue
+              </button>
+            )
+          )}
         </div>
       )}
 
@@ -818,6 +946,7 @@ export default function RepairsBoard() {
   const inDiagnosis  = useMemo(() => repairs.filter(r => isActiveRepairStatus(r.status) && isDiagnosisStage(r)), [repairs]);
   const inRepair     = useMemo(() => repairs.filter(r => isActiveRepairStatus(r.status) && !isDiagnosisStage(r) && r.status !== 'ready'), [repairs]);
   const ready        = useMemo(() => repairs.filter(r => r.status === 'ready'), [repairs]);
+  const overdue      = useMemo(() => repairs.filter(isOverdueRepair), [repairs]);
 
   const filterTabs = FILTER_TABS;
 
@@ -877,6 +1006,24 @@ export default function RepairsBoard() {
     });
   };
 
+  // Ends the job without a completed repair — declined after diagnosis,
+  // mid-repair, or on a return visit — at whatever stage/job type it's
+  // currently in (unlike Close-Diagnosis-Only, which only ever applies
+  // before repair work starts). Deliberately doesn't touch completedDate:
+  // isDoneStatus()/avgTurnaround/revenue elsewhere already only count
+  // 'completed'/'diagnosis_only_closed', so a discontinued ticket correctly
+  // never counts as revenue — any diagnosis fee already paid stays recorded
+  // in payments regardless, and readyForInvoice already accounts for that.
+  const handleDiscontinue = (id: string, reason: string) => {
+    const target = repairs.find(r => r.id === id);
+    if (!target) return;
+    patchRepair(id, { status: 'cancelled', serviceStage: 'closed' });
+    if (target.ticketDbId) {
+      addTicketComment(target.ticketDbId, `Discontinued: ${reason}`, user?.name ?? 'Staff').catch(() => {});
+    }
+    setSelectedId(null);
+  };
+
   const handleDelete = (repair: Repair) => {
     if (!window.confirm(`Delete ${repair.id} (${repair.device})? This can't be undone.`)) return;
     remove(repair.id);
@@ -888,6 +1035,7 @@ export default function RepairsBoard() {
     { label: 'IN DIAGNOSIS',   value: String(inDiagnosis.length),  icon: Stethoscope,  border: '#0ea5e9' },
     { label: 'IN REPAIR',      value: String(inRepair.length),     icon: Scissors,     border: '#7c3aed' },
     { label: 'READY FOR PICKUP', value: String(ready.length),      icon: CheckCircle2, border: '#22c55e' },
+    { label: 'OVERDUE',        value: String(overdue.length),      icon: AlertCircle,  border: '#ef4444' },
   ] as const;
 
   const cols = selected ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3';
@@ -897,7 +1045,7 @@ export default function RepairsBoard() {
       {/* Scrollable left section */}
       <div className="flex-1 overflow-y-auto p-6 space-y-5 min-w-0">
         {/* Stat cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           {STATS.map(card => {
             const Icon = card.icon;
             return (
@@ -1015,6 +1163,7 @@ export default function RepairsBoard() {
             canDeleteTickets={canDeleteTickets}
             onProceedToRepair={handleProceedToRepair}
             onCloseDiagnosisOnly={handleCloseDiagnosisOnly}
+            onDiscontinue={handleDiscontinue}
             onPatchParts={(id, parts) => patchRepair(id, { parts })}
             onEdit={() => setEditingRepair(selected)}
             onDelete={() => handleDelete(selected)}

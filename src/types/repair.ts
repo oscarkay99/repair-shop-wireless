@@ -90,6 +90,10 @@ export interface Repair {
    *  one; each gets full access and workload/completion credit for it. */
   technicians: RepairTechnician[];
   eta: string;
+  /** Structured projected-completion date (YYYY-MM-DD), alongside the
+   *  free-text `eta` label — powers the overdue flag and turnaround stats
+   *  that free text can't support. Optional: existing tickets predate it. */
+  etaDate?: string;
   cost: string;
   costNum?: number;
   started: string;

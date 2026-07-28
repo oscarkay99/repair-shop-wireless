@@ -1,6 +1,6 @@
 import { jsPDF, GState } from 'jspdf';
 import type { Repair } from '@/types/repair';
-import { loadWirelessLogo, fitLogoBox, fmtGHS, SERVICE_TERMS_URL } from '@/utils/pdfBranding';
+import { loadWirelessLogo, fitLogoBox, fmtGHS, SERVICE_TERMS_URL, loadTrackerQrCode } from '@/utils/pdfBranding';
 
 export interface ReceiptBrandSettings {
   business_name?: string;
@@ -53,6 +53,9 @@ export async function buildTicketReceiptPdf({ repair, warrantyDays, settings }: 
     logoRatio = props.height / props.width;
     logoType = props.fileType;
   } catch { logo = null; }
+
+  let trackerQr: string | null = null;
+  try { trackerQr = await loadTrackerQrCode(); } catch { trackerQr = null; }
 
   if (logo) {
     const { w: wmW, h: wmH } = fitLogoBox(logoRatio, 140, 90);
@@ -160,6 +163,19 @@ export async function buildTicketReceiptPdf({ repair, warrantyDays, settings }: 
     url: SERVICE_TERMS_URL,
     align: 'center',
   });
+
+  // Scannable shortcut to the tracker site — sits beside the terms link
+  // rather than below it, so it doesn't push the page any taller.
+  if (trackerQr) {
+    const qrSize = 15;
+    const qrX = RIGHT_X - qrSize;
+    const qrY = linkY - qrSize + 2;
+    doc.addImage(trackerQr, 'PNG', qrX, qrY, qrSize, qrSize);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6);
+    doc.setTextColor(140);
+    doc.text('Scan to track', qrX + qrSize / 2, qrY + qrSize + 3, { align: 'center' });
+  }
 
   return doc;
 }

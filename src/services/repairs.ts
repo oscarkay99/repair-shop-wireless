@@ -35,6 +35,7 @@ type TicketRow = {
   approval_decision_at?: string | null;
   repair_started_at?: string | null;
   eta: string;
+  eta_date?: string | null;
   cost_label: string;
   received_at: string;
   estimated_cost?: number | null;
@@ -184,6 +185,7 @@ function normalizeTicketRow(row: TicketRow, media: RepairMedia[], technicians: R
     repairStartedAt: row.repair_started_at ?? undefined,
     technicians,
     eta: row.eta,
+    etaDate: row.eta_date ?? undefined,
     cost: row.cost_label,
     costNum: row.estimated_cost ?? undefined,
     started: row.received_at,
@@ -221,6 +223,7 @@ function toTicketPatch(item: Partial<Repair>) {
   // wireless.ticket_technicians join table, not a tickets column, and is
   // written separately by setTicketTechnicians() (see updateRepair/createRepair).
   if ('eta' in item) patch.eta = item.eta;
+  if ('etaDate' in item) patch.eta_date = item.etaDate || null;
   if ('cost' in item) patch.cost_label = item.cost;
   if ('costNum' in item) patch.estimated_cost = item.costNum ?? null;
   if ('completedDate' in item) patch.completed_at = item.completedDate ?? null;
@@ -367,6 +370,7 @@ export async function createRepair(r: Omit<Repair, 'id'>): Promise<Repair> {
       approval_decision_at: item.approvalDecisionAt ?? null,
       repair_started_at: item.repairStartedAt ?? null,
       eta: item.eta,
+      eta_date: item.etaDate || null,
       cost_label: item.cost,
       estimated_cost: item.costNum ?? null,
       completed_at: item.completedDate ?? null,

@@ -34,6 +34,7 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
     issue: initial?.issue ?? '',
     cost: initial?.cost ?? 'TBD',
     eta: initial?.eta ?? '',
+    etaDate: initial?.etaDate ?? '',
     warranty: initial?.warranty ?? false,
     diagnosisFee: String(initial?.diagnosisFee ?? 200),
     jobType: (initial?.jobType ?? defaultJobType ?? 'diagnosis_to_repair') as 'diagnosis_only' | 'diagnosis_to_repair' | 'straight_repair',
@@ -231,6 +232,7 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
           cost: form.cost,
           costNum,
           eta: form.eta,
+          etaDate: form.etaDate,
           warranty: form.warranty,
           diagnosisFee: diagnosisFeeNum,
           jobType: form.jobType,
@@ -546,9 +548,13 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
             <div>
               <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>ETA</label>
               <input value={form.eta} onChange={e => set('eta', e.target.value)}
-                className="w-full text-sm rounded-xl px-3 py-2 outline-none"
+                className="w-full text-sm rounded-xl px-3 py-2 outline-none mb-1.5"
                 style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }}
                 placeholder="Apr 26" />
+              <input type="date" value={form.etaDate} onChange={e => set('etaDate', e.target.value)}
+                title="Turnaround date — used to flag this ticket as overdue if it slips past this date"
+                className="w-full text-xs rounded-xl px-3 py-1.5 outline-none"
+                style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }} />
             </div>
             {form.jobType === 'straight_repair' ? (
               <div>

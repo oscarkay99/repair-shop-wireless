@@ -18,7 +18,7 @@ export const REPAIR_STATUS_META: Record<RepairStatus, RepairStatusMeta> = {
   ready:                 { label: 'Ready',         dot: '#22c55e', bg: 'rgba(34,197,94,0.15)',   color: '#22c55e', filterKey: 'ready' },
   completed:             { label: 'Completed',     dot: '#22c55e', bg: 'rgba(34,197,94,0.08)',   color: '#22c55e', filterKey: 'completed' },
   diagnosis_only_closed: { label: 'Completed',     dot: '#64748b', bg: 'rgba(100,116,139,0.1)',  color: '#64748b', filterKey: 'completed' },
-  cancelled:             { label: 'Cancelled',     dot: '#ef4444', bg: 'rgba(239,68,68,0.15)',   color: '#ef4444', filterKey: 'completed' },
+  cancelled:             { label: 'Discontinued',  dot: '#ef4444', bg: 'rgba(239,68,68,0.15)',   color: '#ef4444', filterKey: 'completed' },
 };
 
 export const PIPELINE_FULL     = ['Received', 'Diagnosed', 'Parts Pending', 'In Progress', 'Quality Check', 'Ready'];
@@ -114,6 +114,16 @@ export function nextStatus(status: RepairStatus, jobType?: RepairJobType): Repai
 /** Terminal/closed statuses — a repair in one of these is done, not part of the active queue. */
 export function isActiveRepairStatus(status: RepairStatus): boolean {
   return !['completed', 'cancelled', 'diagnosis_only_closed'].includes(status);
+}
+
+/** A ticket is overdue once its projected turnaround date has passed and
+ *  it's still active — the free-text `eta` ("Today", "Apr 26") can't
+ *  support this, only the structured `etaDate` can. */
+export function isOverdueRepair(repair: Pick<Repair, 'etaDate' | 'status'>): boolean {
+  if (!repair.etaDate || !isActiveRepairStatus(repair.status)) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return new Date(`${repair.etaDate}T00:00`) < today;
 }
 
 const DIAGNOSIS_STAGE_STATUSES = new Set<RepairStatus>([
