@@ -30,7 +30,11 @@ export function useRepairs() {
       // the invoice manually from the ticket panel.
       if (hasConfirmedDiagnosisPayment(created)) {
         const depositPaid = (created.payments ?? []).reduce((sum, p) => sum + (p.status === 'paid' ? p.amount : 0), 0);
-        ensureTicketInvoice(created, { depositPaid, taxEnabled, vatRate, nhilGetfundRate, warrantyDays: settings?.warranty_days }).catch(() => {});
+        ensureTicketInvoice(created, { depositPaid, taxEnabled, vatRate, nhilGetfundRate, warrantyDays: settings?.warranty_days })
+          .catch((invoiceError) => {
+            console.error('Auto-invoice failed for', created.id, invoiceError);
+            showToast(errMessage(invoiceError, `Ticket created, but the invoice couldn't be generated — create it manually from the ticket panel.`), 'error');
+          });
       }
       return created;
     } catch (e) {
