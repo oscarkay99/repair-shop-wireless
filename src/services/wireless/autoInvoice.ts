@@ -28,19 +28,25 @@ export async function ensureTicketInvoice(repair: Repair, ctx: AutoInvoiceContex
   const isDiagnosisOnly = repair.status === 'diagnosis_only_closed';
   const isCancelled = repair.status === 'cancelled';
   const isReady = repair.status === 'ready';
+  const isAtIntake = !isDiagnosisOnly && !isCancelled && !isReady;
   // A diagnosis fee is charged and paid the moment the ticket is created —
   // invoice it immediately rather than waiting for the job to reach a
   // terminal state, so there's always an invoice to track the ticket by
   // from day one, not just ones that eventually reach Ready.
-  const isAtIntakeWithPaidDiagnosis = !isDiagnosisOnly && !isCancelled && !isReady && hasConfirmedDiagnosisPayment(repair);
+  const isAtIntakeWithPaidDiagnosis = isAtIntake && hasConfirmedDiagnosisPayment(repair);
+  // Straight repair never has a diagnosis fee (no diagnosis stage at all) —
+  // nothing's actually been paid yet, but it still gets an unpaid invoice
+  // for the quoted cost immediately, same tracking-from-day-one reasoning.
+  const isAtIntakeStraightRepair = isAtIntake && repair.jobType === 'straight_repair';
 
-  if (!isDiagnosisOnly && !isCancelled && !isReady && !isAtIntakeWithPaidDiagnosis) return null;
+  if (!isDiagnosisOnly && !isCancelled && !isReady && !isAtIntakeWithPaidDiagnosis && !isAtIntakeStraightRepair) return null;
   // A cancelled job only gets invoiced if a diagnosis fee was actually paid —
   // nothing changed hands otherwise, so there's nothing to bill.
   if (isCancelled && !hasConfirmedDiagnosisPayment(repair)) return null;
 
-  // Everything except the finished repair itself bills just the diagnosis fee.
-  const billDiagnosisFeeOnly = !isReady;
+  // Everything except the finished repair (or a straight repair, which has
+  // no separate diagnosis fee to bill instead) bills just the diagnosis fee.
+  const billDiagnosisFeeOnly = !isReady && !isAtIntakeStraightRepair;
   const subtotal = billDiagnosisFeeOnly ? (repair.diagnosisFee ?? 0) : (repair.costNum ?? 0);
   if (subtotal <= 0) return null;
 

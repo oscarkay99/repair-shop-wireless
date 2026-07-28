@@ -23,12 +23,14 @@ export function useRepairs() {
       const created = await createRepair(r);
       setRepairs(prev => [created, ...prev]);
       showToast('Repair job created');
-      // Every ticket with a paid diagnosis fee gets an invoice immediately,
-      // not just ones that later reach Ready — gives staff something to
-      // track the ticket by from the moment it's created. Best-effort: a
-      // failure here shouldn't undo ticket creation; staff can still create
-      // the invoice manually from the ticket panel.
-      if (hasConfirmedDiagnosisPayment(created)) {
+      // Every ticket gets an invoice immediately at creation — one with a
+      // paid diagnosis fee is invoiced for that; a straight repair (no
+      // diagnosis fee at all) gets an unpaid invoice for the quoted cost —
+      // not just ones that later reach Ready. Gives staff something to track
+      // the ticket by from the moment it's created. Best-effort: a failure
+      // here shouldn't undo ticket creation; staff can still create the
+      // invoice manually from the ticket panel.
+      if (hasConfirmedDiagnosisPayment(created) || created.jobType === 'straight_repair') {
         const depositPaid = (created.payments ?? []).reduce((sum, p) => sum + (p.status === 'paid' ? p.amount : 0), 0);
         ensureTicketInvoice(created, { depositPaid, taxEnabled, vatRate, nhilGetfundRate, warrantyDays: settings?.warranty_days })
           .catch((invoiceError) => {

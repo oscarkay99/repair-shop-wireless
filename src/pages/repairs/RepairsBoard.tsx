@@ -214,8 +214,10 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   const depositPaid = ticketPayments.reduce((s, p) => s + p.amount, 0);
   // A paid diagnosis fee is billable the moment it's paid, not just once the
   // job reaches Ready — subsumes the old diagnosis_only_closed/cancelled
-  // special cases, since neither is reachable without one.
-  const readyForInvoice = repair.status === 'ready' || hasConfirmedDiagnosisPayment(repair);
+  // special cases, since neither is reachable without one. A straight
+  // repair has no diagnosis fee at all, so it's billable (unpaid, for the
+  // quoted cost) from the moment it's created instead.
+  const readyForInvoice = repair.status === 'ready' || hasConfirmedDiagnosisPayment(repair) || repair.jobType === 'straight_repair';
 
   useEffect(() => {
     let cancelled = false;
