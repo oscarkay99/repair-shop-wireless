@@ -72,18 +72,34 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
     return parts.filter(p => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)).slice(0, 8);
   }, [parts, partSearch]);
 
-  // Inventory is the device catalog here — each part is a distinct, exact
-  // device model with its own price (e.g. "iPhone 11", "iPhone 11 Pro",
-  // "iPhone 11 Pro max" are three separate entries), so picking the precise
-  // one from the dropdown is what disambiguates the price, not a fuzzy
-  // match afterwards.
+  // Inventory is the device catalog here — each part is normally a distinct,
+  // exact device model with its own price (e.g. "iPhone 11", "iPhone 11 Pro",
+  // "iPhone 11 Pro max" are three separate entries). But two rows can
+  // legitimately share an identical name at different prices too (e.g. an
+  // OEM vs. compatible "iPhone 13 Screen") — collapsing those down to one
+  // price used to just take whichever row happened to load first, silently
+  // handing out the wrong number. Instead: same name + same price collapses
+  // to one clean suggestion; same name + different prices lists every one,
+  // each tagged with its SKU, so the price picked is always the one actually
+  // chosen, never guessed.
   const knownDevices = useMemo(() => {
-    const byName = new Map<string, number>();
+    const groups = new Map<string, typeof parts>();
     for (const p of parts) {
-      if (p.name && !byName.has(p.name)) byName.set(p.name, p.selling_price);
+      if (!p.name) continue;
+      const key = p.name.trim().toLowerCase();
+      const g = groups.get(key);
+      if (g) g.push(p); else groups.set(key, [p]);
     }
-    return Array.from(byName, ([name, price]) => ({ name, price }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+    const out: { name: string; price: number; sku?: string }[] = [];
+    for (const group of groups.values()) {
+      const prices = new Set(group.map(p => p.selling_price));
+      if (prices.size === 1) {
+        out.push({ name: group[0].name, price: group[0].selling_price });
+      } else {
+        for (const p of group) out.push({ name: p.name, price: p.selling_price, sku: p.sku });
+      }
+    }
+    return out.sort((a, b) => a.name.localeCompare(b.name) || a.price - b.price);
   }, [parts]);
 
   // Not gated to "only when creating" — a Diagnosis Only ticket has no cost
@@ -92,9 +108,15 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
   // touches a cost that's still 'TBD' or was auto-filled by this same
   // effect, never something someone actually typed in.
   useEffect(() => {
-    const exact = parts.find(p => p.name.trim().toLowerCase() === form.device.trim().toLowerCase());
-    if (exact && (form.cost === 'TBD' || costAutoFilled)) {
-      set('cost', String(exact.selling_price));
+    const exactMatches = parts.filter(p => p.name.trim().toLowerCase() === form.device.trim().toLowerCase());
+    if (exactMatches.length === 0) return;
+    const prices = new Set(exactMatches.map(p => p.selling_price));
+    // More than one price behind the same name is ambiguous — there's no
+    // correct number to silently fill in, so leave it alone and make staff
+    // pick the exact (SKU-tagged) entry from the dropdown instead.
+    if (prices.size > 1) return;
+    if (form.cost === 'TBD' || costAutoFilled) {
+      set('cost', String(exactMatches[0].selling_price));
       setCostAutoFilled(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

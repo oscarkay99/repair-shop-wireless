@@ -5,6 +5,12 @@ export interface DeviceSuggestion {
   /** Selling price of the matching inventory entry, when there is one — shown
    *  in the row so it's obvious that picking this device sets the quote. */
   price?: number;
+  /** Set only when another inventory entry shares this exact name at a
+   *  different price (e.g. an OEM vs. compatible screen both just called
+   *  "iPhone 13 Screen") — shown so the two rows are told apart by more than
+   *  price alone, since picking the wrong one silently would defeat the
+   *  point of listing both. */
+  sku?: string;
 }
 
 interface Props {
@@ -79,7 +85,7 @@ export default function DevicePicker({
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}
             >
-              <span className="truncate">{d.name}</span>
+              <span className="truncate">{d.name}{d.sku && <span className="opacity-60"> · {d.sku}</span>}</span>
               {d.price !== undefined && (
                 <span className="flex-shrink-0" style={{ color: 'hsl(var(--muted-foreground))' }}>GHS {d.price}</span>
               )}
