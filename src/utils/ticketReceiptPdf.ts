@@ -55,7 +55,7 @@ export async function buildTicketReceiptPdf({ repair, warrantyDays, settings }: 
   } catch { logo = null; }
 
   let trackerQr: string | null = null;
-  try { trackerQr = await loadTrackerQrCode(trackerUrlFor(repair.id)); } catch { trackerQr = null; }
+  try { trackerQr = await loadTrackerQrCode(trackerUrlFor(repair.publicToken)); } catch { trackerQr = null; }
 
   if (logo) {
     const { w: wmW, h: wmH } = fitLogoBox(logoRatio, 140, 90);

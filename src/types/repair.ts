@@ -94,6 +94,12 @@ export interface Repair {
    *  free-text `eta` label — powers the overdue flag and turnaround stats
    *  that free text can't support. Optional: existing tickets predate it. */
   etaDate?: string;
+  /** Random, unguessable per-ticket secret — embedded in the tracker QR code
+   *  on printed receipts/invoices so a scan authenticates on its own,
+   *  without a phone-number match (unlike the sequential/guessable ticket
+   *  number `id`). Always set by the DB default; optional here only because
+   *  local/offline mock data predates it. */
+  publicToken?: string;
   cost: string;
   costNum?: number;
   started: string;

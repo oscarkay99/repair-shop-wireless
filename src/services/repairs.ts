@@ -36,6 +36,7 @@ type TicketRow = {
   repair_started_at?: string | null;
   eta: string;
   eta_date?: string | null;
+  public_token?: string | null;
   cost_label: string;
   received_at: string;
   estimated_cost?: number | null;
@@ -186,6 +187,7 @@ function normalizeTicketRow(row: TicketRow, media: RepairMedia[], technicians: R
     technicians,
     eta: row.eta,
     etaDate: row.eta_date ?? undefined,
+    publicToken: row.public_token ?? undefined,
     cost: row.cost_label,
     costNum: row.estimated_cost ?? undefined,
     started: row.received_at,
@@ -378,7 +380,7 @@ export async function createRepair(r: Omit<Repair, 'id'>): Promise<Repair> {
       parts_json: item.parts,
       notes_json: item.notes,
       payments_json: item.payments ?? [],
-    }).select('id, ticket_number, received_at, created_at').single();
+    }).select('id, ticket_number, received_at, created_at, public_token').single();
 
     if (error) throw error;
     await setTicketTechnicians(inserted.id, item.technicians.map((tech) => tech.id));
@@ -388,6 +390,7 @@ export async function createRepair(r: Omit<Repair, 'id'>): Promise<Repair> {
       ticketDbId: inserted.id,
       started: inserted.received_at,
       createdAt: inserted.created_at ?? undefined,
+      publicToken: inserted.public_token ?? undefined,
     });
     store = [item, ...store];
     return normalizeRepair(item);
@@ -455,15 +458,14 @@ export async function deleteRepair(id: string): Promise<void> {
   store = store.filter((repair) => repair.id !== id);
 }
 
-// Invoices only carry the ticket's uuid (ticket_id), not its human-readable
-// ticket_number — needed to deep-link the tracker QR to the right ticket
-// without pulling the whole repairs list into a page that otherwise has no
-// reason to load it.
-export async function getTicketNumberById(ticketDbId: string): Promise<string | null> {
+// Invoices only carry the ticket's uuid (ticket_id), not its public_token —
+// needed to deep-link the tracker QR to the right ticket without pulling the
+// whole repairs list into a page that otherwise has no reason to load it.
+export async function getTicketPublicTokenById(ticketDbId: string): Promise<string | null> {
   if (!isSupabaseConfigured) return null;
-  const { data, error } = await db.from('tickets').select('ticket_number').eq('id', ticketDbId).single();
+  const { data, error } = await db.from('tickets').select('public_token').eq('id', ticketDbId).single();
   if (error) return null;
-  return (data as { ticket_number: string } | null)?.ticket_number ?? null;
+  return (data as { public_token: string } | null)?.public_token ?? null;
 }
 
 export async function addRepairMedia(repairId: string, input: RepairMediaUploadInput): Promise<RepairMedia> {

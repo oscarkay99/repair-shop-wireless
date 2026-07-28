@@ -25,10 +25,10 @@ export interface InvoicePdfOptions {
   vatRate: number;
   levyRate: number;
   settings?: InvoiceBrandSettings;
-  /** The linked ticket's human-readable number (e.g. "TK-0001"), resolved by
-   *  the caller from invoice.ticket_id — deep-links the tracker QR straight
-   *  to this ticket. Omitted for invoices with no linked ticket. */
-  ticketNumber?: string | null;
+  /** The linked ticket's random public_token, resolved by the caller from
+   *  invoice.ticket_id — lets the tracker QR authenticate on scan with no
+   *  phone-number match needed. Omitted for invoices with no linked ticket. */
+  trackerToken?: string | null;
 }
 
 const PAGE_W = 210;
@@ -63,7 +63,7 @@ function drawPaidStamp(doc: jsPDF, cx: number, cy: number) {
   doc.text('PAID', cx, cy, { angle: angleDeg, align: 'center', baseline: 'middle' });
 }
 
-export async function buildInvoicePdf({ invoice, items, taxEnabled, vatRate, levyRate, settings, ticketNumber }: InvoicePdfOptions): Promise<jsPDF> {
+export async function buildInvoicePdf({ invoice, items, taxEnabled, vatRate, levyRate, settings, trackerToken }: InvoicePdfOptions): Promise<jsPDF> {
   const doc = new jsPDF();
   const isPaid = invoice.status === 'paid';
   const businessName = settings?.business_name?.trim() || 'Wireless';
@@ -88,7 +88,7 @@ export async function buildInvoicePdf({ invoice, items, taxEnabled, vatRate, lev
   } catch { logo = null; }
 
   let trackerQr: string | null = null;
-  try { trackerQr = await loadTrackerQrCode(trackerUrlFor(ticketNumber)); } catch { trackerQr = null; }
+  try { trackerQr = await loadTrackerQrCode(trackerUrlFor(trackerToken)); } catch { trackerQr = null; }
 
   // Watermark — drawn first so header/table content layers on top of it.
   if (logo) {

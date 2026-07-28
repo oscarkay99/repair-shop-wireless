@@ -20,7 +20,7 @@ import type { Invoice, InvoiceItem, InvoiceStatus } from '@/types/wireless';
 import type { PaymentMethod } from '@/types/sale';
 import { errMessage } from '@/utils/errors';
 import { downloadInvoicePdf, invoicePdfBase64 } from '@/utils/invoicePdf';
-import { getTicketNumberById } from '@/services/repairs';
+import { getTicketPublicTokenById } from '@/services/repairs';
 import { SERVICE_TERMS_URL } from '@/utils/pdfBranding';
 
 const PAYMENT_METHODS: PaymentMethod[] = ['Cash', 'Card', 'MoMo', 'Bank Transfer'];
@@ -390,7 +390,7 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
   const [emailError, setEmailError] = useState('');
   const [items, setItems] = useState<InvoiceItem[]>([]);
   const [itemsLoading, setItemsLoading] = useState(true);
-  const [ticketNumber, setTicketNumber] = useState<string | null>(null);
+  const [trackerToken, setTrackerToken] = useState<string | null>(null);
   const balanceDue = Math.max(0, inv.total - inv.amount_paid);
   const isPaid = inv.status === 'paid';
 
@@ -403,12 +403,12 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
     return () => { cancelled = true; };
   }, [inv.id]);
 
-  // Only known so the tracker QR can deep-link straight to this ticket —
-  // the invoice itself only carries the ticket's uuid, not its TK-#### number.
+  // Only known so the tracker QR can authenticate the scan on its own —
+  // the invoice itself only carries the ticket's uuid, not its public_token.
   useEffect(() => {
     let cancelled = false;
-    if (!inv.ticket_id) { setTicketNumber(null); return; }
-    getTicketNumberById(inv.ticket_id).then(n => { if (!cancelled) setTicketNumber(n); });
+    if (!inv.ticket_id) { setTrackerToken(null); return; }
+    getTicketPublicTokenById(inv.ticket_id).then(t => { if (!cancelled) setTrackerToken(t); });
     return () => { cancelled = true; };
   }, [inv.ticket_id]);
 
@@ -417,7 +417,7 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
     setEmailStatus('sending');
     setEmailError('');
     try {
-      const pdfBase64 = await invoicePdfBase64({ invoice: inv, items, taxEnabled, vatRate, levyRate, settings: settings ?? undefined, ticketNumber });
+      const pdfBase64 = await invoicePdfBase64({ invoice: inv, items, taxEnabled, vatRate, levyRate, settings: settings ?? undefined, trackerToken });
       await sendInvoiceEmail({
         to: inv.customer.email,
         invoiceNumber: inv.invoice_number,
@@ -490,7 +490,7 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
             Print
           </button>
           <button
-            onClick={() => downloadInvoicePdf({ invoice: inv, items, taxEnabled, vatRate, levyRate, settings: settings ?? undefined, ticketNumber })}
+            onClick={() => downloadInvoicePdf({ invoice: inv, items, taxEnabled, vatRate, levyRate, settings: settings ?? undefined, trackerToken })}
             className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold transition-colors"
             style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))', background: 'transparent' }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
