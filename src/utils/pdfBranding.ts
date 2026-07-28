@@ -53,3 +53,11 @@ export function loadTrackerQrCode(url: string = TRACKER_URL): Promise<string> {
   }
   return qrDataUrlPromises.get(url)!;
 }
+
+/** Pre-fills the tracker's ticket-number field so the customer only has to
+ *  type their phone — still required, same as searching manually, just one
+ *  less field. Falls back to the plain tracker home when no ticket number
+ *  is known (e.g. a non-ticket-linked invoice). */
+export function trackerUrlFor(ticketNumber?: string | null): string {
+  return ticketNumber ? `${TRACKER_URL}/?ticket=${encodeURIComponent(ticketNumber)}` : TRACKER_URL;
+}

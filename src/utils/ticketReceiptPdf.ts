@@ -1,6 +1,6 @@
 import { jsPDF, GState } from 'jspdf';
 import type { Repair } from '@/types/repair';
-import { loadWirelessLogo, fitLogoBox, fmtGHS, SERVICE_TERMS_URL, loadTrackerQrCode } from '@/utils/pdfBranding';
+import { loadWirelessLogo, fitLogoBox, fmtGHS, SERVICE_TERMS_URL, loadTrackerQrCode, trackerUrlFor } from '@/utils/pdfBranding';
 
 export interface ReceiptBrandSettings {
   business_name?: string;
@@ -55,7 +55,7 @@ export async function buildTicketReceiptPdf({ repair, warrantyDays, settings }: 
   } catch { logo = null; }
 
   let trackerQr: string | null = null;
-  try { trackerQr = await loadTrackerQrCode(); } catch { trackerQr = null; }
+  try { trackerQr = await loadTrackerQrCode(trackerUrlFor(repair.id)); } catch { trackerQr = null; }
 
   if (logo) {
     const { w: wmW, h: wmH } = fitLogoBox(logoRatio, 140, 90);

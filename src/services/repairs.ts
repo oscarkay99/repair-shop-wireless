@@ -455,6 +455,17 @@ export async function deleteRepair(id: string): Promise<void> {
   store = store.filter((repair) => repair.id !== id);
 }
 
+// Invoices only carry the ticket's uuid (ticket_id), not its human-readable
+// ticket_number — needed to deep-link the tracker QR to the right ticket
+// without pulling the whole repairs list into a page that otherwise has no
+// reason to load it.
+export async function getTicketNumberById(ticketDbId: string): Promise<string | null> {
+  if (!isSupabaseConfigured) return null;
+  const { data, error } = await db.from('tickets').select('ticket_number').eq('id', ticketDbId).single();
+  if (error) return null;
+  return (data as { ticket_number: string } | null)?.ticket_number ?? null;
+}
+
 export async function addRepairMedia(repairId: string, input: RepairMediaUploadInput): Promise<RepairMedia> {
   if (input.file.size > MAX_REPAIR_MEDIA_BYTES) {
     throw new Error('Each photo or video must be 5MB or less.');
