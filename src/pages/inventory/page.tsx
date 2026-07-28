@@ -277,7 +277,7 @@ export default function InventoryPage() {
           <table className="w-full">
             <thead>
               <tr style={{ borderBottom: '1px solid hsl(var(--border))' }}>
-                {['Part Name', 'Product Code', 'Category', 'Stock', 'Unit Cost', ''].map(h => (
+                {['Part Name', 'Product Code', 'Category', 'Stock', 'Unit Cost', 'Selling Price', ''].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider"
                     style={{ color: 'hsl(var(--muted-foreground))' }}>
                     {h}
@@ -288,7 +288,7 @@ export default function InventoryPage() {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-16 text-center text-sm" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                  <td colSpan={7} className="px-4 py-16 text-center text-sm" style={{ color: 'hsl(var(--muted-foreground))' }}>
                     No parts found.
                   </td>
                 </tr>
@@ -326,6 +326,9 @@ export default function InventoryPage() {
                     </td>
                     <td className="px-4 py-3 text-sm font-medium" style={{ color: 'hsl(var(--foreground))' }}>
                       ¢{p.unit_cost.toFixed(2)}
+                    </td>
+                    <td className="px-4 py-3 text-sm font-semibold" style={{ color: 'hsl(var(--primary))' }}>
+                      ¢{p.selling_price.toFixed(2)}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1 justify-end">
