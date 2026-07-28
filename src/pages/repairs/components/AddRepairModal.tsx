@@ -77,10 +77,14 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
   // "iPhone 11 Pro max" are three separate entries), so picking the precise
   // one from the dropdown is what disambiguates the price, not a fuzzy
   // match afterwards.
-  const knownDevices = useMemo(
-    () => Array.from(new Set(parts.map(p => p.name).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
-    [parts]
-  );
+  const knownDevices = useMemo(() => {
+    const byName = new Map<string, number>();
+    for (const p of parts) {
+      if (p.name && !byName.has(p.name)) byName.set(p.name, p.selling_price);
+    }
+    return Array.from(byName, ([name, price]) => ({ name, price }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [parts]);
 
   // Not gated to "only when creating" — a Diagnosis Only ticket has no cost
   // yet when it later proceeds to repair (Edit Ticket, `initial` set), so
@@ -154,8 +158,10 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
     try {
       // A brand-new walk-in customer is created here, right as the ticket is
       // submitted, rather than requiring a separate trip to Customers first.
+      // …unless the name they typed matched somebody already on file and they
+      // picked them from the dropdown, in which case that record is reused.
       const customer = customerMode === 'new' && !initial
-        ? await addCustomer({ name: form.customer.trim(), phone: form.customerPhone.trim(), email: form.customerEmail.trim(), address: '' })
+        ? selectedCustomer ?? await addCustomer({ name: form.customer.trim(), phone: form.customerPhone.trim(), email: form.customerEmail.trim(), address: '' })
         : selectedCustomer;
 
       const costNum = parseFloat(form.cost.replace(/[^0-9.]/g, '')) || 0;
@@ -301,13 +307,26 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
           </div>
           <div className="grid grid-cols-2 gap-3">
             {customerMode === 'new' && !initial ? (
-              <div>
-                <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Customer Name *</label>
-                <input required value={form.customer} onChange={e => set('customer', e.target.value)}
-                  className="w-full text-sm rounded-xl px-3 py-2 outline-none"
-                  style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }}
-                  placeholder="Full name" />
-              </div>
+              // Same search-as-you-type flow as the Existing tab — a walk-in
+              // who's actually already registered gets linked (and their phone
+              // and email filled in) instead of duplicated, while a genuinely
+              // new name is just typed through and created on submit.
+              <CustomerPicker
+                createMode
+                value={form.customer}
+                phone={form.customerPhone}
+                onChange={(name, phone, customer) => {
+                  set('customer', name);
+                  if (customer) {
+                    set('customerPhone', phone);
+                    set('customerEmail', customer.email ?? '');
+                  }
+                  setSelectedCustomer(customer ?? null);
+                }}
+                required
+                label="Customer Name"
+                placeholder="Full name"
+              />
             ) : (
               <CustomerPicker
                 value={form.customer}
@@ -324,7 +343,15 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
             )}
             <DevicePicker
               value={form.device}
-              onChange={v => set('device', v)}
+              onChange={(v, price) => {
+                set('device', v);
+                // Picked straight from inventory, so the price is known here —
+                // no need to wait on the exact-name-match effect below.
+                if (price !== undefined) {
+                  set('cost', String(price));
+                  setCostAutoFilled(true);
+                }
+              }}
               suggestions={knownDevices}
               required
               label="Device"

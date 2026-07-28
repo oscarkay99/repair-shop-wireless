@@ -10,6 +10,11 @@ interface Props {
   label?: string;
   placeholder?: string;
   theme?: 'dark' | 'light';
+  /** Typing a brand-new name is the expected outcome here, not an error — the
+   *  caller creates the customer itself when the form is submitted. The
+   *  dropdown still searches, so an already-registered walk-in gets linked
+   *  instead of duplicated, but nothing gets cleared or created inline. */
+  createMode?: boolean;
 }
 
 export default function CustomerPicker({
@@ -20,6 +25,7 @@ export default function CustomerPicker({
   label = 'Customer',
   placeholder = 'Search by name or phone…',
   theme = 'dark',
+  createMode = false,
 }: Props) {
   const { customers, add } = useWirelessCustomers();
   const [open, setOpen] = useState(false);
@@ -44,12 +50,12 @@ export default function CustomerPicker({
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false);
-        if (dirty && !pickedId && value.trim()) onChange('', phone, null);
+        if (!createMode && dirty && !pickedId && value.trim()) onChange('', phone, null);
       }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [dirty, pickedId, value, phone, onChange]);
+  }, [createMode, dirty, pickedId, value, phone, onChange]);
 
   const pick = (c: WCustomer) => {
     setPickedId(c.id);
@@ -154,7 +160,12 @@ export default function CustomerPicker({
               </button>
             ))
           ) : q.length >= 1 ? (
-            phone.trim() ? (
+            createMode ? (
+              <div className="px-3 py-3 text-xs text-[hsl(var(--muted-foreground))] flex items-center gap-2">
+                <i className="ri-user-add-line" />
+                New customer — created when you save this ticket.
+              </div>
+            ) : phone.trim() ? (
               <button
                 type="button"
                 onMouseDown={e => { e.preventDefault(); createNew(); }}
