@@ -213,7 +213,7 @@ export default function InventoryPage() {
   // admin can add a brand-new part type; everyone else can only edit
   // existing ones (adjusting stock, not creating catalog entries).
   const canSeeCost = user?.role === 'admin';
-  const canCreatePart = user?.role === 'admin';
+  const canCreatePart = user?.role === 'admin' || user?.role === 'stock_manager';
   // Stock manager's whole job here is "is it in stock, adjust it" — a
   // KPI-tiles-and-cards view built around that, instead of the dense admin
   // table (which also shows things stock_manager can't act on anyway).
