@@ -38,10 +38,10 @@ function AddPartModal({
   onClose: () => void;
   initial?: Part;
   existingParts?: Part[];
-  /** Wholesale cost and supplier are restricted to admin/stock_manager —
-   *  everyone else who can otherwise edit parts (sales_manager) never sees
-   *  or sets them; a restricted user's save preserves whatever was already
-   *  there rather than silently blanking/zeroing it. */
+  /** Wholesale cost and supplier are admin-only — everyone else who can
+   *  otherwise edit parts (stock_manager, sales_manager, receptionist) never
+   *  sees or sets them; a restricted user's save preserves whatever was
+   *  already there rather than silently blanking/zeroing it. */
   canSeeCost: boolean;
 }) {
   const categoryOptions = [...new Set([...CATEGORIES, ...existingParts.map(p => p.category)])].sort();
@@ -202,7 +202,12 @@ export default function InventoryPage() {
   // uses a separate paginated fetch so the list view doesn't pull every row.
   const { parts, loading, add, patch, remove, lowStock } = useParts();
   const { user } = useAuth();
-  const canSeeCost = user?.role === 'admin' || user?.role === 'stock_manager';
+  // Reception and stock_manager can view/adjust stock and see selling price
+  // (what to quote), but unit cost and supplier are admin-only — and only
+  // admin can add a brand-new part type; everyone else can only edit
+  // existing ones (adjusting stock, not creating catalog entries).
+  const canSeeCost = user?.role === 'admin';
+  const canCreatePart = user?.role === 'admin';
   const [tab, setTab] = useState<InventoryTab>('parts');
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebouncedValue(query, 300);
@@ -232,11 +237,11 @@ export default function InventoryPage() {
       title: 'Inventory',
       subtitle: tab === 'parts' ? `${parts.length} parts · ${lowStock.length} low stock` : 'Retail accessories stock',
       action: tab === 'parts'
-        ? { label: 'Add Part', onClick: () => setShowAdd(true) }
+        ? (canCreatePart ? { label: 'Add Part', onClick: () => setShowAdd(true) } : undefined)
         : { label: 'Add Accessory', onClick: () => setShowAddAccessory(true) },
     });
     return () => setPageTitle({ title: 'Dashboard' });
-  }, [setPageTitle, tab, parts.length, lowStock.length]);
+  }, [setPageTitle, tab, parts.length, lowStock.length, canCreatePart]);
 
   const filtered = pagedParts;
   const paged = pagedParts;
