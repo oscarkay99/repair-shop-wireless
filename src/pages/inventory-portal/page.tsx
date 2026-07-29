@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { usePageTitle } from '@/context/PageTitleContext';
 import { useParts } from '@/hooks/useParts';
-import { Boxes, AlertTriangle, Package, Plus, Search } from 'lucide-react';
+import { Boxes, AlertTriangle, Package, Search } from 'lucide-react';
 
 export default function InventoryPortalPage() {
   const { setPageTitle } = usePageTitle();
@@ -34,16 +34,11 @@ export default function InventoryPortalPage() {
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-3">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: 'hsl(var(--muted-foreground))' }} />
-          <input type="text" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search parts..."
-            className="h-8 pl-8 pr-3 w-48 rounded-lg text-xs outline-none"
-            style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
-        </div>
-        <button className="h-8 px-3 flex items-center gap-1.5 rounded-lg text-xs font-semibold text-white" style={{ background: 'hsl(var(--primary))' }}>
-          <Plus className="w-3.5 h-3.5" /> Add Part
-        </button>
+      <div className="relative">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: 'hsl(var(--muted-foreground))' }} />
+        <input type="text" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search parts..."
+          className="h-8 pl-8 pr-3 w-48 rounded-lg text-xs outline-none"
+          style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
       </div>
 
       <div className="rounded-xl border overflow-hidden" style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>

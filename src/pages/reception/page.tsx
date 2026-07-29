@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Sun, Moon, Plus, Search, Phone, Clock3, ClipboardList, ChevronDown,
-  CheckCircle2, UserX, Smartphone, LogOut, Bell, User, Tag, X,
+  CheckCircle2, UserX, Smartphone, LogOut, Bell, User, Tag, X, Cake,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/context/ThemeContext';
@@ -41,7 +41,7 @@ const NAV_TABS = [
   { key: 'sales',       label: 'Sales',       to: '/sales' },
   { key: 'inventory',   label: 'Inventory',   to: '/inventory' },
   { key: 'technicians', label: 'Technicians', to: '/technicians' },
-  { key: 'birthdays',   label: 'Birthdays',   to: '/' },
+  { key: 'birthdays',   label: 'Birthdays',   to: null },
 ] as const;
 
 export default function ReceptionPortalPage() {
@@ -53,11 +53,13 @@ export default function ReceptionPortalPage() {
   const { technicians } = useTechnicians();
   const { invoices } = useInvoices();
   const todaysBirthdays = useUpcomingBirthdays(0);
+  const upcomingBirthdays = useUpcomingBirthdays(30);
 
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterKey>('all');
   const [discountRequestId, setDiscountRequestId] = useState<string | null>(null);
   const [discountReason, setDiscountReason] = useState('');
+  const [showBirthdays, setShowBirthdays] = useState(false);
 
   const invoicesNeedingAttention = useMemo(
     () => invoices.filter(i => i.status === 'unpaid' || i.status === 'overdue').length,
@@ -113,6 +115,15 @@ export default function ReceptionPortalPage() {
     navigate('/signin', { replace: true });
   };
 
+  const handleCall = async (phone: string) => {
+    try {
+      await navigator.clipboard.writeText(phone);
+      showToast(`Copied ${phone} — dialing…`);
+    } catch {
+      showToast(`Call ${phone}`);
+    }
+  };
+
   return (
     <div className="h-screen flex flex-col" style={{ background: 'hsl(var(--background))' }}>
       {/* Header */}
@@ -148,23 +159,25 @@ export default function ReceptionPortalPage() {
           const badge = tab.key === 'invoices' ? invoicesNeedingAttention
             : tab.key === 'birthdays' ? todaysBirthdays.length
             : 0;
-          return (
-            <Link
-              key={tab.key}
-              to={tab.to}
-              className="flex items-center gap-1.5 py-3 text-sm font-semibold whitespace-nowrap border-b-2 -mb-px transition-colors"
-              style={{
-                color: active ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))',
-                borderColor: active ? 'hsl(var(--primary))' : 'transparent',
-              }}
-            >
+          const tabClass = "flex items-center gap-1.5 py-3 text-sm font-semibold whitespace-nowrap border-b-2 -mb-px transition-colors cursor-pointer";
+          const tabStyle = {
+            color: active ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))',
+            borderColor: active ? 'hsl(var(--primary))' : 'transparent',
+          };
+          const content = (
+            <>
               {tab.label}
               {badge > 0 && (
                 <span className="inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full text-[10px] font-bold text-white" style={{ background: '#f59e0b' }}>
                   {badge}
                 </span>
               )}
-            </Link>
+            </>
+          );
+          return tab.to ? (
+            <Link key={tab.key} to={tab.to} className={tabClass} style={tabStyle}>{content}</Link>
+          ) : (
+            <button key={tab.key} onClick={() => setShowBirthdays(true)} className={tabClass} style={tabStyle}>{content}</button>
           );
         })}
       </nav>
@@ -208,7 +221,8 @@ export default function ReceptionPortalPage() {
                   </div>
                   {r.customerPhone && (
                     <a href={`tel:${r.customerPhone}`}
-                      className="h-8 px-3 inline-flex items-center gap-1.5 rounded-lg text-xs font-semibold flex-shrink-0"
+                      onClick={() => handleCall(r.customerPhone!)}
+                      className="h-8 px-3 inline-flex items-center gap-1.5 rounded-lg text-xs font-semibold flex-shrink-0 cursor-pointer"
                       style={{ background: 'rgba(34,197,94,0.15)', color: '#16a34a' }}>
                       <Phone className="w-3.5 h-3.5" /> Call
                     </a>
@@ -397,6 +411,46 @@ export default function ReceptionPortalPage() {
           >
             <LogOut className="w-3.5 h-3.5" />
           </button>
+        </div>
+      )}
+
+      {/* Birthdays panel — no dedicated /birthdays route exists in the app,
+          so this renders inline rather than navigating away. */}
+      {showBirthdays && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowBirthdays(false)}>
+          <div className="absolute inset-0" style={{ background: 'rgba(15,23,42,0.5)' }} />
+          <div
+            className="relative w-full max-w-sm rounded-2xl p-5 max-h-[80vh] overflow-y-auto"
+            style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Cake className="w-4.5 h-4.5" style={{ color: '#f59e0b' }} />
+                <p className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>Upcoming Birthdays</p>
+              </div>
+              <button onClick={() => setShowBirthdays(false)} className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            {upcomingBirthdays.length === 0 ? (
+              <p className="text-xs py-6 text-center" style={{ color: 'hsl(var(--muted-foreground))' }}>No birthdays in the next 30 days.</p>
+            ) : (
+              <div className="space-y-2">
+                {upcomingBirthdays.map(b => (
+                  <div key={b.id} className="flex items-center gap-3 p-2.5 rounded-xl" style={{ background: 'hsl(var(--muted))' }}>
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{ background: '#f59e0b' }}>
+                      {b.avatar}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold truncate" style={{ color: 'hsl(var(--foreground))' }}>{b.name}</p>
+                      <p className="text-[11px]" style={{ color: 'hsl(var(--muted-foreground))' }}>{b.label}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

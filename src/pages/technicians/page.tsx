@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { usePageTitle } from '@/context/PageTitleContext';
+import { useAuth } from '@/hooks/useAuth';
 import { useTechnicians } from '@/hooks/useTechnicians';
 import { useRepairs } from '@/hooks/useRepairs';
 import Pagination from '@/components/shared/Pagination';
@@ -522,8 +523,13 @@ function ReassignModal({ technicians, onClose }: { technicians: Technician[]; on
 
 export default function TechniciansPage() {
   const { setPageTitle } = usePageTitle();
+  const { user } = useAuth();
   const { technicians, loading, add, patch, remove } = useTechnicians();
   const { repairs } = useRepairs();
+  // Receptionist can see technician availability to route tickets, but
+  // creating a technician account (with login credentials) is reserved
+  // for whoever actually holds people-management permission.
+  const canAddTechnician = !!user?.permissions?.includes('technicians:edit');
   const [timeline, setTimeline] = useState<TimelineFilter>('24hrs');
   const [showAdd, setShowAdd] = useState(false);
   const [showReassign, setShowReassign] = useState(false);
@@ -543,10 +549,10 @@ export default function TechniciansPage() {
     setPageTitle({
       title: 'Technicians',
       subtitle: `${unavailableTechs} unavailable · ${technicians.length} total`,
-      action: { label: 'Add Technician', onClick: () => setShowAdd(true) },
+      action: canAddTechnician ? { label: 'Add Technician', onClick: () => setShowAdd(true) } : undefined,
       secondaryAction: { label: 'Reassign', onClick: () => setShowReassign(true) },
     });
-  }, [technicians.length, unavailableTechs, setPageTitle]);
+  }, [technicians.length, unavailableTechs, canAddTechnician, setPageTitle]);
 
   const doneHours = filterHours(timeline);
   const doneLabel = timeline === 'All' ? 'Done (all)' : `Done (${timeline})`;
@@ -837,12 +843,16 @@ export default function TechniciansPage() {
               style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
               <UserPlus className="w-10 h-10 mx-auto mb-3" style={{ color: 'hsl(var(--muted-foreground))' }} />
               <p className="text-sm font-semibold mb-1" style={{ color: 'hsl(var(--foreground))' }}>No technicians yet</p>
-              <p className="text-xs mb-4" style={{ color: 'hsl(var(--muted-foreground))' }}>Add your first technician to start tracking workloads</p>
-              <button onClick={() => setShowAdd(true)}
-                className="px-4 h-8 rounded-lg text-xs font-semibold text-white"
-                style={{ background: 'hsl(var(--primary))' }}>
-                Add Technician
-              </button>
+              {canAddTechnician && (
+                <>
+                  <p className="text-xs mb-4" style={{ color: 'hsl(var(--muted-foreground))' }}>Add your first technician to start tracking workloads</p>
+                  <button onClick={() => setShowAdd(true)}
+                    className="px-4 h-8 rounded-lg text-xs font-semibold text-white"
+                    style={{ background: 'hsl(var(--primary))' }}>
+                    Add Technician
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>
