@@ -213,7 +213,7 @@ export default function InventoryPage() {
   // admin can add a brand-new part type; everyone else can only edit
   // existing ones (adjusting stock, not creating catalog entries).
   const canSeeCost = user?.role === 'admin';
-  const canCreatePart = user?.role === 'admin' || user?.role === 'stock_manager';
+  const canCreatePart = user?.role === 'admin';
   // Stock manager's whole job here is "is it in stock, adjust it" — a
   // KPI-tiles-and-cards view built around that, instead of the dense admin
   // table (which also shows things stock_manager can't act on anyway).
@@ -249,7 +249,7 @@ export default function InventoryPage() {
       subtitle: tab === 'parts' ? `${parts.length} parts · ${lowStock.length} low stock` : 'Retail accessories stock',
       action: tab === 'parts'
         ? (canCreatePart ? { label: 'Add Part', onClick: () => setShowAdd(true) } : undefined)
-        : { label: 'Add Accessory', onClick: () => setShowAddAccessory(true) },
+        : (canCreatePart ? { label: 'Add Accessory', onClick: () => setShowAddAccessory(true) } : undefined),
     });
     return () => setPageTitle({ title: 'Dashboard' });
   }, [setPageTitle, tab, parts.length, lowStock.length, canCreatePart]);
@@ -405,20 +405,6 @@ export default function InventoryPage() {
                       className="w-8 h-8 flex items-center justify-center rounded-lg text-white"
                       style={{ background: '#22c55e' }}>
                       <Plus className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    <button onClick={() => setEditing(p)}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors" style={{ color: 'hsl(var(--muted-foreground))' }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}>
-                      <Pencil className="w-3.5 h-3.5" />
-                    </button>
-                    <button onClick={() => handleDelete(p)}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors" style={{ color: 'hsl(var(--muted-foreground))' }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; (e.currentTarget as HTMLElement).style.color = '#ef4444'; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.color = 'hsl(var(--muted-foreground))'; }}>
-                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
