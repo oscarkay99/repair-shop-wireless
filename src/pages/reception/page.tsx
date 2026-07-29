@@ -1,113 +1,336 @@
-import { useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { usePageTitle } from '@/context/PageTitleContext';
+import { useState, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import {
+  Sun, Moon, Plus, Search, Phone, Clock3, PackageCheck, ClipboardList,
+  CheckCircle2, UserX, Smartphone, LogOut, Bell,
+} from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useTheme } from '@/context/ThemeContext';
 import { useRepairs } from '@/hooks/useRepairs';
-import { ConciergeBell, Plus, Phone } from 'lucide-react';
+import { useTechnicians } from '@/hooks/useTechnicians';
+import { useInvoices } from '@/hooks/useInvoices';
+import { useUpcomingBirthdays } from '@/hooks/useUpcomingBirthdays';
+import { REPAIR_STATUS_META, isOverdueRepair, isActiveRepairStatus } from '@/utils/repairStatus';
+import { roleColors, roleLabels } from '@/mocks/users';
+import { formatDate } from '@/utils/date';
+import type { Repair, RepairStatus } from '@/types/repair';
 
-const typeStyle: Record<string, { bg: string; color: string }> = {
-  'Drop-off': { bg: 'hsl(var(--status-in-progress-bg))', color: 'hsl(var(--status-in-progress))' },
-  'Pick-up':  { bg: 'hsl(var(--status-ready-bg))',       color: 'hsl(var(--status-ready))' },
-};
+type FilterKey = 'all' | 'pending' | 'in_progress' | 'ready' | 'completed';
+
+const COMPLETED_STATUSES: RepairStatus[] = ['completed', 'diagnosis_only_closed', 'cancelled'];
+
+const FILTERS: { key: FilterKey; label: string }[] = [
+  { key: 'all',         label: 'All' },
+  { key: 'pending',     label: 'Pending' },
+  { key: 'in_progress', label: 'In Progress' },
+  { key: 'ready',       label: 'Ready' },
+  { key: 'completed',   label: 'Completed' },
+];
+
+function bucketOf(status: RepairStatus): FilterKey {
+  if (status === 'in_progress') return 'in_progress';
+  if (status === 'ready') return 'ready';
+  if (COMPLETED_STATUSES.includes(status)) return 'completed';
+  return 'pending';
+}
+
+const NAV_TABS = [
+  { key: 'tickets',     label: 'Tickets',     to: '/tickets' },
+  { key: 'invoices',    label: 'Invoices',    to: '/invoices' },
+  { key: 'sales',       label: 'Sales',       to: '/sales' },
+  { key: 'inventory',   label: 'Inventory',   to: '/inventory' },
+  { key: 'technicians', label: 'Technicians', to: '/technicians' },
+  { key: 'birthdays',   label: 'Birthdays',   to: '/' },
+] as const;
 
 export default function ReceptionPortalPage() {
-  const { setPageTitle } = usePageTitle();
-  const { repairs, loading } = useRepairs();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
+  const { repairs, loading, patchRepair } = useRepairs();
+  const { technicians } = useTechnicians();
+  const { invoices } = useInvoices();
+  const todaysBirthdays = useUpcomingBirthdays(0);
 
-  useEffect(() => {
-    setPageTitle({ title: 'Reception Portal', subtitle: 'Walk-in management and customer queue' });
-    return () => setPageTitle({ title: 'Dashboard' });
-  }, [setPageTitle]);
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<FilterKey>('all');
+
+  const invoicesNeedingAttention = useMemo(
+    () => invoices.filter(i => i.status === 'unpaid' || i.status === 'overdue').length,
+    [invoices],
+  );
 
   const today = new Date().toDateString();
-
-  // "Needs reception's attention right now": just dropped off (not yet routed
-  // to a technician) or ready for the customer to collect.
-  const dropOffs = useMemo(() => repairs.filter(r => r.status === 'received' || r.status === 'diagnosis_paid'), [repairs]);
-  const pickUps  = useMemo(() => repairs.filter(r => r.status === 'ready'), [repairs]);
-  const queue = useMemo(() =>
-    [...dropOffs.map(r => ({ ...r, kind: 'Drop-off' as const })), ...pickUps.map(r => ({ ...r, kind: 'Pick-up' as const }))]
-      .sort((a, b) => (b.createdAt ?? b.started).localeCompare(a.createdAt ?? a.started)),
-  [dropOffs, pickUps]);
-
-  const droppedToday  = repairs.filter(r => (r.createdAt ?? r.started)?.slice(0, 10) === new Date().toISOString().slice(0, 10)).length;
-  const pickedUpToday = repairs.filter(r => r.completedDate && new Date(r.completedDate).toDateString() === today).length;
+  const todaysIntake = useMemo(
+    () => repairs.filter(r => (r.createdAt ?? r.started)?.slice(0, 10) === new Date().toISOString().slice(0, 10)).length,
+    [repairs],
+  );
+  const activeJobs = useMemo(
+    () => repairs.filter(r => isActiveRepairStatus(r.status) && r.status !== 'ready').length,
+    [repairs],
+  );
+  const readyPickups = useMemo(() => repairs.filter(r => r.status === 'ready'), [repairs]);
+  const doneToday = useMemo(
+    () => repairs.filter(r => r.completedDate && new Date(r.completedDate).toDateString() === today).length,
+    [repairs, today],
+  );
 
   const stats = [
-    { label: 'In Queue', value: String(queue.length), sub: 'Need attention now' },
-    { label: 'Drop-offs Today', value: String(droppedToday), sub: 'Devices received' },
-    { label: 'Pick-ups Today', value: String(pickedUpToday), sub: 'Devices collected' },
+    { label: "Today's Intake", value: todaysIntake, icon: ClipboardList, accent: 'hsl(var(--muted-foreground))' },
+    { label: 'Active Jobs',    value: activeJobs,   icon: Clock3,        accent: '#f59e0b' },
+    { label: 'Ready Pickup',   value: readyPickups.length, icon: PackageCheck, accent: '#22c55e' },
+    { label: 'Done Today',     value: doneToday,    icon: CheckCircle2,  accent: '#22c55e' },
   ];
 
+  const filteredRepairs = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return repairs
+      .filter(r => filter === 'all' || bucketOf(r.status) === filter)
+      .filter(r => !q || r.id.toLowerCase().includes(q) || r.customer.toLowerCase().includes(q) || r.device.toLowerCase().includes(q))
+      .sort((a, b) => (b.createdAt ?? b.started).localeCompare(a.createdAt ?? a.started));
+  }, [repairs, filter, search]);
+
+  const handleAssign = (repairId: string, techId: string) => {
+    if (!techId) { patchRepair(repairId, { technicians: [] }); return; }
+    const tech = technicians.find(t => t.id === techId);
+    if (tech) patchRepair(repairId, { technicians: [{ id: tech.id, name: tech.name }] });
+  };
+
+  const handleSignOut = async () => {
+    await logout();
+    navigate('/signin', { replace: true });
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-3 gap-4">
-        {stats.map((card) => (
-          <div key={card.label} className="rounded-xl border p-4" style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
-            <p className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: 'hsl(var(--muted-foreground))' }}>{card.label}</p>
-            <p className="text-2xl font-bold mt-1" style={{ color: 'hsl(var(--foreground))' }}>{card.value}</p>
-            <p className="text-[11px] mt-0.5" style={{ color: 'hsl(var(--muted-foreground))' }}>{card.sub}</p>
+    <div className="h-screen flex flex-col" style={{ background: 'hsl(var(--background))' }}>
+      {/* Header */}
+      <header className="flex items-center justify-between px-4 sm:px-6 h-16 border-b flex-shrink-0" style={{ borderColor: 'hsl(var(--border))' }}>
+        <div className="flex items-center gap-2.5">
+          <img src="/wireless-mark.png" alt="" className="w-8 h-8" />
+          <div>
+            <p className="text-sm font-bold tracking-wide leading-none" style={{ color: 'hsl(var(--foreground))' }}>WIRELESS</p>
+            <p className="text-[9px] tracking-widest uppercase mt-1" style={{ color: 'hsl(var(--muted-foreground))' }}>Reception</p>
           </div>
-        ))}
-      </div>
-
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2" style={{ color: 'hsl(var(--foreground))' }}>
-          <ConciergeBell className="w-4 h-4" style={{ color: 'hsl(var(--primary))' }} />
-          <span className="text-sm font-semibold">Customer Queue</span>
         </div>
-        <Link to="/tickets">
-          <button className="h-8 px-3 flex items-center gap-1.5 rounded-lg text-xs font-semibold text-white cursor-pointer" style={{ background: 'hsl(var(--primary))' }}>
-            <Plus className="w-3.5 h-3.5" /> Check In Customer
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggleTheme}
+            className="w-9 h-9 flex items-center justify-center rounded-full transition-colors"
+            style={{ color: 'hsl(var(--muted-foreground))', border: '1px solid hsl(var(--border))' }}
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
-        </Link>
-      </div>
+          <Link to="/tickets">
+            <button className="h-9 px-4 flex items-center gap-1.5 rounded-full text-xs font-semibold text-white cursor-pointer" style={{ background: 'hsl(var(--primary))' }}>
+              <Plus className="w-3.5 h-3.5" /> New Ticket
+            </button>
+          </Link>
+        </div>
+      </header>
 
-      <div className="space-y-2">
-        {loading ? (
-          <p className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Loading…</p>
-        ) : queue.length === 0 ? (
-          <p className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No one waiting right now.</p>
-        ) : queue.map((entry) => {
-          const t = typeStyle[entry.kind];
+      {/* Tabs */}
+      <nav className="flex items-center gap-6 px-4 sm:px-6 border-b flex-shrink-0 overflow-x-auto" style={{ borderColor: 'hsl(var(--border))' }}>
+        {NAV_TABS.map(tab => {
+          const active = tab.key === 'tickets';
+          const badge = tab.key === 'invoices' ? invoicesNeedingAttention
+            : tab.key === 'birthdays' ? todaysBirthdays.length
+            : 0;
           return (
-            <Link to="/tickets" key={entry.id}>
-              <div
-                className="rounded-xl border p-4 flex items-center gap-4 cursor-pointer transition-colors"
-                style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'hsl(var(--primary) / 0.3)'; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'hsl(var(--border))'; }}
-              >
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm flex-shrink-0 text-white"
-                  style={{ background: 'hsl(0 80% 18%)' }}
-                >
-                  {(entry.customer || '?').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold" style={{ color: 'hsl(var(--foreground))' }}>{entry.customer || 'Unknown customer'}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <Phone className="w-3 h-3" style={{ color: 'hsl(var(--muted-foreground))' }} />
-                    <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>{entry.customerPhone || '—'}</span>
-                    <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>·</span>
-                    <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>{entry.device}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ background: t.bg, color: t.color }}>
-                    {entry.kind}
-                  </span>
-                  <div className="text-right">
-                    <p className="text-xs font-semibold" style={{ color: 'hsl(var(--foreground))' }}>{entry.id}</p>
-                  </div>
-                  <button className="h-8 px-3 rounded-lg text-xs font-semibold text-white cursor-pointer" style={{ background: 'hsl(var(--primary))' }}>
-                    Serve
-                  </button>
-                </div>
-              </div>
+            <Link
+              key={tab.key}
+              to={tab.to}
+              className="flex items-center gap-1.5 py-3 text-sm font-semibold whitespace-nowrap border-b-2 -mb-px transition-colors"
+              style={{
+                color: active ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))',
+                borderColor: active ? 'hsl(var(--primary))' : 'transparent',
+              }}
+            >
+              {tab.label}
+              {badge > 0 && (
+                <span className="inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full text-[10px] font-bold text-white" style={{ background: '#f59e0b' }}>
+                  {badge}
+                </span>
+              )}
             </Link>
           );
         })}
+      </nav>
+
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-24 space-y-5">
+        {/* Stat cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {stats.map(card => {
+            const Icon = card.icon;
+            return (
+              <div key={card.label} className="rounded-2xl p-5 relative overflow-hidden" style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
+                <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ background: card.accent }} />
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-3xl font-bold" style={{ color: 'hsl(var(--foreground))' }}>{card.value}</p>
+                    <p className="text-[11px] font-bold uppercase tracking-widest mt-1" style={{ color: 'hsl(var(--muted-foreground))' }}>{card.label}</p>
+                  </div>
+                  <Icon className="w-5 h-5 mt-0.5 shrink-0" style={{ color: card.accent }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Ready-for-pickup banner */}
+        {readyPickups.length > 0 && (
+          <div className="rounded-2xl p-4" style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)' }}>
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: '#22c55e' }}>
+                <Bell className="w-4.5 h-4.5 text-white" />
+              </div>
+              <p className="text-sm font-bold" style={{ color: '#16a34a' }}>
+                {readyPickups.length} Device{readyPickups.length > 1 ? 's' : ''} Ready for Pickup
+              </p>
+            </div>
+            <div className="pl-12 space-y-1.5 mt-2">
+              {readyPickups.map(r => (
+                <div key={r.id} className="flex items-center justify-between gap-3 text-xs">
+                  <span style={{ color: 'hsl(var(--foreground))' }}>
+                    <span className="font-semibold">{r.device}</span>
+                    <span style={{ color: 'hsl(var(--muted-foreground))' }}> · {r.customer} · {r.id} · {r.cost}</span>
+                  </span>
+                  {r.customerPhone && (
+                    <a href={`tel:${r.customerPhone}`} className="flex items-center gap-1 font-semibold shrink-0" style={{ color: '#16a34a' }}>
+                      <Phone className="w-3 h-3" /> Call
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Search + filters */}
+        <div className="space-y-3">
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'hsl(var(--muted-foreground))' }} />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search ticket #, customer, device..."
+              className="w-full h-10 pl-9 pr-3 rounded-xl text-sm outline-none"
+              style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
+            />
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {FILTERS.map(f => (
+              <button
+                key={f.key}
+                onClick={() => setFilter(f.key)}
+                className="h-8 px-3.5 rounded-full text-xs font-semibold transition-colors"
+                style={filter === f.key
+                  ? { background: 'hsl(var(--primary))', color: 'white' }
+                  : { background: 'hsl(var(--card))', color: 'hsl(var(--muted-foreground))', border: '1px solid hsl(var(--border))' }}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Ticket list */}
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: 'hsl(var(--muted-foreground))' }}>
+            {filteredRepairs.length} Tickets
+          </p>
+          <div className="space-y-2">
+            {loading ? (
+              <p className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Loading…</p>
+            ) : filteredRepairs.length === 0 ? (
+              <p className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No tickets match.</p>
+            ) : filteredRepairs.map(repair => {
+              const s = REPAIR_STATUS_META[repair.status];
+              const overdue = isOverdueRepair(repair);
+              const assignedTech = repair.technicians[0];
+              return (
+                <div key={repair.id} className="rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4" style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'hsl(var(--muted))' }}>
+                    <Smartphone className="w-4.5 h-4.5" style={{ color: 'hsl(var(--muted-foreground))' }} />
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>{repair.device}</p>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ background: s.bg, color: s.color }}>
+                        {s.label}
+                      </span>
+                      {overdue && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444' }}>
+                          OVERDUE
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs mt-0.5 truncate" style={{ color: 'hsl(var(--muted-foreground))' }}>{repair.issue}</p>
+                    <div className="flex items-center gap-2 flex-wrap mt-1 text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                      <span>{repair.customer}</span>
+                      {repair.customerPhone && <><span>·</span><span>{repair.customerPhone}</span></>}
+                      <span>·</span>
+                      <span>In: {formatDate(repair.createdAt ?? repair.started)}</span>
+                      <span>·</span>
+                      <span style={{ color: overdue ? '#ef4444' : undefined }}>Due: {repair.eta || '—'}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 flex-shrink-0">
+                    <span className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>{repair.cost || 'TBD'}</span>
+                    <select
+                      value={assignedTech?.id ?? ''}
+                      onChange={e => handleAssign(repair.id, e.target.value)}
+                      className="h-8 px-3 rounded-lg text-xs font-semibold outline-none"
+                      style={{ background: 'transparent', border: '1px solid hsl(var(--border))', color: assignedTech ? 'hsl(var(--foreground))' : '#f59e0b' }}
+                    >
+                      <option value="">Unassigned</option>
+                      {technicians.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                    </select>
+                    {!assignedTech && <UserX className="w-3.5 h-3.5" style={{ color: '#f59e0b' }} />}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
+
+      {/* User card + sign out — bottom-left, matching the sidebar's convention in every other role */}
+      {user && (
+        <div className="fixed bottom-4 left-4 z-40 rounded-xl p-3 flex items-center gap-2.5 max-w-[calc(100vw-2rem)]"
+          style={{ background: 'hsl(220 14% 94%)', border: '1px solid hsl(220 13% 88%)' }}>
+          <Link
+            to="/profile"
+            title="View profile"
+            className="flex items-center gap-2.5 flex-1 min-w-0 rounded-lg -m-1 p-1 transition-colors cursor-pointer"
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(220 13% 88%)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}
+          >
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0"
+              style={{ background: user.role ? (roleColors[user.role] ?? 'hsl(354 60% 35%)') : 'hsl(354 60% 35%)' }}
+            >
+              {user.avatar || user.name.slice(0, 2).toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold truncate" style={{ color: 'hsl(220 20% 12%)' }}>{user.name}</p>
+              <p className="text-[10px] truncate" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                {user.role ? (roleLabels[user.role] ?? user.role) : user.role}
+              </p>
+            </div>
+          </Link>
+          <button
+            onClick={handleSignOut}
+            title="Sign out"
+            className="w-7 h-7 flex items-center justify-center rounded-lg flex-shrink-0 cursor-pointer transition-colors hover:bg-red-50 hover:text-red-500"
+            style={{ color: 'hsl(var(--muted-foreground))' }}
+          >
+            <LogOut className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
