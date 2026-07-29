@@ -894,6 +894,9 @@ export default function DashboardPage() {
   // dashboard. Distinguishing by the scope flag (not the literal 'technician'
   // role id) means a renamed or custom technician-like role still lands here.
   if (user.scopeTicketsToTechnician) return <Navigate to="/tech-portal" replace />;
+  // Receptionist gets the same treatment — a dedicated full-screen portal
+  // (no sidebar/topbar), never the shared shell's dashboard.
+  if (user.dashboardVariant === 'receptionist') return <Navigate to="/reception" replace />;
   return (
     <>
       <BirthdayBanner />
