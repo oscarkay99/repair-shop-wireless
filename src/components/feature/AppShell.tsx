@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import { PageTitleProvider, usePageTitle } from '@/context/PageTitleContext';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ErrorBoundaryState { error: Error | null }
 
@@ -42,22 +43,31 @@ class PageErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundary
 function ShellInner() {
   const { pageTitle } = usePageTitle();
   const { pathname } = useLocation();
+  const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Receptionist gets a dedicated sidebar-less portal (/reception) as their
+  // landing page, but the tabs there link out to real pages (Tickets,
+  // Invoices, Sales, Inventory, Technicians) that everyone else reaches
+  // through this shell. Those pages must never grow the "main menu" back
+  // in for receptionist — so the shell itself drops the sidebar for them,
+  // on every route, rather than special-casing each page.
+  const hideSidebar = user?.dashboardVariant === 'receptionist';
 
   // Dismiss the mobile drawer on every navigation, not just an explicit close.
   useEffect(() => { setSidebarOpen(false); }, [pathname]);
 
   return (
     <div className="flex h-full w-full overflow-hidden bg-background">
-      {sidebarOpen && (
+      {!hideSidebar && sidebarOpen && (
         <div
           className="fixed inset-0 z-30 bg-black/50 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      {!hideSidebar && <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />}
       <main className="flex-1 flex flex-col overflow-hidden min-w-0">
-        <TopBar title={pageTitle.title} subtitle={pageTitle.subtitle} onMenuClick={() => setSidebarOpen(true)} />
+        <TopBar title={pageTitle.title} subtitle={pageTitle.subtitle} onMenuClick={hideSidebar ? undefined : () => setSidebarOpen(true)} />
         <div className="flex-1 overflow-y-auto p-4 sm:p-6">
           <PageErrorBoundary key={pathname}>
             <Outlet />
