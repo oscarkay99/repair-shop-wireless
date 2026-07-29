@@ -7,6 +7,7 @@ import SearchDropdown from '@/components/shared/SearchDropdown';
 import Pagination from '@/components/shared/Pagination';
 import { Pencil, Trash2, X } from 'lucide-react';
 import type { AccessoryProduct } from '@/services/wireless/accessoryStore';
+import { useAuth } from '@/hooks/useAuth';
 
 const PAGE_SIZE = 10;
 const CATEGORIES = ['Cases', 'Chargers', 'Cables', 'Screen Protectors', 'Bands', 'Adapters'];
@@ -40,14 +41,21 @@ function emptyForm(initial?: AccessoryProduct): ProductForm {
   };
 }
 
-function AccessoryModal({ initial, onSave, onClose }: {
+function AccessoryModal({ initial, onSave, onClose, existingProducts = [], canSeeCost }: {
   initial?: AccessoryProduct;
   onSave: (d: Omit<AccessoryProduct, 'id' | 'created_at'>) => Promise<unknown>;
   onClose: () => void;
+  existingProducts?: AccessoryProduct[];
+  /** Wholesale cost is admin-only — a restricted user's save preserves
+   *  whatever was already there rather than silently blanking/zeroing it. */
+  canSeeCost: boolean;
 }) {
   const [form, setForm] = useState<ProductForm>(emptyForm(initial));
   const [saving, setSaving] = useState(false);
   const set = (k: keyof ProductForm, v: string) => setForm(f => ({ ...f, [k]: v }));
+
+  const categoryOptions = [...new Set([...CATEGORIES, ...existingProducts.map(p => p.category)])].sort();
+  const [addingCategory, setAddingCategory] = useState(initial ? !categoryOptions.includes(initial.category) : false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,7 +67,7 @@ function AccessoryModal({ initial, onSave, onClose }: {
         compatible_with: form.compatible_with,
         category: form.category,
         price: parseFloat(form.price) || 0,
-        cost: parseFloat(form.cost) || 0,
+        cost: canSeeCost ? (parseFloat(form.cost) || 0) : (initial?.cost ?? 0),
         stock: parseInt(form.stock) || 0,
         reorder_at: parseInt(form.reorder_at) || 0,
       });
@@ -98,10 +106,30 @@ function AccessoryModal({ initial, onSave, onClose }: {
             </div>
             <div>
               <label className="text-[11px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Category</label>
-              <select value={form.category} onChange={e => set('category', e.target.value)}
-                className="w-full h-9 px-3 rounded-lg text-sm outline-none" style={inputStyle}>
-                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+              {addingCategory ? (
+                <div className="flex gap-1.5">
+                  <input required autoFocus value={form.category} onChange={e => set('category', e.target.value)}
+                    placeholder="New category name"
+                    className="w-full h-9 px-3 rounded-lg text-sm outline-none" style={inputStyle} />
+                  <button type="button"
+                    onClick={() => { setAddingCategory(false); set('category', categoryOptions[0] ?? ''); }}
+                    title="Choose from list instead"
+                    className="h-9 w-9 flex items-center justify-center rounded-lg flex-shrink-0"
+                    style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--muted-foreground))' }}>
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <select value={form.category}
+                  onChange={e => {
+                    if (e.target.value === '__new__') { setAddingCategory(true); set('category', ''); }
+                    else set('category', e.target.value);
+                  }}
+                  className="w-full h-9 px-3 rounded-lg text-sm outline-none" style={inputStyle}>
+                  {categoryOptions.map(c => <option key={c} value={c}>{c}</option>)}
+                  <option value="__new__">+ Add new category…</option>
+                </select>
+              )}
             </div>
           </div>
           <div>
@@ -109,12 +137,14 @@ function AccessoryModal({ initial, onSave, onClose }: {
             <input value={form.compatible_with} onChange={e => set('compatible_with', e.target.value)} placeholder="iPhone 15 / 15 Pro"
               className="w-full h-9 px-3 rounded-lg text-sm outline-none" style={inputStyle} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[11px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Cost (¢)</label>
-              <input type="number" min="0" step="0.01" required value={form.cost} onChange={e => set('cost', e.target.value)}
-                className="w-full h-9 px-3 rounded-lg text-sm outline-none" style={inputStyle} />
-            </div>
+          <div className={canSeeCost ? 'grid grid-cols-2 gap-3' : ''}>
+            {canSeeCost && (
+              <div>
+                <label className="text-[11px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Cost (¢)</label>
+                <input type="number" min="0" step="0.01" required value={form.cost} onChange={e => set('cost', e.target.value)}
+                  className="w-full h-9 px-3 rounded-lg text-sm outline-none" style={inputStyle} />
+              </div>
+            )}
             <div>
               <label className="text-[11px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Selling Price (¢)</label>
               <input type="number" min="0" step="0.01" required value={form.price} onChange={e => set('price', e.target.value)}
@@ -158,7 +188,11 @@ interface Props {
 }
 
 export default function AccessoriesTab({ showAddModal, onCloseAddModal }: Props) {
-  const { addProduct, patchProduct, removeProduct } = useAccessoryStore();
+  const { products, addProduct, patchProduct, removeProduct } = useAccessoryStore();
+  const { user } = useAuth();
+  // Margin is derived from cost vs. price, so it leaks cost just as much as
+  // showing the number outright would — hidden alongside it.
+  const canSeeCost = user?.role === 'admin';
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebouncedValue(query, 300);
   const [page, setPage] = useState(1);
@@ -214,7 +248,11 @@ export default function AccessoriesTab({ showAddModal, onCloseAddModal }: Props)
           <table className="w-full text-sm">
             <thead>
               <tr style={{ borderBottom: '1px solid hsl(var(--border))' }}>
-                {['Product', 'Category', 'Price', 'Stock', 'Reorder At', 'Margin', ''].map(h => (
+                {[
+                  'Product', 'Category', 'Price', 'Stock', 'Reorder At',
+                  ...(canSeeCost ? ['Margin'] : []),
+                  '',
+                ].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider"
                     style={{ color: 'hsl(var(--muted-foreground))' }}>{h}</th>
                 ))}
@@ -223,7 +261,7 @@ export default function AccessoriesTab({ showAddModal, onCloseAddModal }: Props)
             <tbody>
               {paged.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-16 text-center text-sm" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                  <td colSpan={canSeeCost ? 7 : 6} className="px-4 py-16 text-center text-sm" style={{ color: 'hsl(var(--muted-foreground))' }}>
                     No accessories found.
                   </td>
                 </tr>
@@ -247,7 +285,9 @@ export default function AccessoriesTab({ showAddModal, onCloseAddModal }: Props)
                       <span className="font-medium" style={{ color: isLow ? '#f59e0b' : 'hsl(var(--foreground))' }}>{p.stock}</span>
                     </td>
                     <td className="px-4 py-3" style={{ color: 'hsl(var(--muted-foreground))' }}>{p.reorder_at}</td>
-                    <td className="px-4 py-3 font-bold" style={{ color: m >= 70 ? '#22c55e' : m >= 50 ? '#f59e0b' : 'hsl(var(--primary))' }}>{m}%</td>
+                    {canSeeCost && (
+                      <td className="px-4 py-3 font-bold" style={{ color: m >= 70 ? '#22c55e' : m >= 50 ? '#f59e0b' : 'hsl(var(--primary))' }}>{m}%</td>
+                    )}
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1 justify-end">
                         <button
@@ -284,12 +324,16 @@ export default function AccessoriesTab({ showAddModal, onCloseAddModal }: Props)
         onPageChange={setPage}
       />
 
-      {showAddModal && <AccessoryModal onSave={data => addProduct(data).then(reload)} onClose={onCloseAddModal} />}
+      {showAddModal && (
+        <AccessoryModal onSave={data => addProduct(data).then(reload)} onClose={onCloseAddModal} existingProducts={products} canSeeCost={canSeeCost} />
+      )}
       {editing && (
         <AccessoryModal
           initial={editing}
           onSave={data => patchProduct(editing.id, data).then(reload)}
           onClose={() => setEditing(null)}
+          existingProducts={products}
+          canSeeCost={canSeeCost}
         />
       )}
     </div>
