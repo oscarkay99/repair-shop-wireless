@@ -243,14 +243,13 @@ export default function AccessoriesTab({ showAddModal, onCloseAddModal, useCardL
         {/* KPI tiles */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { label: 'TOTAL ACCESSORIES', value: String(products.length), sub: 'unique SKUs', border: '#6366f1' },
-            { label: 'LOW STOCK', value: String(cardLowStockCount), sub: `${cardLowStockCount} at or below reorder`, border: cardLowStockCount ? '#f59e0b' : '#22c55e' },
-            { label: 'TOTAL UNITS', value: String(cardTotalUnits), sub: 'across all accessories', border: '#06b6d4' },
-            { label: 'STOCK VALUE', value: fmt(cardStockValue), sub: 'at selling price', border: '#22c55e', valueColor: '#22c55e' },
+            { label: 'TOTAL ACCESSORIES', value: String(products.length), sub: 'unique SKUs' },
+            { label: 'LOW STOCK', value: String(cardLowStockCount), sub: `${cardLowStockCount} at or below reorder`, valueColor: cardLowStockCount ? '#f59e0b' : undefined },
+            { label: 'TOTAL UNITS', value: String(cardTotalUnits), sub: 'across all accessories' },
+            { label: 'STOCK VALUE', value: fmt(cardStockValue), sub: 'at selling price', valueColor: '#22c55e' },
           ].map(card => (
-            <div key={card.label} className="rounded-2xl p-5 relative overflow-hidden"
+            <div key={card.label} className="rounded-2xl p-5"
               style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
-              <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ background: card.border }} />
               <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: 'hsl(var(--muted-foreground))' }}>{card.label}</p>
               <p className="text-2xl font-bold" style={{ color: card.valueColor ?? 'hsl(var(--foreground))' }}>{card.value}</p>
               <p className="text-[10px] mt-1" style={{ color: 'hsl(var(--muted-foreground))' }}>{card.sub}</p>
@@ -300,13 +299,15 @@ export default function AccessoriesTab({ showAddModal, onCloseAddModal, useCardL
                     {p.sku} · <span className="font-semibold" style={{ color: cs.color }}>{p.category}</span>
                   </p>
                 </div>
-                <div className="text-right">
-                  <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>Selling Price</p>
-                  <p className="text-sm font-semibold" style={{ color: 'hsl(var(--primary))' }}>{fmt(p.price)}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>Reorder At</p>
-                  <p className="text-sm" style={{ color: 'hsl(var(--muted-foreground))' }}>{p.reorder_at}</p>
+                <div className="flex items-center gap-5 flex-shrink-0">
+                  <div className="text-right">
+                    <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>Selling Price</p>
+                    <p className="text-sm font-semibold" style={{ color: 'hsl(var(--primary))' }}>{fmt(p.price)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>Reorder At</p>
+                    <p className="text-sm" style={{ color: 'hsl(var(--muted-foreground))' }}>{p.reorder_at}</p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <button type="button" onClick={() => adjustStock(p, -1)} disabled={p.stock <= 0}

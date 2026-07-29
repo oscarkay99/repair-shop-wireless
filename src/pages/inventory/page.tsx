@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { usePageTitle } from '@/context/PageTitleContext';
 import { useParts } from '@/hooks/useParts';
+import { useAccessoryStore } from '@/hooks/useAccessoryStore';
 import { getPartsPage } from '@/services/wireless/parts';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import SearchDropdown from '@/components/shared/SearchDropdown';
 import Pagination from '@/components/shared/Pagination';
 import AccessoriesTab from './components/AccessoriesTab';
-import { AlertTriangle, Pencil, Trash2, X, Search, Boxes, Minus, Plus } from 'lucide-react';
+import { AlertTriangle, Pencil, Trash2, X, Search, Boxes, Minus, Plus, ShoppingBag } from 'lucide-react';
 import type { Part } from '@/types/wireless';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -203,6 +204,9 @@ export default function InventoryPage() {
   // and the low-stock/total counts in the subtitle — the table itself below
   // uses a separate paginated fetch so the list view doesn't pull every row.
   const { parts, loading, add, patch, remove, adjust, lowStock } = useParts();
+  // Only fetched here for the Accessories tab count badge — AccessoriesTab
+  // itself calls useAccessoryStore() independently for the actual data.
+  const { products: accessoryProducts } = useAccessoryStore();
   const { user } = useAuth();
   // Reception and stock_manager can view/adjust stock and see selling price
   // (what to quote), but unit cost and supplier are admin-only — and only
@@ -272,6 +276,33 @@ export default function InventoryPage() {
   return (
     <div className="space-y-4">
       {/* Tab bar */}
+      {useCardLayout ? (
+        <div className="inline-flex items-center gap-1 p-1 rounded-xl" style={{ background: 'hsl(var(--muted))' }}>
+          {([
+            { id: 'parts', label: 'Repair Parts', icon: Boxes, count: parts.length },
+            { id: 'accessories', label: 'Accessories', icon: ShoppingBag, count: accessoryProducts.length },
+          ] as { id: InventoryTab; label: string; icon: typeof Boxes; count: number }[]).map(t => {
+            const Icon = t.icon;
+            const active = tab === t.id;
+            return (
+              <button key={t.id} onClick={() => setTab(t.id)}
+                className="px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-colors"
+                style={active
+                  ? { background: 'hsl(var(--card))', color: 'hsl(var(--foreground))' }
+                  : { color: 'hsl(var(--muted-foreground))' }}>
+                <Icon className="w-3.5 h-3.5" />
+                {t.label}
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold"
+                  style={active
+                    ? { background: 'hsl(var(--primary))', color: 'white' }
+                    : { background: 'hsl(var(--border))', color: 'hsl(var(--muted-foreground))' }}>
+                  {t.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      ) : (
       <div className="flex items-center gap-1 border-b" style={{ borderColor: 'hsl(var(--border))' }}>
         {([
           { id: 'parts', label: 'Parts' },
@@ -286,6 +317,7 @@ export default function InventoryPage() {
           </button>
         ))}
       </div>
+      )}
 
       {tab === 'accessories' ? (
         <AccessoriesTab showAddModal={showAddAccessory} onCloseAddModal={() => setShowAddAccessory(false)} useCardLayout={useCardLayout} />
@@ -294,14 +326,13 @@ export default function InventoryPage() {
           {/* KPI tiles */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { label: 'TOTAL PARTS', value: String(parts.length), sub: 'unique SKUs', border: '#6366f1' },
-              { label: 'LOW STOCK', value: String(lowStock.length), sub: `${lowStock.length} below minimum`, border: lowStock.length ? '#f59e0b' : '#22c55e' },
-              { label: 'TOTAL UNITS', value: String(cardTotalUnits), sub: 'across all parts', border: '#06b6d4' },
-              { label: 'STOCK VALUE', value: fmtCedis(cardStockValue), sub: 'at selling price', border: '#22c55e', valueColor: '#22c55e' },
+              { label: 'TOTAL PARTS', value: String(parts.length), sub: 'unique SKUs' },
+              { label: 'LOW STOCK', value: String(lowStock.length), sub: `${lowStock.length} below minimum`, valueColor: lowStock.length ? '#f59e0b' : undefined },
+              { label: 'TOTAL UNITS', value: String(cardTotalUnits), sub: 'across all parts' },
+              { label: 'STOCK VALUE', value: fmtCedis(cardStockValue), sub: 'at selling price', valueColor: '#22c55e' },
             ].map(card => (
-              <div key={card.label} className="rounded-2xl p-5 relative overflow-hidden"
+              <div key={card.label} className="rounded-2xl p-5"
                 style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
-                <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ background: card.border }} />
                 <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: 'hsl(var(--muted-foreground))' }}>{card.label}</p>
                 <p className="text-2xl font-bold" style={{ color: card.valueColor ?? 'hsl(var(--foreground))' }}>{card.value}</p>
                 <p className="text-[10px] mt-1" style={{ color: 'hsl(var(--muted-foreground))' }}>{card.sub}</p>
@@ -350,13 +381,15 @@ export default function InventoryPage() {
                     <p className="text-sm font-semibold" style={{ color: 'hsl(var(--foreground))' }}>{p.name}</p>
                     <p className="text-xs mt-0.5" style={{ color: 'hsl(var(--muted-foreground))' }}>{p.sku} · {p.category}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>Selling Price</p>
-                    <p className="text-sm font-semibold" style={{ color: 'hsl(var(--primary))' }}>{fmtCedis(p.selling_price)}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>Reorder At</p>
-                    <p className="text-sm" style={{ color: 'hsl(var(--muted-foreground))' }}>{p.min_stock}</p>
+                  <div className="flex items-center gap-5 flex-shrink-0">
+                    <div className="text-right">
+                      <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>Selling Price</p>
+                      <p className="text-sm font-semibold" style={{ color: 'hsl(var(--primary))' }}>{fmtCedis(p.selling_price)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>Reorder At</p>
+                      <p className="text-sm" style={{ color: 'hsl(var(--muted-foreground))' }}>{p.min_stock}</p>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <button type="button" onClick={() => adjust(p.id, -1)} disabled={p.stock <= 0}
