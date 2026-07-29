@@ -480,12 +480,14 @@ function AdminDashboard() {
           </h1>
           <p className="text-xs mt-0.5" style={{ color: 'hsl(var(--muted-foreground))' }}>{dateStr}</p>
         </div>
-        <Link to="/tickets">
-          <button className="flex items-center gap-2 px-4 h-9 rounded-xl text-xs font-bold"
-            style={{ background: 'hsl(var(--foreground))', color: 'hsl(var(--background))' }}>
-            <Plus className="w-3.5 h-3.5" /> New Ticket
-          </button>
-        </Link>
+        {(user?.permissions?.includes('tickets:create') ?? false) && (
+          <Link to="/tickets">
+            <button className="flex items-center gap-2 px-4 h-9 rounded-xl text-xs font-bold"
+              style={{ background: 'hsl(var(--foreground))', color: 'hsl(var(--background))' }}>
+              <Plus className="w-3.5 h-3.5" /> New Ticket
+            </button>
+          </Link>
+        )}
       </div>
 
       {/* P&L Banner */}
@@ -743,11 +745,11 @@ function AdminDashboard() {
           </p>
           <div className="space-y-2">
             {[
-              { label: 'New Ticket',    desc: 'Create a repair job',      icon: Plus,      to: '/tickets',      primary: true },
+              { label: 'New Ticket',    desc: 'Create a repair job',      icon: Plus,      to: '/tickets',      primary: true, show: user?.permissions?.includes('tickets:create') ?? false },
               { label: 'Add Customer',  desc: 'Register a new customer',  icon: UserPlus,  to: '/customers' },
               { label: 'Add Part',      desc: 'Update inventory stock',   icon: Package,   to: '/inventory' },
               { label: 'Log Expense',   desc: 'Record a business cost',   icon: Receipt,   to: '/expenses' },
-            ].map(action => (
+            ].filter(action => action.show ?? true).map(action => (
               <Link key={action.label} to={action.to}>
                 <div
                   className="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors mb-2"

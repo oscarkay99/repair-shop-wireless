@@ -7,12 +7,14 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import SearchDropdown from '@/components/shared/SearchDropdown';
 import Pagination from '@/components/shared/Pagination';
 import AccessoriesTab from './components/AccessoriesTab';
-import { AlertTriangle, Pencil, Trash2, X } from 'lucide-react';
+import { AlertTriangle, Pencil, Trash2, X, Search, Boxes, Minus, Plus } from 'lucide-react';
 import type { Part } from '@/types/wireless';
 import { useAuth } from '@/hooks/useAuth';
 
 const PAGE_SIZE = 10;
 type InventoryTab = 'parts' | 'accessories';
+
+const fmtCedis = (n: number) => `¢${n.toFixed(2)}`;
 
 const CATEGORIES = ['Screens', 'Batteries', 'Keyboards', 'Connectors', 'Trackpads', 'Other'];
 
@@ -200,7 +202,7 @@ export default function InventoryPage() {
   // Kept for existingParts validation (needs the full catalog), mutations,
   // and the low-stock/total counts in the subtitle — the table itself below
   // uses a separate paginated fetch so the list view doesn't pull every row.
-  const { parts, loading, add, patch, remove, lowStock } = useParts();
+  const { parts, loading, add, patch, remove, adjust, lowStock } = useParts();
   const { user } = useAuth();
   // Reception and stock_manager can view/adjust stock and see selling price
   // (what to quote), but unit cost and supplier are admin-only — and only
@@ -208,6 +210,11 @@ export default function InventoryPage() {
   // existing ones (adjusting stock, not creating catalog entries).
   const canSeeCost = user?.role === 'admin';
   const canCreatePart = user?.role === 'admin';
+  // Stock manager's whole job here is "is it in stock, adjust it" — a
+  // KPI-tiles-and-cards view built around that, instead of the dense admin
+  // table (which also shows things stock_manager can't act on anyway).
+  const useCardLayout = user?.role === 'stock_manager';
+  const [lowStockOnly, setLowStockOnly] = useState(false);
   const [tab, setTab] = useState<InventoryTab>('parts');
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebouncedValue(query, 300);
@@ -250,6 +257,18 @@ export default function InventoryPage() {
     if (confirm(`Delete "${p.name}"?`)) remove(p.id).then(reloadTable);
   };
 
+  // Card layout works off the full catalog directly (not the paginated
+  // table fetch) — a shop's part catalog is small enough to show at once,
+  // and it matches the "everything visible, just filter" feel of the KPI
+  // tiles above it.
+  const cardTotalUnits = parts.reduce((s, p) => s + p.stock, 0);
+  const cardStockValue = parts.reduce((s, p) => s + p.stock * p.selling_price, 0);
+  const cardFiltered = parts.filter(p => {
+    if (lowStockOnly && p.stock >= p.min_stock) return false;
+    const q = query.trim().toLowerCase();
+    return !q || p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q);
+  });
+
   return (
     <div className="space-y-4">
       {/* Tab bar */}
@@ -269,7 +288,111 @@ export default function InventoryPage() {
       </div>
 
       {tab === 'accessories' ? (
-        <AccessoriesTab showAddModal={showAddAccessory} onCloseAddModal={() => setShowAddAccessory(false)} />
+        <AccessoriesTab showAddModal={showAddAccessory} onCloseAddModal={() => setShowAddAccessory(false)} useCardLayout={useCardLayout} />
+      ) : useCardLayout ? (
+        <>
+          {/* KPI tiles */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { label: 'TOTAL PARTS', value: String(parts.length), sub: 'unique SKUs', border: '#6366f1' },
+              { label: 'LOW STOCK', value: String(lowStock.length), sub: `${lowStock.length} below minimum`, border: lowStock.length ? '#f59e0b' : '#22c55e' },
+              { label: 'TOTAL UNITS', value: String(cardTotalUnits), sub: 'across all parts', border: '#06b6d4' },
+              { label: 'STOCK VALUE', value: fmtCedis(cardStockValue), sub: 'at selling price', border: '#22c55e', valueColor: '#22c55e' },
+            ].map(card => (
+              <div key={card.label} className="rounded-2xl p-5 relative overflow-hidden"
+                style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
+                <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ background: card.border }} />
+                <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: 'hsl(var(--muted-foreground))' }}>{card.label}</p>
+                <p className="text-2xl font-bold" style={{ color: card.valueColor ?? 'hsl(var(--foreground))' }}>{card.value}</p>
+                <p className="text-[10px] mt-1" style={{ color: 'hsl(var(--muted-foreground))' }}>{card.sub}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Search + low stock filter */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: 'hsl(var(--muted-foreground))' }} />
+              <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search parts, SKU…"
+                className="w-full h-9 pl-9 pr-3 rounded-lg text-sm outline-none"
+                style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
+            </div>
+            <button type="button" onClick={() => setLowStockOnly(v => !v)}
+              className="h-9 px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 flex-shrink-0"
+              style={lowStockOnly
+                ? { background: 'rgba(245,158,11,0.15)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.4)' }
+                : { border: '1px solid hsl(var(--border))', color: 'hsl(var(--muted-foreground))' }}>
+              <AlertTriangle className="w-3.5 h-3.5" /> Low Stock Only
+            </button>
+          </div>
+
+          <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'hsl(var(--muted-foreground))' }}>
+            {cardFiltered.length} part{cardFiltered.length === 1 ? '' : 's'}
+          </p>
+
+          {/* Cards */}
+          <div className="space-y-2">
+            {loading ? (
+              <div className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Loading…</div>
+            ) : cardFiltered.length === 0 ? (
+              <div className="py-16 text-center text-xs rounded-xl" style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--muted-foreground))' }}>
+                No parts found.
+              </div>
+            ) : cardFiltered.map(p => {
+              const isLow = p.stock < p.min_stock;
+              return (
+                <div key={p.id} className="rounded-xl p-4 flex items-center gap-4 flex-wrap"
+                  style={{ background: 'hsl(var(--card))', border: `1px solid ${isLow ? 'rgba(245,158,11,0.4)' : 'hsl(var(--border))'}` }}>
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'hsl(var(--muted))' }}>
+                    <Boxes className="w-4 h-4" style={{ color: 'hsl(var(--muted-foreground))' }} />
+                  </div>
+                  <div className="flex-1 min-w-[140px]">
+                    <p className="text-sm font-semibold" style={{ color: 'hsl(var(--foreground))' }}>{p.name}</p>
+                    <p className="text-xs mt-0.5" style={{ color: 'hsl(var(--muted-foreground))' }}>{p.sku} · {p.category}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>Selling Price</p>
+                    <p className="text-sm font-semibold" style={{ color: 'hsl(var(--primary))' }}>{fmtCedis(p.selling_price)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>Reorder At</p>
+                    <p className="text-sm" style={{ color: 'hsl(var(--muted-foreground))' }}>{p.min_stock}</p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <button type="button" onClick={() => adjust(p.id, -1)} disabled={p.stock <= 0}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg disabled:opacity-30"
+                      style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}>
+                      <Minus className="w-3.5 h-3.5" />
+                    </button>
+                    <div className="w-14 text-center">
+                      <p className="text-sm font-bold" style={{ color: isLow ? '#f59e0b' : 'hsl(var(--foreground))' }}>{p.stock}</p>
+                      <p className="text-[9px] uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>units</p>
+                    </div>
+                    <button type="button" onClick={() => adjust(p.id, 1)}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg text-white"
+                      style={{ background: '#22c55e' }}>
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button onClick={() => setEditing(p)}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors" style={{ color: 'hsl(var(--muted-foreground))' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}>
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => handleDelete(p)}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors" style={{ color: 'hsl(var(--muted-foreground))' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; (e.currentTarget as HTMLElement).style.color = '#ef4444'; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.color = 'hsl(var(--muted-foreground))'; }}>
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
       ) : (
       <>
       {/* Search */}

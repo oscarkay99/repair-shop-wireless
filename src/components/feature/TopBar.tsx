@@ -348,7 +348,7 @@ export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: T
               <Plus className="w-3.5 h-3.5" />
               {pageTitle.action.label}
             </button>
-          ) : !pageTitle.hideDefaultAction ? (
+          ) : !pageTitle.hideDefaultAction && (user?.permissions?.includes('tickets:create') ?? false) ? (
             <Link to="/tickets">
               <button
                 className="flex items-center gap-1.5 px-3 h-8 rounded-lg text-xs font-semibold text-white transition-opacity hover:opacity-90"

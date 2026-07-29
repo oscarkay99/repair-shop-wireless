@@ -1,8 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { usePageTitle } from '@/context/PageTitleContext';
-import { useWirelessCustomers } from '@/hooks/useWirelessCustomers';
 import { useAuth } from '@/hooks/useAuth';
+import CustomerPicker from '@/components/shared/CustomerPicker';
+import type { WCustomer } from '@/types/wireless';
 import { useWirelessSettings } from '@/hooks/useWirelessSettings';
 import { useTaxSettings } from '@/hooks/useTaxSettings';
 import { useToast } from '@/contexts/ToastContext';
@@ -97,26 +98,18 @@ function IssueInvoiceModal({ onSave, onClose }: {
   ) => Promise<unknown>;
   onClose: () => void;
 }) {
-  const { customers } = useWirelessCustomers();
   const { user } = useAuth();
   const { taxEnabled, vatRate, nhilGetfundRate } = useTaxSettings();
   const { settings } = useWirelessSettings();
   const [customerSearch, setCustomerSearch] = useState('');
-  const [customerId, setCustomerId] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [selectedCustomer, setSelectedCustomer] = useState<WCustomer | null>(null);
   const [lineItems, setLineItems] = useState<DraftLineItem[]>([{ description: '', quantity: '1', unit_price: '' }]);
   const [dueDate, setDueDate] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const customerSuggestions = useMemo(() => {
-    const q = customerSearch.toLowerCase();
-    if (!q) return [];
-    return customers
-      .filter(c => c.name.toLowerCase().includes(q) || c.phone.includes(q))
-      .map(c => ({ id: c.id, primary: c.name, secondary: c.phone }));
-  }, [customers, customerSearch]);
-
-  const selectedCustomer = customers.find(c => c.id === customerId);
+  const customerId = selectedCustomer?.id ?? '';
 
   const updateRow = (i: number, field: keyof DraftLineItem, value: string) => {
     setLineItems(prev => prev.map((row, idx) => idx === i ? { ...row, [field]: value } : row));
@@ -182,31 +175,20 @@ function IssueInvoiceModal({ onSave, onClose }: {
         </div>
 
         <form onSubmit={handleSubmit} className="px-5 py-4 space-y-3 max-h-[75vh] overflow-y-auto">
-          {/* Customer search */}
-          <Field label="Customer *">
-            {selectedCustomer ? (
-              <div className="flex items-center justify-between h-9 px-3 rounded-lg"
-                style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))' }}>
-                <div>
-                  <span className="text-sm font-semibold" style={{ color: 'hsl(var(--foreground))' }}>{selectedCustomer.name}</span>
-                  <span className="text-xs ml-2" style={{ color: 'hsl(var(--muted-foreground))' }}>{selectedCustomer.phone}</span>
-                </div>
-                <button type="button" onClick={() => { setCustomerId(''); setCustomerSearch(''); }}
-                  className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            ) : (
-              <SearchDropdown
-                query={customerSearch}
-                onQueryChange={setCustomerSearch}
-                suggestions={customerSuggestions}
-                onSelect={item => { setCustomerId(item.id); setCustomerSearch(item.primary); }}
-                placeholder="Search by name or phone…"
-                width="100%"
-              />
-            )}
-          </Field>
+          {/* Customer search — same picker used on tickets: search existing,
+              or type a name + phone to create a brand-new customer inline
+              rather than needing a ticket created first just to register them. */}
+          <CustomerPicker
+            value={customerSearch}
+            phone={customerPhone}
+            onChange={(name, phone, customer) => {
+              setCustomerSearch(name);
+              setCustomerPhone(phone);
+              setSelectedCustomer(customer ?? null);
+            }}
+            required
+            label="Customer"
+          />
 
           <div>
             <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1.5" style={{ color: 'hsl(var(--muted-foreground))' }}>

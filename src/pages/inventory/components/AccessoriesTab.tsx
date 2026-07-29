@@ -5,7 +5,7 @@ import { getProductsPage } from '@/services/wireless/accessoryStore';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import SearchDropdown from '@/components/shared/SearchDropdown';
 import Pagination from '@/components/shared/Pagination';
-import { Pencil, Trash2, X } from 'lucide-react';
+import { Pencil, Trash2, X, Search, Boxes, Minus, Plus, AlertTriangle } from 'lucide-react';
 import type { AccessoryProduct } from '@/services/wireless/accessoryStore';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -185,14 +185,20 @@ function AccessoryModal({ initial, onSave, onClose, existingProducts = [], canSe
 interface Props {
   showAddModal: boolean;
   onCloseAddModal: () => void;
+  /** Stock manager's KPI-tiles-and-cards view instead of the dense admin
+   *  table, same treatment as the Parts tab. */
+  useCardLayout?: boolean;
 }
 
-export default function AccessoriesTab({ showAddModal, onCloseAddModal }: Props) {
+export default function AccessoriesTab({ showAddModal, onCloseAddModal, useCardLayout }: Props) {
   const { products, addProduct, patchProduct, removeProduct } = useAccessoryStore();
   const { user } = useAuth();
   // Margin is derived from cost vs. price, so it leaks cost just as much as
   // showing the number outright would — hidden alongside it.
   const canSeeCost = user?.role === 'admin';
+  const [lowStockOnly, setLowStockOnly] = useState(false);
+  const adjustStock = (p: AccessoryProduct, delta: number) =>
+    patchProduct(p.id, { stock: Math.max(0, p.stock + delta) });
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebouncedValue(query, 300);
   const [page, setPage] = useState(1);
@@ -219,6 +225,139 @@ export default function AccessoriesTab({ showAddModal, onCloseAddModal }: Props)
   const handleDelete = (p: AccessoryProduct) => {
     if (confirm(`Delete "${p.name}"?`)) removeProduct(p.id).then(reload);
   };
+
+  // Card layout works off the full catalog (not the paginated table fetch),
+  // same as the Parts tab's card view.
+  const cardTotalUnits = products.reduce((s, p) => s + p.stock, 0);
+  const cardStockValue = products.reduce((s, p) => s + p.stock * p.price, 0);
+  const cardLowStockCount = products.filter(p => p.stock <= p.reorder_at).length;
+  const cardFiltered = products.filter(p => {
+    if (lowStockOnly && p.stock > p.reorder_at) return false;
+    const q = query.trim().toLowerCase();
+    return !q || p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q);
+  });
+
+  if (useCardLayout) {
+    return (
+      <div className="space-y-4">
+        {/* KPI tiles */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { label: 'TOTAL ACCESSORIES', value: String(products.length), sub: 'unique SKUs', border: '#6366f1' },
+            { label: 'LOW STOCK', value: String(cardLowStockCount), sub: `${cardLowStockCount} at or below reorder`, border: cardLowStockCount ? '#f59e0b' : '#22c55e' },
+            { label: 'TOTAL UNITS', value: String(cardTotalUnits), sub: 'across all accessories', border: '#06b6d4' },
+            { label: 'STOCK VALUE', value: fmt(cardStockValue), sub: 'at selling price', border: '#22c55e', valueColor: '#22c55e' },
+          ].map(card => (
+            <div key={card.label} className="rounded-2xl p-5 relative overflow-hidden"
+              style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
+              <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ background: card.border }} />
+              <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: 'hsl(var(--muted-foreground))' }}>{card.label}</p>
+              <p className="text-2xl font-bold" style={{ color: card.valueColor ?? 'hsl(var(--foreground))' }}>{card.value}</p>
+              <p className="text-[10px] mt-1" style={{ color: 'hsl(var(--muted-foreground))' }}>{card.sub}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Search + low stock filter */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: 'hsl(var(--muted-foreground))' }} />
+            <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search accessories, SKU…"
+              className="w-full h-9 pl-9 pr-3 rounded-lg text-sm outline-none"
+              style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
+          </div>
+          <button type="button" onClick={() => setLowStockOnly(v => !v)}
+            className="h-9 px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 flex-shrink-0"
+            style={lowStockOnly
+              ? { background: 'rgba(245,158,11,0.15)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.4)' }
+              : { border: '1px solid hsl(var(--border))', color: 'hsl(var(--muted-foreground))' }}>
+            <AlertTriangle className="w-3.5 h-3.5" /> Low Stock Only
+          </button>
+        </div>
+
+        <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'hsl(var(--muted-foreground))' }}>
+          {cardFiltered.length} accessor{cardFiltered.length === 1 ? 'y' : 'ies'}
+        </p>
+
+        {/* Cards */}
+        <div className="space-y-2">
+          {cardFiltered.length === 0 ? (
+            <div className="py-16 text-center text-xs rounded-xl" style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--muted-foreground))' }}>
+              No accessories found.
+            </div>
+          ) : cardFiltered.map(p => {
+            const isLow = p.stock <= p.reorder_at;
+            const cs = catStyle(p.category);
+            return (
+              <div key={p.id} className="rounded-xl p-4 flex items-center gap-4 flex-wrap"
+                style={{ background: 'hsl(var(--card))', border: `1px solid ${isLow ? 'rgba(245,158,11,0.4)' : 'hsl(var(--border))'}` }}>
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'hsl(var(--muted))' }}>
+                  <Boxes className="w-4 h-4" style={{ color: 'hsl(var(--muted-foreground))' }} />
+                </div>
+                <div className="flex-1 min-w-[140px]">
+                  <p className="text-sm font-semibold" style={{ color: 'hsl(var(--foreground))' }}>{p.name}</p>
+                  <p className="text-xs mt-0.5" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                    {p.sku} · <span className="font-semibold" style={{ color: cs.color }}>{p.category}</span>
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>Selling Price</p>
+                  <p className="text-sm font-semibold" style={{ color: 'hsl(var(--primary))' }}>{fmt(p.price)}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>Reorder At</p>
+                  <p className="text-sm" style={{ color: 'hsl(var(--muted-foreground))' }}>{p.reorder_at}</p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button type="button" onClick={() => adjustStock(p, -1)} disabled={p.stock <= 0}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg disabled:opacity-30"
+                    style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}>
+                    <Minus className="w-3.5 h-3.5" />
+                  </button>
+                  <div className="w-14 text-center">
+                    <p className="text-sm font-bold" style={{ color: isLow ? '#f59e0b' : 'hsl(var(--foreground))' }}>{p.stock}</p>
+                    <p className="text-[9px] uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>units</p>
+                  </div>
+                  <button type="button" onClick={() => adjustStock(p, 1)}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-white"
+                    style={{ background: '#22c55e' }}>
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <button onClick={() => setEditing(p)}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors" style={{ color: 'hsl(var(--muted-foreground))' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}>
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                  <button onClick={() => handleDelete(p)}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors" style={{ color: 'hsl(var(--muted-foreground))' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; (e.currentTarget as HTMLElement).style.color = '#ef4444'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.color = 'hsl(var(--muted-foreground))'; }}>
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {showAddModal && (
+          <AccessoryModal onSave={data => addProduct(data).then(reload)} onClose={onCloseAddModal} existingProducts={products} canSeeCost={canSeeCost} />
+        )}
+        {editing && (
+          <AccessoryModal
+            initial={editing}
+            onSave={data => patchProduct(editing.id, data).then(reload)}
+            onClose={() => setEditing(null)}
+            existingProducts={products}
+            canSeeCost={canSeeCost}
+          />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
