@@ -64,6 +64,8 @@ const FILTER_TABS: { key: string; label: string }[] = [
 function RepairCard({ repair, onClick, selected }: {
   repair: Repair; onClick: () => void; selected: boolean;
 }) {
+  const { user } = useAuth();
+  const hidePrices = user?.role === 'technician';
   const s = STATUS[repair.status] ?? STATUS.received;
   return (
     <div
@@ -107,9 +109,11 @@ function RepairCard({ repair, onClick, selected }: {
             {isOverdueRepair(repair) ? 'Overdue: ' : 'ETA: '}{repair.eta || '—'}
           </span>
         </div>
-        <span className="text-xs font-bold" style={{ color: 'hsl(var(--foreground))' }}>
-          {repair.cost || 'TBD'}
-        </span>
+        {!hidePrices && (
+          <span className="text-xs font-bold" style={{ color: 'hsl(var(--foreground))' }}>
+            {repair.cost || 'TBD'}
+          </span>
+        )}
       </div>
 
       <div className="flex items-center gap-3 mt-2">
@@ -188,6 +192,9 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   const [reassignSaving, setReassignSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
+  // Technicians repair the device — what the customer's charged is a
+  // reception/admin concern, not shown on their view of the ticket.
+  const hidePrices = user?.role === 'technician';
   const s = STATUS[repair.status] ?? STATUS.received;
   const isDxOnly = repair.jobType === 'diagnosis_only';
   const isStraightRepair = repair.jobType === 'straight_repair';
@@ -373,7 +380,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
         style={{ borderBottom: '1px solid hsl(var(--border))' }}>
         <span className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>Ticket Details</span>
         <div className="flex items-center gap-1.5">
-          {canPrintReceipt && (
+          {canPrintReceipt && !hidePrices && (
             <button onClick={handlePrintReceipt} className="w-7 h-7 flex items-center justify-center rounded-lg"
               style={{ color: 'hsl(var(--muted-foreground))' }}
               title="Print pickup receipt"
@@ -457,8 +464,10 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
             ['Technician',     repair.technicians.length ? repair.technicians.map(t => t.name).join(', ') : '—'],
             ['Started',        fmtStarted(repair.started)],
             [isOverdueRepair(repair) ? 'Overdue' : 'ETA', repair.eta || '—'],
-            ['Estimated Cost', repair.cost || '—'],
-            ...(depositPaid > 0 ? [['Deposit Paid', `GHS ${depositPaid.toFixed(2)}`]] : []),
+            // Technicians don't see pricing at all — they repair the device,
+            // reception/admin handles what the customer's charged.
+            ...(hidePrices ? [] : [['Estimated Cost', repair.cost || '—']]),
+            ...(!hidePrices && depositPaid > 0 ? [['Deposit Paid', `GHS ${depositPaid.toFixed(2)}`]] : []),
             ['Warranty',       repair.warranty ? 'Yes' : 'No'],
           ].map(([label, value]) => (
             <div key={label} className="flex items-center justify-between">
