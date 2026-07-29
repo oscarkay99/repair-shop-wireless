@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { usePageTitle } from '@/context/PageTitleContext';
-import { Activity, User, ClipboardList, Package, Settings, Receipt, FileText, HardHat, LogIn, LogOut } from 'lucide-react';
+import { Activity, User, ClipboardList, Package, Settings, Receipt, FileText, UserCog, LogIn, LogOut } from 'lucide-react';
 import { getAuditLogs, SYSTEM_ACTOR, type AuditLogRecord } from '@/services/wireless/auditLogs';
 import { getWirelessUsers } from '@/services/wireless/users';
 import Pagination from '@/components/shared/Pagination';
@@ -12,7 +12,7 @@ const MODULE_ICON: Record<string, { icon: typeof Activity; color: string }> = {
   ticket_media:     { icon: ClipboardList, color: 'hsl(var(--status-in-progress))' },
   customers:        { icon: User,          color: 'hsl(38 90% 65%)' },
   parts:            { icon: Package,       color: 'hsl(var(--status-ready))' },
-  technicians:      { icon: HardHat,       color: 'hsl(190 70% 55%)' },
+  technicians:      { icon: UserCog,       color: 'hsl(190 70% 55%)' },
   invoices:         { icon: FileText,      color: 'hsl(262 55% 60%)' },
   invoice_items:    { icon: FileText,      color: 'hsl(262 55% 60%)' },
   accessory_sales:  { icon: Package,       color: 'hsl(var(--status-ready))' },

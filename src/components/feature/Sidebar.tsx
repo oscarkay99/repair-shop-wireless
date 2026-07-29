@@ -2,7 +2,7 @@ import { useLocation, Link, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Users,
-  HardHat,
+  UserCog,
   ShoppingBag,
   Package,
   FileText,
@@ -26,7 +26,7 @@ const mainNav: NavItem[] = [
   { label: 'Dashboard',         icon: LayoutDashboard, path: '/',            module: 'Dashboard' },
   { label: 'Tickets',           icon: Hammer,          path: '/tickets',     module: 'Tickets' },
   { label: 'Customers',         icon: Users,           path: '/customers',   module: 'Customers' },
-  { label: 'Technicians',       icon: HardHat,         path: '/technicians', module: 'Technicians' },
+  { label: 'Technicians',       icon: UserCog,         path: '/technicians', module: 'Technicians' },
   { label: 'Accessories Sales', icon: ShoppingBag,     path: '/sales',       module: 'Sales' },
   { label: 'Inventory',         icon: Package,         path: '/inventory',   module: 'Inventory' },
   { label: 'Invoices',          icon: FileText,        path: '/invoices',    module: 'Invoices' },

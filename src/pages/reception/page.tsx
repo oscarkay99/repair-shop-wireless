@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Sun, Moon, Plus, ClipboardList, LogOut,
-  FileText, ShoppingCart, Package, HardHat, Cake,
+  FileText, ShoppingCart, Package, UserCog, Cake,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/context/ThemeContext';
@@ -24,7 +24,7 @@ const NAV_TABS: { key: TabKey; label: string; icon: typeof ClipboardList }[] = [
   { key: 'invoices',    label: 'Invoices',    icon: FileText },
   { key: 'sales',       label: 'Sales',       icon: ShoppingCart },
   { key: 'inventory',   label: 'Inventory',   icon: Package },
-  { key: 'technicians', label: 'Technicians', icon: HardHat },
+  { key: 'technicians', label: 'Technicians', icon: UserCog },
   { key: 'birthdays',   label: 'Birthdays',   icon: Cake },
 ];
 
