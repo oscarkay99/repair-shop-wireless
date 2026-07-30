@@ -61,7 +61,7 @@ export default function InventoryPortalPage() {
     <div className="h-screen flex flex-col" style={{ background: 'hsl(var(--background))' }}>
       {/* Header */}
       <header className="border-b flex-shrink-0" style={{ borderColor: 'hsl(var(--border))' }}>
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img
               src={
@@ -70,11 +70,9 @@ export default function InventoryPortalPage() {
                   : settings?.logo_url || '/wireless-logo-light.png'
               }
               alt={settings?.business_name || 'WIRELESS'}
-              style={{ height: 22, width: 'auto', objectFit: 'contain' }}
+              style={{ height: 34, width: 'auto', objectFit: 'contain' }}
             />
-            <div className="border-l pl-3" style={{ borderColor: 'hsl(var(--border))' }}>
-              <p className="text-[9px] tracking-widest uppercase leading-none" style={{ color: 'hsl(var(--muted-foreground))' }}>Inventory Portal</p>
-            </div>
+            <p className="text-[9px] tracking-widest uppercase leading-none" style={{ color: 'hsl(var(--muted-foreground))' }}>Inventory Portal</p>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -197,7 +195,9 @@ export default function InventoryPortalPage() {
                       </div>
                       <div className="flex-1 min-w-[140px]">
                         <p className="text-sm font-semibold" style={{ color: 'hsl(var(--foreground))' }}>{p.name}</p>
-                        <p className="text-xs mt-0.5" style={{ color: 'hsl(var(--muted-foreground))' }}>{p.sku} · {p.category}</p>
+                        <p className="text-xs mt-0.5" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                          {[p.sku, p.category, p.color, p.size, p.model_year].filter(Boolean).join(' · ')}
+                        </p>
                       </div>
                       <div className="flex items-center gap-5 flex-shrink-0">
                         <div className="text-right">

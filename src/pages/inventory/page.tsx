@@ -58,6 +58,9 @@ export function AddPartModal({
     stock: String(initial?.stock ?? ''),
     min_stock: String(initial?.min_stock ?? ''),
     supplier: initial?.supplier ?? '',
+    color: initial?.color ?? '',
+    size: initial?.size ?? '',
+    model_year: initial?.model_year ?? '',
   });
   const [addingCategory, setAddingCategory] = useState(initial ? !categoryOptions.includes(initial.category) : false);
   const [skuTouched, setSkuTouched] = useState(false);
@@ -85,6 +88,9 @@ export function AddPartModal({
       stock: parseInt(form.stock) || 0,
       min_stock: parseInt(form.min_stock) || 0,
       supplier: canSeeCost ? form.supplier : (initial?.supplier ?? ''),
+      color: form.color,
+      size: form.size,
+      model_year: form.model_year,
     });
     onClose();
   };
@@ -144,6 +150,23 @@ export function AddPartModal({
                   <option value="__new__">+ Add new category…</option>
                 </select>
               )}
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="text-[11px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Color</label>
+              <input value={form.color} onChange={e => set('color', e.target.value)} placeholder="e.g. Space Gray"
+                className="w-full h-9 px-3 rounded-lg text-sm outline-none" style={inputStyle} />
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Size</label>
+              <input value={form.size} onChange={e => set('size', e.target.value)} placeholder={'e.g. 13"'}
+                className="w-full h-9 px-3 rounded-lg text-sm outline-none" style={inputStyle} />
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Model Year</label>
+              <input value={form.model_year} onChange={e => set('model_year', e.target.value)} placeholder="e.g. 2022"
+                className="w-full h-9 px-3 rounded-lg text-sm outline-none" style={inputStyle} />
             </div>
           </div>
           <div className={canSeeCost ? 'grid grid-cols-2 gap-3' : ''}>
@@ -379,7 +402,9 @@ export default function InventoryPage() {
                   </div>
                   <div className="flex-1 min-w-[140px]">
                     <p className="text-sm font-semibold" style={{ color: 'hsl(var(--foreground))' }}>{p.name}</p>
-                    <p className="text-xs mt-0.5" style={{ color: 'hsl(var(--muted-foreground))' }}>{p.sku} · {p.category}</p>
+                    <p className="text-xs mt-0.5" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                      {[p.sku, p.category, p.color, p.size, p.model_year].filter(Boolean).join(' · ')}
+                    </p>
                   </div>
                   <div className="flex items-center gap-5 flex-shrink-0">
                     <div className="text-right">

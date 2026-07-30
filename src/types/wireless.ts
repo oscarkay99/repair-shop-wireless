@@ -47,6 +47,12 @@ export interface Part {
   min_stock: number;
   supplier?: string;
   notes?: string;
+  /** Variant attributes for parts that come in multiple colors/sizes/model
+   *  years (e.g. MacBook screens) — each distinct combination is its own
+   *  part row so stock is tracked per variant, not lumped into one SKU. */
+  color?: string;
+  size?: string;
+  model_year?: string;
   created_at: string;
   updated_at: string;
 }

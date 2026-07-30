@@ -34,6 +34,7 @@ const routes: RouteObject[] = [
   { path: "/signin", element: <SignInPage /> },
   { path: "/tech-portal", element: <AuthGuard><TechPortalPage /></AuthGuard> },
   { path: "/reception", element: <AuthGuard requiredModule="Portal"><ReceptionPortalPage /></AuthGuard> },
+  { path: "/inventory-portal", element: <AuthGuard requiredModule="Portal"><InventoryPortalPage /></AuthGuard> },
 
   {
     element: <AppShell />,
@@ -49,7 +50,6 @@ const routes: RouteObject[] = [
       { path: "/tickets",            element: <AuthGuard requiredModule="Tickets"><RepairsPage /></AuthGuard> },
       { path: "/technicians",        element: <AuthGuard requiredModule="Technicians"><TechniciansPage /></AuthGuard> },
       { path: "/invoices",           element: <AuthGuard requiredModule="Invoices"><InvoicesPage /></AuthGuard> },
-      { path: "/inventory-portal",   element: <AuthGuard requiredModule="Portal"><InventoryPortalPage /></AuthGuard> },
       { path: "/activity",           element: <AuthGuard requiredModule="Activity"><ActivityPage /></AuthGuard> },
       { path: "/ai-studio",          element: <AuthGuard requiredModule="AI Studio"><AIStudioPage /></AuthGuard> },
       { path: "/team",               element: <AuthGuard requiredModule="Team"><TeamPage /></AuthGuard> },

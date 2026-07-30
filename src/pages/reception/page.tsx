@@ -49,7 +49,7 @@ export default function ReceptionPortalPage() {
     <div className="h-screen flex flex-col" style={{ background: 'hsl(var(--background))' }}>
       {/* Header */}
       <header className="border-b flex-shrink-0" style={{ borderColor: 'hsl(var(--border))' }}>
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img
               src={
@@ -58,11 +58,9 @@ export default function ReceptionPortalPage() {
                   : settings?.logo_url || '/wireless-logo-light.png'
               }
               alt={settings?.business_name || 'WIRELESS'}
-              style={{ height: 22, width: 'auto', objectFit: 'contain' }}
+              style={{ height: 34, width: 'auto', objectFit: 'contain' }}
             />
-            <div className="border-l pl-3" style={{ borderColor: 'hsl(var(--border))' }}>
-              <p className="text-[9px] tracking-widest uppercase leading-none" style={{ color: 'hsl(var(--muted-foreground))' }}>Reception</p>
-            </div>
+            <p className="text-[9px] tracking-widest uppercase leading-none" style={{ color: 'hsl(var(--muted-foreground))' }}>Reception</p>
           </div>
           <div className="flex items-center gap-2">
             <button
