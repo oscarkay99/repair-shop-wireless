@@ -39,7 +39,7 @@ const LEGACY_MODULE_VISIBILITY: Partial<Record<AppModule, string[]>> = {
   Delivery: ['admin', 'sales_manager'],
   Warranty: ['admin', 'technician'],
   Authentication: ['admin'],
-  Portal: ['admin', 'receptionist'],
+  Portal: ['admin', 'receptionist', 'stock_manager'],
   Activity: ['admin'],
   Users: ['admin'],
   // Reception needs to see who's available before assigning a ticket —

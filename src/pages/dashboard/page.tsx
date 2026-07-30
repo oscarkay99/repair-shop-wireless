@@ -897,6 +897,9 @@ export default function DashboardPage() {
   // Receptionist gets the same treatment — a dedicated full-screen portal
   // (no sidebar/topbar), never the shared shell's dashboard.
   if (user.dashboardVariant === 'receptionist') return <Navigate to="/reception" replace />;
+  // Stock manager's whole job is the inventory portal — land them there
+  // directly rather than the shared dashboard they'd otherwise fall through to.
+  if (user.role === 'stock_manager') return <Navigate to="/inventory-portal" replace />;
   return (
     <>
       <BirthdayBanner />

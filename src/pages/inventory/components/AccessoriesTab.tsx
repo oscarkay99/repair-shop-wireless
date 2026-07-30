@@ -188,9 +188,13 @@ interface Props {
   /** Stock manager's KPI-tiles-and-cards view instead of the dense admin
    *  table, same treatment as the Parts tab. */
   useCardLayout?: boolean;
+  /** Receptionist gets this same card view for visibility, but strictly
+   *  view-only — no adjust/edit/delete affordances. Defaults to true so
+   *  every existing caller (stock_manager/admin on /inventory) is unaffected. */
+  canEdit?: boolean;
 }
 
-export default function AccessoriesTab({ showAddModal, onCloseAddModal, useCardLayout }: Props) {
+export default function AccessoriesTab({ showAddModal, onCloseAddModal, useCardLayout, canEdit = true }: Props) {
   const { products, addProduct, patchProduct, removeProduct } = useAccessoryStore();
   const { user } = useAuth();
   // Margin is derived from cost vs. price, so it leaks cost just as much as
@@ -309,36 +313,45 @@ export default function AccessoriesTab({ showAddModal, onCloseAddModal, useCardL
                     <p className="text-sm" style={{ color: 'hsl(var(--muted-foreground))' }}>{p.reorder_at}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <button type="button" onClick={() => adjustStock(p, -1)} disabled={p.stock <= 0}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg disabled:opacity-30"
-                    style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}>
-                    <Minus className="w-3.5 h-3.5" />
-                  </button>
-                  <div className="w-14 text-center">
+                {canEdit ? (
+                  <>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button type="button" onClick={() => adjustStock(p, -1)} disabled={p.stock <= 0}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg disabled:opacity-30"
+                        style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}>
+                        <Minus className="w-3.5 h-3.5" />
+                      </button>
+                      <div className="w-14 text-center">
+                        <p className="text-sm font-bold" style={{ color: isLow ? '#f59e0b' : 'hsl(var(--foreground))' }}>{p.stock}</p>
+                        <p className="text-[9px] uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>units</p>
+                      </div>
+                      <button type="button" onClick={() => adjustStock(p, 1)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-white"
+                        style={{ background: '#22c55e' }}>
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <button onClick={() => setEditing(p)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors" style={{ color: 'hsl(var(--muted-foreground))' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}>
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => handleDelete(p)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors" style={{ color: 'hsl(var(--muted-foreground))' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; (e.currentTarget as HTMLElement).style.color = '#ef4444'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.color = 'hsl(var(--muted-foreground))'; }}>
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-right flex-shrink-0">
                     <p className="text-sm font-bold" style={{ color: isLow ? '#f59e0b' : 'hsl(var(--foreground))' }}>{p.stock}</p>
                     <p className="text-[9px] uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>units</p>
                   </div>
-                  <button type="button" onClick={() => adjustStock(p, 1)}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg text-white"
-                    style={{ background: '#22c55e' }}>
-                    <Plus className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <button onClick={() => setEditing(p)}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors" style={{ color: 'hsl(var(--muted-foreground))' }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}>
-                    <Pencil className="w-3.5 h-3.5" />
-                  </button>
-                  <button onClick={() => handleDelete(p)}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors" style={{ color: 'hsl(var(--muted-foreground))' }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; (e.currentTarget as HTMLElement).style.color = '#ef4444'; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.color = 'hsl(var(--muted-foreground))'; }}>
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                )}
               </div>
             );
           })}

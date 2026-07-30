@@ -30,7 +30,7 @@ function nextSku(category: string, existingParts: Part[]): string {
   return `${categoryPrefix(category)}-${String(countInCategory + 1).padStart(3, '0')}`;
 }
 
-function AddPartModal({
+export function AddPartModal({
   onSave,
   onClose,
   initial,
