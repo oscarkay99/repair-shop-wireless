@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
-import { FileText, CreditCard, AlertCircle, Search, Eye, Share2, Printer, Check } from 'lucide-react';
+import { FileText, CreditCard, AlertCircle, Search, Eye, Share2, Printer, Check, Plus, X } from 'lucide-react';
 import { useInvoices } from '@/hooks/useInvoices';
 import { useToast } from '@/contexts/ToastContext';
 import { formatDate } from '@/utils/date';
-import type { InvoiceStatus } from '@/types/wireless';
+import type { Invoice, InvoiceStatus } from '@/types/wireless';
 import type { PaymentMethod } from '@/types/sale';
+
+interface SplitRow { method: PaymentMethod; amount: string }
 
 type FilterKey = 'all' | 'unpaid' | 'partial' | 'paid' | 'overdue';
 
@@ -33,6 +35,7 @@ export default function InvoicesPanel() {
   const [filter, setFilter] = useState<FilterKey>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [markingPaidId, setMarkingPaidId] = useState<string | null>(null);
+  const [splits, setSplits] = useState<SplitRow[]>([]);
 
   const unpaidCount = useMemo(() => invoices.filter(i => i.status === 'unpaid').length, [invoices]);
 
@@ -53,9 +56,36 @@ export default function InvoicesPanel() {
     catch { showToast(text); }
   };
 
-  const handleMarkPaid = async (id: string, amount: number, method: PaymentMethod, customerName?: string) => {
-    await markPaid(id, amount, method, customerName);
+  const startMarkingPaid = (inv: Invoice) => {
+    setMarkingPaidId(inv.id);
+    setSplits([{ method: 'Cash', amount: (inv.total - inv.amount_paid).toFixed(2) }]);
+  };
+
+  const cancelMarkingPaid = () => {
     setMarkingPaidId(null);
+    setSplits([]);
+  };
+
+  const splitTotal = splits.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
+
+  const addSplit = (outstanding: number) => {
+    const remaining = Math.max(0, outstanding - splitTotal);
+    setSplits(rows => [...rows, { method: 'Cash', amount: remaining > 0 ? remaining.toFixed(2) : '' }]);
+  };
+
+  const removeSplit = (index: number) => setSplits(rows => rows.filter((_, i) => i !== index));
+
+  const updateSplit = (index: number, patch: Partial<SplitRow>) =>
+    setSplits(rows => rows.map((r, i) => i === index ? { ...r, ...patch } : r));
+
+  const confirmPayment = async (inv: Invoice) => {
+    for (const row of splits) {
+      const amount = parseFloat(row.amount) || 0;
+      if (amount <= 0) continue;
+      await markPaid(inv.id, amount, row.method, inv.customer?.name);
+    }
+    showToast('Payment recorded');
+    cancelMarkingPaid();
   };
 
   return (
@@ -155,16 +185,55 @@ export default function InvoicesPanel() {
                 )}
 
                 {markingPaid ? (
-                  <div className="flex items-center gap-2 mt-3 flex-wrap">
-                    {PAYMENT_METHODS.map(m => (
-                      <button key={m}
-                        onClick={() => handleMarkPaid(inv.id, outstanding, m, inv.customer?.name)}
-                        className="h-8 px-3 rounded-lg text-xs font-semibold cursor-pointer"
-                        style={{ background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))', border: '1px solid hsl(var(--border))' }}>
-                        {m}
-                      </button>
+                  <div className="mt-3 pt-3 space-y-2" style={{ borderTop: '1px solid hsl(var(--border))' }}>
+                    {splits.map((row, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <select
+                          value={row.method}
+                          onChange={e => updateSplit(idx, { method: e.target.value as PaymentMethod })}
+                          className="h-8 px-2 rounded-lg text-xs outline-none flex-shrink-0"
+                          style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
+                        >
+                          {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
+                        </select>
+                        <div className="relative flex-1">
+                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>GH₵</span>
+                          <input
+                            type="number" min="0" step="0.01"
+                            value={row.amount}
+                            onChange={e => updateSplit(idx, { amount: e.target.value })}
+                            className="w-full h-8 pl-9 pr-2 rounded-lg text-xs outline-none"
+                            style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
+                          />
+                        </div>
+                        {splits.length > 1 && (
+                          <button onClick={() => removeSplit(idx)} className="w-8 h-8 flex items-center justify-center rounded-lg flex-shrink-0 cursor-pointer" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
                     ))}
-                    <button onClick={() => setMarkingPaidId(null)} className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Cancel</button>
+
+                    <div className="flex items-center justify-between">
+                      <button onClick={() => addSplit(outstanding)} className="flex items-center gap-1 text-xs font-semibold cursor-pointer" style={{ color: 'hsl(var(--primary))' }}>
+                        <Plus className="w-3.5 h-3.5" /> Split Payment
+                      </button>
+                      <span className="text-xs font-semibold" style={{ color: splitTotal > outstanding + 0.001 ? '#ef4444' : 'hsl(var(--muted-foreground))' }}>
+                        GH₵{splitTotal.toFixed(2)} / GH₵{outstanding.toFixed(2)}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <button
+                        onClick={() => confirmPayment(inv)}
+                        disabled={splitTotal <= 0 || splitTotal > outstanding + 0.001}
+                        className="h-8 px-3 rounded-lg text-xs font-semibold text-white cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                        style={{ background: 'hsl(var(--primary))' }}
+                      >
+                        Confirm Payment
+                      </button>
+                      <button onClick={cancelMarkingPaid} className="text-xs cursor-pointer" style={{ color: 'hsl(var(--muted-foreground))' }}>Cancel</button>
+                    </div>
                   </div>
                 ) : (
                   <div className="flex items-center gap-4 mt-3 pt-3" style={{ borderTop: '1px solid hsl(var(--border))' }}>
@@ -178,7 +247,7 @@ export default function InvoicesPanel() {
                       <Printer className="w-3.5 h-3.5" /> Print
                     </button>
                     {(inv.status === 'unpaid' || inv.status === 'partial' || inv.status === 'overdue') && (
-                      <button onClick={() => setMarkingPaidId(inv.id)} className="flex items-center gap-1 text-xs font-semibold cursor-pointer" style={{ color: '#22c55e' }}>
+                      <button onClick={() => startMarkingPaid(inv)} className="flex items-center gap-1 text-xs font-semibold cursor-pointer" style={{ color: '#22c55e' }}>
                         <Check className="w-3.5 h-3.5" /> Mark Paid
                       </button>
                     )}
