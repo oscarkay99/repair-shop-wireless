@@ -47,6 +47,9 @@ export interface Part {
   min_stock: number;
   supplier?: string;
   notes?: string;
+  /** Which Apple product line this part is for (MacBook Air, iPhone, Apple
+   *  Pencil, ...) — separate from `category` (the kind of part). */
+  device?: string;
   /** Variant attributes for parts that come in multiple colors/sizes/model
    *  years (e.g. MacBook screens) — each distinct combination is its own
    *  part row so stock is tracked per variant, not lumped into one SKU. */

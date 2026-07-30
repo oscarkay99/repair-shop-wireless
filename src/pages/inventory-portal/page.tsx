@@ -54,7 +54,7 @@ export default function InventoryPortalPage() {
   const filtered = parts.filter(p => {
     if (lowStockOnly && p.stock >= p.min_stock) return false;
     const q = query.trim().toLowerCase();
-    return !q || p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q);
+    return !q || p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q) || (p.device ?? '').toLowerCase().includes(q);
   });
 
   return (
@@ -196,7 +196,7 @@ export default function InventoryPortalPage() {
                       <div className="flex-1 min-w-[140px]">
                         <p className="text-sm font-semibold" style={{ color: 'hsl(var(--foreground))' }}>{p.name}</p>
                         <p className="text-xs mt-0.5" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                          {[p.sku, p.category, p.color, p.size, p.model_year].filter(Boolean).join(' · ')}
+                          {[p.sku, p.device, p.category, p.color, p.size, p.model_year].filter(Boolean).join(' · ')}
                         </p>
                       </div>
                       <div className="flex items-center gap-5 flex-shrink-0">

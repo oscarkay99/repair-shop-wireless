@@ -19,6 +19,15 @@ const fmtCedis = (n: number) => `¢${n.toFixed(2)}`;
 
 const CATEGORIES = ['Screens', 'Batteries', 'Keyboards', 'Connectors', 'Trackpads', 'Other'];
 
+// Common Apple product lines a repair part is for — separate from `category`
+// (the kind of part: Screen, Battery, etc). Starts with the usual suspects;
+// "+ Add new device…" (same pattern as category) covers anything not listed.
+const DEVICES = [
+  'MacBook Air', 'MacBook Pro', 'iMac', 'Mac Mini',
+  'iPhone', 'iPad', 'iPad Pro', 'iPad Mini',
+  'Apple Watch', 'AirPods', 'AirPods Pro', 'Apple Pencil',
+];
+
 function categoryPrefix(category: string): string {
   const words = category.trim().split(/\s+/).filter(Boolean);
   if (words.length > 1) return words.map(w => w[0]?.toUpperCase() ?? '').join('').slice(0, 4);
@@ -48,11 +57,13 @@ export function AddPartModal({
   canSeeCost: boolean;
 }) {
   const categoryOptions = [...new Set([...CATEGORIES, ...existingParts.map(p => p.category)])].sort();
+  const deviceOptions = [...new Set([...DEVICES, ...existingParts.map(p => p.device).filter((d): d is string => !!d)])].sort();
   const defaultCategory = initial?.category ?? 'Screens';
   const [form, setForm] = useState({
     name: initial?.name ?? '',
     sku: initial?.sku ?? nextSku(defaultCategory, existingParts),
     category: defaultCategory,
+    device: initial?.device ?? '',
     unit_cost: String(initial?.unit_cost ?? ''),
     selling_price: String(initial?.selling_price ?? ''),
     stock: String(initial?.stock ?? ''),
@@ -63,6 +74,7 @@ export function AddPartModal({
     model_year: initial?.model_year ?? '',
   });
   const [addingCategory, setAddingCategory] = useState(initial ? !categoryOptions.includes(initial.category) : false);
+  const [addingDevice, setAddingDevice] = useState(initial?.device ? !deviceOptions.includes(initial.device) : false);
   const [skuTouched, setSkuTouched] = useState(false);
 
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
@@ -79,6 +91,7 @@ export function AddPartModal({
       name: form.name,
       sku: form.sku,
       category: form.category,
+      device: form.device,
       // A restricted user never sees these fields below, so their form state
       // is whatever it started as (0 / '' for a new part, unchanged for an
       // edit) — always resolve from `initial` here rather than trusting form
@@ -117,6 +130,34 @@ export function AddPartModal({
             <label className="text-[11px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Part Name</label>
             <input required value={form.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Galaxy S24 Screen, iPad Battery"
               className="w-full h-9 px-3 rounded-lg text-sm outline-none" style={inputStyle} />
+          </div>
+          <div>
+            <label className="text-[11px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Device</label>
+            {addingDevice ? (
+              <div className="flex gap-1.5">
+                <input autoFocus value={form.device} onChange={e => set('device', e.target.value)}
+                  placeholder="New device name"
+                  className="w-full h-9 px-3 rounded-lg text-sm outline-none" style={inputStyle} />
+                <button type="button"
+                  onClick={() => { setAddingDevice(false); set('device', deviceOptions[0] ?? ''); }}
+                  title="Choose from list instead"
+                  className="h-9 w-9 flex items-center justify-center rounded-lg flex-shrink-0"
+                  style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--muted-foreground))' }}>
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <select value={form.device}
+                onChange={e => {
+                  if (e.target.value === '__new__') { setAddingDevice(true); set('device', ''); }
+                  else set('device', e.target.value);
+                }}
+                className="w-full h-9 px-3 rounded-lg text-sm outline-none" style={inputStyle}>
+                <option value="">Not device-specific</option>
+                {deviceOptions.map(d => <option key={d} value={d}>{d}</option>)}
+                <option value="__new__">+ Add new device…</option>
+              </select>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -293,7 +334,7 @@ export default function InventoryPage() {
   const cardFiltered = parts.filter(p => {
     if (lowStockOnly && p.stock >= p.min_stock) return false;
     const q = query.trim().toLowerCase();
-    return !q || p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q);
+    return !q || p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q) || (p.device ?? '').toLowerCase().includes(q);
   });
 
   return (
@@ -403,7 +444,7 @@ export default function InventoryPage() {
                   <div className="flex-1 min-w-[140px]">
                     <p className="text-sm font-semibold" style={{ color: 'hsl(var(--foreground))' }}>{p.name}</p>
                     <p className="text-xs mt-0.5" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                      {[p.sku, p.category, p.color, p.size, p.model_year].filter(Boolean).join(' · ')}
+                      {[p.sku, p.device, p.category, p.color, p.size, p.model_year].filter(Boolean).join(' · ')}
                     </p>
                   </div>
                   <div className="flex items-center gap-5 flex-shrink-0">
