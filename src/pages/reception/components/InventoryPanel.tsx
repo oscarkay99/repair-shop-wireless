@@ -75,7 +75,7 @@ export default function InventoryPanel() {
           <table className="w-full text-sm">
             <thead>
               <tr style={{ borderBottom: '1px solid hsl(var(--border))' }}>
-                {['Part', 'Product Code', 'Category', 'Stock', 'Min', 'Cost', 'Sell Price', 'Supplier', 'Status', ''].map(h => (
+                {['Part', 'Product Code', 'Category', 'Stock', 'Min', ...(canSeeCost ? ['Cost'] : []), 'Sell Price', 'Supplier', 'Status', ''].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider whitespace-nowrap" style={{ color: 'hsl(var(--muted-foreground))' }}>{h}</th>
                 ))}
               </tr>
@@ -112,7 +112,9 @@ export default function InventoryPanel() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>{p.min_stock}</td>
-                    <td className="px-4 py-3 text-xs whitespace-nowrap" style={{ color: 'hsl(var(--foreground))' }}>GH₵ {p.unit_cost.toFixed(2)}</td>
+                    {canSeeCost && (
+                      <td className="px-4 py-3 text-xs whitespace-nowrap" style={{ color: 'hsl(var(--foreground))' }}>GH₵ {p.unit_cost.toFixed(2)}</td>
+                    )}
                     <td className="px-4 py-3 text-xs font-semibold whitespace-nowrap" style={{ color: 'hsl(var(--foreground))' }}>GH₵ {p.selling_price.toFixed(2)}</td>
                     <td className="px-4 py-3 text-xs whitespace-nowrap" style={{ color: 'hsl(var(--muted-foreground))' }}>{p.supplier ?? '—'}</td>
                     <td className="px-4 py-3">
