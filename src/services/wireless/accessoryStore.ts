@@ -24,7 +24,7 @@ export interface AccessorySaleRecord {
   quantity: number;
   unit_price: number;
   total: number;
-  payment_method: 'Cash' | 'Card' | 'Transfer';
+  payment_method: 'Cash' | 'Card' | 'MoMo';
   payment_status: 'paid' | 'partial' | 'unpaid';
   sold_at: string;
   customer_id?: string | null;
@@ -112,7 +112,7 @@ const PRODUCT_SEED: AccessoryProduct[] = [
 ];
 
 const SALE_SEED: AccessorySaleRecord[] = [
-  { id: 's8', sale_number: 'SL-008', product_id: 'ap5', product_name: 'AirPods Pro 2 Silicone Case',  category: 'Cases',             quantity: 2, unit_price: 12.99, total: 25.98, payment_method: 'Transfer', payment_status: 'paid', sold_at: '2026-06-09T15:00:00Z' },
+  { id: 's8', sale_number: 'SL-008', product_id: 'ap5', product_name: 'AirPods Pro 2 Silicone Case',  category: 'Cases',             quantity: 2, unit_price: 12.99, total: 25.98, payment_method: 'MoMo', payment_status: 'paid', sold_at: '2026-06-09T15:00:00Z' },
   { id: 's7', sale_number: 'SL-007', product_id: 'ap7', product_name: 'USB-C to 3.5mm Adapter',       category: 'Adapters',          quantity: 4, unit_price:  9.99, total: 39.96, payment_method: 'Cash', payment_status: 'paid', sold_at: '2026-06-09T13:30:00Z' },
   { id: 's6', sale_number: 'SL-006', product_id: 'ap1', product_name: 'iPhone 15 Pro Clear Case',     category: 'Cases',             quantity: 1, unit_price: 29.99, total: 29.99, payment_method: 'Card', payment_status: 'paid', sold_at: '2026-06-09T12:00:00Z' },
   { id: 's5', sale_number: 'SL-005', product_id: 'ap6', product_name: 'Apple Watch Sport Band 41mm',  category: 'Bands',             quantity: 1, unit_price: 24.99, total: 24.99, payment_method: 'Cash', payment_status: 'paid', sold_at: '2026-06-09T10:45:00Z' },

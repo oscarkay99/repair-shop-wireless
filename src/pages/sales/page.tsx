@@ -40,7 +40,7 @@ function catStyle(cat: string) {
 // ── Payment badge colors ──────────────────────────────────────────────────────
 
 const PAY_COLORS: Record<string, { bg: string; color: string }> = {
-  Transfer: { bg: 'hsl(var(--muted))',              color: 'hsl(var(--foreground))' },
+  MoMo:     { bg: 'hsl(var(--muted))',              color: 'hsl(var(--foreground))' },
   Cash:     { bg: 'rgba(34,197,94,0.18)',           color: '#4ade80' },
   Card:     { bg: 'rgba(99,102,241,0.18)',          color: '#818cf8' },
 };
@@ -143,7 +143,7 @@ function RecordSaleModal({ products, onSave, onClose }: {
 }) {
   const [productId, setProductId]   = useState(products[0]?.id ?? '');
   const [qty, setQty]               = useState('1');
-  const [payment, setPayment]       = useState<'Cash' | 'Card' | 'Transfer'>('Cash');
+  const [payment, setPayment]       = useState<'Cash' | 'Card' | 'MoMo'>('Cash');
   const [saving, setSaving]         = useState(false);
   const [customerMode, setCustomerMode]   = useState<'existing' | 'new'>('existing');
   const [customerName, setCustomerName]   = useState('');
@@ -303,7 +303,7 @@ function RecordSaleModal({ products, onSave, onClose }: {
               <select value={payment} onChange={e => setPayment(e.target.value as typeof payment)}
                 className="w-full h-9 px-3 rounded-lg text-sm outline-none"
                 style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}>
-                {(['Cash', 'Card', 'Transfer'] as const).map(m => <option key={m} value={m}>{m}</option>)}
+                {(['Cash', 'Card', 'MoMo'] as const).map(m => <option key={m} value={m}>{m}</option>)}
               </select>
             </div>
           </div>

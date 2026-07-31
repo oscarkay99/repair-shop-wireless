@@ -9,10 +9,12 @@ import { errMessage } from '@/utils/errors';
 import type { AccessoryProduct } from '@/services/wireless/accessoryStore';
 import { downloadAccessorySaleReceiptPdf } from '@/utils/accessorySaleReceiptPdf';
 import CustomerPicker from '@/components/shared/CustomerPicker';
+import Pagination from '@/components/shared/Pagination';
 import type { WCustomer } from '@/types/wireless';
 
-type SalePaymentMethod = 'Cash' | 'Card' | 'Transfer';
-const PAYMENT_METHODS: SalePaymentMethod[] = ['Cash', 'Card', 'Transfer'];
+type SalePaymentMethod = 'Cash' | 'Card' | 'MoMo';
+const PAYMENT_METHODS: SalePaymentMethod[] = ['Cash', 'Card', 'MoMo'];
+const SALES_PAGE_SIZE = 8;
 
 function isToday(iso: string) {
   return new Date(iso).toDateString() === new Date().toDateString();
@@ -34,8 +36,12 @@ export default function SalesPanel() {
   const [customerPhone, setCustomerPhone] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<WCustomer | null>(null);
   const [customerError, setCustomerError] = useState('');
+  const [salesPage, setSalesPage] = useState(1);
 
   const salesToday = useMemo(() => sales.filter(s => isToday(s.sold_at)), [sales]);
+  const pagedSales = useMemo(() =>
+    sales.slice((salesPage - 1) * SALES_PAGE_SIZE, salesPage * SALES_PAGE_SIZE),
+  [sales, salesPage]);
   const revenueToday = useMemo(() => salesToday.reduce((sum, s) => sum + s.total, 0), [salesToday]);
   const inStock = useMemo(() => products.reduce((sum, p) => sum + p.stock, 0), [products]);
 
@@ -298,7 +304,7 @@ export default function SalesPanel() {
         <div className="divide-y" style={{ borderColor: 'hsl(var(--border))' }}>
           {sales.length === 0 ? (
             <p className="py-6 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No sales recorded yet.</p>
-          ) : sales.slice(0, 8).map(s => (
+          ) : pagedSales.map(s => (
             <div key={s.id} className="flex items-center justify-between px-5 py-3" style={{ borderColor: 'hsl(var(--border))' }}>
               <div>
                 <p className="text-sm font-medium" style={{ color: 'hsl(var(--foreground))' }}>{s.product_name}</p>
@@ -323,6 +329,17 @@ export default function SalesPanel() {
             </div>
           ))}
         </div>
+        {sales.length > 0 && (
+          <div className="px-5 py-3 border-t" style={{ borderColor: 'hsl(var(--border))' }}>
+            <Pagination
+              page={salesPage}
+              pageCount={Math.ceil(sales.length / SALES_PAGE_SIZE)}
+              total={sales.length}
+              pageSize={SALES_PAGE_SIZE}
+              onPageChange={setSalesPage}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
