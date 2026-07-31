@@ -7,6 +7,8 @@ export interface MyNotificationRow {
   entity_id: string | null;
   actor_name: string | null;
   created_at: string;
+  before_data: Record<string, unknown> | null;
+  after_data: Record<string, unknown> | null;
 }
 
 export async function getMyNotifications(limit = 30): Promise<MyNotificationRow[]> {

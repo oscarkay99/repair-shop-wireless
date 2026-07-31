@@ -41,7 +41,7 @@ function toNotification(row: MyNotificationRow, read: boolean): Notification {
     id: row.id,
     type: TABLE_TYPE[row.table_name] ?? 'alert',
     title: `${TABLE_TITLE[row.table_name] ?? row.table_name} ${row.action}`,
-    message: summarizeAuditAction(row.actor_name, row.action, row.table_name),
+    message: summarizeAuditAction(row.actor_name, row.action, row.table_name, row.before_data, row.after_data),
     time: new Date(row.created_at),
     read,
   };
