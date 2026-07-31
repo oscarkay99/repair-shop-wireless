@@ -3,11 +3,15 @@ import { createPortal } from 'react-dom';
 import { usePageTitle } from '@/context/PageTitleContext';
 import { useAccessoryStore } from '@/hooks/useAccessoryStore';
 import { useTaxSettings } from '@/hooks/useTaxSettings';
+import { useWirelessSettings } from '@/hooks/useWirelessSettings';
 import SearchDropdown from '@/components/shared/SearchDropdown';
 import Pagination from '@/components/shared/Pagination';
 import DateRangePicker, { type DateRange } from '@/components/shared/DateRangePicker';
-import { Pencil, Trash2, X, ShoppingCart, TrendingUp, ShoppingBag, AlertTriangle } from 'lucide-react';
+import { Pencil, Trash2, X, ShoppingCart, TrendingUp, ShoppingBag, AlertTriangle, Printer } from 'lucide-react';
 import type { AccessoryProduct, AccessorySaleRecord } from '@/services/wireless/accessoryStore';
+import { downloadAccessorySaleReceiptPdf } from '@/utils/accessorySaleReceiptPdf';
+import { useToast } from '@/contexts/ToastContext';
+import { errMessage } from '@/utils/errors';
 import CustomerPicker from '@/components/shared/CustomerPicker';
 import type { WCustomer } from '@/types/wireless';
 
@@ -131,9 +135,10 @@ function ProductModal({ initial, onSave, onClose }: {
 
 // ── Record Sale Modal ─────────────────────────────────────────────────────────
 
-function RecordSaleModal({ products, onSave, onClose }: {
+function RecordSaleModal({ products, settings, onSave, onClose }: {
   products: AccessoryProduct[];
-  onSave: (s: Omit<AccessorySaleRecord, 'id' | 'sale_number' | 'sold_at'>) => Promise<void>;
+  settings?: { business_name?: string; tagline?: string; phone?: string; address?: string; logo_url?: string | null };
+  onSave: (s: Omit<AccessorySaleRecord, 'id' | 'sale_number' | 'sold_at'>) => Promise<AccessorySaleRecord>;
   onClose: () => void;
 }) {
   const [productId, setProductId]   = useState(products[0]?.id ?? '');
@@ -146,6 +151,7 @@ function RecordSaleModal({ products, onSave, onClose }: {
   const [customerError, setCustomerError] = useState('');
 
   const { taxEnabled, vatRate } = useTaxSettings();
+  const { showToast } = useToast();
   const product  = products.find(p => p.id === productId);
   const subtotal = product ? product.price * Number(qty) : 0;
   const tax      = taxEnabled ? Math.round(subtotal * (vatRate / 100) * 100) / 100 : 0;
@@ -163,7 +169,7 @@ function RecordSaleModal({ products, onSave, onClose }: {
     setCustomerError('');
     setSaving(true);
     try {
-      await onSave({
+      const sale = await onSave({
         product_id:     product.id,
         product_name:   product.name,
         category:       product.category,
@@ -175,6 +181,10 @@ function RecordSaleModal({ products, onSave, onClose }: {
         customer_name:  customerName || 'Walk-in Customer',
       });
       onClose();
+      // The sale itself already succeeded at this point — a receipt PDF
+      // failure (e.g. logo fetch) shouldn't read as the sale having failed.
+      try { await downloadAccessorySaleReceiptPdf({ sale, settings }); }
+      catch (e) { showToast(errMessage(e, 'Sale recorded, but the receipt could not be generated'), 'error'); }
     } finally { setSaving(false); }
   };
 
@@ -280,6 +290,8 @@ type Tab = 'overview' | 'products' | 'sales';
 export default function AccessoriesSalesPage() {
   const { setPageTitle } = usePageTitle();
   const { products, sales, loading, addProduct, patchProduct, removeProduct, recordSale } = useAccessoryStore();
+  const { settings } = useWirelessSettings();
+  const { showToast } = useToast();
 
   const [tab, setTab]               = useState<Tab>('overview');
   const [productSearch, setProductSearch] = useState('');
@@ -579,7 +591,7 @@ export default function AccessoriesSalesPage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr style={{ borderBottom: '1px solid hsl(var(--border))' }}>
-                        {['Sale #', 'Product', 'Qty', 'Unit Price', 'Total', 'Payment', 'Date'].map(h => (
+                        {['Sale #', 'Product', 'Qty', 'Unit Price', 'Total', 'Payment', 'Date', ''].map(h => (
                           <th key={h} className="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-wider"
                             style={{ color: 'hsl(var(--muted-foreground))' }}>{h}</th>
                         ))}
@@ -587,7 +599,7 @@ export default function AccessoriesSalesPage() {
                     </thead>
                     <tbody>
                       {pagedSales.length === 0 ? (
-                        <tr><td colSpan={7} className="px-5 py-10 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No sales found</td></tr>
+                        <tr><td colSpan={8} className="px-5 py-10 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No sales found</td></tr>
                       ) : pagedSales.map((s, i) => {
                         const ps = PAY_COLORS[s.payment_method] ?? PAY_COLORS.Card;
                         return (
@@ -610,6 +622,16 @@ export default function AccessoriesSalesPage() {
                             <td className="px-5 py-3.5 text-xs whitespace-nowrap" style={{ color: 'hsl(var(--muted-foreground))' }}>
                               {new Date(s.sold_at).toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
                             </td>
+                            <td className="px-5 py-3.5">
+                              <button
+                                onClick={() => downloadAccessorySaleReceiptPdf({ sale: s, settings: settings ?? undefined })
+                                  .catch(e => showToast(errMessage(e, 'Failed to generate receipt'), 'error'))}
+                                title="Download receipt"
+                                className="w-7 h-7 flex items-center justify-center rounded-lg"
+                                style={{ background: 'hsl(var(--muted))' }}>
+                                <Printer className="w-3.5 h-3.5" style={{ color: 'hsl(var(--muted-foreground))' }} />
+                              </button>
+                            </td>
                           </tr>
                         );
                       })}
@@ -630,7 +652,7 @@ export default function AccessoriesSalesPage() {
         )}
       </div>
 
-      {showSaleModal    && <RecordSaleModal products={products} onSave={recordSale} onClose={() => setShowSaleModal(false)} />}
+      {showSaleModal    && <RecordSaleModal products={products} settings={settings ?? undefined} onSave={recordSale} onClose={() => setShowSaleModal(false)} />}
       {showAddProduct   && <ProductModal onSave={async f => { await addProduct({ name: f.name, sku: f.sku, compatible_with: f.compatible_with, category: f.category, price: Number(f.price), cost: Number(f.cost), stock: Number(f.stock), reorder_at: Number(f.reorder_at) }); }} onClose={() => setShowAddProduct(false)} />}
       {editProduct      && <ProductModal initial={editProduct} onSave={async f => { await patchProduct(editProduct.id, { name: f.name, sku: f.sku, compatible_with: f.compatible_with, category: f.category, price: Number(f.price), cost: Number(f.cost), stock: Number(f.stock), reorder_at: Number(f.reorder_at) }); }} onClose={() => setEditProduct(null)} />}
     </div>
