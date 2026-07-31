@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Search, Phone, Clock3, ClipboardList, ChevronDown,
   CheckCircle2, UserX, Smartphone, Bell, User, Tag, X,
@@ -8,9 +8,11 @@ import { useRepairs } from '@/hooks/useRepairs';
 import { useTechnicians } from '@/hooks/useTechnicians';
 import { REPAIR_STATUS_META, isOverdueRepair, isActiveRepairStatus } from '@/utils/repairStatus';
 import { formatDate } from '@/utils/date';
+import Pagination from '@/components/shared/Pagination';
 import type { Repair, RepairStatus } from '@/types/repair';
 
 type FilterKey = 'all' | 'pending' | 'in_progress' | 'ready' | 'completed';
+const PAGE_SIZE = 10;
 
 const COMPLETED_STATUSES: RepairStatus[] = ['completed', 'diagnosis_only_closed', 'cancelled'];
 
@@ -38,6 +40,7 @@ export default function TicketsPanel() {
   const [filter, setFilter] = useState<FilterKey>('all');
   const [discountRequestId, setDiscountRequestId] = useState<string | null>(null);
   const [discountReason, setDiscountReason] = useState('');
+  const [page, setPage] = useState(1);
 
   const today = new Date().toDateString();
   const todaysIntake = useMemo(
@@ -68,6 +71,12 @@ export default function TicketsPanel() {
       .filter(r => !q || r.id.toLowerCase().includes(q) || r.customer.toLowerCase().includes(q) || r.device.toLowerCase().includes(q))
       .sort((a, b) => (b.createdAt ?? b.started).localeCompare(a.createdAt ?? a.started));
   }, [repairs, filter, search]);
+
+  useEffect(() => { setPage(1); }, [filter, search]);
+
+  const pagedRepairs = useMemo(() =>
+    filteredRepairs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+  [filteredRepairs, page]);
 
   const handleAssign = (repairId: string, techId: string) => {
     if (!techId) { patchRepair(repairId, { technicians: [] }); return; }
@@ -182,7 +191,7 @@ export default function TicketsPanel() {
             <p className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Loading…</p>
           ) : filteredRepairs.length === 0 ? (
             <p className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No tickets match.</p>
-          ) : filteredRepairs.map(repair => {
+          ) : pagedRepairs.map(repair => {
             const s = REPAIR_STATUS_META[repair.status];
             const overdue = isOverdueRepair(repair);
             const assignedTech = repair.technicians[0];
@@ -286,6 +295,15 @@ export default function TicketsPanel() {
               </div>
             );
           })}
+        </div>
+        <div className="mt-3">
+          <Pagination
+            page={page}
+            pageCount={Math.ceil(filteredRepairs.length / PAGE_SIZE)}
+            total={filteredRepairs.length}
+            pageSize={PAGE_SIZE}
+            onPageChange={setPage}
+          />
         </div>
       </div>
     </div>

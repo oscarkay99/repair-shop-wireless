@@ -1,15 +1,25 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Boxes, AlertTriangle, Package, Search } from 'lucide-react';
 import { useParts } from '@/hooks/useParts';
+import Pagination from '@/components/shared/Pagination';
+
+const PAGE_SIZE = 10;
 
 export default function InventoryPanel() {
   const { parts, loading, lowStock } = useParts();
   const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
 
   const filtered = parts.filter(p => {
     const q = query.toLowerCase();
     return !q || p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q);
   });
+
+  useEffect(() => { setPage(1); }, [query]);
+
+  const paged = useMemo(() =>
+    filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+  [filtered, page]);
 
   return (
     <div className="space-y-5">
@@ -52,11 +62,11 @@ export default function InventoryPanel() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((p, i) => {
+              {paged.map((p, i) => {
                 const isLow = p.stock < p.min_stock;
                 return (
                   <tr key={p.id} className="transition-colors"
-                    style={{ borderBottom: i < filtered.length - 1 ? '1px solid hsl(var(--border))' : 'none' }}
+                    style={{ borderBottom: i < paged.length - 1 ? '1px solid hsl(var(--border))' : 'none' }}
                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}>
                     <td className="px-4 py-3">
@@ -87,6 +97,13 @@ export default function InventoryPanel() {
           </table>
         )}
       </div>
+      <Pagination
+        page={page}
+        pageCount={Math.ceil(filtered.length / PAGE_SIZE)}
+        total={filtered.length}
+        pageSize={PAGE_SIZE}
+        onPageChange={setPage}
+      />
     </div>
   );
 }

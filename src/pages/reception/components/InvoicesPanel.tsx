@@ -1,14 +1,16 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { FileText, CreditCard, AlertCircle, Search, Eye, Share2, Printer, Check, Plus, X } from 'lucide-react';
 import { useInvoices } from '@/hooks/useInvoices';
 import { useToast } from '@/contexts/ToastContext';
 import { formatDate } from '@/utils/date';
+import Pagination from '@/components/shared/Pagination';
 import type { Invoice, InvoiceStatus } from '@/types/wireless';
 import type { PaymentMethod } from '@/types/sale';
 
 interface SplitRow { method: PaymentMethod; amount: string }
 
 type FilterKey = 'all' | 'unpaid' | 'partial' | 'paid' | 'overdue';
+const PAGE_SIZE = 10;
 
 const FILTERS: { key: FilterKey; label: string }[] = [
   { key: 'all',     label: 'All' },
@@ -36,6 +38,7 @@ export default function InvoicesPanel() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [markingPaidId, setMarkingPaidId] = useState<string | null>(null);
   const [splits, setSplits] = useState<SplitRow[]>([]);
+  const [page, setPage] = useState(1);
 
   const unpaidCount = useMemo(() => invoices.filter(i => i.status === 'unpaid').length, [invoices]);
 
@@ -46,6 +49,12 @@ export default function InvoicesPanel() {
       .filter(i => !q || i.invoice_number.toLowerCase().includes(q) || (i.customer?.name ?? '').toLowerCase().includes(q))
       .sort((a, b) => b.created_at.localeCompare(a.created_at));
   }, [invoices, filter, search]);
+
+  useEffect(() => { setPage(1); }, [filter, search]);
+
+  const pagedInvoices = useMemo(() =>
+    filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+  [filtered, page]);
 
   const handleShare = async (invoiceNumber: string, total: number, customer?: string) => {
     const text = `Invoice ${invoiceNumber}${customer ? ` for ${customer}` : ''} — GH₵ ${total.toFixed(2)}`;
@@ -151,7 +160,7 @@ export default function InvoicesPanel() {
             <p className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Loading…</p>
           ) : filtered.length === 0 ? (
             <p className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No invoices match.</p>
-          ) : filtered.map(inv => {
+          ) : pagedInvoices.map(inv => {
             const s = STATUS_META[inv.status];
             const outstanding = inv.total - inv.amount_paid;
             const expanded = expandedId === inv.id;
@@ -256,6 +265,15 @@ export default function InvoicesPanel() {
               </div>
             );
           })}
+        </div>
+        <div className="mt-3">
+          <Pagination
+            page={page}
+            pageCount={Math.ceil(filtered.length / PAGE_SIZE)}
+            total={filtered.length}
+            pageSize={PAGE_SIZE}
+            onPageChange={setPage}
+          />
         </div>
       </div>
     </div>
