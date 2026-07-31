@@ -1,8 +1,13 @@
 import { useMemo, useState } from 'react';
 import { ShoppingCart, Banknote, Package, Search } from 'lucide-react';
 import { useAccessoryStore } from '@/hooks/useAccessoryStore';
+import { useWirelessSettings } from '@/hooks/useWirelessSettings';
 import { useToast } from '@/contexts/ToastContext';
+import { errMessage } from '@/utils/errors';
 import type { AccessoryProduct } from '@/services/wireless/accessoryStore';
+import { downloadAccessorySaleReceiptPdf } from '@/utils/accessorySaleReceiptPdf';
+import CustomerPicker from '@/components/shared/CustomerPicker';
+import type { WCustomer } from '@/types/wireless';
 
 type SalePaymentMethod = 'Cash' | 'Card' | 'Transfer';
 const PAYMENT_METHODS: SalePaymentMethod[] = ['Cash', 'Card', 'Transfer'];
@@ -13,12 +18,17 @@ function isToday(iso: string) {
 
 export default function SalesPanel() {
   const { products, sales, loading, recordSale } = useAccessoryStore();
+  const { settings } = useWirelessSettings();
   const { showToast } = useToast();
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<AccessoryProduct | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [method, setMethod] = useState<SalePaymentMethod>('Cash');
   const [submitting, setSubmitting] = useState(false);
+  const [customerName, setCustomerName]   = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [selectedCustomer, setSelectedCustomer] = useState<WCustomer | null>(null);
+  const [customerError, setCustomerError] = useState('');
 
   const salesToday = useMemo(() => sales.filter(s => isToday(s.sold_at)), [sales]);
   const revenueToday = useMemo(() => salesToday.reduce((sum, s) => sum + s.total, 0), [salesToday]);
@@ -28,9 +38,16 @@ export default function SalesPanel() {
 
   const handleRecordSale = async () => {
     if (!selected) return;
+    // A typed customer name must be linked to a real customer record — either
+    // picked from the dropdown or created inline through it.
+    if (customerName.trim() && !selectedCustomer) {
+      setCustomerError('Select an existing customer or create a new one from the dropdown.');
+      return;
+    }
+    setCustomerError('');
     setSubmitting(true);
     try {
-      await recordSale({
+      const sale = await recordSale({
         product_id: selected.id,
         product_name: selected.name,
         category: selected.category,
@@ -38,11 +55,19 @@ export default function SalesPanel() {
         unit_price: selected.price,
         total: selected.price * quantity,
         payment_method: method,
+        customer_id: selectedCustomer?.id ?? null,
+        customer_name: customerName || 'Walk-in Customer',
       });
-      showToast('Sale recorded');
       setSelected(null);
       setQuantity(1);
       setMethod('Cash');
+      setCustomerName('');
+      setCustomerPhone('');
+      setSelectedCustomer(null);
+      // The sale itself already succeeded at this point — a receipt PDF
+      // failure (e.g. logo fetch) shouldn't read as the sale having failed.
+      try { await downloadAccessorySaleReceiptPdf({ sale, settings: settings ?? undefined }); }
+      catch (e) { showToast(errMessage(e, 'Sale recorded, but the receipt could not be generated'), 'error'); }
     } finally {
       setSubmitting(false);
     }
@@ -120,6 +145,31 @@ export default function SalesPanel() {
           <p className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>
             Selling <span className="font-semibold" style={{ color: 'hsl(var(--foreground))' }}>{selected.name}</span>
           </p>
+        )}
+
+        <CustomerPicker
+          value={customerName}
+          phone={customerPhone}
+          required={false}
+          label="Customer"
+          placeholder="Search by name or phone… (optional)"
+          onChange={(name, phone, customer) => {
+            setCustomerName(name);
+            setCustomerPhone(phone);
+            setSelectedCustomer(customer ?? null);
+          }}
+        />
+        {customerName.trim() && !selectedCustomer && (
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>Customer Phone *</label>
+            <input value={customerPhone} onChange={e => setCustomerPhone(e.target.value)}
+              className="w-full h-9 px-3 rounded-xl text-xs outline-none"
+              style={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
+              placeholder="+233…" />
+          </div>
+        )}
+        {customerError && (
+          <p className="text-xs" style={{ color: '#dc2626' }}>{customerError}</p>
         )}
 
         <div className="grid grid-cols-2 gap-3">
