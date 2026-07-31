@@ -136,9 +136,8 @@ function ProductModal({ initial, onSave, onClose }: {
 
 // ── Record Sale Modal ─────────────────────────────────────────────────────────
 
-function RecordSaleModal({ products, settings, onSave, onClose }: {
+function RecordSaleModal({ products, onSave, onClose }: {
   products: AccessoryProduct[];
-  settings?: { business_name?: string; tagline?: string; phone?: string; address?: string; logo_url?: string | null };
   onSave: (s: Omit<AccessorySaleRecord, 'id' | 'sale_number' | 'sold_at'>) => Promise<AccessorySaleRecord>;
   onClose: () => void;
 }) {
@@ -153,7 +152,6 @@ function RecordSaleModal({ products, settings, onSave, onClose }: {
   const [customerError, setCustomerError] = useState('');
 
   const { taxEnabled, vatRate } = useTaxSettings();
-  const { showToast } = useToast();
   const { add: addCustomer } = useWirelessCustomers();
   const product  = products.find(p => p.id === productId);
   const subtotal = product ? product.price * Number(qty) : 0;
@@ -181,7 +179,10 @@ function RecordSaleModal({ products, settings, onSave, onClose }: {
       const customer = customerMode === 'new' && customerName.trim() && !selectedCustomer
         ? await addCustomer({ name: customerName.trim(), phone: customerPhone.trim(), email: '', address: '' })
         : selectedCustomer;
-      const sale = await onSave({
+      // Receipt isn't auto-downloaded — the sale is recorded in Sales
+      // History, where it can be downloaded on demand (same pattern as
+      // Invoices' own "Download PDF" button) rather than forced every time.
+      await onSave({
         product_id:     product.id,
         product_name:   product.name,
         category:       product.category,
@@ -193,10 +194,6 @@ function RecordSaleModal({ products, settings, onSave, onClose }: {
         customer_name:  customerName || 'Walk-in Customer',
       });
       onClose();
-      // The sale itself already succeeded at this point — a receipt PDF
-      // failure (e.g. logo fetch) shouldn't read as the sale having failed.
-      try { await downloadAccessorySaleReceiptPdf({ sale, settings }); }
-      catch (e) { showToast(errMessage(e, 'Sale recorded, but the receipt could not be generated'), 'error'); }
     } finally { setSaving(false); }
   };
 
@@ -712,7 +709,7 @@ export default function AccessoriesSalesPage() {
         )}
       </div>
 
-      {showSaleModal    && <RecordSaleModal products={products} settings={settings ?? undefined} onSave={recordSale} onClose={() => setShowSaleModal(false)} />}
+      {showSaleModal    && <RecordSaleModal products={products} onSave={recordSale} onClose={() => setShowSaleModal(false)} />}
       {showAddProduct   && <ProductModal onSave={async f => { await addProduct({ name: f.name, sku: f.sku, compatible_with: f.compatible_with, category: f.category, price: Number(f.price), cost: Number(f.cost), stock: Number(f.stock), reorder_at: Number(f.reorder_at) }); }} onClose={() => setShowAddProduct(false)} />}
       {editProduct      && <ProductModal initial={editProduct} onSave={async f => { await patchProduct(editProduct.id, { name: f.name, sku: f.sku, compatible_with: f.compatible_with, category: f.category, price: Number(f.price), cost: Number(f.cost), stock: Number(f.stock), reorder_at: Number(f.reorder_at) }); }} onClose={() => setEditProduct(null)} />}
     </div>

@@ -1,6 +1,6 @@
 import { jsPDF, GState } from 'jspdf';
 import type { AccessorySaleRecord } from '@/services/wireless/accessoryStore';
-import { loadWirelessLogo, fitLogoBox, fmtGHS, SERVICE_TERMS_URL, loadTrackerQrCode, trackerUrlFor } from '@/utils/pdfBranding';
+import { loadWirelessLogo, fitLogoBox, fmtGHS, SERVICE_TERMS_URL } from '@/utils/pdfBranding';
 
 export interface AccessoryReceiptBrandSettings {
   business_name?: string;
@@ -42,9 +42,6 @@ export async function buildAccessorySaleReceiptPdf({ sale, settings }: Accessory
     logoRatio = props.height / props.width;
     logoType = props.fileType;
   } catch { logo = null; }
-
-  let trackerQr: string | null = null;
-  try { trackerQr = await loadTrackerQrCode(trackerUrlFor()); } catch { trackerQr = null; }
 
   if (logo) {
     const { w: wmW, h: wmH } = fitLogoBox(logoRatio, 140, 90);
@@ -168,17 +165,6 @@ export async function buildAccessorySaleReceiptPdf({ sale, settings }: Accessory
     url: SERVICE_TERMS_URL,
     align: 'center',
   });
-
-  if (trackerQr) {
-    const qrSize = 15;
-    const qrX = RIGHT_X - qrSize;
-    const qrY = noteY + 16 - qrSize + 2;
-    doc.addImage(trackerQr, 'PNG', qrX, qrY, qrSize, qrSize);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(6);
-    doc.setTextColor(140);
-    doc.text('Scan to track', qrX + qrSize / 2, qrY + qrSize + 3, { align: 'center' });
-  }
 
   return doc;
 }

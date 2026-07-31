@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ShoppingCart, Banknote, Package, Search } from 'lucide-react';
+import { ShoppingCart, Banknote, Package, Search, Printer } from 'lucide-react';
 import { useAccessoryStore } from '@/hooks/useAccessoryStore';
 import { useWirelessSettings } from '@/hooks/useWirelessSettings';
 import { useTaxSettings } from '@/hooks/useTaxSettings';
@@ -65,7 +65,10 @@ export default function SalesPanel() {
       const customer = customerMode === 'new' && customerName.trim() && !selectedCustomer
         ? await addCustomer({ name: customerName.trim(), phone: customerPhone.trim(), email: '', address: '' })
         : selectedCustomer;
-      const sale = await recordSale({
+      // Receipt isn't auto-downloaded — the sale is recorded below in
+      // Recent Sales, where it can be downloaded on demand (same pattern as
+      // Invoices' own "Download PDF" button) rather than forced every time.
+      await recordSale({
         product_id: selected.id,
         product_name: selected.name,
         category: selected.category,
@@ -83,10 +86,6 @@ export default function SalesPanel() {
       setCustomerName('');
       setCustomerPhone('');
       setSelectedCustomer(null);
-      // The sale itself already succeeded at this point — a receipt PDF
-      // failure (e.g. logo fetch) shouldn't read as the sale having failed.
-      try { await downloadAccessorySaleReceiptPdf({ sale, settings: settings ?? undefined }); }
-      catch (e) { showToast(errMessage(e, 'Sale recorded, but the receipt could not be generated'), 'error'); }
     } finally {
       setSubmitting(false);
     }
@@ -290,6 +289,40 @@ export default function SalesPanel() {
           <ShoppingCart className="w-4 h-4" />
           {selected ? `Record Sale — GH₵${total.toFixed(2)}` : 'Select an accessory'}
         </button>
+      </div>
+
+      <div className="rounded-2xl overflow-hidden" style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
+        <div className="px-5 py-3 border-b" style={{ borderColor: 'hsl(var(--border))' }}>
+          <p className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>Recent Sales</p>
+        </div>
+        <div className="divide-y" style={{ borderColor: 'hsl(var(--border))' }}>
+          {sales.length === 0 ? (
+            <p className="py-6 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No sales recorded yet.</p>
+          ) : sales.slice(0, 8).map(s => (
+            <div key={s.id} className="flex items-center justify-between px-5 py-3" style={{ borderColor: 'hsl(var(--border))' }}>
+              <div>
+                <p className="text-sm font-medium" style={{ color: 'hsl(var(--foreground))' }}>{s.product_name}</p>
+                <p className="text-xs mt-0.5" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                  {s.sale_number} · {new Date(s.sold_at).toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <p className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>GH₵{s.total.toFixed(2)}</p>
+                  <p className="text-xs mt-0.5" style={{ color: 'hsl(var(--muted-foreground))' }}>{s.payment_method}</p>
+                </div>
+                <button
+                  onClick={() => downloadAccessorySaleReceiptPdf({ sale: s, settings: settings ?? undefined })
+                    .catch(e => showToast(errMessage(e, 'Failed to generate receipt'), 'error'))}
+                  title="Download receipt"
+                  className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer"
+                  style={{ background: 'hsl(var(--muted))' }}>
+                  <Printer className="w-3.5 h-3.5" style={{ color: 'hsl(var(--muted-foreground))' }} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
