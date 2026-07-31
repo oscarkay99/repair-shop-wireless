@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import { ShoppingCart, Banknote, Package, Search } from 'lucide-react';
 import { useAccessoryStore } from '@/hooks/useAccessoryStore';
 import { useWirelessSettings } from '@/hooks/useWirelessSettings';
+import { useTaxSettings } from '@/hooks/useTaxSettings';
+import { useWirelessCustomers } from '@/hooks/useWirelessCustomers';
 import { useToast } from '@/contexts/ToastContext';
 import { errMessage } from '@/utils/errors';
 import type { AccessoryProduct } from '@/services/wireless/accessoryStore';
@@ -19,12 +21,15 @@ function isToday(iso: string) {
 export default function SalesPanel() {
   const { products, sales, loading, recordSale } = useAccessoryStore();
   const { settings } = useWirelessSettings();
+  const { taxEnabled, vatRate } = useTaxSettings();
+  const { add: addCustomer } = useWirelessCustomers();
   const { showToast } = useToast();
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<AccessoryProduct | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [method, setMethod] = useState<SalePaymentMethod>('Cash');
   const [submitting, setSubmitting] = useState(false);
+  const [customerMode, setCustomerMode]   = useState<'existing' | 'new'>('existing');
   const [customerName, setCustomerName]   = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<WCustomer | null>(null);
@@ -36,31 +41,45 @@ export default function SalesPanel() {
 
   const filtered = products.filter(p => !query.trim() || p.name.toLowerCase().includes(query.toLowerCase()));
 
+  const subtotal = selected ? selected.price * quantity : 0;
+  const tax      = taxEnabled ? Math.round(subtotal * (vatRate / 100) * 100) / 100 : 0;
+  const total    = subtotal + tax;
+
   const handleRecordSale = async () => {
     if (!selected) return;
-    // A typed customer name must be linked to a real customer record — either
-    // picked from the dropdown or created inline through it.
-    if (customerName.trim() && !selectedCustomer) {
+    // Existing tab: a typed name must resolve to a real customer record —
+    // picked from the dropdown or created inline through it. New tab: name
+    // and phone are typed fresh and the customer is created right here on
+    // submit (same split as the New Ticket modal's Existing/New toggle).
+    if (customerMode === 'existing' && customerName.trim() && !selectedCustomer) {
       setCustomerError('Select an existing customer or create a new one from the dropdown.');
+      return;
+    }
+    if (customerMode === 'new' && customerName.trim() && !customerPhone.trim()) {
+      setCustomerError('Phone number is required to create a new customer.');
       return;
     }
     setCustomerError('');
     setSubmitting(true);
     try {
+      const customer = customerMode === 'new' && customerName.trim() && !selectedCustomer
+        ? await addCustomer({ name: customerName.trim(), phone: customerPhone.trim(), email: '', address: '' })
+        : selectedCustomer;
       const sale = await recordSale({
         product_id: selected.id,
         product_name: selected.name,
         category: selected.category,
         quantity,
         unit_price: selected.price,
-        total: selected.price * quantity,
+        total,
         payment_method: method,
-        customer_id: selectedCustomer?.id ?? null,
+        customer_id: customer?.id ?? null,
         customer_name: customerName || 'Walk-in Customer',
       });
       setSelected(null);
       setQuantity(1);
       setMethod('Cash');
+      setCustomerMode('existing');
       setCustomerName('');
       setCustomerPhone('');
       setSelectedCustomer(null);
@@ -147,26 +166,74 @@ export default function SalesPanel() {
           </p>
         )}
 
-        <CustomerPicker
-          value={customerName}
-          phone={customerPhone}
-          required={false}
-          label="Customer"
-          placeholder="Search by name or phone… (optional)"
-          onChange={(name, phone, customer) => {
-            setCustomerName(name);
-            setCustomerPhone(phone);
-            setSelectedCustomer(customer ?? null);
-          }}
-        />
-        {customerName.trim() && !selectedCustomer && (
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>Customer Phone *</label>
-            <input value={customerPhone} onChange={e => setCustomerPhone(e.target.value)}
-              className="w-full h-9 px-3 rounded-xl text-xs outline-none"
-              style={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
-              placeholder="+233…" />
+        <div className="space-y-1.5">
+          <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>Customer</label>
+          <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid hsl(var(--border))' }}>
+            {(['existing', 'new'] as const).map(mode => (
+              <button key={mode} type="button"
+                onClick={() => {
+                  setCustomerMode(mode);
+                  setCustomerError('');
+                  setSelectedCustomer(null);
+                  setCustomerName('');
+                  setCustomerPhone('');
+                }}
+                className="flex-1 text-xs font-bold py-1.5 transition-colors cursor-pointer"
+                style={customerMode === mode
+                  ? { background: 'hsl(var(--primary))', color: 'white' }
+                  : { background: 'hsl(var(--background))', color: 'hsl(var(--muted-foreground))' }}>
+                {mode === 'existing' ? 'Existing' : 'New'}
+              </button>
+            ))}
           </div>
+        </div>
+        {customerMode === 'new' ? (
+          <>
+            <CustomerPicker
+              createMode
+              value={customerName}
+              phone={customerPhone}
+              required={false}
+              label="Customer Name"
+              placeholder="Full name (optional — leave blank for walk-in)"
+              onChange={(name, phone, customer) => {
+                setCustomerName(name);
+                if (customer) setCustomerPhone(phone);
+                setSelectedCustomer(customer ?? null);
+              }}
+            />
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>Customer Phone{customerName.trim() ? ' *' : ''}</label>
+              <input value={customerPhone} onChange={e => setCustomerPhone(e.target.value)}
+                className="w-full h-9 px-3 rounded-xl text-xs outline-none"
+                style={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
+                placeholder="+233…" />
+            </div>
+          </>
+        ) : (
+          <>
+            <CustomerPicker
+              value={customerName}
+              phone={customerPhone}
+              required={false}
+              label="Customer"
+              placeholder="Search by name or phone… (optional)"
+              onChange={(name, phone, customer) => {
+                setCustomerName(name);
+                setCustomerPhone(phone);
+                setSelectedCustomer(customer ?? null);
+              }}
+            />
+            {customerName.trim() && !selectedCustomer && (
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>Customer Phone *</label>
+                <input value={customerPhone} onChange={e => setCustomerPhone(e.target.value)}
+                  className="w-full h-9 px-3 rounded-xl text-xs outline-none"
+                  style={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
+                  placeholder="+233…" />
+              </div>
+            )}
+          </>
         )}
         {customerError && (
           <p className="text-xs" style={{ color: '#dc2626' }}>{customerError}</p>
@@ -201,6 +268,19 @@ export default function SalesPanel() {
           </div>
         </div>
 
+        {selected && taxEnabled && (
+          <div className="space-y-1 py-2 px-3 rounded-lg" style={{ background: 'hsl(var(--background))' }}>
+            <div className="flex items-center justify-between">
+              <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Subtotal</span>
+              <span className="text-xs" style={{ color: 'hsl(var(--foreground))' }}>GH₵{subtotal.toFixed(2)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>VAT ({vatRate}%)</span>
+              <span className="text-xs" style={{ color: 'hsl(var(--foreground))' }}>GH₵{tax.toFixed(2)}</span>
+            </div>
+          </div>
+        )}
+
         <button
           onClick={handleRecordSale}
           disabled={!selected || submitting}
@@ -208,7 +288,7 @@ export default function SalesPanel() {
           style={{ background: 'hsl(var(--primary))' }}
         >
           <ShoppingCart className="w-4 h-4" />
-          {selected ? `Record Sale — GH₵${(selected.price * quantity).toFixed(2)}` : 'Select an accessory'}
+          {selected ? `Record Sale — GH₵${total.toFixed(2)}` : 'Select an accessory'}
         </button>
       </div>
     </div>
