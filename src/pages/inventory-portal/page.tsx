@@ -26,11 +26,13 @@ export default function InventoryPortalPage() {
   const { parts, loading, add, patch, remove, adjust, lowStock } = useParts();
   const { products: accessoryProducts } = useAccessoryStore();
 
-  // Same restriction as the main /inventory page: stock_manager and admin
-  // can manage parts/accessories (add, edit, delete, adjust stock); every
-  // other portal visitor (receptionist) gets the identical view, minus the
-  // action affordances. Unit cost/supplier stay admin-only either way.
-  const canManage = user?.role === 'admin' || user?.role === 'stock_manager';
+  // Permission-based (parts:edit), not a hardcoded role id — otherwise no
+  // custom role built for this same job (e.g. a differently-named
+  // inventory-manager role) could ever manage anything here, only the one
+  // literally id'd 'stock_manager'. Every other portal visitor gets the
+  // identical view, minus the action affordances. Unit cost/supplier stay
+  // admin-only either way.
+  const canManage = user?.role === 'admin' || (user?.permissions ?? []).includes('parts:edit');
   const canSeeCost = user?.role === 'admin';
 
   const [tab, setTab] = useState<Tab>('parts');

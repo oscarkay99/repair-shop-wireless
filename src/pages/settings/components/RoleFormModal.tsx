@@ -24,7 +24,9 @@ const PERMISSION_GROUPS: { resource: string; label: string; actions: { value: st
     { value: 'invoices:delete', label: 'Delete' }, { value: 'invoices:items_edit', label: 'Edit Line Items' },
   ] },
   { resource: 'technicians', label: 'Technicians Roster', actions: [{ value: 'technicians:edit', label: 'Manage' }] },
-  { resource: 'parts', label: 'Inventory / Parts', actions: [{ value: 'parts:edit', label: 'Manage' }] },
+  { resource: 'parts', label: 'Inventory / Parts', actions: [
+    { value: 'parts:edit', label: 'Manage' }, { value: 'parts:create', label: 'Add New Parts' },
+  ] },
   { resource: 'sales', label: 'Accessory Sales (POS)', actions: [{ value: 'sales:create', label: 'Record Sale' }] },
   { resource: 'payments', label: 'Payments', actions: [{ value: 'payments:create', label: 'Record Payment' }] },
   { resource: 'expenses', label: 'Expenses', actions: [
