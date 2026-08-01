@@ -41,6 +41,7 @@ const DASHBOARD_VARIANTS = [
   { value: 'admin', label: 'Admin (full overview)' },
   { value: 'sales_manager', label: 'Sales Manager' },
   { value: 'receptionist', label: 'Receptionist' },
+  { value: 'inventory_portal', label: 'Inventory Manager (stock portal)' },
 ];
 
 const COLOR_SWATCHES = ['#EC0118', '#F59E0B', '#06B6D4', '#8B5CF6', '#22C55E', '#3B82F6', '#EC4899', '#64748B'];

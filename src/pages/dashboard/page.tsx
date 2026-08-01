@@ -897,9 +897,12 @@ export default function DashboardPage() {
   // Receptionist gets the same treatment — a dedicated full-screen portal
   // (no sidebar/topbar), never the shared shell's dashboard.
   if (user.dashboardVariant === 'receptionist') return <Navigate to="/reception" replace />;
-  // Stock manager's whole job is the inventory portal — land them there
-  // directly rather than the shared dashboard they'd otherwise fall through to.
-  if (user.role === 'stock_manager') return <Navigate to="/inventory-portal" replace />;
+  // Stock/inventory-focused roles get the dedicated inventory portal — land
+  // them there directly rather than the shared dashboard they'd otherwise
+  // fall through to. Keyed off dashboardVariant (so any custom role built
+  // for this job works, not just the one literally named/id'd
+  // 'stock_manager') with the legacy role-id check kept as a fallback.
+  if (user.dashboardVariant === 'inventory_portal' || user.role === 'stock_manager') return <Navigate to="/inventory-portal" replace />;
   return (
     <>
       <BirthdayBanner />

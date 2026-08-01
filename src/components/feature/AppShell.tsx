@@ -52,7 +52,7 @@ function ShellInner() {
   // through this shell. Those pages must never grow the "main menu" back
   // in for receptionist — so the shell itself drops the sidebar for them,
   // on every route, rather than special-casing each page.
-  const hideSidebar = user?.dashboardVariant === 'receptionist' || user?.role === 'stock_manager';
+  const hideSidebar = user?.dashboardVariant === 'receptionist' || user?.dashboardVariant === 'inventory_portal' || user?.role === 'stock_manager';
 
   // Dismiss the mobile drawer on every navigation, not just an explicit close.
   useEffect(() => { setSidebarOpen(false); }, [pathname]);

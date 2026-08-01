@@ -39,7 +39,6 @@ const LEGACY_MODULE_VISIBILITY: Partial<Record<AppModule, string[]>> = {
   Delivery: ['admin', 'sales_manager'],
   Warranty: ['admin', 'technician'],
   Authentication: ['admin'],
-  Portal: ['admin', 'receptionist', 'stock_manager'],
   Activity: ['admin'],
   Users: ['admin'],
   // Reception needs to see who's available before assigning a ticket —
@@ -49,7 +48,7 @@ const LEGACY_MODULE_VISIBILITY: Partial<Record<AppModule, string[]>> = {
   Technicians: ['admin', 'receptionist'],
 };
 
-type PermCtx = Pick<AuthUser, 'role' | 'permissions' | 'scopeTicketsToTechnician'> | null | undefined;
+type PermCtx = Pick<AuthUser, 'role' | 'permissions' | 'scopeTicketsToTechnician' | 'dashboardVariant'> | null | undefined;
 
 export function canAccessModule(user: PermCtx, module: AppModule): boolean {
   if (!user?.role) return false;
@@ -80,6 +79,11 @@ export function canAccessModule(user: PermCtx, module: AppModule): boolean {
       return has('settings:edit');
     case 'Audit Logs':
       return has('audit_logs:view');
+    // Gated on dashboardVariant (which route/portal the role lands on),
+    // not a hardcoded role-id list — otherwise no custom role could ever
+    // reach the portal it was actually built and routed for.
+    case 'Portal':
+      return user.role === 'admin' || user.dashboardVariant === 'receptionist' || user.dashboardVariant === 'inventory_portal' || user.role === 'stock_manager';
     default:
       return LEGACY_MODULE_VISIBILITY[module]?.includes(user.role) ?? false;
   }
