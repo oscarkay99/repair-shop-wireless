@@ -4,6 +4,7 @@ import { useInvoices } from '@/hooks/useInvoices';
 import { useToast } from '@/contexts/ToastContext';
 import { formatDate } from '@/utils/date';
 import Pagination from '@/components/shared/Pagination';
+import { IssueInvoiceModal } from '@/pages/invoices/page';
 import type { Invoice, InvoiceStatus } from '@/types/wireless';
 import type { PaymentMethod } from '@/types/sale';
 
@@ -31,7 +32,7 @@ const STATUS_META: Record<InvoiceStatus, { label: string; bg: string; color: str
 const PAYMENT_METHODS: PaymentMethod[] = ['Cash', 'Card', 'MoMo', 'Bank Transfer'];
 
 export default function InvoicesPanel() {
-  const { invoices, loading, totals, markPaid } = useInvoices();
+  const { invoices, loading, totals, markPaid, add } = useInvoices();
   const { showToast } = useToast();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterKey>('all');
@@ -39,6 +40,7 @@ export default function InvoicesPanel() {
   const [markingPaidId, setMarkingPaidId] = useState<string | null>(null);
   const [splits, setSplits] = useState<SplitRow[]>([]);
   const [page, setPage] = useState(1);
+  const [showIssue, setShowIssue] = useState(false);
 
   const unpaidCount = useMemo(() => invoices.filter(i => i.status === 'unpaid').length, [invoices]);
 
@@ -130,15 +132,22 @@ export default function InvoicesPanel() {
       </div>
 
       <div className="space-y-3">
-        <div className="relative">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'hsl(var(--muted-foreground))' }} />
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search invoice # or customer..."
-            className="w-full h-10 pl-9 pr-3 rounded-xl text-sm outline-none"
-            style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
-          />
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'hsl(var(--muted-foreground))' }} />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search invoice # or customer..."
+              className="w-full h-10 pl-9 pr-3 rounded-xl text-sm outline-none"
+              style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
+            />
+          </div>
+          <button onClick={() => setShowIssue(true)}
+            className="h-10 px-4 flex items-center gap-1.5 rounded-xl text-sm font-semibold text-white cursor-pointer flex-shrink-0"
+            style={{ background: 'hsl(var(--primary))' }}>
+            <Plus className="w-4 h-4" /> New Invoice
+          </button>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {FILTERS.map(f => (
@@ -276,6 +285,10 @@ export default function InvoicesPanel() {
           />
         </div>
       </div>
+
+      {showIssue && (
+        <IssueInvoiceModal onSave={(input, items) => add(input, items)} onClose={() => setShowIssue(false)} />
+      )}
     </div>
   );
 }

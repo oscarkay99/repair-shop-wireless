@@ -91,7 +91,7 @@ const inputStyle = { background: 'hsl(var(--muted))', border: '1px solid hsl(var
 
 interface DraftLineItem { description: string; quantity: string; unit_price: string }
 
-function IssueInvoiceModal({ onSave, onClose }: {
+export function IssueInvoiceModal({ onSave, onClose }: {
   onSave: (
     input: Omit<Invoice, 'id' | 'invoice_number' | 'created_at' | 'updated_at'>,
     items?: { description: string; quantity: number; unit_price: number; total_price: number }[]
