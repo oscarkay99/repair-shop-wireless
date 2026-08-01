@@ -41,11 +41,6 @@ const LEGACY_MODULE_VISIBILITY: Partial<Record<AppModule, string[]>> = {
   Authentication: ['admin'],
   Activity: ['admin'],
   Users: ['admin'],
-  // Reception needs to see who's available before assigning a ticket —
-  // matches technicians:edit already being granted to receptionist at the
-  // RLS layer (this was previously the one module where frontend gating was
-  // stricter than the backend actually allowed).
-  Technicians: ['admin', 'receptionist'],
 };
 
 type PermCtx = Pick<AuthUser, 'role' | 'permissions' | 'scopeTicketsToTechnician' | 'dashboardVariant'> | null | undefined;
@@ -65,6 +60,14 @@ export function canAccessModule(user: PermCtx, module: AppModule): boolean {
       return has('customers:create') || has('customers:edit') || has('customers:delete');
     case 'Inventory':
       return has('parts:edit');
+    // Permission-based, not a hardcoded role id — same fix as Portal above.
+    // technicians:edit alone would under-grant: reads on wireless.technicians
+    // are open to any active user at the RLS layer (writes are the part
+    // gated on technicians:edit), and receptionist's real reason for needing
+    // this page is ticket assignment, not technician management — so ticket
+    // permissions imply access here too, matching what reception already had.
+    case 'Technicians':
+      return has('technicians:edit') || has('tickets:view') || has('tickets:create') || has('tickets:edit') || has('tickets:delete');
     case 'Payments':
       return has('payments:create');
     case 'Invoices':
