@@ -24,6 +24,28 @@ export async function getPaymentsForTicket(ticketId: string): Promise<Payment[]>
   return (data as Payment[] | null) ?? [];
 }
 
+/**
+ * Payments joined down to the technician(s) assigned on their ticket, for
+ * per-technician revenue rollups. A payment tied to a multi-technician
+ * ticket contributes to each assignee — same "everyone assigned shares the
+ * credit" convention already used for job/workload counts on the
+ * Technicians page.
+ */
+export async function getPaymentsWithTechnicians(): Promise<{ amount: number; created_at: string; technicianIds: string[] }[]> {
+  if (!isSupabaseConfigured) return [];
+  const { data, error } = await db
+    .from('payments')
+    .select('amount, created_at, ticket:tickets(ticket_technicians(technician_id))')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return ((data ?? []) as unknown as { amount: number; created_at: string; ticket: { ticket_technicians: { technician_id: string }[] } | null }[])
+    .map(p => ({
+      amount: p.amount,
+      created_at: p.created_at,
+      technicianIds: p.ticket?.ticket_technicians?.map(tt => tt.technician_id) ?? [],
+    }));
+}
+
 export async function recordPayment(input: {
   amount: number;
   method: PaymentMethod;

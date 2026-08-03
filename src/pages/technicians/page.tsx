@@ -11,6 +11,9 @@ import { REPAIR_STATUS_META, isActiveRepairStatus } from '@/utils/repairStatus';
 import { createWirelessUser } from '@/services/wireless/users';
 import { isCurrentlyUnavailable } from '@/utils/technicianAvailability';
 import { errMessage } from '@/utils/errors';
+import { avatarColor, initials, TIMELINE_FILTERS, filterHours, type TimelineFilter } from './shared';
+import PerformanceTab from './tabs/PerformanceTab';
+import AttendanceTab from './tabs/AttendanceTab';
 
 const PAGE_SIZE = 9;
 
@@ -23,32 +26,11 @@ function generatePassword(): string {
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
-const AVATAR_COLORS = ['#3b82f6', '#8b5cf6', '#22c55e', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899', '#f97316'];
-function avatarColor(name: string): string {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffffffff;
-  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
-}
-
-function initials(name: string) {
-  return name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
-}
-
 function timeOnJob(receivedAt: string): string {
   const ms = Date.now() - new Date(receivedAt).getTime();
   const h = Math.floor(ms / 3_600_000);
   const m = Math.floor((ms % 3_600_000) / 60_000);
   return `${h}h ${m}m`;
-}
-
-// ── Timeline filter ───────────────────────────────────────────────────────────
-
-const TIMELINE_FILTERS = ['1hr', '2hrs', '3hrs', '4hrs', '24hrs', '48hrs', '72hrs', 'All'] as const;
-type TimelineFilter = typeof TIMELINE_FILTERS[number];
-
-function filterHours(f: TimelineFilter): number | null {
-  if (f === 'All') return null;
-  return parseInt(f);
 }
 
 // ── Add Technician Modal ──────────────────────────────────────────────────────
@@ -530,6 +512,10 @@ export default function TechniciansPage() {
   // creating a technician account (with login credentials) is reserved
   // for whoever actually holds people-management permission.
   const canAddTechnician = !!user?.permissions?.includes('technicians:edit');
+  const isAdmin = user?.role === 'admin';
+  const canViewAttendance = !!(user?.permissions?.includes('attendance:view') || user?.permissions?.includes('attendance:manage'));
+  const canManageAttendance = !!user?.permissions?.includes('attendance:manage');
+  const [tab, setTab] = useState<'roster' | 'performance' | 'attendance'>('roster');
   const [timeline, setTimeline] = useState<TimelineFilter>('24hrs');
   const [showAdd, setShowAdd] = useState(false);
   const [showReassign, setShowReassign] = useState(false);
@@ -615,6 +601,30 @@ export default function TechniciansPage() {
           </div>
         ))}
       </div>
+
+      {/* Section tabs */}
+      {(isAdmin || canViewAttendance) && (
+        <div className="flex items-center gap-2 flex-wrap border-b" style={{ borderColor: 'hsl(var(--border))' }}>
+          {([
+            { key: 'roster', label: 'Roster' },
+            ...(isAdmin ? [{ key: 'performance', label: 'Performance' }] as const : []),
+            ...(canViewAttendance ? [{ key: 'attendance', label: 'Attendance' }] as const : []),
+          ] as const).map(t => (
+            <button key={t.key} onClick={() => setTab(t.key)}
+              className="px-3 py-2 text-sm font-semibold transition-colors border-b-2 -mb-px"
+              style={tab === t.key
+                ? { color: 'hsl(var(--foreground))', borderColor: 'hsl(var(--primary))' }
+                : { color: 'hsl(var(--muted-foreground))', borderColor: 'transparent' }}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {tab === 'performance' && isAdmin && <PerformanceTab technicians={technicians} repairs={repairs} />}
+      {tab === 'attendance' && canViewAttendance && <AttendanceTab technicians={technicians} canManage={canManageAttendance} />}
+
+      {tab === 'roster' && <>
 
       {/* Timeline filter */}
       <div className="flex items-center gap-2 flex-wrap">
@@ -867,6 +877,8 @@ export default function TechniciansPage() {
           onPageChange={setPage}
         />
       )}
+
+      </>}
 
       {showAdd && <AddTechnicianModal onSave={add} onClose={() => setShowAdd(false)} />}
       {editingTech && <EditTechnicianModal technician={editingTech} onSave={patch} onClose={() => setEditingTech(null)} />}
