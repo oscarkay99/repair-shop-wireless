@@ -87,8 +87,13 @@ create trigger audit_attendance_changes
   after insert or delete or update on wireless.attendance
   for each row execute function wireless.capture_audit_log();
 
--- ── Grant the module to Admin + Manager ─────────────────────────────────
+-- ── Grant the module to Manager ──────────────────────────────────────────
+-- Admin is a protected system role (trg_prevent_system_role_mutation blocks
+-- any update to it, permissions included) — it doesn't need a grant anyway,
+-- since wireless.has_permission() already treats is_admin() as an automatic
+-- pass regardless of the seeded array. The client mirrors that by checking
+-- user.role === 'admin' directly instead of relying on this permission.
 update wireless.roles
 set permissions = permissions || array['attendance:view', 'attendance:manage']
-where id in ('admin', 'manager')
+where id = 'manager'
   and not ('attendance:manage' = any(permissions));

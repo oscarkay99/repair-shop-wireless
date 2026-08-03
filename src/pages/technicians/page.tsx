@@ -513,8 +513,12 @@ export default function TechniciansPage() {
   // for whoever actually holds people-management permission.
   const canAddTechnician = !!user?.permissions?.includes('technicians:edit');
   const isAdmin = user?.role === 'admin';
-  const canViewAttendance = !!(user?.permissions?.includes('attendance:view') || user?.permissions?.includes('attendance:manage'));
-  const canManageAttendance = !!user?.permissions?.includes('attendance:manage');
+  // Admin is a protected system role that can't carry a DB-seeded
+  // attendance:* permission (see the migration) — is_admin() already
+  // bypasses every wireless.has_permission() check server-side, so the
+  // client mirrors that with an explicit role check instead.
+  const canViewAttendance = isAdmin || !!(user?.permissions?.includes('attendance:view') || user?.permissions?.includes('attendance:manage'));
+  const canManageAttendance = isAdmin || !!user?.permissions?.includes('attendance:manage');
   const [tab, setTab] = useState<'roster' | 'performance' | 'attendance'>('roster');
   const [timeline, setTimeline] = useState<TimelineFilter>('24hrs');
   const [showAdd, setShowAdd] = useState(false);
