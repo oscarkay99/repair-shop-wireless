@@ -10,8 +10,7 @@ import { roleColors, roleLabels } from '@/mocks/users';
 import { isCurrentlyUnavailable } from '@/utils/technicianAvailability';
 import BirthdayBanner from '@/components/shared/BirthdayBanner';
 import type { RepairStatus } from '@/types/repair';
-import { getOpenSession, clockIn as clockInAttendance, clockOut as clockOutAttendance } from '@/services/wireless/attendance';
-import type { AttendanceRecord } from '@/services/wireless/attendance';
+import { useClockInOut } from '@/hooks/useClockInOut';
 
 const QUEUE_STATUSES: RepairStatus[] = ['received', 'diagnosis_paid', 'diagnosing', 'awaiting_approval', 'parts_pending'];
 const DONE_STATUSES: RepairStatus[] = ['ready', 'completed', 'diagnosis_only_closed'];
@@ -34,8 +33,7 @@ export default function TechPortalPage() {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const pickerRef = useRef<HTMLDivElement>(null);
-  const [openSession, setOpenSession] = useState<AttendanceRecord | null>(null);
-  const [clockBusy, setClockBusy] = useState(false);
+  const { openSession, busy: clockBusy, clockIn: handleClockIn, clockOut: handleClockOut } = useClockInOut();
 
   const myTech = useMemo(() => technicians.find(t => t.profile_id === user?.id), [technicians, user]);
   const unavailableNow = myTech ? isCurrentlyUnavailable(myTech) : false;
@@ -58,26 +56,6 @@ export default function TechPortalPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myTech?.id, myTech?.status, myTech?.unavailable_until]);
-
-  useEffect(() => {
-    if (!myTech) return;
-    getOpenSession(myTech.id).then(setOpenSession).catch(() => setOpenSession(null));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [myTech?.id]);
-
-  const handleClockIn = async () => {
-    if (!myTech || clockBusy) return;
-    setClockBusy(true);
-    try { setOpenSession(await clockInAttendance(myTech.id)); }
-    finally { setClockBusy(false); }
-  };
-
-  const handleClockOut = async () => {
-    if (!openSession || clockBusy) return;
-    setClockBusy(true);
-    try { await clockOutAttendance(openSession.id); setOpenSession(null); }
-    finally { setClockBusy(false); }
-  };
 
   useEffect(() => {
     if (!showUnavailablePicker) return;
@@ -180,7 +158,7 @@ export default function TechPortalPage() {
               </div>
             </div>
 
-            {myTech && (
+            {user && (
               <div className="flex items-center justify-between gap-2 mb-4 px-3 py-2.5 rounded-xl"
                 style={{ background: openSession ? 'rgba(34,197,94,0.08)' : 'hsl(var(--muted))' }}>
                 <div className="flex items-center gap-2">

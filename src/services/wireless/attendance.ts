@@ -2,8 +2,8 @@ import { isSupabaseConfigured, db } from '@/services/supabase';
 
 export interface AttendanceRecord {
   id: string;
-  technician_id: string;
-  technician?: { id: string; name: string } | null;
+  profile_id: string;
+  profile?: { id: string; name: string; role: string } | null;
   clock_in: string;
   clock_out: string | null;
   notes: string | null;
@@ -12,9 +12,11 @@ export interface AttendanceRecord {
   updated_at: string;
 }
 
+const SELECT = '*, profile:profiles(id,name,role)';
+
 export async function getAttendance(params?: { from?: string; to?: string }): Promise<AttendanceRecord[]> {
   if (!isSupabaseConfigured) return [];
-  let query = db.from('attendance').select('*, technician:technicians(id,name)').order('clock_in', { ascending: false });
+  let query = db.from('attendance').select(SELECT).order('clock_in', { ascending: false });
   if (params?.from) query = query.gte('clock_in', params.from);
   if (params?.to) query = query.lte('clock_in', params.to);
   const { data, error } = await query;
@@ -22,24 +24,24 @@ export async function getAttendance(params?: { from?: string; to?: string }): Pr
   return (data as AttendanceRecord[] | null) ?? [];
 }
 
-export async function getOpenSession(technicianId: string): Promise<AttendanceRecord | null> {
-  if (!isSupabaseConfigured || !technicianId) return null;
+export async function getOpenSession(profileId: string): Promise<AttendanceRecord | null> {
+  if (!isSupabaseConfigured || !profileId) return null;
   const { data, error } = await db
     .from('attendance')
-    .select('*, technician:technicians(id,name)')
-    .eq('technician_id', technicianId)
+    .select(SELECT)
+    .eq('profile_id', profileId)
     .is('clock_out', null)
     .maybeSingle();
   if (error) throw error;
   return data as AttendanceRecord | null;
 }
 
-export async function clockIn(technicianId: string): Promise<AttendanceRecord> {
+export async function clockIn(profileId: string): Promise<AttendanceRecord> {
   if (!isSupabaseConfigured) throw new Error('Not configured');
   const { data, error } = await db
     .from('attendance')
-    .insert({ technician_id: technicianId })
-    .select('*, technician:technicians(id,name)')
+    .insert({ profile_id: profileId })
+    .select(SELECT)
     .single();
   if (error) throw error;
   return data as AttendanceRecord;
@@ -51,14 +53,14 @@ export async function clockOut(id: string): Promise<AttendanceRecord> {
     .from('attendance')
     .update({ clock_out: new Date().toISOString() })
     .eq('id', id)
-    .select('*, technician:technicians(id,name)')
+    .select(SELECT)
     .single();
   if (error) throw error;
   return data as AttendanceRecord;
 }
 
 export async function createAttendanceRecord(input: {
-  technicianId: string;
+  profileId: string;
   clockIn: string;
   clockOut?: string | null;
   notes?: string;
@@ -67,12 +69,12 @@ export async function createAttendanceRecord(input: {
   const { data, error } = await db
     .from('attendance')
     .insert({
-      technician_id: input.technicianId,
+      profile_id: input.profileId,
       clock_in: input.clockIn,
       clock_out: input.clockOut ?? null,
       notes: input.notes || null,
     })
-    .select('*, technician:technicians(id,name)')
+    .select(SELECT)
     .single();
   if (error) throw error;
   return data as AttendanceRecord;
@@ -92,7 +94,7 @@ export async function updateAttendanceRecord(id: string, changes: {
     .from('attendance')
     .update(patch)
     .eq('id', id)
-    .select('*, technician:technicians(id,name)')
+    .select(SELECT)
     .single();
   if (error) throw error;
   return data as AttendanceRecord;

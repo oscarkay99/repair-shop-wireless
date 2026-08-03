@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/context/ThemeContext';
 import { useWirelessSettings } from '@/hooks/useWirelessSettings';
 import { useParts } from '@/hooks/useParts';
+import ClockInOutButton from '@/components/shared/ClockInOutButton';
 import { useAccessoryStore } from '@/hooks/useAccessoryStore';
 import { roleColors, roleLabels } from '@/mocks/users';
 import { AddPartModal } from '@/pages/inventory/page';
@@ -77,6 +78,7 @@ export default function InventoryPortalPage() {
             <p className="text-[9px] tracking-widest uppercase leading-none" style={{ color: 'hsl(var(--muted-foreground))' }}>Inventory Portal</p>
           </div>
           <div className="flex items-center gap-2">
+            <ClockInOutButton />
             <button
               onClick={toggleTheme}
               className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors flex-shrink-0"

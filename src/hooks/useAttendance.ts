@@ -23,7 +23,7 @@ export function useAttendance(params?: { from?: string; to?: string }) {
 
   useEffect(() => { refresh(); }, [refresh]);
 
-  const add = async (input: { technicianId: string; clockIn: string; clockOut?: string | null; notes?: string }) => {
+  const add = async (input: { profileId: string; clockIn: string; clockOut?: string | null; notes?: string }) => {
     try {
       const created = await createAttendanceRecord(input);
       setRecords(prev => [created, ...prev]);

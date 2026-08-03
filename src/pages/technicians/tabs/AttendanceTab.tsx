@@ -1,13 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Plus, Pencil, Trash2, X, Clock } from 'lucide-react';
-import type { Technician } from '@/types/wireless';
 import { useAttendance } from '@/hooks/useAttendance';
 import type { AttendanceRecord } from '@/services/wireless/attendance';
+import { getWirelessUsers, type WirelessProfile } from '@/services/wireless/users';
 import { avatarColor, initials } from '../shared';
 
 interface Props {
-  technicians: Technician[];
   canManage: boolean;
 }
 
@@ -39,13 +38,13 @@ function toLocalInput(iso: string): string {
 
 // ── Add / Edit modal ──────────────────────────────────────────────────────
 
-function AttendanceModal({ technicians, record, onSave, onClose }: {
-  technicians: Technician[];
+function AttendanceModal({ staff, record, onSave, onClose }: {
+  staff: WirelessProfile[];
   record?: AttendanceRecord | null;
-  onSave: (input: { technicianId: string; clockIn: string; clockOut?: string | null; notes?: string }) => Promise<unknown>;
+  onSave: (input: { profileId: string; clockIn: string; clockOut?: string | null; notes?: string }) => Promise<unknown>;
   onClose: () => void;
 }) {
-  const [technicianId, setTechnicianId] = useState(record?.technician_id ?? technicians[0]?.id ?? '');
+  const [profileId, setProfileId] = useState(record?.profile_id ?? staff[0]?.id ?? '');
   const [clockIn, setClockIn] = useState(record ? toLocalInput(record.clock_in) : toLocalInput(new Date().toISOString()));
   const [clockOut, setClockOut] = useState(record?.clock_out ? toLocalInput(record.clock_out) : '');
   const [notes, setNotes] = useState(record?.notes ?? '');
@@ -55,11 +54,11 @@ function AttendanceModal({ technicians, record, onSave, onClose }: {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!technicianId || !clockIn) { setError('Technician and clock in time are required'); return; }
+    if (!profileId || !clockIn) { setError('Staff member and clock in time are required'); return; }
     setSaving(true);
     try {
       await onSave({
-        technicianId,
+        profileId,
         clockIn: new Date(clockIn).toISOString(),
         clockOut: clockOut ? new Date(clockOut).toISOString() : null,
         notes: notes.trim(),
@@ -87,11 +86,11 @@ function AttendanceModal({ technicians, record, onSave, onClose }: {
         </div>
         <form onSubmit={handleSubmit} className="px-5 py-4 space-y-3">
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>Technician *</label>
-            <select required value={technicianId} onChange={e => setTechnicianId(e.target.value)} disabled={!!record}
+            <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>Staff Member *</label>
+            <select required value={profileId} onChange={e => setProfileId(e.target.value)} disabled={!!record}
               className="w-full h-9 px-3 rounded-lg text-sm outline-none disabled:opacity-60"
               style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}>
-              {technicians.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              {staff.map(s => <option key={s.id} value={s.id}>{s.name} ({s.role})</option>)}
             </select>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -132,12 +131,15 @@ function AttendanceModal({ technicians, record, onSave, onClose }: {
 
 // ── Main tab ───────────────────────────────────────────────────────────────
 
-export default function AttendanceTab({ technicians, canManage }: Props) {
+export default function AttendanceTab({ canManage }: Props) {
   const [range, setRange] = useState<RangeFilter>('Today');
   const from = useMemo(() => rangeFrom(range), [range]);
   const { records, loading, add, update, remove } = useAttendance({ from });
+  const [staff, setStaff] = useState<WirelessProfile[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<AttendanceRecord | null>(null);
+
+  useEffect(() => { getWirelessUsers().then(setStaff).catch(() => setStaff([])); }, []);
 
   const onShiftNow = records.filter(r => !r.clock_out);
   const totalHoursInRange = records.reduce((s, r) => s + (hoursBetween(r.clock_in, r.clock_out) ?? 0), 0);
@@ -174,8 +176,8 @@ export default function AttendanceTab({ technicians, canManage }: Props) {
           ))}
         </div>
         {canManage && (
-          <button onClick={() => setShowAdd(true)}
-            className="flex items-center gap-1.5 px-3 h-8 rounded-lg text-xs font-semibold text-white"
+          <button onClick={() => setShowAdd(true)} disabled={staff.length === 0}
+            className="flex items-center gap-1.5 px-3 h-8 rounded-lg text-xs font-semibold text-white disabled:opacity-50"
             style={{ background: 'hsl(var(--primary))' }}>
             <Plus className="w-3.5 h-3.5" /> Add Record
           </button>
@@ -195,7 +197,7 @@ export default function AttendanceTab({ technicians, canManage }: Props) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-left" style={{ borderColor: 'hsl(var(--border))' }}>
-                {['Technician', 'Clock In', 'Clock Out', 'Hours', 'Notes', ''].map(h => (
+                {['Staff Member', 'Role', 'Clock In', 'Clock Out', 'Hours', 'Notes', ''].map(h => (
                   <th key={h} className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>{h}</th>
                 ))}
               </tr>
@@ -208,12 +210,13 @@ export default function AttendanceTab({ technicians, canManage }: Props) {
                     <td className="px-4 py-2.5">
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
-                          style={{ background: avatarColor(r.technician?.name ?? '?') }}>
-                          {initials(r.technician?.name ?? '?')}
+                          style={{ background: avatarColor(r.profile?.name ?? '?') }}>
+                          {initials(r.profile?.name ?? '?')}
                         </div>
-                        <span style={{ color: 'hsl(var(--foreground))' }}>{r.technician?.name ?? 'Unknown'}</span>
+                        <span style={{ color: 'hsl(var(--foreground))' }}>{r.profile?.name ?? 'Unknown'}</span>
                       </div>
                     </td>
+                    <td className="px-4 py-2.5 capitalize" style={{ color: 'hsl(var(--muted-foreground))' }}>{r.profile?.role?.replace(/_/g, ' ') ?? '—'}</td>
                     <td className="px-4 py-2.5" style={{ color: 'hsl(var(--foreground))' }}>{fmtDateTime(r.clock_in)}</td>
                     <td className="px-4 py-2.5" style={{ color: 'hsl(var(--foreground))' }}>
                       {r.clock_out ? fmtDateTime(r.clock_out) : <span className="font-semibold" style={{ color: 'hsl(142 60% 45%)' }}>On shift</span>}
@@ -244,14 +247,14 @@ export default function AttendanceTab({ technicians, canManage }: Props) {
 
       {showAdd && (
         <AttendanceModal
-          technicians={technicians}
+          staff={staff}
           onSave={input => add(input)}
           onClose={() => setShowAdd(false)}
         />
       )}
       {editing && (
         <AttendanceModal
-          technicians={technicians}
+          staff={staff}
           record={editing}
           onSave={input => update(editing.id, { clockIn: input.clockIn, clockOut: input.clockOut, notes: input.notes })}
           onClose={() => setEditing(null)}

@@ -626,7 +626,7 @@ export default function TechniciansPage() {
       )}
 
       {tab === 'performance' && isAdmin && <PerformanceTab technicians={technicians} repairs={repairs} />}
-      {tab === 'attendance' && canViewAttendance && <AttendanceTab technicians={technicians} canManage={canManageAttendance} />}
+      {tab === 'attendance' && canViewAttendance && <AttendanceTab canManage={canManageAttendance} />}
 
       {tab === 'roster' && <>
 

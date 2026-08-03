@@ -10,6 +10,7 @@ import { useWirelessSettings } from '@/hooks/useWirelessSettings';
 import { useInvoices } from '@/hooks/useInvoices';
 import { useUpcomingBirthdays } from '@/hooks/useUpcomingBirthdays';
 import { roleColors, roleLabels } from '@/mocks/users';
+import ClockInOutButton from '@/components/shared/ClockInOutButton';
 import TicketsPanel from './components/TicketsPanel';
 import InvoicesPanel from './components/InvoicesPanel';
 import SalesPanel from './components/SalesPanel';
@@ -63,6 +64,7 @@ export default function ReceptionPortalPage() {
             <p className="text-[9px] tracking-widest uppercase leading-none" style={{ color: 'hsl(var(--muted-foreground))' }}>Reception</p>
           </div>
           <div className="flex items-center gap-2">
+            <ClockInOutButton />
             <button
               onClick={toggleTheme}
               className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors flex-shrink-0"
