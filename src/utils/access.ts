@@ -18,6 +18,7 @@ export type AppModule =
   | 'Warranty'
   | 'Delivery'
   | 'Expenses'
+  | 'Attendance'
   | 'Reports'
   | 'Loyalty'
   | 'Team'
@@ -76,6 +77,12 @@ export function canAccessModule(user: PermCtx, module: AppModule): boolean {
       return has('sales:create');
     case 'Expenses':
       return has('expenses:view') || has('expenses:edit');
+    // Admin is a protected system role that can't carry a DB-seeded
+    // attendance:* permission (trg_prevent_system_role_mutation blocks any
+    // update to it) — wireless.has_permission() already bypasses is_admin()
+    // unconditionally server-side, so the client mirrors that here too.
+    case 'Attendance':
+      return user.role === 'admin' || has('attendance:view') || has('attendance:manage');
     case 'Team':
       return has('team:view') || has('team:edit') || has('team:delete');
     case 'Settings':

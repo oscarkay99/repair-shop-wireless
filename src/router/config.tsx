@@ -29,6 +29,7 @@ import TechPortalPage from "../pages/tech-portal/page";
 import InventoryPortalPage from "../pages/inventory-portal/page";
 import ReceptionPortalPage from "../pages/reception/page";
 import ActivityPage from "../pages/activity/page";
+import AttendancePage from "../pages/attendance/page";
 
 const routes: RouteObject[] = [
   { path: "/signin", element: <SignInPage /> },
@@ -49,6 +50,7 @@ const routes: RouteObject[] = [
       { path: "/customers",          element: <AuthGuard requiredModule="Customers"><CustomersPage /></AuthGuard> },
       { path: "/tickets",            element: <AuthGuard requiredModule="Tickets"><RepairsPage /></AuthGuard> },
       { path: "/technicians",        element: <AuthGuard requiredModule="Technicians"><TechniciansPage /></AuthGuard> },
+      { path: "/attendance",         element: <AuthGuard requiredModule="Attendance"><AttendancePage /></AuthGuard> },
       { path: "/invoices",           element: <AuthGuard requiredModule="Invoices"><InvoicesPage /></AuthGuard> },
       { path: "/activity",           element: <AuthGuard requiredModule="Activity"><ActivityPage /></AuthGuard> },
       { path: "/ai-studio",          element: <AuthGuard requiredModule="AI Studio"><AIStudioPage /></AuthGuard> },

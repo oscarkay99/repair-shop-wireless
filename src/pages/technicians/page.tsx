@@ -13,7 +13,6 @@ import { isCurrentlyUnavailable } from '@/utils/technicianAvailability';
 import { errMessage } from '@/utils/errors';
 import { avatarColor, initials, TIMELINE_FILTERS, filterHours, type TimelineFilter } from './shared';
 import PerformanceTab from './tabs/PerformanceTab';
-import AttendanceTab from './tabs/AttendanceTab';
 
 const PAGE_SIZE = 9;
 
@@ -513,13 +512,7 @@ export default function TechniciansPage() {
   // for whoever actually holds people-management permission.
   const canAddTechnician = !!user?.permissions?.includes('technicians:edit');
   const isAdmin = user?.role === 'admin';
-  // Admin is a protected system role that can't carry a DB-seeded
-  // attendance:* permission (see the migration) — is_admin() already
-  // bypasses every wireless.has_permission() check server-side, so the
-  // client mirrors that with an explicit role check instead.
-  const canViewAttendance = isAdmin || !!(user?.permissions?.includes('attendance:view') || user?.permissions?.includes('attendance:manage'));
-  const canManageAttendance = isAdmin || !!user?.permissions?.includes('attendance:manage');
-  const [tab, setTab] = useState<'roster' | 'performance' | 'attendance'>('roster');
+  const [tab, setTab] = useState<'roster' | 'performance'>('roster');
   const [timeline, setTimeline] = useState<TimelineFilter>('24hrs');
   const [showAdd, setShowAdd] = useState(false);
   const [showReassign, setShowReassign] = useState(false);
@@ -607,12 +600,11 @@ export default function TechniciansPage() {
       </div>
 
       {/* Section tabs */}
-      {(isAdmin || canViewAttendance) && (
+      {isAdmin && (
         <div className="flex items-center gap-2 flex-wrap border-b" style={{ borderColor: 'hsl(var(--border))' }}>
           {([
             { key: 'roster', label: 'Roster' },
-            ...(isAdmin ? [{ key: 'performance', label: 'Performance' }] as const : []),
-            ...(canViewAttendance ? [{ key: 'attendance', label: 'Attendance' }] as const : []),
+            { key: 'performance', label: 'Performance' },
           ] as const).map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
               className="px-3 py-2 text-sm font-semibold transition-colors border-b-2 -mb-px"
@@ -626,7 +618,6 @@ export default function TechniciansPage() {
       )}
 
       {tab === 'performance' && isAdmin && <PerformanceTab technicians={technicians} repairs={repairs} />}
-      {tab === 'attendance' && canViewAttendance && <AttendanceTab canManage={canManageAttendance} />}
 
       {tab === 'roster' && <>
 

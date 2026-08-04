@@ -4,7 +4,7 @@ import { Plus, Pencil, Trash2, X, Clock } from 'lucide-react';
 import { useAttendance } from '@/hooks/useAttendance';
 import type { AttendanceRecord } from '@/services/wireless/attendance';
 import { getWirelessUsers, type WirelessProfile } from '@/services/wireless/users';
-import { avatarColor, initials } from '../shared';
+import { avatarColor, initials } from '@/pages/technicians/shared';
 
 interface Props {
   canManage: boolean;
