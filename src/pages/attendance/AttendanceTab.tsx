@@ -5,10 +5,13 @@ import { useAttendance } from '@/hooks/useAttendance';
 import type { AttendanceRecord } from '@/services/wireless/attendance';
 import { getWirelessUsers, type WirelessProfile } from '@/services/wireless/users';
 import { avatarColor, initials } from '@/pages/technicians/shared';
+import Pagination from '@/components/shared/Pagination';
 
 interface Props {
   canManage: boolean;
 }
+
+const PAGE_SIZE = 15;
 
 const RANGE_FILTERS = ['Today', '7 days', '30 days', 'All'] as const;
 type RangeFilter = typeof RANGE_FILTERS[number];
@@ -138,11 +141,17 @@ export default function AttendanceTab({ canManage }: Props) {
   const [staff, setStaff] = useState<WirelessProfile[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<AttendanceRecord | null>(null);
+  const [page, setPage] = useState(1);
 
   useEffect(() => { getWirelessUsers().then(setStaff).catch(() => setStaff([])); }, []);
+  useEffect(() => { setPage(1); }, [range]);
 
   const onShiftNow = records.filter(r => !r.clock_out);
   const totalHoursInRange = records.reduce((s, r) => s + (hoursBetween(r.clock_in, r.clock_out) ?? 0), 0);
+  const pageCount = Math.max(1, Math.ceil(records.length / PAGE_SIZE));
+  const pagedRecords = useMemo(() =>
+    records.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+  [records, page]);
 
   return (
     <div className="space-y-5">
@@ -203,7 +212,7 @@ export default function AttendanceTab({ canManage }: Props) {
               </tr>
             </thead>
             <tbody>
-              {records.map(r => {
+              {pagedRecords.map(r => {
                 const hrs = hoursBetween(r.clock_in, r.clock_out);
                 return (
                   <tr key={r.id} className="border-b last:border-0" style={{ borderColor: 'hsl(var(--border))' }}>
@@ -242,6 +251,9 @@ export default function AttendanceTab({ canManage }: Props) {
               })}
             </tbody>
           </table>
+          <div className="px-4">
+            <Pagination page={page} pageCount={pageCount} total={records.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
+          </div>
         </div>
       )}
 

@@ -188,6 +188,7 @@ export default function ExpensesPage() {
   const [showAddAsset, setShowAddAsset] = useState(false);
   const [editingAsset, setEditingAsset] = useState<FixedAsset | null>(null);
   const [confirmDeleteAssetId, setConfirmDeleteAssetId] = useState<string | null>(null);
+  const [assetPage, setAssetPage] = useState(1);
 
   useEffect(() => {
     setPageTitle({
@@ -281,6 +282,10 @@ export default function ExpensesPage() {
   const activeAssets = useMemo(() => assets.filter(a => a.status !== 'disposed'), [assets]);
   const totalPurchaseCost = useMemo(() => activeAssets.reduce((s, a) => s + a.purchase_cost, 0), [activeAssets]);
   const totalCurrentValue = useMemo(() => activeAssets.reduce((s, a) => s + a.current_value, 0), [activeAssets]);
+  const assetPageCount = Math.max(1, Math.ceil(assets.length / PAGE_SIZE));
+  const pagedAssets = useMemo(() =>
+    assets.slice((assetPage - 1) * PAGE_SIZE, assetPage * PAGE_SIZE),
+  [assets, assetPage]);
 
   const handleSaveAsset = async (data: Omit<FixedAsset, 'id' | 'created_at' | 'updated_at' | 'created_by'>, id?: string) => {
     if (id) await updateAsset(id, data);
@@ -720,7 +725,7 @@ export default function ExpensesPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {assets.map(a => (
+                    {pagedAssets.map(a => (
                       <tr key={a.id} className="border-b last:border-0" style={{ borderColor: 'hsl(var(--border))' }}>
                         <td className="px-4 py-2.5 font-semibold" style={{ color: 'hsl(var(--foreground))' }}>{a.name}</td>
                         <td className="px-4 py-2.5" style={{ color: 'hsl(var(--muted-foreground))' }}>{a.category}</td>
@@ -771,6 +776,9 @@ export default function ExpensesPage() {
                     ))}
                   </tbody>
                 </table>
+                <div className="px-1 pb-1">
+                  <Pagination page={assetPage} pageCount={assetPageCount} total={assets.length} pageSize={PAGE_SIZE} onPageChange={setAssetPage} />
+                </div>
               </div>
             )}
           </div>

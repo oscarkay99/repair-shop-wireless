@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Sun, Moon, Plus, Search, AlertTriangle, Boxes, ShoppingBag,
@@ -13,9 +13,12 @@ import { useAccessoryStore } from '@/hooks/useAccessoryStore';
 import { roleColors, roleLabels } from '@/mocks/users';
 import { AddPartModal } from '@/pages/inventory/page';
 import AccessoriesTab from '@/pages/inventory/components/AccessoriesTab';
+import Pagination from '@/components/shared/Pagination';
 import type { Part } from '@/types/wireless';
 
 type Tab = 'parts' | 'accessories';
+
+const PAGE_SIZE = 10;
 
 const fmtCedis = (n: number) => `¢${n.toFixed(2)}`;
 
@@ -42,6 +45,7 @@ export default function InventoryPortalPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [showAddAccessory, setShowAddAccessory] = useState(false);
   const [editing, setEditing] = useState<Part | null>(null);
+  const [page, setPage] = useState(1);
 
   const handleSignOut = async () => {
     await logout();
@@ -59,6 +63,11 @@ export default function InventoryPortalPage() {
     const q = query.trim().toLowerCase();
     return !q || p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q) || (p.device ?? '').toLowerCase().includes(q);
   });
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const pagedFiltered = useMemo(() =>
+    filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+  [filtered, page]);
+  useEffect(() => { setPage(1); }, [query, lowStockOnly]);
 
   return (
     <div className="h-screen flex flex-col" style={{ background: 'hsl(var(--background))' }}>
@@ -189,7 +198,7 @@ export default function InventoryPortalPage() {
                   <div className="py-16 text-center text-xs rounded-xl" style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--muted-foreground))' }}>
                     No parts found.
                   </div>
-                ) : filtered.map(p => {
+                ) : pagedFiltered.map(p => {
                   const isLow = p.stock < p.min_stock;
                   return (
                     <div key={p.id} className="rounded-xl p-4 flex items-center gap-4 flex-wrap"
@@ -256,6 +265,10 @@ export default function InventoryPortalPage() {
                   );
                 })}
               </div>
+
+              {!loading && filtered.length > 0 && (
+                <Pagination page={page} pageCount={pageCount} total={filtered.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
+              )}
             </div>
           )}
         </div>
