@@ -1,13 +1,17 @@
 import { useState, useMemo, useEffect } from 'react';
 import { usePageTitle } from '@/context/PageTitleContext';
+import { useAuth } from '@/hooks/useAuth';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useSales } from '@/hooks/useSales';
 import { useBudgets } from '@/hooks/useBudgets';
+import { useAssets } from '@/hooks/useAssets';
 import { expenseCategories } from '@/mocks/expenses';
 import AddExpenseModal from './components/AddExpenseModal';
+import AddAssetModal from './components/AddAssetModal';
 import Pagination from '@/components/shared/Pagination';
-import { TrendingUp, TrendingDown, Plus, Pencil, Trash2, X } from 'lucide-react';
+import { TrendingUp, TrendingDown, Plus, Pencil, Trash2, X, Boxes } from 'lucide-react';
 import type { Expense } from '@/services/wireless/expenses';
+import type { FixedAsset } from '@/services/wireless/assets';
 
 const PAGE_SIZE = 15;
 
@@ -161,18 +165,29 @@ function PnLRow({ label, value, indent, bold, separator, color }: {
 
 export default function ExpensesPage() {
   const { setPageTitle } = usePageTitle();
+  const { user } = useAuth();
   const { expenses, loading, add, update, remove } = useExpenses();
   const { sales } = useSales();
   const { budgetMap, setBudget } = useBudgets();
+  const { assets, loading: assetsLoading, add: addAsset, update: updateAsset, remove: removeAsset } = useAssets();
+  // Admin is a protected system role that can't carry a DB-seeded
+  // assets:edit permission (see the migration) — is_admin() already
+  // bypasses every wireless.has_permission() check server-side, so the
+  // client mirrors that with an explicit role check. Finance (and anyone
+  // else with assets:view but not assets:edit) gets read-only.
+  const canManageAssets = user?.role === 'admin';
 
   const [period, setPeriod] = useState<Period>('1m');
-  const [activeTab, setActiveTab] = useState<'overview' | 'transactions' | 'budgets'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'transactions' | 'budgets' | 'assets'>('overview');
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [editingBudgetId, setEditingBudgetId] = useState<string | null>(null);
   const [budgetInput, setBudgetInput] = useState('');
   const [txPage, setTxPage] = useState(1);
+  const [showAddAsset, setShowAddAsset] = useState(false);
+  const [editingAsset, setEditingAsset] = useState<FixedAsset | null>(null);
+  const [confirmDeleteAssetId, setConfirmDeleteAssetId] = useState<string | null>(null);
 
   useEffect(() => {
     setPageTitle({
@@ -263,10 +278,25 @@ export default function ExpensesPage() {
     setConfirmDeleteId(null);
   };
 
+  const activeAssets = useMemo(() => assets.filter(a => a.status !== 'disposed'), [assets]);
+  const totalPurchaseCost = useMemo(() => activeAssets.reduce((s, a) => s + a.purchase_cost, 0), [activeAssets]);
+  const totalCurrentValue = useMemo(() => activeAssets.reduce((s, a) => s + a.current_value, 0), [activeAssets]);
+
+  const handleSaveAsset = async (data: Omit<FixedAsset, 'id' | 'created_at' | 'updated_at' | 'created_by'>, id?: string) => {
+    if (id) await updateAsset(id, data);
+    else await addAsset(data);
+  };
+
+  const handleDeleteAsset = (id: string) => {
+    removeAsset(id);
+    setConfirmDeleteAssetId(null);
+  };
+
   const tabs = [
     { key: 'overview',     label: 'Overview' },
     { key: 'transactions', label: `Transactions (${expenses.length})` },
     { key: 'budgets',      label: 'Budgets' },
+    { key: 'assets',       label: `Assets (${assets.length})` },
   ] as const;
 
   return (
@@ -642,6 +672,111 @@ export default function ExpensesPage() {
         </div>
       )}
 
+      {/* ── ASSETS (Fixed / Non-current Assets) ─────────────────────────────── */}
+      {activeTab === 'assets' && (
+        <div className="space-y-5">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+            <KpiCard label="Total Assets" value={String(activeAssets.length)}
+              sub={`${assets.length - activeAssets.length} disposed`}
+              color="hsl(var(--primary))" />
+            <KpiCard label="Total Purchase Cost" value={fmt(totalPurchaseCost)}
+              color="#f59e0b" />
+            <KpiCard label="Total Current Value" value={fmt(totalCurrentValue)}
+              color="#22c55e" />
+          </div>
+
+          <div className="rounded-xl overflow-hidden"
+            style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
+            <div className="flex items-center justify-between px-5 py-3.5"
+              style={{ borderBottom: '1px solid hsl(var(--border))' }}>
+              <h3 className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>Fixed Assets (Non-current Assets)</h3>
+              {canManageAssets && (
+                <button onClick={() => setShowAddAsset(true)}
+                  className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold text-white"
+                  style={{ background: 'hsl(var(--primary))' }}>
+                  <Plus className="w-3.5 h-3.5" />
+                  Add Asset
+                </button>
+              )}
+            </div>
+
+            {assetsLoading ? (
+              <div className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Loading…</div>
+            ) : assets.length === 0 ? (
+              <div className="py-16 text-center">
+                <Boxes className="w-8 h-8 mx-auto mb-2 opacity-30" style={{ color: 'hsl(var(--muted-foreground))' }} />
+                <p className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                  No fixed assets yet{canManageAssets ? ' — add your first one.' : '.'}
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b text-left" style={{ borderColor: 'hsl(var(--border))' }}>
+                      {['Asset', 'Category', 'Purchase Date', 'Purchase Cost', 'Current Value', 'Status', 'Location', ''].map(h => (
+                        <th key={h} className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {assets.map(a => (
+                      <tr key={a.id} className="border-b last:border-0" style={{ borderColor: 'hsl(var(--border))' }}>
+                        <td className="px-4 py-2.5 font-semibold" style={{ color: 'hsl(var(--foreground))' }}>{a.name}</td>
+                        <td className="px-4 py-2.5" style={{ color: 'hsl(var(--muted-foreground))' }}>{a.category}</td>
+                        <td className="px-4 py-2.5" style={{ color: 'hsl(var(--muted-foreground))' }}>{a.purchase_date || '—'}</td>
+                        <td className="px-4 py-2.5" style={{ color: 'hsl(var(--foreground))' }}>{fmtFull(a.purchase_cost)}</td>
+                        <td className="px-4 py-2.5 font-semibold" style={{ color: '#22c55e' }}>{fmtFull(a.current_value)}</td>
+                        <td className="px-4 py-2.5">
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                            style={
+                              a.status === 'active' ? { background: 'rgba(34,197,94,0.12)', color: '#22c55e' }
+                              : a.status === 'under_repair' ? { background: 'rgba(245,158,11,0.12)', color: '#f59e0b' }
+                              : { background: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' }
+                            }>
+                            {a.status === 'under_repair' ? 'Under Repair' : a.status === 'disposed' ? 'Disposed' : 'Active'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5" style={{ color: 'hsl(var(--muted-foreground))' }}>{a.location || '—'}</td>
+                        <td className="px-4 py-2.5">
+                          {canManageAssets && (
+                            confirmDeleteAssetId === a.id ? (
+                              <div className="flex items-center gap-1.5 justify-end">
+                                <button onClick={() => setConfirmDeleteAssetId(null)}
+                                  className="h-7 px-2.5 rounded-lg text-xs font-semibold"
+                                  style={{ background: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' }}>
+                                  Cancel
+                                </button>
+                                <button onClick={() => handleDeleteAsset(a.id)}
+                                  className="h-7 px-2.5 rounded-lg text-xs font-semibold text-white"
+                                  style={{ background: '#ef4444' }}>
+                                  Delete
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1.5 justify-end">
+                                <button onClick={() => setEditingAsset(a)} className="w-7 h-7 flex items-center justify-center rounded-lg"
+                                  style={{ background: 'hsl(var(--muted))' }} title="Edit">
+                                  <Pencil className="w-3.5 h-3.5" style={{ color: 'hsl(var(--muted-foreground))' }} />
+                                </button>
+                                <button onClick={() => setConfirmDeleteAssetId(a.id)} className="w-7 h-7 flex items-center justify-center rounded-lg"
+                                  style={{ background: 'hsl(var(--muted))' }} title="Delete">
+                                  <Trash2 className="w-3.5 h-3.5" style={{ color: '#ef4444' }} />
+                                </button>
+                              </div>
+                            )
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Modals */}
       {(showAdd || editing) && (
         <AddExpenseModal
@@ -649,6 +784,13 @@ export default function ExpensesPage() {
           expense={editing ?? undefined}
           onSave={handleSave}
           onClose={() => { setShowAdd(false); setEditing(null); }}
+        />
+      )}
+      {canManageAssets && (showAddAsset || editingAsset) && (
+        <AddAssetModal
+          asset={editingAsset ?? undefined}
+          onSave={handleSaveAsset}
+          onClose={() => { setShowAddAsset(false); setEditingAsset(null); }}
         />
       )}
     </div>

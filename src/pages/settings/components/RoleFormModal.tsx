@@ -32,6 +32,12 @@ const PERMISSION_GROUPS: { resource: string; label: string; actions: { value: st
   { resource: 'expenses', label: 'Expenses', actions: [
     { value: 'expenses:view', label: 'View' }, { value: 'expenses:edit', label: 'Manage' },
   ] },
+  { resource: 'assets', label: 'Fixed Assets', actions: [
+    { value: 'assets:view', label: 'View' }, { value: 'assets:edit', label: 'Manage' },
+  ] },
+  { resource: 'attendance', label: 'Attendance', actions: [
+    { value: 'attendance:view', label: 'View' }, { value: 'attendance:manage', label: 'Manage' },
+  ] },
   { resource: 'settings', label: 'Settings', actions: [{ value: 'settings:edit', label: 'Manage' }] },
   { resource: 'team', label: 'Team & Staff', actions: [
     { value: 'team:view', label: 'View' }, { value: 'team:edit', label: 'Edit' }, { value: 'team:delete', label: 'Remove' },
