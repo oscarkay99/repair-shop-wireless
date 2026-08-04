@@ -12,7 +12,10 @@ export interface AttendanceRecord {
   updated_at: string;
 }
 
-const SELECT = '*, profile:profiles(id,name,role)';
+// attendance has two FKs into profiles (profile_id and recorded_by) — the
+// relationship must be named explicitly or PostgREST can't disambiguate
+// which one to embed and returns 300 Multiple Choices for every request.
+const SELECT = '*, profile:profiles!attendance_profile_id_fkey(id,name,role)';
 
 export async function getAttendance(params?: { from?: string; to?: string }): Promise<AttendanceRecord[]> {
   if (!isSupabaseConfigured) return [];
