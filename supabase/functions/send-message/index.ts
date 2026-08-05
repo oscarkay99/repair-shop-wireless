@@ -1,7 +1,8 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { requireActiveUser } from '../_shared/auth.ts';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': Deno.env.get('APP_ORIGIN') ?? 'https://operations.wirelesscares.com',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
@@ -76,6 +77,15 @@ async function sendTikTok(to: string, message: string, integration: any) {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+
+  // This sends a real message to a real customer on the shop's behalf —
+  // only a logged-in staff member should be able to trigger it.
+  const caller = await requireActiveUser(req.headers.get('authorization'));
+  if (!caller) {
+    return new Response(JSON.stringify({ error: 'Not authorized' }), {
+      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
 
   try {
     const { channel, to, message } = await req.json();

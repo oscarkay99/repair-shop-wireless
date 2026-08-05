@@ -15,7 +15,7 @@ export default function ChangePasswordSection() {
     setSuccess(false);
     if (!newPw || !confirmPw) { setError('Both fields are required'); return; }
     if (newPw !== confirmPw) { setError('Passwords do not match'); return; }
-    if (newPw.length < 6) { setError('Password must be at least 6 characters'); return; }
+    if (newPw.length < 8) { setError('Password must be at least 8 characters'); return; }
     setSaving(true);
     try {
       await changePassword(newPw);
@@ -49,7 +49,7 @@ export default function ChangePasswordSection() {
             type="password"
             value={newPw}
             onChange={e => setNewPw(e.target.value)}
-            placeholder="Min 6 characters"
+            placeholder="Min 8 characters"
             className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
           />
         </div>

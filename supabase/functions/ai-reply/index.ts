@@ -3,13 +3,15 @@ import OpenAI from 'npm:openai';
 import { OPENAI_MODEL } from '../_shared/openai.ts';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': Deno.env.get('APP_ORIGIN') ?? 'https://operations.wirelesscares.com',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL')!,
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+  SERVICE_ROLE_KEY,
 );
 
 const openai = new OpenAI({ apiKey: Deno.env.get('OPENAI_API_KEY')! });
@@ -23,6 +25,18 @@ If you don't know a specific price or detail, say you'll check and ask for their
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+
+  // This function is only ever meant to be called server-to-server by our
+  // own webhook handlers (instagram/whatsapp/tiktok-webhook), which already
+  // hold the service role key — never directly by a browser. Requiring the
+  // exact key as the bearer token (rather than a staff JWT, which the
+  // calling webhooks don't have) keeps it a trusted internal call while
+  // still closing it off to the public internet.
+  if (req.headers.get('authorization') !== `Bearer ${SERVICE_ROLE_KEY}`) {
+    return new Response(JSON.stringify({ error: 'Not authorized' }), {
+      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
 
   try {
     const { conversation_id, channel, message, contact_phone, contact_ig_id, contact_tiktok_id, is_comment } = await req.json();

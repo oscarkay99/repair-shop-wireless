@@ -208,32 +208,17 @@ export function useAuth() {
 
   const login = async (identifier: string, password: string): Promise<AuthResult> => {
     setState({ loading: true });
-
-    // Demo/mock accounts only ever have an email, never a username — a
-    // username login simply won't match one, which is correct.
-    const demoMatch = mockUsers.find(u => u.email === identifier && u.password === password);
     setState({ deniedMessage: null });
 
-    // Admin tries Supabase first (needs real session for RLS), others skip straight to mock
-    if (isSupabaseConfigured && demoMatch?.role === 'admin') {
-      try {
-        const email = await resolveIdentifierToEmail(identifier);
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (!error && data.session) {
-          // Load profile; fall back to demo data if DB query fails
-          const profile = await loadProfileFromSession(data.session.user.id, data.session.user.email ?? '');
-          const { password: _pw, ...fallback } = demoMatch;
-          const user = profile ?? { ...fallback, ...(await resolveRoleMeta(fallback.role)), id: data.session.user.id };
-          writeStoredUser(user);
-          setState({ user, loading: false });
-          return { success: true };
-        }
-        // Supabase auth failed — fall through to mock below
-      } catch { /* fall through to mock */ }
-    }
-
-    // Non-demo users with Supabase configured must go through Supabase only
-    if (isSupabaseConfigured && !demoMatch) {
+    // A live, configured Supabase backend is always the sole source of
+    // truth — no demo/mock fallback of any kind, for any account, ever.
+    // (Previously a hardcoded-credential match could either silently
+    // substitute a client-only mock session when the real Supabase call
+    // failed, or — for non-admin demo accounts — skip real auth entirely.
+    // Since mockUsers ships in the public JS bundle, that meant anyone who
+    // read the bundle could obtain an authenticated-looking UI session for
+    // those roles without ever knowing the real password.)
+    if (isSupabaseConfigured) {
       try {
         const email = await resolveIdentifierToEmail(identifier);
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -249,7 +234,9 @@ export function useAuth() {
       }
     }
 
-    // Mock auth — all demo accounts reach here (non-admin always, admin if Supabase failed)
+    // No Supabase configured at all (local dev without a .env) — demo/mock
+    // accounts only, never reachable once a real backend is configured.
+    const demoMatch = mockUsers.find(u => u.email === identifier && u.password === password);
     if (!demoMatch) { setState({ loading: false }); return { success: false, error: 'Invalid email/username or password' }; }
     const { password: _pw, ...userFields } = demoMatch;
     const roleMeta = await resolveRoleMeta(userFields.role);

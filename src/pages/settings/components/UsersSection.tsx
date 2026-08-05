@@ -52,7 +52,7 @@ function EditUserModal({ user, roles, onClose, onSaved }: { user: WirelessProfil
   };
 
   const handleResetPassword = async () => {
-    if (newPassword.length < 6) { setResetError('Password must be at least 6 characters'); return; }
+    if (newPassword.length < 8) { setResetError('Password must be at least 8 characters'); return; }
     setResetting(true);
     setResetError('');
     try {
@@ -129,7 +129,7 @@ function EditUserModal({ user, roles, onClose, onSaved }: { user: WirelessProfil
                       type={showNewPassword ? 'text' : 'password'}
                       value={newPassword}
                       onChange={e => setNewPassword(e.target.value)}
-                      placeholder="At least 6 characters"
+                      placeholder="At least 8 characters"
                       className="w-full bg-background border border-border rounded-lg pl-3 pr-9 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
                     />
                     <button

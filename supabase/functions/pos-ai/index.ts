@@ -1,5 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { OPENAI_MODEL } from '../_shared/openai.ts';
+import { requireActiveUser } from '../_shared/auth.ts';
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL')!,
@@ -9,7 +10,7 @@ const supabase = createClient(
 const OPENAI_KEY = Deno.env.get('OPENAI_API_KEY')!;
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': Deno.env.get('APP_ORIGIN') ?? 'https://operations.wirelesscares.com',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
@@ -136,6 +137,13 @@ async function handleChat(query: string, context: Record<string, unknown>) {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
+  }
+
+  const caller = await requireActiveUser(req.headers.get('authorization'));
+  if (!caller) {
+    return new Response(JSON.stringify({ error: 'Not authorized' }), {
+      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 
   try {

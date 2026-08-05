@@ -1,13 +1,15 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
+const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': Deno.env.get('APP_ORIGIN') ?? 'https://operations.wirelesscares.com',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL')!,
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+  SERVICE_ROLE_KEY,
 );
 
 async function publishToInstagram(caption: string, integration: any): Promise<string> {
@@ -59,6 +61,14 @@ async function sendWhatsAppBroadcast(message: string, integration: any): Promise
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+
+  // Meant to be triggered by a scheduled job holding the service role key —
+  // it publishes live to the shop's connected social accounts.
+  if (req.headers.get('authorization') !== `Bearer ${SERVICE_ROLE_KEY}`) {
+    return new Response(JSON.stringify({ error: 'Not authorized' }), {
+      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
 
   try {
     const { post_id } = await req.json();

@@ -1,8 +1,9 @@
 import OpenAI from 'npm:openai';
 import { OPENAI_MODEL } from '../_shared/openai.ts';
+import { requireActiveUser } from '../_shared/auth.ts';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': Deno.env.get('APP_ORIGIN') ?? 'https://operations.wirelesscares.com',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
@@ -10,6 +11,13 @@ const openai = new OpenAI({ apiKey: Deno.env.get('OPENAI_API_KEY')! });
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+
+  const caller = await requireActiveUser(req.headers.get('authorization'));
+  if (!caller) {
+    return new Response(JSON.stringify({ error: 'Not authorized' }), {
+      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
 
   try {
     const { topic, channel, tone = 'engaging', product, price } = await req.json();

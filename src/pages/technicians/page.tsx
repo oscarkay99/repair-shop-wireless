@@ -52,7 +52,7 @@ function AddTechnicianModal({ onSave, onClose }: {
     e.preventDefault();
     setError('');
     if (!form.name || !form.phone || !form.email) { setError('Name, phone, and email are required'); return; }
-    if (password.trim() && password.trim().length < 6) { setError('Password must be at least 6 characters'); return; }
+    if (password.trim() && password.trim().length < 8) { setError('Password must be at least 8 characters'); return; }
     setSaving(true);
     const finalPassword = password.trim() || generatePassword();
     try {
@@ -216,7 +216,7 @@ function CreateLoginModal({ technician, onLinked, onClose }: {
     e.preventDefault();
     setError('');
     if (!email.trim()) { setError('Email is required'); return; }
-    if (password.trim() && password.trim().length < 6) { setError('Password must be at least 6 characters'); return; }
+    if (password.trim() && password.trim().length < 8) { setError('Password must be at least 8 characters'); return; }
     setSaving(true);
     const finalPassword = password.trim() || generatePassword();
     try {
