@@ -48,7 +48,11 @@ export async function getWirelessSettings(): Promise<WirelessSettings> {
 // after a change — same reasoning as the ticket-media upload path.
 export async function uploadLogo(file: File): Promise<string> {
   if (!isSupabaseConfigured) throw new Error('Uploading a logo requires a live Supabase connection.');
-  const ext = file.name.split('.').pop() || 'png';
+  // Strip to a short alphanumeric token before it becomes part of a
+  // storage path — an unvalidated extension could otherwise let the
+  // resulting key escape the bucket's flat namespace.
+  const rawExt = file.name.includes('.') ? file.name.split('.').pop() ?? '' : '';
+  const ext = rawExt.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10) || 'png';
   const filePath = `logo-${Date.now()}.${ext}`;
   const { error } = await supabase.storage.from(LOGO_BUCKET).upload(filePath, file, {
     cacheControl: '3600',

@@ -16,11 +16,16 @@ export default function AddCustomerModal({ onSave, onClose }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.phone) return;
+    const name = form.name.trim();
+    const phone = form.phone.trim();
+    if (!name || !phone) return;
     setSaving(true);
     try {
       await onSave({
         ...form,
+        name,
+        phone,
+        email: form.email.trim(),
         ltv: 'GHS 0',
         orders: 0,
         lastOrder: '—',

@@ -39,6 +39,8 @@ create policy "repair_media_bucket_read" on storage.objects for select to authen
     )
   );
 
+drop function if exists wireless.lookup_ticket_media(text, text);
+
 create or replace function wireless.lookup_ticket_media(p_ticket_number text default null, p_phone text default null)
 returns table (
   stage         text,
@@ -97,6 +99,11 @@ begin
 end;
 $$;
 
+revoke all on function wireless.lookup_ticket_media(text, text) from public;
+grant execute on function wireless.lookup_ticket_media(text, text) to anon, authenticated;
+
+drop function if exists wireless.lookup_ticket_media_by_token(uuid);
+
 create or replace function wireless.lookup_ticket_media_by_token(p_token uuid)
 returns table (
   stage         text,
@@ -124,3 +131,6 @@ begin
     order by m.created_at asc;
 end;
 $$;
+
+revoke all on function wireless.lookup_ticket_media_by_token(uuid) from public;
+grant execute on function wireless.lookup_ticket_media_by_token(uuid) to anon, authenticated;

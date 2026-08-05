@@ -238,9 +238,19 @@ function toTicketPatch(item: Partial<Repair>) {
   return patch;
 }
 
+// The extension comes from the browser-supplied File.name — strip it down
+// to a short alphanumeric token before it becomes part of a storage path,
+// since an unvalidated "extension" (e.g. containing a slash) could
+// otherwise let the resulting key escape the intended repairs/<ticket>/
+// folder.
+function safeExtension(fileName: string): string {
+  const raw = fileName.includes('.') ? fileName.split('.').pop() ?? '' : '';
+  const cleaned = raw.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10);
+  return cleaned || 'bin';
+}
+
 function buildStoragePath(ticketNumber: string, file: File, stage: RepairMedia['stage']) {
-  const extension = file.name.includes('.') ? file.name.split('.').pop() : 'bin';
-  return `repairs/${ticketNumber}/${stage}/${crypto.randomUUID()}.${extension}`;
+  return `repairs/${ticketNumber}/${stage}/${crypto.randomUUID()}.${safeExtension(file.name)}`;
 }
 
 async function currentUserId(): Promise<string | null> {
