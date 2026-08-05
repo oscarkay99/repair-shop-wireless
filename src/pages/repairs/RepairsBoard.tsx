@@ -27,7 +27,7 @@ import { formatDate } from '@/utils/date';
 import { getPaymentsForTicket } from '@/services/wireless/payments';
 import { ensureTicketInvoice } from '@/services/wireless/autoInvoice';
 import { useTaxSettings } from '@/hooks/useTaxSettings';
-import { hasConfirmedDiagnosisPayment } from '@/services/repairs';
+import { hasConfirmedDiagnosisPayment, getSignedMediaUrls } from '@/services/repairs';
 import { errMessage } from '@/utils/errors';
 import { useWirelessSettings } from '@/hooks/useWirelessSettings';
 import { downloadTicketReceiptPdf } from '@/utils/ticketReceiptPdf';
@@ -204,6 +204,15 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   const isAwaitingDecision = repair.status === 'awaiting_approval';
   const isClosedDiagnosis = repair.status === 'diagnosis_only_closed';
   const media = repair.media ?? [];
+  const [signedMediaUrls, setSignedMediaUrls] = useState<Record<string, string>>({});
+  useEffect(() => {
+    const paths = media.map(m => m.path).filter((p): p is string => !!p);
+    if (paths.length === 0) { setSignedMediaUrls({}); return; }
+    let cancelled = false;
+    getSignedMediaUrls(paths).then(map => { if (!cancelled) setSignedMediaUrls(map); });
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [media.map(m => m.path).join(',')]);
   const { settings } = useWirelessSettings();
   const { parts: inventoryParts } = useParts();
   const { taxEnabled, vatRate, nhilGetfundRate } = useTaxSettings();
@@ -626,8 +635,9 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
             <div className="grid grid-cols-3 gap-2">
               {media.map(m => {
                 const canDelete = canUpdateProgress || (!!uploaderName && m.uploadedBy === uploaderName);
+                const resolvedUrl = (m.path && signedMediaUrls[m.path]) || m.url;
                 return (
-                  <a key={m.id} href={m.url} target="_blank" rel="noreferrer"
+                  <a key={m.id} href={resolvedUrl} target="_blank" rel="noreferrer"
                     className="relative aspect-square rounded-lg overflow-hidden block group/photo"
                     style={{ background: 'hsl(var(--muted))' }}
                     title={m.caption || m.fileName}>
@@ -636,7 +646,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
                         <Video className="w-5 h-5" style={{ color: 'hsl(var(--muted-foreground))' }} />
                       </div>
                     ) : (
-                      <img src={m.url} alt={m.caption || m.fileName} className="w-full h-full object-cover" />
+                      <img src={resolvedUrl} alt={m.caption || m.fileName} className="w-full h-full object-cover" />
                     )}
                     <span className="absolute bottom-0 left-0 right-0 px-1 py-0.5 text-[8px] font-semibold text-center text-white capitalize truncate"
                       style={{ background: 'rgba(0,0,0,0.55)' }}>

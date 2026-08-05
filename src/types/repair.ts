@@ -40,6 +40,8 @@ export interface RepairMedia {
   repairId: string;
   stage: RepairMediaStage;
   type: RepairMediaType;
+  /** Storage object path — used to mint a short-lived signed URL for display, since the repair-media bucket is private. */
+  path?: string;
   url: string;
   thumbnailUrl?: string;
   fileName: string;

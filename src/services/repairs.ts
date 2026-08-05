@@ -62,6 +62,7 @@ type TicketMediaRow = {
   ticket_number: string;
   stage: string;
   media_type: string;
+  file_path?: string | null;
   file_url: string;
   thumbnail_url?: string | null;
   file_name: string;
@@ -148,6 +149,7 @@ function normalizeMediaRow(row: TicketMediaRow): RepairMedia {
     repairId: row.ticket_number,
     stage: row.stage as RepairMedia['stage'],
     type: row.media_type as RepairMediaType,
+    path: row.file_path ?? undefined,
     url: row.file_url,
     thumbnailUrl: row.thumbnail_url ?? undefined,
     fileName: row.file_name,
@@ -466,6 +468,21 @@ export async function getTicketPublicTokenById(ticketDbId: string): Promise<stri
   const { data, error } = await db.from('tickets').select('public_token').eq('id', ticketDbId).single();
   if (error) return null;
   return (data as { public_token: string } | null)?.public_token ?? null;
+}
+
+// repair-media is a private bucket — file_url/thumbnail_url stored on the
+// row are inert legacy strings, not directly fetchable. Mint short-lived
+// signed URLs for whichever paths are about to be displayed instead.
+export async function getSignedMediaUrls(paths: string[], expiresIn = 600): Promise<Record<string, string>> {
+  const unique = [...new Set(paths.filter(Boolean))];
+  if (!isSupabaseConfigured || unique.length === 0) return {};
+  const { data, error } = await supabase.storage.from(REPAIR_MEDIA_BUCKET).createSignedUrls(unique, expiresIn);
+  if (error || !data) return {};
+  const map: Record<string, string> = {};
+  for (const item of data) {
+    if (item.signedUrl && item.path) map[item.path] = item.signedUrl;
+  }
+  return map;
 }
 
 export async function addRepairMedia(repairId: string, input: RepairMediaUploadInput): Promise<RepairMedia> {
