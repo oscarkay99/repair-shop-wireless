@@ -12,15 +12,16 @@ import {
   getInvoiceItems, sendInvoiceEmail, createInvoice, patchInvoice,
   getInvoicesPage, getInvoiceTotals, type InvoiceTotals,
 } from '@/services/wireless/invoices';
-import { recordPayment } from '@/services/wireless/payments';
+import { recordPayment, getPaymentsForInvoice } from '@/services/wireless/payments';
 import SearchDropdown from '@/components/shared/SearchDropdown';
 import Pagination from '@/components/shared/Pagination';
 import DateRangePicker, { type DateRange } from '@/components/shared/DateRangePicker';
-import { Check, Share2, Printer, Download, Mail, Loader2, ChevronLeft, X, Pencil, Plus } from 'lucide-react';
-import type { Invoice, InvoiceItem, InvoiceStatus } from '@/types/wireless';
+import { Check, Share2, Printer, Download, Mail, Loader2, ChevronLeft, X, Pencil, Plus, Receipt } from 'lucide-react';
+import type { Invoice, InvoiceItem, InvoiceStatus, Payment } from '@/types/wireless';
 import type { PaymentMethod } from '@/types/sale';
 import { errMessage } from '@/utils/errors';
 import { downloadInvoicePdf, invoicePdfBase64 } from '@/utils/invoicePdf';
+import { downloadPaymentReceiptPdf } from '@/utils/paymentReceiptPdf';
 import { getTicketPublicTokenById } from '@/services/repairs';
 import { SERVICE_TERMS_URL } from '@/utils/pdfBranding';
 
@@ -373,6 +374,7 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
   const [items, setItems] = useState<InvoiceItem[]>([]);
   const [itemsLoading, setItemsLoading] = useState(true);
   const [trackerToken, setTrackerToken] = useState<string | null>(null);
+  const [payments, setPayments] = useState<Payment[]>([]);
   const balanceDue = Math.max(0, inv.total - inv.amount_paid);
   const isPaid = inv.status === 'paid';
 
@@ -384,6 +386,12 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
       .finally(() => { if (!cancelled) setItemsLoading(false); });
     return () => { cancelled = true; };
   }, [inv.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    getPaymentsForInvoice(inv.id).then(data => { if (!cancelled) setPayments(data); });
+    return () => { cancelled = true; };
+  }, [inv.id, inv.amount_paid]);
 
   // Only known so the tracker QR can authenticate the scan on its own —
   // the invoice itself only carries the ticket's uuid, not its public_token.
@@ -676,6 +684,45 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
           </div>
         </div>
       </div>
+
+      {/* Payment history — a partial payment paid in installments gets its
+          own receipt per installment here, not just the one invoice PDF. */}
+      {payments.length > 0 && (
+        <div className="mx-auto max-w-2xl rounded-2xl overflow-hidden print:hidden"
+          style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
+          <div className="px-5 py-3.5" style={{ borderBottom: '1px solid hsl(var(--border))' }}>
+            <h3 className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>Payment History</h3>
+          </div>
+          <div>
+            {payments.reduce<{ rows: JSX.Element[]; runningTotal: number }>((acc, p, i) => {
+              const runningTotal = acc.runningTotal + p.amount;
+              acc.rows.push(
+                <div key={p.id} className="flex items-center gap-3 px-5 py-3"
+                  style={{ borderBottom: i < payments.length - 1 ? '1px solid hsl(var(--border))' : 'none' }}>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold" style={{ color: 'hsl(var(--foreground))' }}>{fmt(p.amount)} · {p.method}</p>
+                    <p className="text-xs mt-0.5" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                      {fmtDate(p.created_at)}{p.reference ? ` · ${p.reference}` : ''}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => downloadPaymentReceiptPdf({
+                      payment: p,
+                      settings: settings ?? undefined,
+                      invoiceContext: { total: inv.total, paidAfterThisPayment: runningTotal },
+                    })}
+                    className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold flex-shrink-0"
+                    style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}>
+                    <Receipt className="w-3.5 h-3.5" />
+                    Receipt
+                  </button>
+                </div>
+              );
+              return { rows: acc.rows, runningTotal };
+            }, { rows: [], runningTotal: 0 }).rows}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

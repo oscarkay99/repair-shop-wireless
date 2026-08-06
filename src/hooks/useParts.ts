@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getParts, createPart, updatePart, deletePart, adjustStock } from '@/services/wireless/parts';
+import { getParts, createPart, updatePart, deletePart, adjustStock, adjustDefectiveStock } from '@/services/wireless/parts';
 import type { Part } from '@/types/wireless';
 import { useToast } from '@/contexts/ToastContext';
 import { errMessage } from '@/utils/errors';
@@ -52,15 +52,25 @@ export function useParts() {
 
   const adjust = async (id: string, delta: number) => {
     try {
-      await adjustStock(id, delta);
-      setParts(prev => prev.map(p => p.id === id ? { ...p, stock: Math.max(0, p.stock + delta) } : p));
+      const newStock = await adjustStock(id, delta);
+      setParts(prev => prev.map(p => p.id === id ? { ...p, stock: newStock } : p));
     } catch (e) {
       showToast(errMessage(e, 'Failed to adjust stock'), 'error');
       throw e;
     }
   };
 
+  const adjustDefective = async (id: string, delta: number) => {
+    try {
+      const newDefective = await adjustDefectiveStock(id, delta);
+      setParts(prev => prev.map(p => p.id === id ? { ...p, defective_stock: newDefective } : p));
+    } catch (e) {
+      showToast(errMessage(e, 'Failed to adjust defective stock'), 'error');
+      throw e;
+    }
+  };
+
   const lowStock = parts.filter(p => p.stock < p.min_stock);
 
-  return { parts, loading, reload, add, patch, remove, adjust, lowStock };
+  return { parts, loading, reload, add, patch, remove, adjust, adjustDefective, lowStock };
 }

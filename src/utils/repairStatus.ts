@@ -126,6 +126,23 @@ export function isOverdueRepair(repair: Pick<Repair, 'etaDate' | 'status'>): boo
   return new Date(`${repair.etaDate}T00:00`) < today;
 }
 
+export type EtaTier = 'due_soon' | 'overdue';
+
+/** ETA-based reminder — a nudge to update the customer as the *promised*
+ *  date approaches or passes, distinct from `staleTier` which fires on
+ *  inactivity regardless of what was promised. 'overdue' matches
+ *  `isOverdueRepair` exactly; 'due_soon' is new — today or tomorrow. */
+export function etaTier(repair: Pick<Repair, 'status' | 'etaDate'>): EtaTier | null {
+  if (!repair.etaDate || !isActiveRepairStatus(repair.status)) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const eta = new Date(`${repair.etaDate}T00:00`);
+  const daysUntil = Math.round((eta.getTime() - today.getTime()) / 86_400_000);
+  if (daysUntil < 0) return 'overdue';
+  if (daysUntil <= 1) return 'due_soon';
+  return null;
+}
+
 export type StaleTier = 'warning' | 'urgent';
 
 const STALE_WARNING_HOURS = 24;

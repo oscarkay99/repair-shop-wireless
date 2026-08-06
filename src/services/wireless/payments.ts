@@ -24,6 +24,20 @@ export async function getPaymentsForTicket(ticketId: string): Promise<Payment[]>
   return (data as Payment[] | null) ?? [];
 }
 
+/** Every payment recorded against one invoice — a partial payment made in
+ *  three installments shows up here as three rows, oldest first, each
+ *  individually receipt-able. */
+export async function getPaymentsForInvoice(invoiceId: string): Promise<Payment[]> {
+  if (!isSupabaseConfigured || !invoiceId) return [];
+  const { data, error } = await db
+    .from('payments')
+    .select('*')
+    .eq('invoice_id', invoiceId)
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return (data as Payment[] | null) ?? [];
+}
+
 /**
  * Payments joined down to the technician(s) assigned on their ticket, for
  * per-technician revenue rollups. A payment tied to a multi-technician

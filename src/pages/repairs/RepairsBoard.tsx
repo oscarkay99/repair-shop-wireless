@@ -8,13 +8,13 @@ import AddRepairModal from './components/AddRepairModal';
 import CreateTicketInvoiceModal from './components/CreateTicketInvoiceModal';
 import AddTicketPartModal from './components/AddTicketPartModal';
 import { getTicketParts, removeTicketPart, type TicketPart } from '@/services/wireless/ticketParts';
-import { getTicketComments, addTicketComment, requestReassignment, type TicketComment } from '@/services/wireless/ticketComments';
+import { getTicketComments, addTicketComment, requestReassignment, requestAdditionalApproval, type TicketComment } from '@/services/wireless/ticketComments';
 import SearchDropdown from '@/components/shared/SearchDropdown';
 import Pagination from '@/components/shared/Pagination';
 import DateRangePicker, { type DateRange } from '@/components/shared/DateRangePicker';
 import {
   X, Clock, Shield, Plus, Pencil, Trash2, Camera, Video, AlertCircle, Loader2,
-  CheckCircle2, Scissors, Stethoscope, ArrowRightCircle, UserX, Users, XCircle, Zap, Printer,
+  CheckCircle2, Scissors, Stethoscope, ArrowRightCircle, UserX, Users, XCircle, Zap, Printer, AlertTriangle,
 } from 'lucide-react';
 import type { Repair, RepairStatus, RepairMediaStage, RepairMediaUploadInput } from '@/types/repair';
 import type { Payment } from '@/types/wireless';
@@ -33,7 +33,10 @@ import { useWirelessSettings } from '@/hooks/useWirelessSettings';
 import { downloadTicketReceiptPdf } from '@/utils/ticketReceiptPdf';
 import { useReassignmentRequests } from '@/hooks/useReassignmentRequests';
 import ReassignmentRequestsBanner from '@/components/shared/ReassignmentRequestsBanner';
+import { useApprovalRequests } from '@/hooks/useApprovalRequests';
+import ApprovalRequestsBanner from '@/components/shared/ApprovalRequestsBanner';
 import StaleTicketsBanner from '@/components/shared/StaleTicketsBanner';
+import EtaRemindersBanner from '@/components/shared/EtaRemindersBanner';
 
 const PAGE_SIZE = 12;
 
@@ -193,6 +196,10 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   const [requestingReassign, setRequestingReassign] = useState(false);
   const [reassignReason, setReassignReason] = useState('');
   const [reassignSaving, setReassignSaving] = useState(false);
+  const [reportingExtra, setReportingExtra] = useState(false);
+  const [extraReason, setExtraReason] = useState('');
+  const [extraAmount, setExtraAmount] = useState('');
+  const [extraSaving, setExtraSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   // Technicians repair the device — what the customer's charged is a
@@ -303,6 +310,30 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
       alert(errMessage(e, 'Failed to send reassignment request'));
     } finally {
       setReassignSaving(false);
+    }
+  };
+
+  // A technician can't notify or get sign-off from the customer directly —
+  // this logs the ask the same tagged way as Request Reassignment, so it
+  // surfaces on Reception's/Admin's approval queue instead of only living
+  // in Internal Notes. The existing awaiting_approval status only covers
+  // the initial diagnosis decision; this covers something found later,
+  // mid-repair.
+  const handleRequestApproval = async () => {
+    const reason = extraReason.trim();
+    if (!reason || !repair.ticketDbId) return;
+    setExtraSaving(true);
+    try {
+      const amount = extraAmount.trim() ? parseFloat(extraAmount) : null;
+      await requestAdditionalApproval(repair.ticketDbId, reason, amount, user?.name ?? 'Staff');
+      setReportingExtra(false);
+      setExtraReason('');
+      setExtraAmount('');
+      loadComments();
+    } catch (e) {
+      alert(errMessage(e, 'Failed to send approval request'));
+    } finally {
+      setExtraSaving(false);
     }
   };
 
@@ -966,6 +997,43 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
               </button>
             )
           )}
+          {canUpdateProgress && ['in_progress', 'parts_pending'].includes(repair.status) && (
+            reportingExtra ? (
+              <div className="space-y-2 pt-1">
+                <p className="text-[11px] font-semibold" style={{ color: 'hsl(var(--foreground))' }}>
+                  What did you find, and what will it cost?
+                </p>
+                <textarea autoFocus rows={2} value={extraReason} onChange={e => setExtraReason(e.target.value)}
+                  placeholder="e.g. Found a cracked logic board while replacing the screen — needs a new one"
+                  className="w-full px-3 py-2 rounded-xl text-xs outline-none resize-none"
+                  style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
+                <input type="number" min="0" step="0.01" value={extraAmount} onChange={e => setExtraAmount(e.target.value)}
+                  placeholder="Extra cost (GHS) — optional"
+                  className="w-full px-3 py-2 rounded-xl text-xs outline-none"
+                  style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
+                <div className="flex gap-2 justify-end">
+                  <button onClick={() => { setReportingExtra(false); setExtraReason(''); setExtraAmount(''); }}
+                    className="px-3 py-1.5 text-xs rounded-lg"
+                    style={{ color: 'hsl(var(--muted-foreground))', border: '1px solid hsl(var(--border))' }}>
+                    Cancel
+                  </button>
+                  <button onClick={handleRequestApproval} disabled={!extraReason.trim() || extraSaving}
+                    className="px-3 py-1.5 text-xs font-semibold text-white rounded-lg disabled:opacity-50"
+                    style={{ background: 'hsl(var(--primary))' }}>
+                    {extraSaving ? 'Sending…' : 'Send to Reception'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button onClick={() => setReportingExtra(true)}
+                className="w-full h-9 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5"
+                style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}>
+                <AlertTriangle className="w-3.5 h-3.5" /> Report Additional Issue
+              </button>
+            )
+          )}
         </div>
       )}
 
@@ -1010,6 +1078,7 @@ export default function RepairsBoard() {
   const canUpdateProgress = user?.role === 'admin' || !!user?.scopeTicketsToTechnician;
   const canDeleteTickets = user?.role === 'admin' || perms.includes('tickets:delete');
   const { requests: reassignmentRequests, resolve: resolveReassignment } = useReassignmentRequests();
+  const { requests: approvalRequests, resolve: resolveApproval } = useApprovalRequests();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all');
   const [techFilter, setTechFilter] = useState('all');
@@ -1166,7 +1235,14 @@ export default function RepairsBoard() {
           />
         )}
 
+        {canManageTickets && (
+          <ApprovalRequestsBanner
+            requests={approvalRequests}
+            onResolve={(commentId, ticketId, decision) => resolveApproval(commentId, ticketId, decision, user?.name ?? 'Staff')}
+          />
+        )}
         <StaleTicketsBanner repairs={repairs} onSelect={setSelectedId} />
+        <EtaRemindersBanner repairs={repairs} onSelect={setSelectedId} />
 
         {/* Controls */}
         <div className="flex items-center gap-2 flex-wrap">

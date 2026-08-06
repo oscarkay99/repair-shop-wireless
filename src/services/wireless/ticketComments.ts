@@ -139,3 +139,92 @@ export async function resolveReassignmentRequest(commentId: string): Promise<voi
     .eq('id', commentId);
   if (error) throw error;
 }
+
+export interface ApprovalRequest {
+  commentId: string;
+  ticketId: string;
+  ticketNumber: string;
+  device: string;
+  customerName: string;
+  requestedBy: string;
+  reason: string;
+  amount: number | null;
+  createdAt: string;
+}
+
+function normalizeApprovalRequest(row: ReassignmentRequestRow): ApprovalRequest {
+  // Body is stored as "Additional approval needed: <reason> (+GHS <amount>)"
+  // — amount is optional (a technician might not always have a number yet).
+  const match = row.body.match(/^Additional approval needed:\s*(.*?)(?:\s*\(\+GHS\s*([\d.]+)\))?$/i);
+  return {
+    commentId: row.id,
+    ticketId: row.ticket_id,
+    ticketNumber: row.ticket?.ticket_number ?? row.ticket_id,
+    device: row.ticket?.device ?? '—',
+    customerName: row.ticket?.customer_name ?? '—',
+    requestedBy: row.author_name,
+    reason: match?.[1]?.trim() || row.body,
+    amount: match?.[2] ? parseFloat(match[2]) : null,
+    createdAt: row.created_at,
+  };
+}
+
+/**
+ * A technician finding extra work needed mid-repair can't quote/notify the
+ * customer directly (that's reception's job) — this logs the ask the same
+ * "tagged request, someone else applies it" way as requestReassignment, so
+ * it surfaces on an actionable list instead of only living in Internal Notes.
+ */
+export async function requestAdditionalApproval(ticketId: string, reason: string, amount: number | null, authorName: string): Promise<TicketComment> {
+  if (!isSupabaseConfigured) throw new Error('Comments require Supabase to be configured.');
+  const { data: sessionData } = await supabase.auth.getSession();
+  const body = `Additional approval needed: ${reason}${amount ? ` (+GHS ${amount.toFixed(2)})` : ''}`;
+  const { data, error } = await db
+    .from('ticket_comments')
+    .insert({
+      ticket_id: ticketId,
+      author_id: sessionData.session?.user?.id ?? null,
+      author_name: authorName,
+      body,
+      is_internal: true,
+      request_type: 'additional_approval',
+    })
+    .select('id, ticket_id, author_name, body, created_at')
+    .single();
+  if (error) throw error;
+  return normalize(data as TicketCommentRow);
+}
+
+/** For Admin/Reception — every additional-cost approval nobody has relayed a decision on yet. */
+export async function getPendingApprovalRequests(): Promise<ApprovalRequest[]> {
+  if (!isSupabaseConfigured) return [];
+  const { data, error } = await db
+    .from('ticket_comments')
+    .select('id, ticket_id, author_name, body, created_at, ticket:tickets(id,ticket_number,device,customer_name)')
+    .eq('request_type', 'additional_approval')
+    .eq('resolved', false)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return ((data as unknown as ReassignmentRequestRow[] | null) ?? []).map(normalizeApprovalRequest);
+}
+
+/** Records the customer's decision as a normal internal note (visible to the
+ *  technician in the ticket's comment thread) and marks the request handled. */
+export async function resolveApprovalRequest(commentId: string, ticketId: string, decision: 'approved' | 'declined', authorName: string): Promise<void> {
+  if (!isSupabaseConfigured) return;
+  const { data: sessionData } = await supabase.auth.getSession();
+  const uid = sessionData.session?.user?.id ?? null;
+  const { error } = await db
+    .from('ticket_comments')
+    .update({ resolved: true, resolved_at: new Date().toISOString(), resolved_by: uid })
+    .eq('id', commentId);
+  if (error) throw error;
+
+  await db.from('ticket_comments').insert({
+    ticket_id: ticketId,
+    author_id: uid,
+    author_name: authorName,
+    body: decision === 'approved' ? 'Customer approved the additional cost — go ahead.' : 'Customer declined the additional cost — do not proceed with the extra work.',
+    is_internal: true,
+  });
+}

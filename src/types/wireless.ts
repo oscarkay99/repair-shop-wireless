@@ -45,6 +45,10 @@ export interface Part {
   selling_price: number;
   stock: number;
   min_stock: number;
+  /** Units known to be bad (customer return, DOA from supplier, pulled during
+   *  a repair) — tracked separately from `stock` so a defective unit sitting
+   *  on the shelf can't get mistaken for sellable/usable inventory. */
+  defective_stock: number;
   supplier?: string;
   notes?: string;
   /** Which Apple product line this part is for (MacBook Air, iPhone, Apple

@@ -4,14 +4,18 @@ import {
   CheckCircle2, UserX, Smartphone, Bell, User, Tag, X,
 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
+import { useAuth } from '@/hooks/useAuth';
 import { useRepairs } from '@/hooks/useRepairs';
 import { useTechnicians } from '@/hooks/useTechnicians';
 import { useReassignmentRequests } from '@/hooks/useReassignmentRequests';
+import { useApprovalRequests } from '@/hooks/useApprovalRequests';
+import ApprovalRequestsBanner from '@/components/shared/ApprovalRequestsBanner';
 import { REPAIR_STATUS_META, isOverdueRepair, isActiveRepairStatus } from '@/utils/repairStatus';
 import { formatDate } from '@/utils/date';
 import Pagination from '@/components/shared/Pagination';
 import ReassignmentRequestsBanner from '@/components/shared/ReassignmentRequestsBanner';
 import StaleTicketsBanner from '@/components/shared/StaleTicketsBanner';
+import EtaRemindersBanner from '@/components/shared/EtaRemindersBanner';
 import type { Repair, RepairStatus } from '@/types/repair';
 
 type FilterKey = 'all' | 'pending' | 'in_progress' | 'ready' | 'completed';
@@ -38,7 +42,9 @@ export default function TicketsPanel() {
   const { showToast } = useToast();
   const { repairs, loading, patchRepair, addNote } = useRepairs();
   const { technicians } = useTechnicians();
+  const { user } = useAuth();
   const { requests: reassignmentRequests, resolve: resolveReassignment } = useReassignmentRequests();
+  const { requests: approvalRequests, resolve: resolveApproval } = useApprovalRequests();
 
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterKey>('all');
@@ -132,7 +138,13 @@ export default function TicketsPanel() {
         onResolve={resolveReassignment}
       />
 
+      <ApprovalRequestsBanner
+        requests={approvalRequests}
+        onResolve={(commentId, ticketId, decision) => resolveApproval(commentId, ticketId, decision, user?.name ?? 'Staff')}
+      />
+
       <StaleTicketsBanner repairs={repairs} />
+      <EtaRemindersBanner repairs={repairs} />
 
       {/* Ready-for-pickup banner */}
       {readyPickups.length > 0 && (

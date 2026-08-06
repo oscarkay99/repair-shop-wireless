@@ -27,7 +27,7 @@ export default function InventoryPortalPage() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const { settings } = useWirelessSettings();
-  const { parts, loading, add, patch, remove, adjust, lowStock } = useParts();
+  const { parts, loading, add, patch, remove, adjust, adjustDefective, lowStock } = useParts();
   const { products: accessoryProducts } = useAccessoryStore();
 
   // Permission-based (parts:edit), not a hardcoded role id — otherwise no
@@ -238,6 +238,24 @@ export default function InventoryPortalPage() {
                               className="w-8 h-8 flex items-center justify-center rounded-lg text-white cursor-pointer"
                               style={{ background: '#22c55e' }}>
                               <Plus className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-1.5 flex-shrink-0 pl-2" style={{ borderLeft: '1px solid hsl(var(--border))' }}>
+                            <button type="button" onClick={() => adjustDefective(p.id, -1)} disabled={p.defective_stock <= 0}
+                              title="Fewer defective units"
+                              className="w-6 h-6 flex items-center justify-center rounded-md disabled:opacity-30 cursor-pointer"
+                              style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--muted-foreground))' }}>
+                              <Minus className="w-3 h-3" />
+                            </button>
+                            <div className="w-16 text-center">
+                              <p className="text-xs font-bold" style={{ color: p.defective_stock > 0 ? '#f97316' : 'hsl(var(--muted-foreground))' }}>{p.defective_stock}</p>
+                              <p className="text-[8px] uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>defective</p>
+                            </div>
+                            <button type="button" onClick={() => adjustDefective(p.id, 1)}
+                              title="Log a defective/returned unit"
+                              className="w-6 h-6 flex items-center justify-center rounded-md cursor-pointer"
+                              style={{ border: '1px solid rgba(249,115,22,0.4)', color: '#f97316' }}>
+                              <Plus className="w-3 h-3" />
                             </button>
                           </div>
                           <div className="flex items-center gap-1 flex-shrink-0">
