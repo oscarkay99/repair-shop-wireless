@@ -173,9 +173,11 @@ export default function ExpensesPage() {
   // Admin is a protected system role that can't carry a DB-seeded
   // assets:edit permission (see the migration) — is_admin() already
   // bypasses every wireless.has_permission() check server-side, so the
-  // client mirrors that with an explicit role check. Finance (and anyone
-  // else with assets:view but not assets:edit) gets read-only.
-  const canManageAssets = user?.role === 'admin';
+  // client mirrors that with an explicit role check — but assets:edit is
+  // also a real, grantable checkbox on custom roles (RoleFormModal), so
+  // anyone holding it needs the same OR a custom "Ops Manager" role with
+  // assets:edit checked would pass RLS but see no controls at all.
+  const canManageAssets = user?.role === 'admin' || (user?.permissions ?? []).includes('assets:edit');
   // Same admin-protected-role caveat as canManageAssets above — the DB seed
   // can't grant admin an explicit expenses:edit row, but is_admin() already
   // bypasses the RLS check server-side either way.

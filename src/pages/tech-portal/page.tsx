@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTechnicians } from '@/hooks/useTechnicians';
 import { useRepairs } from '@/hooks/useRepairs';
 import { RepairDetailPanel } from '@/pages/repairs/RepairsBoard';
+import { addTicketComment } from '@/services/wireless/ticketComments';
 import { REPAIR_STATUS_META, statusToServiceStage } from '@/utils/repairStatus';
 import { roleColors, roleLabels } from '@/mocks/users';
 import { isCurrentlyUnavailable } from '@/utils/technicianAvailability';
@@ -112,7 +113,17 @@ export default function TechPortalPage() {
     jobType: 'diagnosis_only',
     status: 'diagnosis_only_closed',
     serviceStage: statusToServiceStage('diagnosis_only_closed', 'diagnosis_only'),
+    completedDate: new Date().toISOString(),
   });
+  const handleDiscontinue = (id: string, reason: string) => {
+    const target = repairs.find(r => r.id === id);
+    if (!target) return;
+    patchRepair(id, { status: 'cancelled', serviceStage: 'closed' });
+    if (target.ticketDbId) {
+      addTicketComment(target.ticketDbId, `Discontinued: ${reason}`, user?.name ?? 'Staff').catch(() => {});
+    }
+    setSelectedId(null);
+  };
 
   return (
     <div className="h-screen flex flex-col" style={{ background: 'hsl(var(--background))' }}>
@@ -347,6 +358,7 @@ export default function TechPortalPage() {
               canDeleteTickets={false}
               onProceedToRepair={handleProceedToRepair}
               onCloseDiagnosisOnly={handleCloseDiagnosisOnly}
+              onDiscontinue={handleDiscontinue}
               onPatchParts={(id, parts) => patchRepair(id, { parts })}
               onEdit={() => {}}
               onDelete={() => {}}

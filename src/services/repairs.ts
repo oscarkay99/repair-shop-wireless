@@ -424,12 +424,22 @@ export async function updateRepairStatus(id: string, status: RepairStatus): Prom
 
   assertCanMoveToStatus(repair, status);
   const serviceStage = statusToServiceStage(status, repair.jobType);
+  // Nothing else stamps completed_at — every dashboard/analytics metric
+  // that filters on it (turnaround time, completed-today counts, revenue
+  // by completion week) was silently reading an always-empty field without
+  // this.
+  const isNowDone = status === 'completed' || status === 'diagnosis_only_closed';
+  const completedDate = isNowDone ? new Date().toISOString() : repair.completedDate;
 
   if (isSupabaseConfigured) {
-    const { error } = await db.from('tickets').update({ status, service_stage: serviceStage }).eq('ticket_number', id);
+    const { error } = await db.from('tickets').update({
+      status,
+      service_stage: serviceStage,
+      ...(isNowDone ? { completed_at: completedDate } : {}),
+    }).eq('ticket_number', id);
     if (error) throw error;
   }
-  updateLocalRepair(id, (currentRepair) => ({ ...currentRepair, status, serviceStage }));
+  updateLocalRepair(id, (currentRepair) => ({ ...currentRepair, status, serviceStage, completedDate }));
 }
 
 export async function updateRepairNotes(id: string, notes: string[]): Promise<void> {

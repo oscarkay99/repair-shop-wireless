@@ -57,6 +57,10 @@ export async function recordPayment(input: {
   notes?: string;
 }): Promise<string> {
   if (!isSupabaseConfigured) throw new Error('Not configured');
+  // A fresh token per call — split payments intentionally share every other
+  // field (amount, method, reference) across calls in the same submission,
+  // so the server can no longer tell those apart from a duplicate retry by
+  // field-matching alone. This is the actual identity of "this one call."
   const { data, error } = await db.rpc('record_payment', {
     p_amount: input.amount,
     p_method: input.method,
@@ -66,6 +70,7 @@ export async function recordPayment(input: {
     p_customer_name: input.customerName ?? '',
     p_reference: input.reference ?? null,
     p_notes: input.notes ?? null,
+    p_client_token: crypto.randomUUID(),
   });
   if (error) throw error;
   return data as string;

@@ -110,9 +110,18 @@ export async function deletePart(id: string): Promise<void> {
   localStore = localStore.filter(p => p.id !== id);
 }
 
+// Atomic on the DB side (wireless.adjust_part_stock does `stock = stock +
+// delta` in one UPDATE) — computing the new value from the client cache and
+// writing it back as an absolute number would lose concurrent adjustments
+// from another open session.
 export async function adjustStock(id: string, delta: number): Promise<void> {
-  const p = localStore.find(x => x.id === id);
-  if (!p) return;
-  const newStock = Math.max(0, p.stock + delta);
-  await updatePart(id, { stock: newStock });
+  if (!isSupabaseConfigured) {
+    const p = localStore.find(x => x.id === id);
+    if (!p) return;
+    localStore = localStore.map(x => x.id === id ? { ...x, stock: Math.max(0, x.stock + delta) } : x);
+    return;
+  }
+  const { data, error } = await db.rpc('adjust_part_stock', { p_part_id: id, p_delta: delta });
+  if (error) throw error;
+  localStore = localStore.map(x => x.id === id ? { ...x, stock: data as number } : x);
 }

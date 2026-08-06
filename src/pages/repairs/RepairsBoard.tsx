@@ -68,7 +68,7 @@ function RepairCard({ repair, onClick, selected }: {
   repair: Repair; onClick: () => void; selected: boolean;
 }) {
   const { user } = useAuth();
-  const hidePrices = user?.role === 'technician';
+  const hidePrices = !!user?.scopeTicketsToTechnician;
   const s = STATUS[repair.status] ?? STATUS.received;
   return (
     <div
@@ -197,7 +197,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   const { user } = useAuth();
   // Technicians repair the device — what the customer's charged is a
   // reception/admin concern, not shown on their view of the ticket.
-  const hidePrices = user?.role === 'technician';
+  const hidePrices = !!user?.scopeTicketsToTechnician;
   const s = STATUS[repair.status] ?? STATUS.received;
   const isDxOnly = repair.jobType === 'diagnosis_only';
   const isStraightRepair = repair.jobType === 'straight_repair';
@@ -1002,8 +1002,13 @@ export default function RepairsBoard() {
   // custom role (sales_manager, manager, finance) that has the matching
   // tickets/invoices permission but isn't literally one of those two roles.
   const canManageTickets = user?.role === 'admin' || perms.includes('tickets:edit') || perms.includes('tickets:create') || perms.includes('invoices:create');
-  const canUpdateProgress = user?.role === 'admin' || user?.role === 'technician';
-  const canDeleteTickets = user?.role === 'admin';
+  // Mirrors prevent_unauthorized_ticket_status_change(): admin, or any role
+  // with scope_tickets_to_technician set (an editable per-role flag in
+  // Settings > Roles, not exclusive to the literal 'technician' role id —
+  // a custom scoped-tech role would pass the DB trigger but hit a hidden
+  // progress UI under the old hardcoded check).
+  const canUpdateProgress = user?.role === 'admin' || !!user?.scopeTicketsToTechnician;
+  const canDeleteTickets = user?.role === 'admin' || perms.includes('tickets:delete');
   const { requests: reassignmentRequests, resolve: resolveReassignment } = useReassignmentRequests();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all');
@@ -1088,6 +1093,7 @@ export default function RepairsBoard() {
       jobType: 'diagnosis_only',
       status: 'diagnosis_only_closed',
       serviceStage: statusToServiceStage('diagnosis_only_closed', 'diagnosis_only'),
+      completedDate: new Date().toISOString(),
     });
   };
 
