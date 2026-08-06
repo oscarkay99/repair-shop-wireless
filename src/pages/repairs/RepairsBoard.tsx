@@ -996,7 +996,12 @@ export default function RepairsBoard() {
   const { repairs, loading, add, updateStatus, addNote, addMedia, removeMedia, patchRepair, remove } = useRepairs();
   const { technicians } = useTechnicians();
   const { user } = useAuth();
-  const canManageTickets = user?.role === 'admin' || user?.role === 'receptionist';
+  const perms = user?.permissions ?? [];
+  // Gates New Ticket, Edit, Create Invoice, and the reassignment banner —
+  // was hardcoded to admin/receptionist, which silently dead-ended every
+  // custom role (sales_manager, manager, finance) that has the matching
+  // tickets/invoices permission but isn't literally one of those two roles.
+  const canManageTickets = user?.role === 'admin' || perms.includes('tickets:edit') || perms.includes('tickets:create') || perms.includes('invoices:create');
   const canUpdateProgress = user?.role === 'admin' || user?.role === 'technician';
   const canDeleteTickets = user?.role === 'admin';
   const { requests: reassignmentRequests, resolve: resolveReassignment } = useReassignmentRequests();

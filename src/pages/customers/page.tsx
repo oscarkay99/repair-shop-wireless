@@ -282,7 +282,7 @@ export default function CustomersPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingCustomer, setEditingCustomer] = useState<WCustomer | null>(null);
 
-  const canEdit = user?.role === 'admin' || user?.role === 'receptionist';
+  const canEdit = user?.role === 'admin' || (user?.permissions ?? []).includes('customers:edit');
 
   useEffect(() => { setPage(1); }, [search, activityFilter, dateRange]);
 

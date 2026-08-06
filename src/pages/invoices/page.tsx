@@ -699,8 +699,9 @@ export default function InvoicesPage() {
   const [loading, setLoading] = useState(true);
   const [totals, setTotals] = useState<InvoiceTotals>({ total: 0, collected: 0, outstanding: 0, overdue: 0 });
 
-  const canIssue = user?.role === 'admin' || user?.role === 'sales_manager' || user?.role === 'receptionist';
-  const canEdit  = user?.role === 'admin' || user?.role === 'sales_manager' || user?.role === 'receptionist';
+  const perms = user?.permissions ?? [];
+  const canIssue = user?.role === 'admin' || perms.includes('invoices:create');
+  const canEdit  = user?.role === 'admin' || perms.includes('invoices:edit');
 
   useEffect(() => { setPage(1); }, [debouncedQuery, dateRange]);
 

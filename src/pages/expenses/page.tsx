@@ -176,6 +176,10 @@ export default function ExpensesPage() {
   // client mirrors that with an explicit role check. Finance (and anyone
   // else with assets:view but not assets:edit) gets read-only.
   const canManageAssets = user?.role === 'admin';
+  // Same admin-protected-role caveat as canManageAssets above — the DB seed
+  // can't grant admin an explicit expenses:edit row, but is_admin() already
+  // bypasses the RLS check server-side either way.
+  const canEditExpenses = user?.role === 'admin' || (user?.permissions ?? []).includes('expenses:edit');
 
   const [period, setPeriod] = useState<Period>('1m');
   const [activeTab, setActiveTab] = useState<'overview' | 'transactions' | 'budgets' | 'assets'>('overview');
@@ -195,11 +199,10 @@ export default function ExpensesPage() {
       title: 'Expenses & P&L',
       subtitle: 'Track spending · Monitor profit & loss',
       hideDefaultAction: true,
-      action: { label: 'Add Expense', onClick: () => setShowAdd(true) },
+      action: canEditExpenses ? { label: 'Add Expense', onClick: () => setShowAdd(true) } : undefined,
     });
     return () => setPageTitle({ title: 'Dashboard' });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setPageTitle]);
+  }, [setPageTitle, canEditExpenses]);
 
   const { from, to } = periodBounds(period);
 
@@ -480,12 +483,14 @@ export default function ExpensesPage() {
           <div className="flex items-center justify-between px-5 py-3.5"
             style={{ borderBottom: '1px solid hsl(var(--border))' }}>
             <h3 className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>All Transactions</h3>
-            <button onClick={() => setShowAdd(true)}
-              className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold text-white"
-              style={{ background: 'hsl(var(--primary))' }}>
-              <Plus className="w-3.5 h-3.5" />
-              Add Expense
-            </button>
+            {canEditExpenses && (
+              <button onClick={() => setShowAdd(true)}
+                className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold text-white"
+                style={{ background: 'hsl(var(--primary))' }}>
+                <Plus className="w-3.5 h-3.5" />
+                Add Expense
+              </button>
+            )}
           </div>
 
           {loading ? (
@@ -551,20 +556,24 @@ export default function ExpensesPage() {
                         {tx.type === 'expense' ? '-' : '+'}GH₵ {parseAmt(tx.amount).toLocaleString()}
                       </p>
                       <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => setEditing(tx)}
-                          className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors"
-                          style={{ color: 'hsl(var(--muted-foreground))' }}
-                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}>
-                          <Pencil className="w-3.5 h-3.5" />
-                        </button>
-                        <button onClick={() => setConfirmDeleteId(tx.id)}
-                          className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors"
-                          style={{ color: 'hsl(var(--muted-foreground))' }}
-                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.12)'; (e.currentTarget as HTMLElement).style.color = '#ef4444'; }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.color = 'hsl(var(--muted-foreground))'; }}>
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        {canEditExpenses && (
+                          <>
+                            <button onClick={() => setEditing(tx)}
+                              className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors"
+                              style={{ color: 'hsl(var(--muted-foreground))' }}
+                              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
+                              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}>
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={() => setConfirmDeleteId(tx.id)}
+                              className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors"
+                              style={{ color: 'hsl(var(--muted-foreground))' }}
+                              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.12)'; (e.currentTarget as HTMLElement).style.color = '#ef4444'; }}
+                              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.color = 'hsl(var(--muted-foreground))'; }}>
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   )}
