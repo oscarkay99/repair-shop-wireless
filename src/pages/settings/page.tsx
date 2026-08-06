@@ -44,7 +44,6 @@ export default function SettingsPage() {
   const [warrantyNewLabel, setWarrantyNewLabel] = useState('12 Months');
   const [warrantyUsedLabel, setWarrantyUsedLabel] = useState('3 Months');
   const [quoteValidityDays, setQuoteValidityDays] = useState('7');
-  const [lowStockThreshold, setLowStockThreshold] = useState('2');
   const [repairTurnaroundTarget, setRepairTurnaroundTarget] = useState('Same Day');
   const [defaultDeliveryFee, setDefaultDeliveryFee] = useState('50');
   const [businessHoursMonFri, setBusinessHoursMonFri] = useState('8:00 AM – 8:00 PM');
@@ -75,7 +74,6 @@ export default function SettingsPage() {
     setWarrantyNewLabel(settings.warranty_new_label ?? '12 Months');
     setWarrantyUsedLabel(settings.warranty_used_label ?? '3 Months');
     setQuoteValidityDays(String(settings.quote_validity_days ?? 7));
-    setLowStockThreshold(String(settings.low_stock_threshold ?? 2));
     setRepairTurnaroundTarget(settings.repair_turnaround_target ?? 'Same Day');
     setDefaultDeliveryFee(String(settings.default_delivery_fee ?? 50));
     setBusinessHoursMonFri(settings.business_hours_mon_fri ?? '8:00 AM – 8:00 PM');
@@ -165,7 +163,6 @@ export default function SettingsPage() {
         warranty_new_label: warrantyNewLabel,
         warranty_used_label: warrantyUsedLabel,
         quote_validity_days: parseInt(quoteValidityDays) || 0,
-        low_stock_threshold: parseInt(lowStockThreshold) || 0,
         repair_turnaround_target: repairTurnaroundTarget,
         default_delivery_fee: parseFloat(defaultDeliveryFee) || 0,
         business_hours_mon_fri: businessHoursMonFri,
@@ -211,7 +208,6 @@ export default function SettingsPage() {
               warrantyNewLabel={warrantyNewLabel} setWarrantyNewLabel={markDirty(setWarrantyNewLabel)}
               warrantyUsedLabel={warrantyUsedLabel} setWarrantyUsedLabel={markDirty(setWarrantyUsedLabel)}
               quoteValidityDays={quoteValidityDays} setQuoteValidityDays={markDirty(setQuoteValidityDays)}
-              lowStockThreshold={lowStockThreshold} setLowStockThreshold={markDirty(setLowStockThreshold)}
               repairTurnaroundTarget={repairTurnaroundTarget} setRepairTurnaroundTarget={markDirty(setRepairTurnaroundTarget)}
               defaultDeliveryFee={defaultDeliveryFee} setDefaultDeliveryFee={markDirty(setDefaultDeliveryFee)}
               businessHoursMonFri={businessHoursMonFri} setBusinessHoursMonFri={markDirty(setBusinessHoursMonFri)}

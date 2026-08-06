@@ -53,8 +53,6 @@ function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
 }
 
-const STATUS_OPTIONS: InvoiceStatus[] = ['unpaid', 'partial', 'paid', 'overdue', 'cancelled'];
-
 function StatusBadge({ status }: { status: Invoice['status'] }) {
   const styles: Record<string, { bg: string; color: string }> = {
     paid:      { bg: 'rgba(34,197,94,0.12)',  color: '#22c55e' },
@@ -276,11 +274,9 @@ export function IssueInvoiceModal({ onSave, onClose }: {
 
 function EditInvoiceModal({ inv, onSave, onClose }: {
   inv: Invoice;
-  onSave: (data: Partial<Pick<Invoice, 'status' | 'amount_paid' | 'due_date' | 'notes'>>) => Promise<void>;
+  onSave: (data: Partial<Pick<Invoice, 'due_date' | 'notes'>>) => Promise<void>;
   onClose: () => void;
 }) {
-  const [status, setStatus]     = useState<InvoiceStatus>(inv.status);
-  const [amountPaid, setAmountPaid] = useState(String(inv.amount_paid));
   const [dueDate, setDueDate]   = useState(inv.due_date ?? '');
   const [notes, setNotes]       = useState(inv.notes ?? '');
   const [saving, setSaving]     = useState(false);
@@ -289,7 +285,7 @@ function EditInvoiceModal({ inv, onSave, onClose }: {
     e.preventDefault();
     setSaving(true);
     try {
-      await onSave({ status, amount_paid: parseFloat(amountPaid) || 0, due_date: dueDate || undefined, notes: notes || undefined });
+      await onSave({ due_date: dueDate || undefined, notes: notes || undefined });
       onClose();
     } finally { setSaving(false); }
   };
@@ -309,20 +305,24 @@ function EditInvoiceModal({ inv, onSave, onClose }: {
         </div>
 
         <form onSubmit={handleSubmit} className="px-5 py-4 space-y-3">
-          <Field label="Status">
-            <select value={status} onChange={e => setStatus(e.target.value as InvoiceStatus)}
-              className={inputCls} style={inputStyle}>
-              {STATUS_OPTIONS.map(s => (
-                <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
-              ))}
-            </select>
-          </Field>
-
-          <Field label="Amount Paid (GH₵)">
-            <input type="number" min="0" step="0.01" value={amountPaid}
-              onChange={e => setAmountPaid(e.target.value)}
-              className={inputCls} style={inputStyle} />
-          </Field>
+          {/* Status and amount paid are consequences of recorded payments,
+              not something to hand-set here — editing them directly would
+              bypass the payments ledger and desync from what the Payments
+              page and the customer's lifetime spend show. Use Record
+              Payment (or Mark Paid) instead; this modal only edits metadata. */}
+          <div className="rounded-lg px-3 py-2.5 flex items-center justify-between" style={{ background: 'hsl(var(--muted))' }}>
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>Status</p>
+              <p className="text-sm font-semibold capitalize" style={{ color: 'hsl(var(--foreground))' }}>{inv.status}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>Paid</p>
+              <p className="text-sm font-semibold" style={{ color: 'hsl(var(--foreground))' }}>GH₵ {inv.amount_paid.toFixed(2)}</p>
+            </div>
+          </div>
+          <p className="text-[10px] -mt-1.5" style={{ color: 'hsl(var(--muted-foreground))' }}>
+            Use Record Payment to change these — keeps the Payments ledger accurate.
+          </p>
 
           <Field label="Due Date">
             <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)}

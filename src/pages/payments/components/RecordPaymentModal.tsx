@@ -136,10 +136,30 @@ export default function RecordPaymentModal({ onClose, onSaved }: { onClose: () =
                 query={selectedId ? (target === 'invoice' ? selectedInvoice?.invoice_number ?? '' : selectedTicket?.id ?? '') : query}
                 onQueryChange={q => { setQuery(q); setSelectedId(''); }}
                 suggestions={target === 'invoice' ? invoiceSuggestions : ticketSuggestions}
-                onSelect={item => { setSelectedId(item.id); setQuery(''); }}
+                onSelect={item => {
+                  // A ticket with an invoice already has a balance-owed source of
+                  // truth — paying the ticket instead would leave that invoice's
+                  // amount_paid (what the customer's document shows) untouched.
+                  // Redirect straight to it instead of silently ignoring the pick.
+                  const linkedInvoice = target === 'ticket'
+                    ? invoices.find(inv => inv.ticket_id === repairs.find(r => r.id === item.id)?.ticketDbId)
+                    : undefined;
+                  if (linkedInvoice) {
+                    setTarget('invoice');
+                    setSelectedId(linkedInvoice.id);
+                  } else {
+                    setSelectedId(item.id);
+                  }
+                  setQuery('');
+                }}
                 placeholder={target === 'invoice' ? 'Search invoice # or customer…' : 'Search ticket # or customer…'}
                 width="100%"
               />
+              {target === 'ticket' && (
+                <p className="text-[10px] mt-1" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                  If the ticket already has an invoice, this switches to paying that invoice instead.
+                </p>
+              )}
             </div>
           )}
 

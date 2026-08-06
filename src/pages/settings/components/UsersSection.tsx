@@ -4,6 +4,7 @@ import { findTechnicianByProfileId, createTechnician } from '@/services/wireless
 import { getRoles, type WirelessRole } from '@/services/wireless/roles';
 import { isSupabaseConfigured } from '@/services/supabase';
 import { errMessage } from '@/utils/errors';
+import { useAuth } from '@/hooks/useAuth';
 import InviteUserModal from './InviteUserModal';
 
 function generatePassword(): string {
@@ -13,12 +14,17 @@ function generatePassword(): string {
   return out;
 }
 
-function EditUserModal({ user, roles, onClose, onSaved }: { user: WirelessProfile; roles: WirelessRole[]; onClose: () => void; onSaved: () => void }) {
+function EditUserModal({ user, roles, isLastAdmin, onClose, onSaved }: { user: WirelessProfile; roles: WirelessRole[]; isLastAdmin: boolean; onClose: () => void; onSaved: () => void }) {
   const [name, setName] = useState(user.name);
   const [role, setRole] = useState(user.role);
   const [username, setUsername] = useState(user.username ?? '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  // The sole remaining admin changing their own role away from admin would
+  // lock the business out of Settings/Roles with nobody left who can undo
+  // it — no DB-level guard exists for this today (trg_prevent_self_
+  // privilege_escalation only restricts non-admins), so it has to live here.
+  const blockRoleChange = isLastAdmin && user.role === 'admin' && role !== 'admin';
 
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
@@ -29,6 +35,7 @@ function EditUserModal({ user, roles, onClose, onSaved }: { user: WirelessProfil
 
   const handleSave = async () => {
     if (!name.trim()) { setError('Name is required'); return; }
+    if (blockRoleChange) { setError("This is the last admin account — change someone else's role to admin first."); return; }
     setSaving(true);
     setError('');
     try {
@@ -104,6 +111,11 @@ function EditUserModal({ user, roles, onClose, onSaved }: { user: WirelessProfil
                 <option key={r.id} value={r.id}>{r.name}</option>
               ))}
             </select>
+            {blockRoleChange && (
+              <p className="text-xs text-red-500 mt-1.5">
+                This is the last admin account — promote someone else to admin first, or this account would be locked out of Settings/Roles.
+              </p>
+            )}
           </div>
 
           <div className="border-t border-border pt-3">
@@ -177,7 +189,7 @@ function EditUserModal({ user, roles, onClose, onSaved }: { user: WirelessProfil
             <button onClick={onClose} className="flex-1 px-4 py-2 border border-border text-sm text-muted-foreground rounded-lg hover:bg-background transition-colors">
               Cancel
             </button>
-            <button onClick={handleSave} disabled={saving} className="flex-1 px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50">
+            <button onClick={handleSave} disabled={saving || blockRoleChange} className="flex-1 px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50">
               {saving ? 'Saving…' : 'Save Changes'}
             </button>
           </div>
@@ -188,6 +200,7 @@ function EditUserModal({ user, roles, onClose, onSaved }: { user: WirelessProfil
 }
 
 export default function UsersSection() {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<WirelessProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [roles, setRoles] = useState<WirelessRole[]>([]);
@@ -208,7 +221,17 @@ export default function UsersSection() {
     getRoles().then(setRoles).catch(() => setRoles([]));
   }, []);
 
+  const adminCount = users.filter(u => u.role === 'admin').length;
+
   const handleDelete = async (user: WirelessProfile) => {
+    if (user.id === currentUser?.id) {
+      alert("You can't delete your own account. Ask another admin to do it.");
+      return;
+    }
+    if (user.role === 'admin' && adminCount <= 1) {
+      alert('This is the last admin account — promote someone else to admin before deleting it.');
+      return;
+    }
     if (!confirm(`Delete ${user.name}? This cannot be undone.`)) return;
     setDeletingId(user.id);
     try {
@@ -280,9 +303,9 @@ export default function UsersSection() {
                 </button>
                 <button
                   onClick={() => handleDelete(u)}
-                  disabled={deletingId === u.id}
+                  disabled={deletingId === u.id || u.id === currentUser?.id || (u.role === 'admin' && adminCount <= 1)}
                   className="p-1.5 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40"
-                  title="Delete user"
+                  title={u.id === currentUser?.id ? "You can't delete your own account" : (u.role === 'admin' && adminCount <= 1) ? "Can't delete the last admin" : 'Delete user'}
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -297,7 +320,7 @@ export default function UsersSection() {
 
       <InviteUserModal open={showAdd} onClose={() => setShowAdd(false)} onCreated={load} roles={roles} />
       {editingUser && (
-        <EditUserModal user={editingUser} roles={roles} onClose={() => setEditingUser(null)} onSaved={load} />
+        <EditUserModal user={editingUser} roles={roles} isLastAdmin={editingUser.role === 'admin' && adminCount <= 1} onClose={() => setEditingUser(null)} onSaved={load} />
       )}
     </div>
   );

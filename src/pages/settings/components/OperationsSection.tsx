@@ -4,7 +4,6 @@ interface OperationsSectionProps {
   warrantyNewLabel: string; setWarrantyNewLabel: (v: string) => void;
   warrantyUsedLabel: string; setWarrantyUsedLabel: (v: string) => void;
   quoteValidityDays: string; setQuoteValidityDays: (v: string) => void;
-  lowStockThreshold: string; setLowStockThreshold: (v: string) => void;
   repairTurnaroundTarget: string; setRepairTurnaroundTarget: (v: string) => void;
   defaultDeliveryFee: string; setDefaultDeliveryFee: (v: string) => void;
   businessHoursMonFri: string; setBusinessHoursMonFri: (v: string) => void;
@@ -21,7 +20,6 @@ export default function OperationsSection({
   warrantyNewLabel, setWarrantyNewLabel,
   warrantyUsedLabel, setWarrantyUsedLabel,
   quoteValidityDays, setQuoteValidityDays,
-  lowStockThreshold, setLowStockThreshold,
   repairTurnaroundTarget, setRepairTurnaroundTarget,
   defaultDeliveryFee, setDefaultDeliveryFee,
   businessHoursMonFri, setBusinessHoursMonFri,
@@ -58,10 +56,6 @@ export default function OperationsSection({
           <div>
             <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] block mb-1.5">Quote Validity (Days)</label>
             <input type="number" min="1" value={quoteValidityDays} onChange={e => setQuoteValidityDays(e.target.value)} className={inputCls} />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] block mb-1.5">Low Stock Threshold</label>
-            <input type="number" min="0" value={lowStockThreshold} onChange={e => setLowStockThreshold(e.target.value)} className={inputCls} />
           </div>
           <div>
             <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] block mb-1.5">Repair Turnaround Target</label>
