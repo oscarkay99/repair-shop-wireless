@@ -1,6 +1,9 @@
 import { useState } from 'react';
-import { Users, X } from 'lucide-react';
+import { Users, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { ReassignmentRequest } from '@/services/wireless/ticketComments';
+import { usePagination } from '@/hooks/usePagination';
+
+const PAGE_SIZE = 5;
 
 interface TechOption { id: string; name: string }
 
@@ -15,6 +18,7 @@ interface Props {
 export default function ReassignmentRequestsBanner({ requests, technicians, onReassign, onResolve }: Props) {
   const [picking, setPicking] = useState<Record<string, string>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
+  const { page, setPage, paginated, totalPages, total, from, to } = usePagination(requests, PAGE_SIZE, requests.length);
 
   if (requests.length === 0) return null;
 
@@ -50,7 +54,7 @@ export default function ReassignmentRequestsBanner({ requests, technicians, onRe
         </p>
       </div>
       <div className="space-y-2">
-        {requests.map(req => (
+        {paginated.map(req => (
           <div key={req.commentId} className="flex items-center gap-3 flex-wrap rounded-lg px-3 py-2.5"
             style={{ background: 'rgba(0,0,0,0.15)' }}>
             <div className="flex-1 min-w-[180px]">
@@ -83,6 +87,23 @@ export default function ReassignmentRequestsBanner({ requests, technicians, onRe
           </div>
         ))}
       </div>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-1">
+          <span className="text-[11px]" style={{ color: 'hsl(38 60% 60%)' }}>{from}–{to} of {total}</span>
+          <div className="flex items-center gap-1">
+            <button onClick={() => setPage(page - 1)} disabled={page === 1}
+              className="w-6 h-6 flex items-center justify-center rounded-md disabled:opacity-30"
+              style={{ background: 'rgba(255,255,255,0.08)', color: 'hsl(38 80% 85%)' }}>
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+            <button onClick={() => setPage(page + 1)} disabled={page === totalPages}
+              className="w-6 h-6 flex items-center justify-center rounded-md disabled:opacity-30"
+              style={{ background: 'rgba(255,255,255,0.08)', color: 'hsl(38 80% 85%)' }}>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

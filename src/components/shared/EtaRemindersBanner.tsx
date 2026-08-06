@@ -1,6 +1,9 @@
-import { CalendarClock, Phone } from 'lucide-react';
+import { CalendarClock, Phone, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEtaReminders } from '@/hooks/useEtaReminders';
+import { usePagination } from '@/hooks/usePagination';
 import type { Repair } from '@/types/repair';
+
+const PAGE_SIZE = 5;
 
 interface Props {
   repairs: Repair[];
@@ -18,6 +21,7 @@ function fmtEta(etaDate: string, tier: 'due_soon' | 'overdue'): string {
 
 export default function EtaRemindersBanner({ repairs, onSelect }: Props) {
   const reminders = useEtaReminders(repairs);
+  const { page, setPage, paginated, totalPages, total, from, to } = usePagination(reminders, PAGE_SIZE, reminders.length);
   if (reminders.length === 0) return null;
 
   const overdueCount = reminders.filter(r => r.tier === 'overdue').length;
@@ -33,7 +37,7 @@ export default function EtaRemindersBanner({ repairs, onSelect }: Props) {
         </p>
       </div>
       <div className="space-y-2">
-        {reminders.map(({ repair, tier }) => {
+        {paginated.map(({ repair, tier }) => {
           const overdue = tier === 'overdue';
           const Row = onSelect ? 'button' : 'div';
           return (
@@ -71,6 +75,23 @@ export default function EtaRemindersBanner({ repairs, onSelect }: Props) {
           );
         })}
       </div>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-1">
+          <span className="text-[11px]" style={{ color: 'hsl(266 35% 65%)' }}>{from}–{to} of {total}</span>
+          <div className="flex items-center gap-1">
+            <button onClick={() => setPage(page - 1)} disabled={page === 1}
+              className="w-6 h-6 flex items-center justify-center rounded-md disabled:opacity-30"
+              style={{ background: 'rgba(255,255,255,0.08)', color: 'hsl(266 60% 88%)' }}>
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+            <button onClick={() => setPage(page + 1)} disabled={page === totalPages}
+              className="w-6 h-6 flex items-center justify-center rounded-md disabled:opacity-30"
+              style={{ background: 'rgba(255,255,255,0.08)', color: 'hsl(266 60% 88%)' }}>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

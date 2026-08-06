@@ -1,6 +1,9 @@
-import { Clock } from 'lucide-react';
+import { Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Repair } from '@/types/repair';
 import { useStaleTickets } from '@/hooks/useStaleTickets';
+import { usePagination } from '@/hooks/usePagination';
+
+const PAGE_SIZE = 5;
 
 interface Props {
   repairs: Repair[];
@@ -15,6 +18,7 @@ function formatQuiet(hours: number): string {
 
 export default function StaleTicketsBanner({ repairs, onSelect }: Props) {
   const stale = useStaleTickets(repairs);
+  const { page, setPage, paginated, totalPages, total, from, to } = usePagination(stale, PAGE_SIZE, stale.length);
   if (stale.length === 0) return null;
 
   const urgentCount = stale.filter(s => s.tier === 'urgent').length;
@@ -30,7 +34,7 @@ export default function StaleTicketsBanner({ repairs, onSelect }: Props) {
         </p>
       </div>
       <div className="space-y-2">
-        {stale.map(({ repair, tier, hoursSinceUpdate }) => {
+        {paginated.map(({ repair, tier, hoursSinceUpdate }) => {
           const urgent = tier === 'urgent';
           const Row = onSelect ? 'button' : 'div';
           return (
@@ -60,6 +64,23 @@ export default function StaleTicketsBanner({ repairs, onSelect }: Props) {
           );
         })}
       </div>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-1">
+          <span className="text-[11px]" style={{ color: 'hsl(210 40% 60%)' }}>{from}–{to} of {total}</span>
+          <div className="flex items-center gap-1">
+            <button onClick={() => setPage(page - 1)} disabled={page === 1}
+              className="w-6 h-6 flex items-center justify-center rounded-md disabled:opacity-30"
+              style={{ background: 'rgba(255,255,255,0.08)', color: 'hsl(210 70% 85%)' }}>
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+            <button onClick={() => setPage(page + 1)} disabled={page === totalPages}
+              className="w-6 h-6 flex items-center justify-center rounded-md disabled:opacity-30"
+              style={{ background: 'rgba(255,255,255,0.08)', color: 'hsl(210 70% 85%)' }}>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
