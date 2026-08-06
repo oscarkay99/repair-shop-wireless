@@ -8,7 +8,7 @@ import AddRepairModal from './components/AddRepairModal';
 import CreateTicketInvoiceModal from './components/CreateTicketInvoiceModal';
 import AddTicketPartModal from './components/AddTicketPartModal';
 import { getTicketParts, removeTicketPart, type TicketPart } from '@/services/wireless/ticketParts';
-import { getTicketComments, addTicketComment, type TicketComment } from '@/services/wireless/ticketComments';
+import { getTicketComments, addTicketComment, requestReassignment, type TicketComment } from '@/services/wireless/ticketComments';
 import SearchDropdown from '@/components/shared/SearchDropdown';
 import Pagination from '@/components/shared/Pagination';
 import DateRangePicker, { type DateRange } from '@/components/shared/DateRangePicker';
@@ -31,6 +31,8 @@ import { hasConfirmedDiagnosisPayment, getSignedMediaUrls } from '@/services/rep
 import { errMessage } from '@/utils/errors';
 import { useWirelessSettings } from '@/hooks/useWirelessSettings';
 import { downloadTicketReceiptPdf } from '@/utils/ticketReceiptPdf';
+import { useReassignmentRequests } from '@/hooks/useReassignmentRequests';
+import ReassignmentRequestsBanner from '@/components/shared/ReassignmentRequestsBanner';
 
 const PAGE_SIZE = 12;
 
@@ -283,16 +285,16 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
     setDiscontinueReason('');
   };
 
-  // A technician can't reassign a ticket themselves — this just logs the ask
-  // to Internal Notes so reception/admin sees it and applies it via the
-  // Technician field in Edit Ticket, same "request, someone else applies it"
-  // shape as Discontinue.
+  // A technician can't reassign a ticket themselves — this logs the ask as
+  // a tagged request so it surfaces on Reception's and Admin's Tickets
+  // Reassignment Requests banner (not just buried in Internal Notes),
+  // same "request, someone else applies it" shape as Discontinue.
   const handleRequestReassign = async () => {
     const reason = reassignReason.trim();
     if (!reason || !repair.ticketDbId) return;
     setReassignSaving(true);
     try {
-      await addTicketComment(repair.ticketDbId, `Reassignment requested: ${reason}`, user?.name ?? 'Staff');
+      await requestReassignment(repair.ticketDbId, reason, user?.name ?? 'Staff');
       setRequestingReassign(false);
       setReassignReason('');
       loadComments();
@@ -996,6 +998,7 @@ export default function RepairsBoard() {
   const canManageTickets = user?.role === 'admin' || user?.role === 'receptionist';
   const canUpdateProgress = user?.role === 'admin' || user?.role === 'technician';
   const canDeleteTickets = user?.role === 'admin';
+  const { requests: reassignmentRequests, resolve: resolveReassignment } = useReassignmentRequests();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all');
   const [techFilter, setTechFilter] = useState('all');
@@ -1141,6 +1144,15 @@ export default function RepairsBoard() {
             );
           })}
         </div>
+
+        {canManageTickets && (
+          <ReassignmentRequestsBanner
+            requests={reassignmentRequests}
+            technicians={technicians}
+            onReassign={(ticketId, tech) => patchRepair(ticketId, { technicians: [{ id: tech.id, name: tech.name }] })}
+            onResolve={resolveReassignment}
+          />
+        )}
 
         {/* Controls */}
         <div className="flex items-center gap-2 flex-wrap">

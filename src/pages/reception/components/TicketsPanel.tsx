@@ -6,9 +6,11 @@ import {
 import { useToast } from '@/contexts/ToastContext';
 import { useRepairs } from '@/hooks/useRepairs';
 import { useTechnicians } from '@/hooks/useTechnicians';
+import { useReassignmentRequests } from '@/hooks/useReassignmentRequests';
 import { REPAIR_STATUS_META, isOverdueRepair, isActiveRepairStatus } from '@/utils/repairStatus';
 import { formatDate } from '@/utils/date';
 import Pagination from '@/components/shared/Pagination';
+import ReassignmentRequestsBanner from '@/components/shared/ReassignmentRequestsBanner';
 import type { Repair, RepairStatus } from '@/types/repair';
 
 type FilterKey = 'all' | 'pending' | 'in_progress' | 'ready' | 'completed';
@@ -35,6 +37,7 @@ export default function TicketsPanel() {
   const { showToast } = useToast();
   const { repairs, loading, patchRepair, addNote } = useRepairs();
   const { technicians } = useTechnicians();
+  const { requests: reassignmentRequests, resolve: resolveReassignment } = useReassignmentRequests();
 
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterKey>('all');
@@ -120,6 +123,13 @@ export default function TicketsPanel() {
           );
         })}
       </div>
+
+      <ReassignmentRequestsBanner
+        requests={reassignmentRequests}
+        technicians={technicians}
+        onReassign={(ticketId, tech) => patchRepair(ticketId, { technicians: [{ id: tech.id, name: tech.name }] })}
+        onResolve={resolveReassignment}
+      />
 
       {/* Ready-for-pickup banner */}
       {readyPickups.length > 0 && (
