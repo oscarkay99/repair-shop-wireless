@@ -502,7 +502,11 @@ export async function addRepairMedia(repairId: string, input: RepairMediaUploadI
 
   const mediaType = toMediaType(input.file);
   const createdAt = new Date().toISOString();
-  let resolvedUrl = URL.createObjectURL(input.file);
+  // Local blob preview — instant, and doesn't depend on the (private)
+  // bucket's public URL working. Superseded once the signed-URL effect
+  // in RepairsBoard resolves `path` below to a real signed URL.
+  const resolvedUrl = URL.createObjectURL(input.file);
+  let resolvedPath: string | undefined;
   let savedId = crypto.randomUUID();
 
   if (isSupabaseConfigured) {
@@ -516,8 +520,10 @@ export async function addRepairMedia(repairId: string, input: RepairMediaUploadI
       });
     if (uploadError) throw uploadError;
 
+    resolvedPath = filePath;
+    // Inert legacy string (see getSignedMediaUrls above) — kept only so the
+    // column isn't left null, never read back for display.
     const { data: publicUrlData } = supabase.storage.from(REPAIR_MEDIA_BUCKET).getPublicUrl(filePath);
-    resolvedUrl = publicUrlData.publicUrl;
 
     const uploaderId = await currentUserId();
     const { data: inserted, error: insertError } = await db
@@ -527,7 +533,7 @@ export async function addRepairMedia(repairId: string, input: RepairMediaUploadI
         stage: input.stage,
         media_type: mediaType,
         file_path: filePath,
-        file_url: resolvedUrl,
+        file_url: publicUrlData.publicUrl,
         file_name: input.file.name,
         file_size: input.file.size,
         mime_type: input.file.type,
@@ -545,6 +551,7 @@ export async function addRepairMedia(repairId: string, input: RepairMediaUploadI
   const media: RepairMedia = {
     id: savedId,
     repairId,
+    path: resolvedPath,
     stage: input.stage,
     type: mediaType,
     url: resolvedUrl,
