@@ -24,7 +24,10 @@ export default function ReassignmentRequestsBanner({ requests, technicians, onRe
     if (!tech) return;
     setBusyId(req.commentId);
     try {
-      await onReassign(req.ticketId, tech);
+      // patchRepair/updateRepair key off ticket_number ("TK-0036"), not the
+      // tickets.id UUID that req.ticketId carries — using ticketId here
+      // threw "Repair not found." on every reassign attempt.
+      await onReassign(req.ticketNumber, tech);
       await onResolve(req.commentId);
     } finally {
       setBusyId(null);
