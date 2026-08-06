@@ -69,6 +69,9 @@ export interface Repair {
    *  ticket-linked payment or invoice needs this field, not `id`. */
   ticketDbId?: string;
   createdAt?: string;
+  /** Bumped by DB triggers on the ticket row itself and on its comments/media/parts —
+   *  last-touched time, used to flag tickets that have gone quiet at their current stage. */
+  updatedAt?: string;
   customerId?: string;
   customer: string;
   customerEmail?: string;

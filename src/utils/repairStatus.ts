@@ -126,6 +126,23 @@ export function isOverdueRepair(repair: Pick<Repair, 'etaDate' | 'status'>): boo
   return new Date(`${repair.etaDate}T00:00`) < today;
 }
 
+export type StaleTier = 'warning' | 'urgent';
+
+const STALE_WARNING_HOURS = 24;
+const STALE_URGENT_HOURS = 72;
+
+/** Flags tickets nobody has touched (status change, note, media, part) in a while
+ *  at their current stage — a nudge to follow up, distinct from `isOverdueRepair`
+ *  which only fires once a *promised* ETA date has passed. `updatedAt` is bumped
+ *  by DB triggers on the ticket row and on its comments/media/parts. */
+export function staleTier(repair: Pick<Repair, 'status' | 'updatedAt'>): StaleTier | null {
+  if (!isActiveRepairStatus(repair.status) || !repair.updatedAt) return null;
+  const hoursSinceUpdate = (Date.now() - new Date(repair.updatedAt).getTime()) / 3_600_000;
+  if (hoursSinceUpdate >= STALE_URGENT_HOURS) return 'urgent';
+  if (hoursSinceUpdate >= STALE_WARNING_HOURS) return 'warning';
+  return null;
+}
+
 const DIAGNOSIS_STAGE_STATUSES = new Set<RepairStatus>([
   'received', 'diagnosis_paid', 'diagnosing', 'awaiting_approval', 'diagnosis_only_closed',
 ]);

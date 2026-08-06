@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Sun, Moon, Plus, ClipboardList, LogOut,
-  FileText, ShoppingCart, Package, UserCog, Cake,
+  FileText, ShoppingCart, Package, UserCog, Cake, Wallet,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/context/ThemeContext';
@@ -17,12 +17,15 @@ import SalesPanel from './components/SalesPanel';
 import InventoryPanel from './components/InventoryPanel';
 import TechniciansPanel from './components/TechniciansPanel';
 import BirthdaysPanel from './components/BirthdaysPanel';
+import PaymentStats from '@/pages/payments/components/PaymentStats';
+import TransactionTable from '@/pages/payments/components/TransactionTable';
 
-type TabKey = 'tickets' | 'invoices' | 'sales' | 'inventory' | 'technicians' | 'birthdays';
+type TabKey = 'tickets' | 'invoices' | 'payments' | 'sales' | 'inventory' | 'technicians' | 'birthdays';
 
 const NAV_TABS: { key: TabKey; label: string; icon: typeof ClipboardList }[] = [
   { key: 'tickets',     label: 'Tickets',     icon: ClipboardList },
   { key: 'invoices',    label: 'Invoices',    icon: FileText },
+  { key: 'payments',    label: 'Payments',    icon: Wallet },
   { key: 'sales',       label: 'Sales',       icon: ShoppingCart },
   { key: 'inventory',   label: 'Inventory',   icon: Package },
   { key: 'technicians', label: 'Technicians', icon: UserCog },
@@ -128,6 +131,12 @@ export default function ReceptionPortalPage() {
         <div className="max-w-4xl mx-auto w-full px-4 py-6">
           {activeTab === 'tickets' && <TicketsPanel />}
           {activeTab === 'invoices' && <InvoicesPanel />}
+          {activeTab === 'payments' && (
+            <div className="space-y-5">
+              <PaymentStats />
+              <TransactionTable />
+            </div>
+          )}
           {activeTab === 'sales' && <SalesPanel />}
           {activeTab === 'inventory' && <InventoryPanel />}
           {activeTab === 'technicians' && <TechniciansPanel />}

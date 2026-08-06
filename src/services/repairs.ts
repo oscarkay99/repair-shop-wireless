@@ -46,6 +46,7 @@ type TicketRow = {
   notes_json: unknown;
   payments_json?: unknown;
   created_at?: string | null;
+  updated_at?: string | null;
 };
 
 // One row per assigned technician per ticket. `technicians` comes back as a
@@ -167,6 +168,7 @@ function normalizeTicketRow(row: TicketRow, media: RepairMedia[], technicians: R
     id: row.ticket_number,
     ticketDbId: row.id,
     createdAt: row.created_at ?? undefined,
+    updatedAt: row.updated_at ?? undefined,
     customerId: row.customer_id ?? undefined,
     customer: row.customer_name,
     customerEmail: row.customer_email ?? undefined,

@@ -6,12 +6,28 @@ import AutoImport from "unplugin-auto-import/vite";
 
 const base = process.env.BASE_PATH || "/";
 const isPreview = process.env.IS_PREVIEW ? true : false;
+// Deploy pipeline sets GITHUB_SHA; falls back to a timestamp for local
+// builds so `npm run build` still produces a distinct id every time.
+const buildId = process.env.GITHUB_SHA || String(Date.now());
 //const proxyPlugins = isPreview ? [readdyJsxRuntimeProxyPlugin()] : [];
+
+// Emits out/version.json so the running app can poll for a newer deploy
+// and prompt staff to refresh, instead of silently running a stale bundle.
+function writeVersionFile() {
+  return {
+    name: "write-version-file",
+    generateBundle() {
+      this.emitFile({ type: "asset", fileName: "version.json", source: JSON.stringify({ buildId }) });
+    },
+  };
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   define: {
     __BASE_PATH__: JSON.stringify(base),
     __IS_PREVIEW__: JSON.stringify(isPreview),
+    __BUILD_ID__: JSON.stringify(buildId),
     __READDY_PROJECT_ID__: JSON.stringify(process.env.PROJECT_ID || ""),
     __READDY_VERSION_ID__: JSON.stringify(process.env.VERSION_ID || ""),
     __READDY_AI_DOMAIN__: JSON.stringify(process.env.READDY_AI_DOMAIN || ""),
@@ -19,6 +35,7 @@ export default defineConfig({
   plugins: [
     // ...proxyPlugins,
     react(),
+    writeVersionFile(),
     AutoImport({
       imports: [
         {

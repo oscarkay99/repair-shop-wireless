@@ -33,6 +33,7 @@ import { useWirelessSettings } from '@/hooks/useWirelessSettings';
 import { downloadTicketReceiptPdf } from '@/utils/ticketReceiptPdf';
 import { useReassignmentRequests } from '@/hooks/useReassignmentRequests';
 import ReassignmentRequestsBanner from '@/components/shared/ReassignmentRequestsBanner';
+import StaleTicketsBanner from '@/components/shared/StaleTicketsBanner';
 
 const PAGE_SIZE = 12;
 
@@ -1153,6 +1154,8 @@ export default function RepairsBoard() {
             onResolve={resolveReassignment}
           />
         )}
+
+        <StaleTicketsBanner repairs={repairs} onSelect={setSelectedId} />
 
         {/* Controls */}
         <div className="flex items-center gap-2 flex-wrap">

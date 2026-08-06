@@ -11,6 +11,7 @@ import { REPAIR_STATUS_META, isOverdueRepair, isActiveRepairStatus } from '@/uti
 import { formatDate } from '@/utils/date';
 import Pagination from '@/components/shared/Pagination';
 import ReassignmentRequestsBanner from '@/components/shared/ReassignmentRequestsBanner';
+import StaleTicketsBanner from '@/components/shared/StaleTicketsBanner';
 import type { Repair, RepairStatus } from '@/types/repair';
 
 type FilterKey = 'all' | 'pending' | 'in_progress' | 'ready' | 'completed';
@@ -130,6 +131,8 @@ export default function TicketsPanel() {
         onReassign={(ticketId, tech) => patchRepair(ticketId, { technicians: [{ id: tech.id, name: tech.name }] })}
         onResolve={resolveReassignment}
       />
+
+      <StaleTicketsBanner repairs={repairs} />
 
       {/* Ready-for-pickup banner */}
       {readyPickups.length > 0 && (
