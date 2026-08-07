@@ -86,42 +86,26 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
     return parts.filter(p => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)).slice(0, 8);
   }, [parts, partSearch]);
 
-  // Inventory is the device catalog here — each part is normally a distinct,
-  // exact device model with its own price (e.g. "iPhone 11", "iPhone 11 Pro",
-  // "iPhone 11 Pro max" are three separate entries). But two rows can
-  // legitimately share an identical name at different prices too (e.g. an
-  // OEM vs. compatible "iPhone 13 Screen") — collapsing those down to one
-  // price used to just take whichever row happened to load first, silently
-  // handing out the wrong number. Instead: same name + same price collapses
-  // to one clean suggestion; same name + different prices lists every one,
-  // each tagged with its SKU, so the price picked is always the one actually
-  // chosen, never guessed.
+  // Suggestions come from device names used on past tickets, not the parts
+  // catalog — a "part" row is a repair component (screen, battery) with its
+  // own price, not the customer's device, and the two even collide by name
+  // in real inventory (e.g. "iPhone 11" exists once under Batteries and
+  // again under Screens at a different price). Matching Device against that
+  // table used to silently pick one of those prices depending on which
+  // category happened to share the name — wrong far more often than right.
   const knownDevices = useMemo(() => {
-    const groups = new Map<string, typeof parts>();
-    for (const p of parts) {
-      if (!p.name) continue;
-      const key = p.name.trim().toLowerCase();
-      const g = groups.get(key);
-      if (g) g.push(p); else groups.set(key, [p]);
+    const names = new Set<string>();
+    for (const r of repairs) {
+      if (r.device) names.add(r.device.trim());
     }
-    const out: { name: string; price: number; sku?: string }[] = [];
-    for (const group of groups.values()) {
-      const prices = new Set(group.map(p => p.selling_price));
-      if (prices.size === 1) {
-        out.push({ name: group[0].name, price: group[0].selling_price });
-      } else {
-        for (const p of group) out.push({ name: p.name, price: p.selling_price, sku: p.sku });
-      }
-    }
-    return out.sort((a, b) => a.name.localeCompare(b.name) || a.price - b.price);
-  }, [parts]);
+    return [...names].sort((a, b) => a.localeCompare(b)).map(name => ({ name }));
+  }, [repairs]);
 
   // Picking an exact replacement part (a specific inventory row, id and all)
-  // is a far stronger price signal than matching free-text device names
-  // against the catalog — it's not a guess, it's the literal part being
-  // billed. Once one is chosen, its price is what drives the quote, and it
-  // wins over the device-name match below even if the device text changes
-  // afterwards.
+  // is the only thing that auto-fills the quote now — it's not a guess, it's
+  // the literal part being billed. A device name alone no longer implies a
+  // price (see knownDevices above for why that used to be wrong); if no
+  // part's been picked yet, cost just stays 'TBD' until staff enter one.
   useEffect(() => {
     if (!selectedPart) return;
     if (form.cost === 'TBD' || costAutoFilled) {
@@ -130,28 +114,6 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPart]);
-
-  // Fallback for when no specific part has been picked yet (diagnosis-only
-  // jobs don't even show that field). Not gated to "only when creating" — a
-  // Diagnosis Only ticket has no cost yet when it later proceeds to repair
-  // (Edit Ticket, `initial` set), so this needs to run there too. Still safe
-  // either way: it only ever touches a cost that's still 'TBD' or was
-  // auto-filled by this same effect, never something someone actually typed in.
-  useEffect(() => {
-    if (selectedPart) return; // the exact part selection above takes priority
-    const exactMatches = parts.filter(p => p.name.trim().toLowerCase() === form.device.trim().toLowerCase());
-    if (exactMatches.length === 0) return;
-    const prices = new Set(exactMatches.map(p => p.selling_price));
-    // More than one price behind the same name is ambiguous — there's no
-    // correct number to silently fill in, so leave it alone and make staff
-    // pick the exact (SKU-tagged) entry from the dropdown instead.
-    if (prices.size > 1) return;
-    if (form.cost === 'TBD' || costAutoFilled) {
-      set('cost', String(exactMatches[0].selling_price));
-      setCostAutoFilled(true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.device, parts, selectedPart]);
 
   // A ticket assigned to 2 technicians counts once toward each of their
   // loads — both are actually working it, no "primary" owner to credit alone.
@@ -407,19 +369,7 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
             )}
             <DevicePicker
               value={form.device}
-              onChange={(v, price) => {
-                set('device', v);
-                // An already-chosen replacement part is the authoritative
-                // price (see the selectedPart effect above) — a device pick
-                // shouldn't clobber it, same priority order either way round.
-                if (selectedPart) return;
-                // Otherwise picked straight from inventory, so the price is
-                // known here — no need to wait on the exact-name-match effect.
-                if (price !== undefined) {
-                  set('cost', String(price));
-                  setCostAutoFilled(true);
-                }
-              }}
+              onChange={v => set('device', v)}
               suggestions={knownDevices}
               required
               label="Device"
