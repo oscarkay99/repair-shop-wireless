@@ -120,7 +120,7 @@ export default function MarketingPage() {
                 <tbody>
                   <tr>
                     <td colSpan={8} className="px-4 py-10 text-center text-xs text-slate-400">
-                      No campaign data yet — launch your first campaign to see ROI breakdown here.
+                      No campaign data yet. Launch your first campaign to see ROI breakdown here.
                     </td>
                   </tr>
                 </tbody>

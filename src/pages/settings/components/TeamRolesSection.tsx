@@ -41,7 +41,7 @@ export default function TeamRolesSection({ roles, members, loading, onInviteMemb
         <div className="p-5 border-b border-[hsl(var(--border))] flex items-center justify-between">
           <div>
             <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">Roles & Permissions</h3>
-            <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">What each role can access — create custom roles or edit what staff can do</p>
+            <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">What each role can access. Create custom roles or edit what staff can do</p>
           </div>
           <button
             onClick={onAddRole}
@@ -108,7 +108,7 @@ export default function TeamRolesSection({ roles, members, loading, onInviteMemb
         ) : members.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <i className="ri-group-line text-2xl text-[hsl(var(--muted-foreground))] mb-2" />
-            <p className="text-xs text-[hsl(var(--muted-foreground))]">No team members yet — invite your team to get started.</p>
+            <p className="text-xs text-[hsl(var(--muted-foreground))]">No team members yet. Invite your team to get started.</p>
           </div>
         ) : (
           <div className="divide-y divide-[hsl(var(--border))]">

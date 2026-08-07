@@ -35,7 +35,7 @@ export function useRepairs() {
         ensureTicketInvoice(created, { depositPaid, taxEnabled, vatRate, nhilGetfundRate, warrantyDays: settings?.warranty_days })
           .catch((invoiceError) => {
             console.error('Auto-invoice failed for', created.id, invoiceError);
-            showToast(errMessage(invoiceError, `Ticket created, but the invoice couldn't be generated — create it manually from the ticket panel.`), 'error');
+            showToast(errMessage(invoiceError, `Ticket created, but the invoice couldn't be generated. Create it manually from the ticket panel.`), 'error');
           });
       }
       return created;

@@ -6,7 +6,7 @@ export default function TopProductsTable() {
       <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
         <div>
           <h3 className="text-sm font-bold text-slate-800">Top Selling Products</h3>
-          <p className="text-xs text-slate-400 mt-0.5">By revenue — last 6 months</p>
+          <p className="text-xs text-slate-400 mt-0.5">By revenue · last 6 months</p>
         </div>
         <button className="text-xs text-emerald-600 hover:text-emerald-700 cursor-pointer font-medium">View inventory</button>
       </div>
@@ -23,7 +23,7 @@ export default function TopProductsTable() {
             {topSellingProducts.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-4 py-10 text-center text-xs text-slate-400">
-                  No sales data yet — products will appear here once you record sales.
+                  No sales data yet. Products will appear here once you record sales.
                 </td>
               </tr>
             ) : topSellingProducts.map((p, i) => (

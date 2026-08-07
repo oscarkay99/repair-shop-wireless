@@ -30,7 +30,7 @@ export default function StaleTicketsBanner({ repairs, onSelect }: Props) {
         <Clock className="w-4 h-4 flex-shrink-0" style={{ color: 'hsl(210 80% 65%)' }} />
         <p className="text-sm font-semibold" style={{ color: 'hsl(210 80% 75%)' }}>
           {stale.length} ticket{stale.length > 1 ? 's' : ''} gone quiet
-          {urgentCount > 0 && ` — ${urgentCount} over 3 days`}
+          {urgentCount > 0 && ` (${urgentCount} over 3 days)`}
         </p>
       </div>
       <div className="space-y-2">

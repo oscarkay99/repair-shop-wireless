@@ -8,7 +8,7 @@ export default function SalesFunnelChart() {
       <div className="flex items-center justify-between mb-5">
         <div>
           <h3 className="text-sm font-bold text-slate-800">Sales Funnel</h3>
-          <p className="text-xs text-slate-400 mt-0.5">Lead-to-close pipeline — this month</p>
+          <p className="text-xs text-slate-400 mt-0.5">Lead-to-close pipeline · this month</p>
         </div>
         <div className="bg-emerald-50 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full">
           0% close rate

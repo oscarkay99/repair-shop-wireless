@@ -257,7 +257,7 @@ export default function POSPage() {
       });
     });
     if (orderDiscount >= 15) {
-      allAlerts.push({ type: 'high_discount', severity: 'warning', message: `Order-level ${orderDiscount}% discount — manager approval needed` });
+      allAlerts.push({ type: 'high_discount', severity: 'warning', message: `Order-level ${orderDiscount}% discount, manager approval needed` });
     }
     setAnomalies(allAlerts);
   }, [cart, orderDiscount]);

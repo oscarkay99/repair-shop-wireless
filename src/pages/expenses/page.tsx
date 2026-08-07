@@ -365,7 +365,7 @@ export default function ExpensesPage() {
           <div className="rounded-xl p-5"
             style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
             <h3 className="text-sm font-bold mb-5" style={{ color: 'hsl(var(--foreground))' }}>
-              Revenue vs Expenses — Last 6 Months
+              Revenue vs Expenses · Last 6 Months
             </h3>
             {chartData.every(m => m.revenue === 0 && m.expenses === 0) ? (
               <div className="h-48 flex flex-col items-center justify-center gap-2">
@@ -722,7 +722,7 @@ export default function ExpensesPage() {
               <div className="py-16 text-center">
                 <Boxes className="w-8 h-8 mx-auto mb-2 opacity-30" style={{ color: 'hsl(var(--muted-foreground))' }} />
                 <p className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                  No fixed assets yet{canManageAssets ? ' — add your first one.' : '.'}
+                  No fixed assets yet{canManageAssets ? '. Add your first one.' : '.'}
                 </p>
               </div>
             ) : (

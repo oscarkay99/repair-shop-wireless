@@ -149,7 +149,7 @@ export default function AIPanel() {
       const fmt = (n: number) => `GHS ${n.toLocaleString('en-GH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
       const pct = (a: number, b: number) => b > 0 ? `${a > b ? '+' : ''}${Math.round(((a - b) / b) * 100)}%` : 'N/A';
       const report = [
-        `## ${thisMonth} ${thisYear} — Executive Summary`,
+        `## ${thisMonth} ${thisYear} Executive Summary`,
         `Revenue this month reached **${fmt(revenue)}** (${pct(revenue, prevRev)} vs last month). Gross profit was **${fmt(gross)}** and net profit **${fmt(net)}** at a **${margin}% net margin**.`,
         `## Sales Performance`,
         `- Total transactions: **${monthSales.length}**\n- Voided/refunded: **${sales.filter(s => s.status === 'cancelled' || s.status === 'refunded').length}**\n- Top products: ${topProductsList || 'No sales recorded'}`,

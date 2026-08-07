@@ -224,7 +224,7 @@ export async function resolveApprovalRequest(commentId: string, ticketId: string
     ticket_id: ticketId,
     author_id: uid,
     author_name: authorName,
-    body: decision === 'approved' ? 'Customer approved the additional cost — go ahead.' : 'Customer declined the additional cost — do not proceed with the extra work.',
+    body: decision === 'approved' ? 'Customer approved the additional cost. Go ahead.' : 'Customer declined the additional cost. Do not proceed with the extra work.',
     is_internal: true,
   });
 }

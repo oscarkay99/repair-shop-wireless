@@ -33,7 +33,7 @@ export default function EtaRemindersBanner({ repairs, onSelect }: Props) {
         <CalendarClock className="w-4 h-4 flex-shrink-0" style={{ color: 'hsl(266 75% 75%)' }} />
         <p className="text-sm font-semibold" style={{ color: 'hsl(266 75% 82%)' }}>
           {reminders.length} customer update{reminders.length > 1 ? 's' : ''} due
-          {overdueCount > 0 && ` — ${overdueCount} overdue`}
+          {overdueCount > 0 && ` (${overdueCount} overdue)`}
         </p>
       </div>
       <div className="space-y-2">

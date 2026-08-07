@@ -54,7 +54,7 @@ export default function ProductInfo() {
         <div className="w-4 h-4 flex items-center justify-center">
           <i className="ri-fire-line text-sm" />
         </div>
-        <span className="text-sm font-medium">Only {productDetail.stock} left in stock — order soon</span>
+        <span className="text-sm font-medium">Only {productDetail.stock} left in stock, order soon</span>
       </div>
 
       {/* Condition */}

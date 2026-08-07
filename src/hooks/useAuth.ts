@@ -230,7 +230,7 @@ export function useAuth() {
         return { success: false, error: 'Invalid email/username or password' };
       } catch {
         setState({ loading: false });
-        return { success: false, error: 'Connection error — please try again' };
+        return { success: false, error: 'Connection error, please try again' };
       }
     }
 

@@ -154,7 +154,7 @@ export default function ProfitSection() {
 
         {/* 6-month gross profit chart */}
         <div>
-          <p className="text-xs font-bold text-slate-700 mb-3">Gross Profit — Last 6 Months</p>
+          <p className="text-xs font-bold text-slate-700 mb-3">Gross Profit · Last 6 Months</p>
           {chartData.every(d => d.gross === 0) ? (
             <div className="flex flex-col items-center justify-center h-24 text-center">
               <i className="ri-bar-chart-2-line text-2xl text-slate-200 block mb-1" />

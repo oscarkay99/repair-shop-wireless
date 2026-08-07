@@ -47,5 +47,5 @@ export function summarizeAuditAction(
   const verb = AUDIT_ACTION_LABEL[action] ?? action;
   const what = tableName.replace(/_/g, ' ').replace(/s$/, '');
   const change = action === 'update' ? describeChange(before, after) : '';
-  return change ? `${who} ${verb} a ${what} record — ${change}` : `${who} ${verb} a ${what} record`;
+  return change ? `${who} ${verb} a ${what} record: ${change}` : `${who} ${verb} a ${what} record`;
 }

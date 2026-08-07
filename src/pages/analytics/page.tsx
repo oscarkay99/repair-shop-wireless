@@ -171,7 +171,7 @@ export default function AnalyticsPage() {
           <RevenueVsTarget />
           <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] overflow-hidden">
             <div className="px-5 py-4 border-b border-[hsl(var(--border))]">
-              <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">Revenue from Repairs — Monthly</h3>
+              <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">Revenue from Repairs · Monthly</h3>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">

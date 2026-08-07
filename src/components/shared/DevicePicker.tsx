@@ -93,8 +93,8 @@ export default function DevicePicker({
           )) : (
             <div className="px-3 py-2.5 text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>
               {suggestions.length === 0
-                ? 'No devices in inventory yet — type the device name.'
-                : 'Not in inventory — saved as typed, quote it manually.'}
+                ? 'No devices in inventory yet. Type the device name.'
+                : 'Not in inventory. Saved as typed, quote it manually.'}
             </div>
           )}
         </div>

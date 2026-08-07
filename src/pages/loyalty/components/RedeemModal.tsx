@@ -25,7 +25,7 @@ export default function RedeemModal({ customers, rewards, selectedReward, onRewa
             <select className="w-full px-4 py-2.5 rounded-xl bg-[hsl(var(--muted))] text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--border))]">
               <option>Choose member...</option>
               {customers.map((c) => (
-                <option key={c.id} value={c.id}>{c.name} — {c.points.toLocaleString()} pts ({c.tier})</option>
+                <option key={c.id} value={c.id}>{c.name} · {c.points.toLocaleString()} pts ({c.tier})</option>
               ))}
             </select>
           </div>
@@ -38,7 +38,7 @@ export default function RedeemModal({ customers, rewards, selectedReward, onRewa
             >
               <option value="">Choose reward...</option>
               {rewards.map((r) => (
-                <option key={r.id} value={r.id}>{r.name} — {r.points.toLocaleString()} pts</option>
+                <option key={r.id} value={r.id}>{r.name} · {r.points.toLocaleString()} pts</option>
               ))}
             </select>
           </div>

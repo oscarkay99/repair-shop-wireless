@@ -59,7 +59,7 @@ export default function InvoicesPanel() {
   [filtered, page]);
 
   const handleShare = async (invoiceNumber: string, total: number, customer?: string) => {
-    const text = `Invoice ${invoiceNumber}${customer ? ` for ${customer}` : ''} — GH₵ ${total.toFixed(2)}`;
+    const text = `Invoice ${invoiceNumber}${customer ? ` for ${customer}` : ''}: GH₵ ${total.toFixed(2)}`;
     if (navigator.share) {
       try { await navigator.share({ title: invoiceNumber, text }); return; } catch { /* user cancelled */ }
     }

@@ -23,7 +23,7 @@ export default function GeneratorCanvas({ selectedTemplate }: GeneratorCanvasPro
     setTimeout(() => {
       const result = selectedTemplate && sampleOutputs[selectedTemplate]
         ? sampleOutputs[selectedTemplate]
-        : `Here's your generated content based on your prompt:\n\n"${prompt}"\n\nThis is a premium AI-generated response tailored for Wireless's brand voice — trustworthy, warm, and conversion-focused. In production, this connects to your AI model for real-time generation.`;
+        : `Here's your generated content based on your prompt:\n\n"${prompt}"\n\nThis is a premium AI-generated response tailored for Wireless's brand voice: trustworthy, warm, and conversion-focused. In production, this connects to your AI model for real-time generation.`;
       setOutput(result);
       setLoading(false);
     }, 1800);
@@ -46,7 +46,7 @@ export default function GeneratorCanvas({ selectedTemplate }: GeneratorCanvasPro
         >
           <i className={`${template.icon} text-xs`} style={{ color: '#EC0118' }} />
           <span className="text-xs font-medium" style={{ color: '#EC0118' }}>{template.name}</span>
-          <span className="text-[10px] text-[hsl(var(--muted-foreground))] ml-1">— {template.description}</span>
+          <span className="text-[10px] text-[hsl(var(--muted-foreground))] ml-1">({template.description})</span>
         </div>
       )}
 
@@ -59,7 +59,7 @@ export default function GeneratorCanvas({ selectedTemplate }: GeneratorCanvasPro
           placeholder={
             template
               ? `Describe specifics for "${template.name}"... e.g. customer name, product, context`
-              : 'Describe what you want to generate — a follow-up message, product description, campaign copy...'
+              : 'Describe what you want to generate: a follow-up message, product description, campaign copy...'
           }
           className="flex-1 rounded-xl p-4 text-sm text-[hsl(var(--foreground))] placeholder-[hsl(var(--muted-foreground))] outline-none resize-none transition-all min-h-[120px]"
           style={{

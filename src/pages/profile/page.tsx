@@ -260,7 +260,7 @@ export default function ProfilePage() {
                     <input type="date" value={birthday} onChange={(e) => setBirthday(e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-[hsl(var(--muted))] text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--border))] border border-[hsl(var(--border))]" />
                   ) : (
                     <p className="text-sm font-semibold text-[hsl(var(--foreground))] py-2.5">
-                      {birthday ? new Date(birthday + 'T00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) : 'Not set — used for the birthday banner everyone sees'}
+                      {birthday ? new Date(birthday + 'T00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) : 'Not set, used for the birthday banner everyone sees'}
                     </p>
                   )}
                 </div>

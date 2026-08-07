@@ -25,9 +25,9 @@ export function errMessage(e: unknown, fallback = 'Something went wrong'): strin
   if (!RAW_DB_ERROR_PATTERN.test(raw)) return raw;
 
   console.error('[errMessage] raw DB error kept out of the UI:', raw);
-  if (/duplicate key value violates unique constraint/i.test(raw)) return 'That value is already in use — please use a different one.';
+  if (/duplicate key value violates unique constraint/i.test(raw)) return 'That value is already in use. Please use a different one.';
   if (/violates foreign key constraint/i.test(raw)) return "That record is linked to other data and can't be changed this way.";
-  if (/violates check constraint|violates not-null constraint|null value in column/i.test(raw)) return "One of the values entered isn't valid — please check and try again.";
+  if (/violates check constraint|violates not-null constraint|null value in column/i.test(raw)) return "One of the values entered isn't valid. Please check and try again.";
   if (/permission denied for/i.test(raw)) return "You don't have permission to do that.";
   return fallback;
 }

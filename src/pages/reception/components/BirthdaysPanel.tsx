@@ -56,7 +56,7 @@ export default function BirthdaysPanel() {
         <div className="p-4">
           {subTab === 'clients' ? (
             <p className="text-xs py-8 text-center" style={{ color: 'hsl(var(--muted-foreground))' }}>
-              Customer birthdays aren't tracked yet — only staff birthdays are available right now.
+              Customer birthdays aren't tracked yet. Only staff birthdays are available right now.
             </p>
           ) : upcoming.length === 0 ? (
             <p className="text-xs py-8 text-center" style={{ color: 'hsl(var(--muted-foreground))' }}>No staff birthdays in the next 30 days.</p>

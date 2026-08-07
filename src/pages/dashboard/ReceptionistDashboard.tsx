@@ -125,7 +125,7 @@ export default function ReceptionistDashboard() {
             Welcome, {firstName}
           </h2>
           <p className="text-sm mt-0.5" style={{ color: 'hsl(var(--muted-foreground))' }}>
-            Front desk overview — {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+            Front desk overview · {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </p>
         </div>
         <div className="flex items-center gap-2">

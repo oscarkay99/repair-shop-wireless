@@ -175,7 +175,7 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
         unitCost: selectedPart.unit_cost,
       });
     } catch (err) {
-      alert(errMessage(err, `Ticket created, but failed to attach ${selectedPart.name} — add it manually from the ticket.`));
+      alert(errMessage(err, `Ticket created, but failed to attach ${selectedPart.name}. Add it manually from the ticket.`));
     }
   };
 
@@ -421,7 +421,7 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
           {showPartField && (
             <div>
               <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                Part Being Replaced <span className="normal-case font-normal opacity-70">(optional — skip if not sure yet)</span>
+                Part Being Replaced <span className="normal-case font-normal opacity-70">(optional, skip if not sure yet)</span>
               </label>
               {selectedPart ? (
                 <div className="w-full flex items-center justify-between gap-2 text-sm rounded-xl px-3 py-2"
@@ -545,25 +545,20 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
             )}
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div>
+            <div className={form.jobType === 'straight_repair' ? 'col-span-2' : ''}>
               <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>ETA</label>
               <input value={form.eta} onChange={e => set('eta', e.target.value)}
                 className="w-full text-sm rounded-xl px-3 py-2 outline-none mb-1.5"
                 style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }}
                 placeholder="Apr 26" />
               <input type="date" value={form.etaDate} onChange={e => set('etaDate', e.target.value)}
-                title="Turnaround date — used to flag this ticket as overdue if it slips past this date"
+                title="Turnaround date, used to flag this ticket as overdue if it slips past this date"
                 className="w-full text-xs rounded-xl px-3 py-1.5 outline-none"
                 style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }} />
             </div>
-            {form.jobType === 'straight_repair' ? (
-              <div>
-                <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Diagnosis Fee</label>
-                <div className="w-full text-sm rounded-xl px-3 py-2" style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' }}>
-                  None — straight repair
-                </div>
-              </div>
-            ) : (
+            {/* Straight repair skips diagnosis entirely — no fee to enter, so
+                the field is absent rather than shown disabled with "None". */}
+            {form.jobType !== 'straight_repair' && (
               <div>
                 <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Diagnosis Fee</label>
                 <input type="number" min="0" step="0.01" value={form.diagnosisFee} onChange={e => set('diagnosisFee', e.target.value)}

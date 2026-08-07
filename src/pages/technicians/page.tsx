@@ -157,7 +157,7 @@ function AddTechnicianModal({ onSave, onClose }: {
 
               <div>
                 <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                  Password <span className="opacity-60 normal-case">(optional — auto-generated if blank)</span>
+                  Password <span className="opacity-60 normal-case">(optional, auto-generated if blank)</span>
                 </label>
                 <div className="flex gap-2">
                   <div className="relative flex-1">
@@ -314,7 +314,7 @@ function CreateLoginModal({ technician, onLinked, onClose }: {
               </div>
               <div>
                 <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                  Password <span className="opacity-60 normal-case">(optional — auto-generated if blank)</span>
+                  Password <span className="opacity-60 normal-case">(optional, auto-generated if blank)</span>
                 </label>
                 <div className="flex gap-2">
                   <div className="relative flex-1">
@@ -669,7 +669,7 @@ export default function TechniciansPage() {
                       onClick={() => setCreatingLoginFor(tech)}
                       className="w-7 h-7 flex items-center justify-center rounded-lg transition-all"
                       style={{ background: 'rgba(245,158,11,0.15)' }}
-                      title="Create login — no account yet"
+                      title="Create login (no account yet)"
                     >
                       <KeyRound className="w-3.5 h-3.5" style={{ color: '#f59e0b' }} />
                     </button>

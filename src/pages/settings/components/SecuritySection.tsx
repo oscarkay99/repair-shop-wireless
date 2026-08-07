@@ -16,7 +16,7 @@ export default function SecuritySection() {
     <div className="space-y-4">
       <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-6">
         <h3 className="text-sm font-bold text-[hsl(var(--foreground))] mb-1">Security Settings</h3>
-        <p className="text-xs text-[hsl(var(--muted-foreground))] mb-4">Not yet available — coming in a future update.</p>
+        <p className="text-xs text-[hsl(var(--muted-foreground))] mb-4">Not yet available. Coming in a future update.</p>
         <div className="space-y-4">
           {settings.map((item) => (
             <div key={item.label} className="flex items-center justify-between py-3 border-b border-[hsl(var(--border))] opacity-50">

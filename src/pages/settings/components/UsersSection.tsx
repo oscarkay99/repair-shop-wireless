@@ -35,7 +35,7 @@ function EditUserModal({ user, roles, isLastAdmin, onClose, onSaved }: { user: W
 
   const handleSave = async () => {
     if (!name.trim()) { setError('Name is required'); return; }
-    if (blockRoleChange) { setError("This is the last admin account — change someone else's role to admin first."); return; }
+    if (blockRoleChange) { setError("This is the last admin account. Change someone else's role to admin first."); return; }
     setSaving(true);
     setError('');
     try {
@@ -113,7 +113,7 @@ function EditUserModal({ user, roles, isLastAdmin, onClose, onSaved }: { user: W
             </select>
             {blockRoleChange && (
               <p className="text-xs text-red-500 mt-1.5">
-                This is the last admin account — promote someone else to admin first, or this account would be locked out of Settings/Roles.
+                This is the last admin account. Promote someone else to admin first, or this account would be locked out of Settings/Roles.
               </p>
             )}
           </div>
@@ -229,7 +229,7 @@ export default function UsersSection() {
       return;
     }
     if (user.role === 'admin' && adminCount <= 1) {
-      alert('This is the last admin account — promote someone else to admin before deleting it.');
+      alert('This is the last admin account. Promote someone else to admin before deleting it.');
       return;
     }
     if (!confirm(`Delete ${user.name}? This cannot be undone.`)) return;

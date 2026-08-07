@@ -38,7 +38,7 @@ export default function QuoteModal({ cartItems, customerName, deliveryType, paym
       `Quote ${quoteId}`,
       `Client: ${customerName || 'Walk-in Customer'}`,
       '',
-      ...cartItems.map(item => `${item.name} × ${item.qty} — ${formatGHS(item.lineTotal)}`),
+      ...cartItems.map(item => `${item.name} × ${item.qty}: ${formatGHS(item.lineTotal)}`),
       '',
       `Subtotal: ${formatGHS(subtotal)}`,
       `Delivery: ${deliveryFee > 0 ? formatGHS(deliveryFee) : 'Free'}`,

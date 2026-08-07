@@ -11,7 +11,7 @@ export default function TrustSection() {
           </div>
           <h2 className="text-2xl lg:text-3xl font-bold text-white mb-4">Every Product Comes with a Warranty Promise</h2>
           <p className="text-white/60 text-base max-w-xl mx-auto mb-6">
-            We stand behind every product we sell. New items come with full manufacturer warranty. Used and refurbished items include our Wireless warranty — real coverage, real support.
+            We stand behind every product we sell. New items come with full manufacturer warranty. Used and refurbished items include our Wireless warranty: real coverage, real support.
           </p>
           <a href="#" className="inline-flex items-center gap-2 text-emerald-400 text-sm font-medium hover:text-emerald-300 transition-colors">
             Learn about our warranty
@@ -87,7 +87,7 @@ export default function TrustSection() {
           <h2 className="text-2xl font-bold text-slate-900 mb-8 text-center">Common Questions</h2>
           <div className="space-y-3">
             {[
-              { q: 'Are your products authentic?', a: 'Yes — 100%. We source directly from authorized distributors and verified suppliers. Every product comes with authenticity documentation.' },
+              { q: 'Are your products authentic?', a: 'Yes, 100%. We source directly from authorized distributors and verified suppliers. Every product comes with authenticity documentation.' },
               { q: 'Do you accept Mobile Money?', a: 'Absolutely. We accept MTN MoMo, Vodafone Cash, AirtelTigo Money, bank transfers, and cash. Pay the way that works for you.' },
               { q: 'What warranty do used/refurbished items come with?', a: 'All used and refurbished items come with a Wireless warranty (3–6 months depending on the item). We cover hardware defects and provide free diagnosis.' },
               { q: 'Can I pick up in person?', a: 'Yes! We have a pickup location in Accra. You can also choose same-day or next-day delivery within Greater Accra.' },
@@ -103,7 +103,7 @@ export default function TrustSection() {
       <section className="py-16 bg-emerald-600">
         <div className="max-w-7xl mx-auto px-6 text-center">
           <h2 className="text-2xl lg:text-3xl font-bold text-white mb-3">Ready to Upgrade Your Gadget?</h2>
-          <p className="text-white/80 mb-8">Chat with us on WhatsApp — we respond in minutes.</p>
+          <p className="text-white/80 mb-8">Chat with us on WhatsApp. We respond in minutes.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <a
               href="https://wa.me/233000000000"

@@ -21,7 +21,7 @@ export default function RevenueChart() {
       <div className="flex items-center justify-between mb-5">
         <div>
           <h3 className="text-sm font-bold text-slate-800">Revenue Performance</h3>
-          <p className="text-xs text-slate-400 mt-0.5">GHS — all payment methods</p>
+          <p className="text-xs text-slate-400 mt-0.5">GHS, all payment methods</p>
         </div>
         <div className="flex items-center gap-1 bg-slate-50 rounded-xl p-1">
           {tabs.map((tab, i) => (

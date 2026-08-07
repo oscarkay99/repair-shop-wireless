@@ -109,7 +109,7 @@ export default function AddTicketPartModal({ ticketDbId, onClose, onAdded }: {
                 style={inputStyle}
               />
               <p className="text-[11px] mt-1" style={{ color: exceedsStock ? '#ef4444' : 'hsl(var(--muted-foreground))' }}>
-                {selected.stock} currently in stock{exceedsStock ? ' — this will take stock to 0' : ''}
+                {selected.stock} currently in stock{exceedsStock ? '. This will take stock to 0' : ''}
               </p>
             </div>
           )}

@@ -270,7 +270,7 @@ export default function TransactionTable() {
                   style={{ background: 'linear-gradient(135deg, #EC0118, #BD0113)' }}
                 >
                   <i className="ri-checkbox-circle-line mr-2" />
-                  Mark as Verified — {selected.amount}
+                  Mark as Verified ({selected.amount})
                 </button>
               ) : (
                 <button
@@ -278,7 +278,7 @@ export default function TransactionTable() {
                   style={{ background: 'rgba(239,68,68,0.08)', color: '#DC2626' }}
                 >
                   <i className="ri-close-circle-line mr-2" />
-                  Transaction Failed — Contact Customer
+                  Transaction Failed, Contact Customer
                 </button>
               )}
             </div>

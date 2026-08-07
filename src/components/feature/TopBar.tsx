@@ -213,7 +213,7 @@ export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: T
         if (`${r.id} ${r.customer} ${r.device} ${r.issue}`.toLowerCase().includes(q)) {
           results.push({
             id: `repair:${r.id}`, to: '/tickets',
-            primary: `${r.device} — ${r.customer || 'Unknown'}`,
+            primary: `${r.device} · ${r.customer || 'Unknown'}`,
             secondary: r.issue,
             meta: r.id,
             badge: { label: 'Ticket', bg: 'hsl(190 80% 93%)', color: 'hsl(190 80% 35%)' },

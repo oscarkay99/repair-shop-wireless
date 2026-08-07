@@ -73,7 +73,7 @@ export default function IgAutomations() {
           </div>
           <div>
             <h3 className="font-bold">Instagram AI Auto-Reply Engine</h3>
-            <p className="text-white/80 text-xs">Handles 71% of DMs automatically — comments, story replies & DMs</p>
+            <p className="text-white/80 text-xs">Handles 71% of DMs automatically: comments, story replies & DMs</p>
           </div>
           <div className="ml-auto flex items-center gap-2">
             <span className="text-xs text-white/80">Active</span>

@@ -200,7 +200,7 @@ export default function SalesPanel() {
               phone={customerPhone}
               required={false}
               label="Customer Name"
-              placeholder="Full name (optional — leave blank for walk-in)"
+              placeholder="Full name (optional, leave blank for walk-in)"
               onChange={(name, phone, customer) => {
                 setCustomerName(name);
                 if (customer) setCustomerPhone(phone);
@@ -293,7 +293,7 @@ export default function SalesPanel() {
           style={{ background: 'hsl(var(--primary))' }}
         >
           <ShoppingCart className="w-4 h-4" />
-          {selected ? `Record Sale — GH₵${total.toFixed(2)}` : 'Select an accessory'}
+          {selected ? `Record Sale (GH₵${total.toFixed(2)})` : 'Select an accessory'}
         </button>
       </div>
 

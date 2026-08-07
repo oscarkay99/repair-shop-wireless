@@ -106,7 +106,7 @@ export default function AnalyticsSection() {
             <div className="w-5 h-5 flex items-center justify-center rounded-full bg-[#25D366]/10 text-[#25D366]">
               <i className="ri-whatsapp-line text-xs" />
             </div>
-            <span className="text-sm font-bold text-slate-800">WhatsApp — 46%</span>
+            <span className="text-sm font-bold text-slate-800">WhatsApp: 46%</span>
           </div>
         </div>
       </div>
@@ -116,7 +116,7 @@ export default function AnalyticsSection() {
         <div className="flex items-center justify-between mb-5">
           <div>
             <h3 className="text-sm font-semibold text-slate-800">Conversion Funnel</h3>
-            <p className="text-xs text-slate-400 mt-0.5">From reach to closed sale — this month</p>
+            <p className="text-xs text-slate-400 mt-0.5">From reach to closed sale · this month</p>
           </div>
           <span className="text-xs bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full font-medium">2.1% overall conversion</span>
         </div>

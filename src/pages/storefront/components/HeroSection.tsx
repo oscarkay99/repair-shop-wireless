@@ -28,7 +28,7 @@ export default function HeroSection() {
           </h1>
 
           <p className="text-lg text-white/70 leading-relaxed mb-8 max-w-lg">
-            New, used, and refurbished gadgets — all with warranty. Serving Accra with genuine products, Mobile Money payments, and same-day delivery.
+            New, used, and refurbished gadgets, all with warranty. Serving Accra with genuine products, Mobile Money payments, and same-day delivery.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3">

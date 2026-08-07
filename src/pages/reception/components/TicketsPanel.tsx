@@ -105,7 +105,7 @@ export default function TicketsPanel() {
   const handleCall = async (phone: string) => {
     try {
       await navigator.clipboard.writeText(phone);
-      showToast(`Copied ${phone} — dialing…`);
+      showToast(`Copied ${phone}, dialing…`);
     } catch {
       showToast(`Call ${phone}`);
     }

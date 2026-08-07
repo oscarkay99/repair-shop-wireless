@@ -55,8 +55,8 @@ export async function ensureTicketInvoice(repair: Repair, ctx: AutoInvoiceContex
   const tax = vat + levy;
   const total = subtotal + tax;
   const description = billDiagnosisFeeOnly
-    ? `Diagnosis fee — ${repair.device} — ${repair.issue}`
-    : `${repair.device} — ${repair.issue}`;
+    ? `Diagnosis fee: ${repair.device}, ${repair.issue}`
+    : `${repair.device}: ${repair.issue}`;
 
   const existing = await getInvoiceForTicket(repair.ticketDbId);
   if (!existing) {

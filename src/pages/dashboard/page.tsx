@@ -655,7 +655,7 @@ function AdminDashboard() {
           <div className="flex items-center gap-3">
             <AlertTriangle className="w-4 h-4 flex-shrink-0" style={{ color: 'hsl(38 80% 35%)' }} />
             <p className="text-sm font-semibold" style={{ color: 'hsl(38 80% 32%)' }}>
-              {lowStock.length} item{lowStock.length > 1 ? 's' : ''} low on stock —{' '}
+              {lowStock.length} item{lowStock.length > 1 ? 's' : ''} low on stock:{' '}
               <span className="font-normal text-xs" style={{ color: 'hsl(38 60% 46%)' }}>
                 {lowStock.map(p => `${p.name} (${p.stock} left)`).join(' · ')}
               </span>

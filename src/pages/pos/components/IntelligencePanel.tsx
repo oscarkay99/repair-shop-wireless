@@ -42,7 +42,7 @@ function DataSourceBanner({ hasRealData, transactionCount, lastUpdated, isLoadin
         style={{ background: 'rgba(16,185,129,0.06)', borderColor: 'rgba(16,185,129,0.2)', color: '#059669' }}>
         <i className="ri-brain-line flex-shrink-0" />
         <span>
-          <strong>Live ML data</strong> — patterns learned from <strong>{transactionCount.toLocaleString()}</strong> real transactions.
+          <strong>Live ML data</strong>: patterns learned from <strong>{transactionCount.toLocaleString()}</strong> real transactions.
           {updated && <span className="opacity-70"> Last updated {updated}.</span>}
         </span>
         <span className="ml-auto opacity-60 font-medium">Run <code className="bg-emerald-100 px-1 rounded">learn-patterns</code> to refresh</span>
@@ -53,7 +53,7 @@ function DataSourceBanner({ hasRealData, transactionCount, lastUpdated, isLoadin
     <div className="lg:col-span-2 flex items-center gap-2 px-4 py-2.5 rounded-2xl border border-amber-200 bg-amber-50 text-amber-700 text-xs">
       <i className="ri-database-2-line flex-shrink-0" />
       <span>
-        Showing <strong>demo data</strong> — complete your first sales at POS and run <code className="bg-amber-100 px-1 rounded">learn-patterns</code> to activate real ML patterns.
+        Showing <strong>demo data</strong>. Complete your first sales at POS and run <code className="bg-amber-100 px-1 rounded">learn-patterns</code> to activate real ML patterns.
       </span>
     </div>
   );
@@ -124,7 +124,7 @@ export default function IntelligencePanel() {
       {/* ── Top performers ─────────────────────────────────────────────────── */}
       <div className="rounded-2xl p-4" style={cardStyle}>
         <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: 'rgba(10,31,74,0.4)' }}>
-          <i className="ri-bar-chart-fill mr-1" style={{ color: '#F59E0B' }} />Top Performers — 30 Days
+          <i className="ri-bar-chart-fill mr-1" style={{ color: '#F59E0B' }} />Top Performers · 30 Days
         </p>
         <div className="space-y-2">
           {topSellers.map((m, i) => {
@@ -182,7 +182,7 @@ export default function IntelligencePanel() {
 
         <div className="rounded-2xl border border-amber-200 p-4" style={{ background: '#FFFBEB' }}>
           <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-2">
-            <i className="ri-snail-line mr-1" />Slow Movers — Consider Promotion
+            <i className="ri-snail-line mr-1" />Slow Movers, Consider Promotion
           </p>
           {slowMovers.length === 0 ? (
             <p className="text-xs text-amber-600 flex items-center gap-1.5">
@@ -214,7 +214,7 @@ export default function IntelligencePanel() {
         <div className="flex items-center justify-between mb-3">
           <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'rgba(10,31,74,0.4)' }}>
             <i className="ri-time-line mr-1" style={{ color: '#F59E0B' }} />
-            Peak Hours {hasRealData ? '— Real Data' : '— 30 Day Avg'}
+            Peak Hours {hasRealData ? '(Real Data)' : '(30 Day Avg)'}
           </p>
           {peakHour && (
             <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(245,166,35,0.12)', color: '#B8860B' }}>
@@ -345,7 +345,7 @@ export default function IntelligencePanel() {
         style={{ background: 'linear-gradient(135deg, #0F172A 0%, #EC0118 50%, #06B6D4 100%)' }}>
         <p className="text-[10px] font-bold text-white/60 uppercase tracking-wider mb-3">
           <i className="ri-sparkling-2-line mr-1 text-amber-400" />
-          AI Demand Forecast — Next 7 Days
+          AI Demand Forecast · Next 7 Days
           {hasRealData && <span className="ml-1 text-amber-400/70 normal-case font-normal">· EMA model, trained on {transactionCount} transactions</span>}
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

@@ -163,7 +163,7 @@ export default function CustomerPicker({
             createMode ? (
               <div className="px-3 py-3 text-xs text-[hsl(var(--muted-foreground))] flex items-center gap-2">
                 <i className="ri-user-add-line" />
-                New customer — created when you save this ticket.
+                New customer, created when you save this ticket.
               </div>
             ) : phone.trim() ? (
               <button

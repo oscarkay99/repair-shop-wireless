@@ -29,7 +29,7 @@ function localAnswer(query: string): string | null {
     const slow = productMetrics.filter(m => m.velocity === 'slow');
     const hotNames = hot.map(m => posProducts.find(x => x.id === m.productId)?.name).filter(Boolean).slice(0, 2);
     const slowNames = slow.map(m => posProducts.find(x => x.id === m.productId)?.name).filter(Boolean).slice(0, 2);
-    return `Push today:\n🔥 Fast-moving (running low): ${hotNames.join(', ') || 'None critical'}\n🐢 Promote slow movers: ${slowNames.join(', ') || 'All good'}\n\nFocus on selling accessories with every phone — they carry 60%+ margin.`;
+    return `Push today:\n🔥 Fast-moving (running low): ${hotNames.join(', ') || 'None critical'}\n🐢 Promote slow movers: ${slowNames.join(', ') || 'All good'}\n\nFocus on selling accessories with every phone. They carry 60%+ margin.`;
   }
 
   if (q.includes('slow') || q.includes('not selling') || q.includes('dead stock')) {
@@ -47,9 +47,9 @@ function localAnswer(query: string): string | null {
     if (alerts.length === 0) return 'No urgent reorder alerts. All critical products have more than 7 days of stock.';
     const names = alerts.map(m => {
       const p = posProducts.find(x => x.id === m.productId);
-      return `${p?.name} — ${m.daysOfStock}d left`;
+      return `${p?.name}: ${m.daysOfStock}d left`;
     });
-    return `Reorder now:\n${names.join('\n')}\n\nOrder before stock hits zero — lead time from suppliers is usually 2–3 days.`;
+    return `Reorder now:\n${names.join('\n')}\n\nOrder before stock hits zero. Lead time from suppliers is usually 2–3 days.`;
   }
 
   if (q.includes('revenue') || q.includes('money') || q.includes('made today') || q.includes('sales today')) {
@@ -69,7 +69,7 @@ function localAnswer(query: string): string | null {
       const pB = posProducts.find(p => p.id === b.productB);
       return `${pA?.name ?? b.productA} + ${pB?.name ?? b.productB} (${b.liftScore}x lift)`;
     });
-    return `Most frequently bought together:\n${combos.join('\n')}\n\nSuggest these combos at checkout — customers who buy in bundles spend 20–30% more.`;
+    return `Most frequently bought together:\n${combos.join('\n')}\n\nSuggest these combos at checkout. Customers who buy in bundles spend 20–30% more.`;
   }
 
   if (q.includes('vip') || q.includes('best customer') || q.includes('loyal')) {
@@ -77,7 +77,7 @@ function localAnswer(query: string): string | null {
     const names = ['Kwame Asante', 'Ama Owusu', 'Kofi Mensah', 'Abena Frimpong', 'Yaw Darko'];
     const result = top.map(ci => {
       const idx = parseInt(ci.customerId.replace('c', '')) - 1;
-      return `${names[idx]} — VIP score ${ci.vipScore}, ${formatGHS(ci.totalSpent)} spent`;
+      return `${names[idx]}: VIP score ${ci.vipScore}, ${formatGHS(ci.totalSpent)} spent`;
     });
     return `Top customers by loyalty:\n${result.join('\n')}\n\nOffer them early access to new arrivals or a personal discount to keep them coming back.`;
   }
@@ -112,7 +112,7 @@ function localAnswer(query: string): string | null {
 export default function AiChat() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: 'Hi! I\'m your AI sales assistant. Ask me anything — "What should I push today?", "Which items are running low?", "Who are my best customers?"' },
+    { role: 'assistant', content: 'Hi! I\'m your AI sales assistant. Ask me anything: "What should I push today?", "Which items are running low?", "Who are my best customers?"' },
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);

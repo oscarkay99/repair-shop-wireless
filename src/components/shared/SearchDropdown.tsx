@@ -140,7 +140,7 @@ export default function SearchDropdown({
           ))}
           {suggestions.length > maxResults && (
             <div className="px-3 py-2 text-[10px]" style={{ color: 'hsl(var(--muted-foreground))', borderTop: '1px solid hsl(var(--border))' }}>
-              {suggestions.length - maxResults} more result{suggestions.length - maxResults !== 1 ? 's' : ''} — keep typing to narrow down
+              {suggestions.length - maxResults} more result{suggestions.length - maxResults !== 1 ? 's' : ''}, keep typing to narrow down
             </div>
           )}
         </div>

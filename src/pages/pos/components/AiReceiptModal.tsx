@@ -46,7 +46,7 @@ export default function AiReceiptModal({ cart, customer, total, tradeIn, payment
 
   function buildReceiptText() {
     const lines: string[] = [
-      `*Wireless — ${isPaid ? 'Receipt' : 'Invoice'} #${txn}*`,
+      `*Wireless · ${isPaid ? 'Receipt' : 'Invoice'} #${txn}*`,
       '',
       `Customer: ${customer?.name ?? 'Walk-in Customer'}`,
       `Date: ${dateStr} · ${timeStr}`,
@@ -55,7 +55,7 @@ export default function AiReceiptModal({ cart, customer, total, tradeIn, payment
       '*Items:*',
       ...cart.map(item => {
         const line = item.product.price * item.qty * (1 - item.discount / 100);
-        return `• ${item.product.name} (×${item.qty}) — ${formatGHS(line)}${item.discount > 0 ? ` [${item.discount}% off]` : ''}`;
+        return `• ${item.product.name} (×${item.qty}): ${formatGHS(line)}${item.discount > 0 ? ` [${item.discount}% off]` : ''}`;
       }),
       '',
       `*Total: ${formatGHS(total)}*`,
@@ -77,7 +77,7 @@ export default function AiReceiptModal({ cart, customer, total, tradeIn, payment
 
   function handleSendEmail() {
     const email = customer?.email ?? '';
-    const subject = encodeURIComponent(`Your Receipt from Wireless — #${txn}`);
+    const subject = encodeURIComponent(`Your Receipt from Wireless, #${txn}`);
     const body = encodeURIComponent(
       buildReceiptText().replace(/\*/g, ''),
     );

@@ -24,7 +24,7 @@ export default function CreateTicketInvoiceModal({ repair, depositPaid, onClose,
   const { user } = useAuth();
   const { taxEnabled, vatRate, nhilGetfundRate } = useTaxSettings();
   const { settings } = useWirelessSettings();
-  const [description, setDescription] = useState(`${repair.device} — ${repair.issue}`);
+  const [description, setDescription] = useState(`${repair.device}: ${repair.issue}`);
   const [amount, setAmount] = useState(String(repair.costNum ?? ''));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');

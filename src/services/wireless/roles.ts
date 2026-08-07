@@ -83,7 +83,7 @@ export async function deleteRole(id: string): Promise<void> {
   }
   const { error } = await db.from('roles').delete().eq('id', id);
   if (error) {
-    if (error.code === '23503') throw new Error('This role still has staff assigned to it — reassign them before deleting.');
+    if (error.code === '23503') throw new Error('This role still has staff assigned to it. Reassign them before deleting.');
     throw error;
   }
 }

@@ -103,8 +103,8 @@ export default function OperationsSection({
             <div>
               <label className="text-[10px] text-[hsl(var(--muted-foreground))] block mb-1">Currency</label>
               <select value={currency} onChange={e => setCurrency(e.target.value)} className={selectCls}>
-                <option value="GHS">GHS — Ghana Cedi</option>
-                <option value="USD">USD — US Dollar</option>
+                <option value="GHS">GHS (Ghana Cedi)</option>
+                <option value="USD">USD (US Dollar)</option>
               </select>
             </div>
             <div>

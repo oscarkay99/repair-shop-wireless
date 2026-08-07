@@ -49,7 +49,7 @@ export default function DeliveryDetail({ order, drivers, zones }: Props) {
         <div className="flex items-center justify-between px-4 py-3 border-b border-[hsl(var(--border))]">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-sm font-bold text-[hsl(var(--foreground))]">Live Route Map — Greater Accra</span>
+            <span className="text-sm font-bold text-[hsl(var(--foreground))]">Live Route Map · Greater Accra</span>
           </div>
           <button className="text-xs text-emerald-600 hover:text-emerald-700 cursor-pointer flex items-center gap-1">
             <i className="ri-route-line" />Optimize Route

@@ -322,7 +322,7 @@ function EditInvoiceModal({ inv, onSave, onClose }: {
             </div>
           </div>
           <p className="text-[10px] -mt-1.5" style={{ color: 'hsl(var(--muted-foreground))' }}>
-            Use Record Payment to change these — keeps the Payments ledger accurate.
+            Use Record Payment to change these, keeps the Payments ledger accurate.
           </p>
 
           <Field label="Due Date">
@@ -501,7 +501,7 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
           </button>
           <button
             onClick={async () => {
-              const text = `Invoice ${inv.invoice_number} — Total: ${fmt(inv.total)}`;
+              const text = `Invoice ${inv.invoice_number} · Total: ${fmt(inv.total)}`;
               if (navigator.share) { await navigator.share({ title: inv.invoice_number, text }); }
               else { await navigator.clipboard.writeText(text); }
             }}

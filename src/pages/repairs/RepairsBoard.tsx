@@ -769,7 +769,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
           <div className="flex items-center justify-between mb-3">
             <div>
               <p className="text-xs font-bold" style={{ color: 'hsl(var(--foreground))' }}>Internal Notes</p>
-              <p className="text-[10px]" style={{ color: 'hsl(var(--muted-foreground))' }}>Staff only — never shown to the customer</p>
+              <p className="text-[10px]" style={{ color: 'hsl(var(--muted-foreground))' }}>Staff only, never shown to the customer</p>
             </div>
             <button onClick={() => setAddingComment(true)} className="text-xs font-medium flex items-center gap-1"
               style={{ color: 'hsl(var(--primary))' }}>
@@ -792,7 +792,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
           {addingComment && (
             <div className="space-y-2">
               <textarea autoFocus rows={3} value={commentText} onChange={e => setCommentText(e.target.value)}
-                placeholder="e.g. Found a cracked digitizer under the screen too — needs an extra part, let the customer know before we proceed…"
+                placeholder="e.g. Found a cracked digitizer under the screen too, needs an extra part, let the customer know before we proceed…"
                 className="w-full px-3 py-2 rounded-xl text-xs outline-none resize-none"
                 style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
               <div className="flex gap-2 justify-end">
@@ -859,7 +859,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
           {canUpdateProgress ? (
             <>
               <p className="text-[11px] text-center mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                Diagnosis complete — what's next?
+                Diagnosis complete. What's next?
               </p>
               <button
                 onClick={() => onProceedToRepair(repair.id)}
@@ -875,12 +875,12 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}>
                 <XCircle className="w-3.5 h-3.5" />
-                Close — Diagnosis Only
+                Close (Diagnosis Only)
               </button>
             </>
           ) : (
             <p className="text-[11px] text-center" style={{ color: 'hsl(var(--muted-foreground))' }}>
-              Diagnosis complete — awaiting a technician or admin to proceed to repair or close it.
+              Diagnosis complete. Awaiting a technician or admin to proceed to repair or close it.
             </p>
           )}
         </div>
@@ -971,7 +971,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
                   Why does this need reassigning?
                 </p>
                 <textarea autoFocus rows={2} value={reassignReason} onChange={e => setReassignReason(e.target.value)}
-                  placeholder="e.g. I'm swamped today — can Kofi take this one over?"
+                  placeholder="e.g. I'm swamped today, can Kofi take this one over?"
                   className="w-full px-3 py-2 rounded-xl text-xs outline-none resize-none"
                   style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
                 <div className="flex gap-2 justify-end">
@@ -1004,11 +1004,11 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
                   What did you find, and what will it cost?
                 </p>
                 <textarea autoFocus rows={2} value={extraReason} onChange={e => setExtraReason(e.target.value)}
-                  placeholder="e.g. Found a cracked logic board while replacing the screen — needs a new one"
+                  placeholder="e.g. Found a cracked logic board while replacing the screen, needs a new one"
                   className="w-full px-3 py-2 rounded-xl text-xs outline-none resize-none"
                   style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
                 <input type="number" min="0" step="0.01" value={extraAmount} onChange={e => setExtraAmount(e.target.value)}
-                  placeholder="Extra cost (GHS) — optional"
+                  placeholder="Extra cost (GHS), optional"
                   className="w-full px-3 py-2 rounded-xl text-xs outline-none"
                   style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
                 <div className="flex gap-2 justify-end">
@@ -1095,7 +1095,7 @@ export default function RepairsBoard() {
   useEffect(() => {
     setPageTitle({
       title: 'Tickets',
-      subtitle: 'Available jobs — assign technicians and track diagnosis & repair progress',
+      subtitle: 'Available jobs, assign technicians and track diagnosis & repair progress',
       hideDefaultAction: true,
     });
     return () => setPageTitle({ title: 'Dashboard' });

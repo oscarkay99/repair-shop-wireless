@@ -240,7 +240,7 @@ function RecordSaleModal({ products, onSave, onClose }: {
                 phone={customerPhone}
                 required={false}
                 label="Customer Name"
-                placeholder="Full name (optional — leave blank for walk-in)"
+                placeholder="Full name (optional, leave blank for walk-in)"
                 onChange={(name, phone, customer) => {
                   setCustomerName(name);
                   if (customer) setCustomerPhone(phone);
@@ -288,7 +288,7 @@ function RecordSaleModal({ products, onSave, onClose }: {
             <select value={productId} onChange={e => setProductId(e.target.value)}
               className="w-full h-9 px-3 rounded-lg text-sm outline-none"
               style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}>
-              {products.map(p => <option key={p.id} value={p.id}>{p.name} — {fmt(p.price)}</option>)}
+              {products.map(p => <option key={p.id} value={p.id}>{p.name} · {fmt(p.price)}</option>)}
             </select>
           </div>
           <div className="grid grid-cols-2 gap-2">
