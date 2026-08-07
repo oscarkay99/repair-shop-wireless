@@ -160,6 +160,16 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
   );
 
   const set = (k: string, v: unknown) => setForm(p => ({ ...p, [k]: v }));
+  // A separate free-text ETA field used to sit next to this date picker,
+  // but nothing kept them in sync — staff would fill in one and not the
+  // other, or type something the overdue/reminder logic couldn't parse at
+  // all ("1hr", "April 2023"). The date picker is the only thing that ever
+  // actually drove overdue detection; the label shown everywhere else is
+  // now always derived from it, so there's exactly one thing to fill in.
+  const handleEtaDateChange = (dateStr: string) => {
+    set('etaDate', dateStr);
+    set('eta', dateStr ? new Date(`${dateStr}T00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '');
+  };
 
   // The ticket is already created by the time this runs — a failure here
   // shouldn't undo that or block the flow, just surface that stock wasn't
@@ -547,13 +557,9 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
           <div className="grid grid-cols-2 gap-3">
             <div className={form.jobType === 'straight_repair' ? 'col-span-2' : ''}>
               <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>ETA</label>
-              <input value={form.eta} onChange={e => set('eta', e.target.value)}
-                className="w-full text-sm rounded-xl px-3 py-2 outline-none mb-1.5"
-                style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }}
-                placeholder="Apr 26" />
-              <input type="date" value={form.etaDate} onChange={e => set('etaDate', e.target.value)}
-                title="Turnaround date, used to flag this ticket as overdue if it slips past this date"
-                className="w-full text-xs rounded-xl px-3 py-1.5 outline-none"
+              <input type="date" value={form.etaDate} onChange={e => handleEtaDateChange(e.target.value)}
+                title="Used to flag this ticket as overdue if it slips past this date"
+                className="w-full text-sm rounded-xl px-3 py-2 outline-none"
                 style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }} />
             </div>
             {/* Straight repair skips diagnosis entirely — no fee to enter, so
