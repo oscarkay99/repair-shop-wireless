@@ -11,12 +11,14 @@ interface Props {
 }
 
 function fmtEta(etaDate: string, tier: 'due_soon' | 'overdue'): string {
+  const eta = new Date(etaDate);
   if (tier === 'overdue') {
-    const days = Math.round((Date.now() - new Date(`${etaDate}T00:00`).getTime()) / 86_400_000);
-    return `${days}d overdue`;
+    const hours = (Date.now() - eta.getTime()) / 3_600_000;
+    return hours < 48 ? `${Math.floor(hours)}h overdue` : `${Math.floor(hours / 24)}d overdue`;
   }
-  const today = new Date().toISOString().slice(0, 10);
-  return etaDate === today ? 'Due today' : 'Due tomorrow';
+  const time = eta.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  const isToday = eta.toDateString() === new Date().toDateString();
+  return isToday ? `Due today, ${time}` : `Due tomorrow, ${time}`;
 }
 
 export default function EtaRemindersBanner({ repairs, onSelect }: Props) {

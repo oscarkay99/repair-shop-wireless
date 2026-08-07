@@ -24,6 +24,13 @@ const ACTIVE_STATUSES = new Set<Repair['status']>([
   'received', 'diagnosis_paid', 'diagnosing', 'awaiting_approval', 'parts_pending', 'in_progress', 'ready',
 ]);
 
+// eta_date is stored as a full timestamptz ("2026-08-20T16:00:00+00:00"),
+// but <input type="datetime-local"> only accepts "YYYY-MM-DDTHH:mm" with no
+// offset — strip it down when seeding the form from an existing ticket.
+function toDatetimeLocalValue(iso: string): string {
+  return iso.slice(0, 16);
+}
+
 export default function AddRepairModal({ onSave, onClose, repairs, defaultJobType, initial, onUpdate }: Props) {
   const [form, setForm] = useState({
     customer: initial?.customer ?? '',
@@ -34,7 +41,7 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
     issue: initial?.issue ?? '',
     cost: initial?.cost ?? 'TBD',
     eta: initial?.eta ?? '',
-    etaDate: initial?.etaDate ?? '',
+    etaDate: initial?.etaDate ? toDatetimeLocalValue(initial.etaDate) : '',
     warranty: initial?.warranty ?? false,
     diagnosisFee: String(initial?.diagnosisFee ?? 200),
     jobType: (initial?.jobType ?? defaultJobType ?? 'diagnosis_to_repair') as 'diagnosis_only' | 'diagnosis_to_repair' | 'straight_repair',
@@ -163,12 +170,12 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
   // A separate free-text ETA field used to sit next to this date picker,
   // but nothing kept them in sync — staff would fill in one and not the
   // other, or type something the overdue/reminder logic couldn't parse at
-  // all ("1hr", "April 2023"). The date picker is the only thing that ever
-  // actually drove overdue detection; the label shown everywhere else is
-  // now always derived from it, so there's exactly one thing to fill in.
-  const handleEtaDateChange = (dateStr: string) => {
-    set('etaDate', dateStr);
-    set('eta', dateStr ? new Date(`${dateStr}T00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '');
+  // all ("1hr", "April 2023"). The date+time picker is the only thing that
+  // ever actually drove overdue detection; the label shown everywhere else
+  // is now always derived from it, so there's exactly one thing to fill in.
+  const handleEtaDateChange = (dateTimeStr: string) => {
+    set('etaDate', dateTimeStr);
+    set('eta', dateTimeStr ? new Date(dateTimeStr).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '');
   };
 
   // The ticket is already created by the time this runs — a failure here
@@ -557,8 +564,8 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
           <div className="grid grid-cols-2 gap-3">
             <div className={form.jobType === 'straight_repair' ? 'col-span-2' : ''}>
               <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>ETA</label>
-              <input type="date" value={form.etaDate} onChange={e => handleEtaDateChange(e.target.value)}
-                title="Used to flag this ticket as overdue if it slips past this date"
+              <input type="datetime-local" value={form.etaDate} onChange={e => handleEtaDateChange(e.target.value)}
+                title="Used to flag this ticket as overdue if it slips past this date and time"
                 className="w-full text-sm rounded-xl px-3 py-2 outline-none"
                 style={{ border: '1px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }} />
             </div>
