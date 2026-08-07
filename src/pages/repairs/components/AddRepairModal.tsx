@@ -6,6 +6,7 @@ import { useParts } from '@/hooks/useParts';
 import type { Repair } from '@/types/repair';
 import type { WCustomer } from '@/types/wireless';
 import CustomerPicker from '@/components/shared/CustomerPicker';
+import BirthdayInput from '@/components/shared/BirthdayInput';
 import DevicePicker from '@/components/shared/DevicePicker';
 import { isCurrentlyUnavailable } from '@/utils/technicianAvailability';
 import { addTicketPart } from '@/services/wireless/ticketParts';
@@ -55,6 +56,8 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
     setSelectedTechnicianIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
   const [customerError, setCustomerError] = useState('');
+  const [customerBirthMonth, setCustomerBirthMonth] = useState<number | undefined>();
+  const [customerBirthDay, setCustomerBirthDay] = useState<number | undefined>();
   const [saving, setSaving] = useState(false);
   const { technicians } = useTechnicians();
   // Walk-ins with no existing record shouldn't need a separate trip to the
@@ -166,6 +169,10 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
         setCustomerError('Name and phone are required to create a new customer.');
         return;
       }
+      if (!customerBirthMonth || !customerBirthDay) {
+        setCustomerError('Birthday is required to create a new customer.');
+        return;
+      }
     } else if (!form.customer) {
       return;
     }
@@ -188,7 +195,10 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
       // …unless the name they typed matched somebody already on file and they
       // picked them from the dropdown, in which case that record is reused.
       const customer = customerMode === 'new' && !initial
-        ? selectedCustomer ?? await addCustomer({ name: form.customer.trim(), phone: form.customerPhone.trim(), email: form.customerEmail.trim(), address: '' })
+        ? selectedCustomer ?? await addCustomer({
+            name: form.customer.trim(), phone: form.customerPhone.trim(), email: form.customerEmail.trim(), address: '',
+            birth_month: customerBirthMonth, birth_day: customerBirthDay,
+          })
         : selectedCustomer;
 
       const costNum = parseFloat(form.cost.replace(/[^0-9.]/g, '')) || 0;
@@ -454,6 +464,11 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
                 placeholder="+233..." />
             </div>
           </div>
+          {customerMode === 'new' && !initial && (
+            <BirthdayInput month={customerBirthMonth} day={customerBirthDay}
+              onChange={(m, d) => { setCustomerBirthMonth(m); setCustomerBirthDay(d); }}
+              label="Customer Birthday" required />
+          )}
           <div>
             <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Device Type</label>
             <select value={form.deviceType} onChange={e => set('deviceType', e.target.value)}

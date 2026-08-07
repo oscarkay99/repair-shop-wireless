@@ -13,6 +13,9 @@ export interface WCustomer {
   email: string;
   address: string;
   notes?: string;
+  /** Month/day only, deliberately no year — never used to compute or imply age. */
+  birth_month?: number;
+  birth_day?: number;
   ticket_count: number;
   total_spent: number;
   created_at: string;

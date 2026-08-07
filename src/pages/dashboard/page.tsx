@@ -11,6 +11,7 @@ import { useAccessoryStore } from '@/hooks/useAccessoryStore';
 import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/shared/Pagination';
 import BirthdayBanner from '@/components/shared/BirthdayBanner';
+import CustomerBirthdayBanner from '@/components/shared/CustomerBirthdayBanner';
 import ReceptionistDashboard from './ReceptionistDashboard';
 import SalesManagerDashboard from './SalesManagerDashboard';
 import {
@@ -906,6 +907,7 @@ export default function DashboardPage() {
   return (
     <>
       <BirthdayBanner />
+      <CustomerBirthdayBanner />
       {(() => {
         switch (user.dashboardVariant) {
           case 'receptionist':      return <ReceptionistDashboard />;

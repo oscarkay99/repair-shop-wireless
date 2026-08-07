@@ -9,6 +9,8 @@ import Pagination from '@/components/shared/Pagination';
 import DateRangePicker, { type DateRange } from '@/components/shared/DateRangePicker';
 import { X, Pencil } from 'lucide-react';
 import type { WCustomer } from '@/types/wireless';
+import BirthdayInput from '@/components/shared/BirthdayInput';
+import { formatMonthDay } from '@/utils/birthdays';
 
 const PAGE_SIZE = 10;
 
@@ -19,15 +21,17 @@ function AddCustomerModal({ onSave, onClose }: {
   onClose: () => void;
 }) {
   const [form, setForm] = useState({ name: '', phone: '', email: '', address: '', notes: '' });
+  const [birthMonth, setBirthMonth] = useState<number | undefined>();
+  const [birthDay, setBirthDay] = useState<number | undefined>();
   const [saving, setSaving] = useState(false);
 
   const set = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.phone) return;
+    if (!form.name || !form.phone || !birthMonth || !birthDay) return;
     setSaving(true);
-    try { await onSave(form); onClose(); }
+    try { await onSave({ ...form, birth_month: birthMonth, birth_day: birthDay }); onClose(); }
     finally { setSaving(false); }
   };
 
@@ -73,6 +77,7 @@ function AddCustomerModal({ onSave, onClose }: {
               />
             </div>
           ))}
+          <BirthdayInput month={birthMonth} day={birthDay} onChange={(m, d) => { setBirthMonth(m); setBirthDay(d); }} required />
           <div className="flex gap-2 pt-1">
             <button type="button" onClick={onClose}
               className="flex-1 h-9 rounded-lg text-xs font-semibold"
@@ -106,14 +111,16 @@ function EditCustomerModal({ customer, onSave, onClose }: {
     address: customer.address ?? '',
     notes:   customer.notes  ?? '',
   });
+  const [birthMonth, setBirthMonth] = useState<number | undefined>(customer.birth_month);
+  const [birthDay, setBirthDay] = useState<number | undefined>(customer.birth_day);
   const [saving, setSaving] = useState(false);
   const set = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.phone) return;
+    if (!form.name || !form.phone || !birthMonth || !birthDay) return;
     setSaving(true);
-    try { await onSave(form); onClose(); }
+    try { await onSave({ ...form, birth_month: birthMonth, birth_day: birthDay }); onClose(); }
     finally { setSaving(false); }
   };
 
@@ -155,6 +162,7 @@ function EditCustomerModal({ customer, onSave, onClose }: {
               />
             </div>
           ))}
+          <BirthdayInput month={birthMonth} day={birthDay} onChange={(m, d) => { setBirthMonth(m); setBirthDay(d); }} required />
           <div>
             <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>Notes</label>
             <textarea
@@ -235,6 +243,7 @@ function CustomerDetailPanel({ customer, lastRepair, canEdit, onEdit, onClose }:
             {[
               { label: 'Email',        value: customer.email || '—' },
               { label: 'Address',      value: customer.address || '—' },
+              { label: 'Birthday',     value: customer.birth_month && customer.birth_day ? formatMonthDay(customer.birth_month, customer.birth_day) : '—' },
               { label: '# Jobs',       value: String(customer.ticket_count) },
               { label: 'Total Spent',  value: `GHS ${customer.total_spent.toFixed(2)}` },
               { label: 'Last Job',     value: lastRepair ?? '—' },
