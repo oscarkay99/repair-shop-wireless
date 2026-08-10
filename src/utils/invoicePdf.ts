@@ -292,6 +292,15 @@ export async function downloadInvoicePdf(opts: InvoicePdfOptions) {
   doc.save(`${opts.invoice.invoice_number}.pdf`);
 }
 
+/** Opens the actual invoice PDF in a new tab so the browser's own PDF
+ *  viewer handles printing — plain window.print() on the app page just
+ *  printed whatever was on screen (sidebar, nav tabs, stat tiles and all),
+ *  not a real invoice document. */
+export async function printInvoicePdf(opts: InvoicePdfOptions) {
+  const doc = await buildInvoicePdf(opts);
+  window.open(doc.output('bloburl'), '_blank');
+}
+
 /** Base64-encoded PDF payload (no data-URI prefix) for emailing as an attachment. */
 export async function invoicePdfBase64(opts: InvoicePdfOptions): Promise<string> {
   const doc = await buildInvoicePdf(opts);

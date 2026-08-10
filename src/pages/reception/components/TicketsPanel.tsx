@@ -15,7 +15,6 @@ import { formatDate } from '@/utils/date';
 import Pagination from '@/components/shared/Pagination';
 import ReassignmentRequestsBanner from '@/components/shared/ReassignmentRequestsBanner';
 import StaleTicketsBanner from '@/components/shared/StaleTicketsBanner';
-import EtaRemindersBanner from '@/components/shared/EtaRemindersBanner';
 import type { Repair, RepairStatus } from '@/types/repair';
 
 type FilterKey = 'all' | 'pending' | 'in_progress' | 'ready' | 'completed';
@@ -144,7 +143,6 @@ export default function TicketsPanel() {
       />
 
       <StaleTicketsBanner repairs={repairs} />
-      <EtaRemindersBanner repairs={repairs} />
 
       {/* Ready-for-pickup banner */}
       {readyPickups.length > 0 && (

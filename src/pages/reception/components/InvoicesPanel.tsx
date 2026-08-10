@@ -1,10 +1,16 @@
 import { useMemo, useState, useEffect } from 'react';
-import { FileText, CreditCard, AlertCircle, Search, Eye, Share2, Printer, Check, Plus, X } from 'lucide-react';
+import { FileText, CreditCard, AlertCircle, Search, Eye, Share2, Printer, Check, Plus, X, Loader2 } from 'lucide-react';
 import { useInvoices } from '@/hooks/useInvoices';
+import { useTaxSettings } from '@/hooks/useTaxSettings';
+import { useWirelessSettings } from '@/hooks/useWirelessSettings';
 import { useToast } from '@/contexts/ToastContext';
 import { formatDate } from '@/utils/date';
 import Pagination from '@/components/shared/Pagination';
 import { IssueInvoiceModal } from '@/pages/invoices/page';
+import { getInvoiceItems } from '@/services/wireless/invoices';
+import { getTicketPublicTokenById } from '@/services/repairs';
+import { printInvoicePdf } from '@/utils/invoicePdf';
+import { errMessage } from '@/utils/errors';
 import type { Invoice, InvoiceStatus } from '@/types/wireless';
 import type { PaymentMethod } from '@/types/sale';
 
@@ -33,6 +39,8 @@ const PAYMENT_METHODS: PaymentMethod[] = ['Cash', 'Card', 'MoMo', 'Bank Transfer
 
 export default function InvoicesPanel() {
   const { invoices, loading, totals, markPaid, add } = useInvoices();
+  const { taxEnabled, vatRate } = useTaxSettings();
+  const { settings } = useWirelessSettings();
   const { showToast } = useToast();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterKey>('all');
@@ -41,6 +49,7 @@ export default function InvoicesPanel() {
   const [splits, setSplits] = useState<SplitRow[]>([]);
   const [page, setPage] = useState(1);
   const [showIssue, setShowIssue] = useState(false);
+  const [printingId, setPrintingId] = useState<string | null>(null);
 
   const unpaidCount = useMemo(() => invoices.filter(i => i.status === 'unpaid').length, [invoices]);
 
@@ -57,6 +66,23 @@ export default function InvoicesPanel() {
   const pagedInvoices = useMemo(() =>
     filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
   [filtered, page]);
+
+  const levyRate = settings?.nhil_getfund_rate ?? 5;
+
+  const handlePrint = async (inv: Invoice) => {
+    setPrintingId(inv.id);
+    try {
+      const [items, trackerToken] = await Promise.all([
+        getInvoiceItems(inv.id),
+        inv.ticket_id ? getTicketPublicTokenById(inv.ticket_id) : Promise.resolve(null),
+      ]);
+      await printInvoicePdf({ invoice: inv, items, taxEnabled, vatRate, levyRate, settings: settings ?? undefined, trackerToken });
+    } catch (e) {
+      showToast(errMessage(e, 'Failed to generate invoice PDF'), 'error');
+    } finally {
+      setPrintingId(null);
+    }
+  };
 
   const handleShare = async (invoiceNumber: string, total: number, customer?: string) => {
     const text = `Invoice ${invoiceNumber}${customer ? ` for ${customer}` : ''}: GH₵ ${total.toFixed(2)}`;
@@ -261,8 +287,8 @@ export default function InvoicesPanel() {
                     <button onClick={() => handleShare(inv.invoice_number, inv.total, inv.customer?.name)} className="flex items-center gap-1 text-xs font-semibold cursor-pointer" style={{ color: 'hsl(var(--foreground))' }}>
                       <Share2 className="w-3.5 h-3.5" /> Share
                     </button>
-                    <button onClick={() => window.print()} className="flex items-center gap-1 text-xs font-semibold cursor-pointer" style={{ color: 'hsl(var(--foreground))' }}>
-                      <Printer className="w-3.5 h-3.5" /> Print
+                    <button onClick={() => handlePrint(inv)} disabled={printingId === inv.id} className="flex items-center gap-1 text-xs font-semibold cursor-pointer disabled:opacity-50" style={{ color: 'hsl(var(--foreground))' }}>
+                      {printingId === inv.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Printer className="w-3.5 h-3.5" />} Print
                     </button>
                     {(inv.status === 'unpaid' || inv.status === 'partial' || inv.status === 'overdue') && (
                       <button onClick={() => startMarkingPaid(inv)} className="flex items-center gap-1 text-xs font-semibold cursor-pointer" style={{ color: '#22c55e' }}>

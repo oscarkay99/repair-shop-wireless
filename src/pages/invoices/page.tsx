@@ -20,7 +20,7 @@ import { Check, Share2, Printer, Download, Mail, Loader2, ChevronLeft, X, Pencil
 import type { Invoice, InvoiceItem, InvoiceStatus, Payment } from '@/types/wireless';
 import type { PaymentMethod } from '@/types/sale';
 import { errMessage } from '@/utils/errors';
-import { downloadInvoicePdf, invoicePdfBase64 } from '@/utils/invoicePdf';
+import { downloadInvoicePdf, printInvoicePdf, invoicePdfBase64 } from '@/utils/invoicePdf';
 import { downloadPaymentReceiptPdf } from '@/utils/paymentReceiptPdf';
 import { getTicketPublicTokenById } from '@/services/repairs';
 import { SERVICE_TERMS_URL } from '@/utils/pdfBranding';
@@ -471,7 +471,7 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
               Edit
             </button>
           )}
-          <button onClick={() => window.print()}
+          <button onClick={() => printInvoicePdf({ invoice: inv, items, taxEnabled, vatRate, levyRate, settings: settings ?? undefined, trackerToken })}
             className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold transition-colors"
             style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))', background: 'transparent' }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
