@@ -14,6 +14,8 @@ import { roleColors, roleLabels } from '@/mocks/users';
 import { AddPartModal } from '@/pages/inventory/page';
 import AccessoriesTab from '@/pages/inventory/components/AccessoriesTab';
 import Pagination from '@/components/shared/Pagination';
+import BirthdayBanner from '@/components/shared/BirthdayBanner';
+import CustomerBirthdayBanner from '@/components/shared/CustomerBirthdayBanner';
 import type { Part } from '@/types/wireless';
 
 type Tab = 'parts' | 'accessories';
@@ -144,6 +146,8 @@ export default function InventoryPortalPage() {
 
       <div className="flex-1 overflow-y-auto pb-24">
         <div className="max-w-4xl mx-auto w-full px-4 py-6">
+          <BirthdayBanner />
+          <CustomerBirthdayBanner />
           {tab === 'accessories' ? (
             <AccessoriesTab
               showAddModal={showAddAccessory}

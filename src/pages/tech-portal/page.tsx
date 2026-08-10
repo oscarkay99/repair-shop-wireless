@@ -10,6 +10,7 @@ import { REPAIR_STATUS_META, statusToServiceStage } from '@/utils/repairStatus';
 import { roleColors, roleLabels } from '@/mocks/users';
 import { isCurrentlyUnavailable } from '@/utils/technicianAvailability';
 import BirthdayBanner from '@/components/shared/BirthdayBanner';
+import CustomerBirthdayBanner from '@/components/shared/CustomerBirthdayBanner';
 import StaleTicketsBanner from '@/components/shared/StaleTicketsBanner';
 import type { RepairStatus } from '@/types/repair';
 import { useClockInOut } from '@/hooks/useClockInOut';
@@ -141,6 +142,7 @@ export default function TechPortalPage() {
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-24">
         <div className="max-w-2xl w-full mx-auto space-y-5">
           <BirthdayBanner />
+          <CustomerBirthdayBanner />
           <StaleTicketsBanner repairs={myRepairs} onSelect={setSelectedId} />
 
           {/* Profile + status card */}

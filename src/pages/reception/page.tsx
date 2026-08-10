@@ -17,6 +17,7 @@ import SalesPanel from './components/SalesPanel';
 import InventoryPanel from './components/InventoryPanel';
 import TechniciansPanel from './components/TechniciansPanel';
 import BirthdaysPanel from './components/BirthdaysPanel';
+import BirthdayBanner from '@/components/shared/BirthdayBanner';
 import CustomerBirthdayBanner from '@/components/shared/CustomerBirthdayBanner';
 import PaymentStats from '@/pages/payments/components/PaymentStats';
 import TransactionTable from '@/pages/payments/components/TransactionTable';
@@ -130,6 +131,7 @@ export default function ReceptionPortalPage() {
 
       <div className="flex-1 overflow-y-auto pb-24">
         <div className="max-w-4xl mx-auto w-full px-4 py-6">
+          <BirthdayBanner />
           <CustomerBirthdayBanner />
           {activeTab === 'tickets' && <TicketsPanel />}
           {activeTab === 'invoices' && <InvoicesPanel />}

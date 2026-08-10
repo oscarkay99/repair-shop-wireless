@@ -4,7 +4,8 @@ import { Bell, Plus, ShoppingBag, Wrench, CreditCard, TriangleAlert, Zap, X, Che
 import { usePageTitle } from '@/context/PageTitleContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useNotifications, type Notification } from '@/hooks/useNotifications';
-import { useUpcomingBirthdays, type UpcomingBirthday } from '@/hooks/useUpcomingBirthdays';
+import { useUpcomingBirthdays } from '@/hooks/useUpcomingBirthdays';
+import { useUpcomingCustomerBirthdays } from '@/hooks/useUpcomingCustomerBirthdays';
 import { useAuth } from '@/hooks/useAuth';
 import { useRepairs } from '@/hooks/useRepairs';
 import { useWirelessCustomers } from '@/hooks/useWirelessCustomers';
@@ -109,7 +110,15 @@ function NotifRow({ n, onClear }: { n: Notification; onClear: (id: string) => vo
   );
 }
 
-function BirthdayRow({ b }: { b: UpcomingBirthday }) {
+interface BirthdayEntry {
+  id: string;
+  name: string;
+  avatarLabel: string;
+  subtitle: string;
+  daysUntil: number;
+}
+
+function BirthdayRow({ b }: { b: BirthdayEntry }) {
   return (
     <div className="flex items-center gap-3 px-4 py-3 transition-colors"
       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
@@ -117,11 +126,11 @@ function BirthdayRow({ b }: { b: UpcomingBirthday }) {
     >
       <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-white text-[10px] font-bold"
         style={{ background: 'hsl(38 85% 55%)' }}>
-        {b.avatar}
+        {b.avatarLabel}
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-xs font-semibold truncate" style={{ color: 'hsl(var(--foreground))' }}>{b.name}</p>
-        <p className="text-[11px] mt-0.5" style={{ color: 'hsl(var(--muted-foreground))' }}>Birthday · {b.label}</p>
+        <p className="text-[11px] mt-0.5" style={{ color: 'hsl(var(--muted-foreground))' }}>{b.subtitle}</p>
       </div>
       <Cake className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'hsl(38 85% 45%)' }} />
     </div>
@@ -176,13 +185,25 @@ export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: T
   const inputRef = useRef<HTMLInputElement>(null);
   const bellRef = useRef<HTMLDivElement>(null);
   const { notifications, toasts, unreadCount, markAllRead, dismissToast, clearToasts, clearNotification, clearAllNotifications } = useNotifications();
-  const upcomingBirthdays = useUpcomingBirthdays();
+  const upcomingStaffBirthdays = useUpcomingBirthdays();
   const { theme, toggleTheme } = useTheme();
 
   const { repairs } = useRepairs();
   const { customers } = useWirelessCustomers();
   const { products } = useInventory();
   const { invoices } = useInvoices();
+  const upcomingCustomerBirthdays = useUpcomingCustomerBirthdays(customers);
+  // Same "notice ahead of the day" treatment as staff birthdays, merged into
+  // one list — a customer's birthday is just as much a reason to plan ahead
+  // as a colleague's.
+  const upcomingBirthdays: BirthdayEntry[] = useMemo(() => [
+    ...upcomingStaffBirthdays.map((b): BirthdayEntry => ({
+      id: `staff-${b.id}`, name: b.name, avatarLabel: b.avatar, subtitle: `Birthday · ${b.label}`, daysUntil: b.daysUntil,
+    })),
+    ...upcomingCustomerBirthdays.map((b): BirthdayEntry => ({
+      id: `customer-${b.id}`, name: b.name, avatarLabel: b.name.trim().charAt(0).toUpperCase() || '?', subtitle: `Customer birthday · ${b.label}`, daysUntil: b.daysUntil,
+    })),
+  ].sort((a, b) => a.daysUntil - b.daysUntil), [upcomingStaffBirthdays, upcomingCustomerBirthdays]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
