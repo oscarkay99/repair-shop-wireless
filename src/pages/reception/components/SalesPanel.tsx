@@ -225,10 +225,8 @@ export default function SalesPanel() {
                 style={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
                 placeholder="+233…" />
             </div>
-            {customerName.trim() && (
-              <BirthdayInput month={customerBirthMonth} day={customerBirthDay}
-                onChange={(m, d) => { setCustomerBirthMonth(m); setCustomerBirthDay(d); }} required />
-            )}
+            <BirthdayInput month={customerBirthMonth} day={customerBirthDay}
+              onChange={(m, d) => { setCustomerBirthMonth(m); setCustomerBirthDay(d); }} required={!!customerName.trim()} />
           </>
         ) : (
           <>
