@@ -9,6 +9,7 @@ import { errMessage } from '@/utils/errors';
 import type { AccessoryProduct } from '@/services/wireless/accessoryStore';
 import { downloadAccessorySaleReceiptPdf } from '@/utils/accessorySaleReceiptPdf';
 import CustomerPicker from '@/components/shared/CustomerPicker';
+import BirthdayInput from '@/components/shared/BirthdayInput';
 import Pagination from '@/components/shared/Pagination';
 import type { WCustomer } from '@/types/wireless';
 
@@ -34,6 +35,8 @@ export default function SalesPanel() {
   const [customerMode, setCustomerMode]   = useState<'existing' | 'new'>('existing');
   const [customerName, setCustomerName]   = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  const [customerBirthMonth, setCustomerBirthMonth] = useState<number | undefined>();
+  const [customerBirthDay, setCustomerBirthDay] = useState<number | undefined>();
   const [selectedCustomer, setSelectedCustomer] = useState<WCustomer | null>(null);
   const [customerError, setCustomerError] = useState('');
   const [salesPage, setSalesPage] = useState(1);
@@ -65,11 +68,15 @@ export default function SalesPanel() {
       setCustomerError('Phone number is required to create a new customer.');
       return;
     }
+    if (customerMode === 'new' && customerName.trim() && (!customerBirthMonth || !customerBirthDay)) {
+      setCustomerError('Birthday is required to create a new customer.');
+      return;
+    }
     setCustomerError('');
     setSubmitting(true);
     try {
       const customer = customerMode === 'new' && customerName.trim() && !selectedCustomer
-        ? await addCustomer({ name: customerName.trim(), phone: customerPhone.trim(), email: '', address: '' })
+        ? await addCustomer({ name: customerName.trim(), phone: customerPhone.trim(), email: '', address: '', birth_month: customerBirthMonth, birth_day: customerBirthDay })
         : selectedCustomer;
       // Receipt isn't auto-downloaded — the sale is recorded below in
       // Recent Sales, where it can be downloaded on demand (same pattern as
@@ -91,6 +98,8 @@ export default function SalesPanel() {
       setCustomerMode('existing');
       setCustomerName('');
       setCustomerPhone('');
+      setCustomerBirthMonth(undefined);
+      setCustomerBirthDay(undefined);
       setSelectedCustomer(null);
     } finally {
       setSubmitting(false);
@@ -182,6 +191,8 @@ export default function SalesPanel() {
                   setSelectedCustomer(null);
                   setCustomerName('');
                   setCustomerPhone('');
+                  setCustomerBirthMonth(undefined);
+                  setCustomerBirthDay(undefined);
                 }}
                 className="flex-1 text-xs font-bold py-1.5 transition-colors cursor-pointer"
                 style={customerMode === mode
@@ -214,6 +225,10 @@ export default function SalesPanel() {
                 style={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
                 placeholder="+233…" />
             </div>
+            {customerName.trim() && (
+              <BirthdayInput month={customerBirthMonth} day={customerBirthDay}
+                onChange={(m, d) => { setCustomerBirthMonth(m); setCustomerBirthDay(d); }} required />
+            )}
           </>
         ) : (
           <>

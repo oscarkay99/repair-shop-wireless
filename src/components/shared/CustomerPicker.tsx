@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useWirelessCustomers } from '@/hooks/useWirelessCustomers';
+import BirthdayInput from '@/components/shared/BirthdayInput';
 import type { WCustomer } from '@/types/wireless';
 
 interface Props {
@@ -32,6 +33,8 @@ export default function CustomerPicker({
   const [pickedId, setPickedId] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [birthMonth, setBirthMonth] = useState<number | undefined>();
+  const [birthDay, setBirthDay] = useState<number | undefined>();
   const ref = useRef<HTMLDivElement>(null);
 
   const q = value.trim().toLowerCase();
@@ -72,11 +75,13 @@ export default function CustomerPicker({
 
   const createNew = async () => {
     const name = value.trim();
-    if (!name || !phone.trim() || creating) return;
+    if (!name || !phone.trim() || !birthMonth || !birthDay || creating) return;
     setCreating(true);
     try {
-      const c = await add({ name, phone: phone.trim(), email: '', address: '' });
+      const c = await add({ name, phone: phone.trim(), email: '', address: '', birth_month: birthMonth, birth_day: birthDay });
       pick(c);
+      setBirthMonth(undefined);
+      setBirthDay(undefined);
     } finally {
       setCreating(false);
     }
@@ -166,16 +171,19 @@ export default function CustomerPicker({
                 New customer, created when you save this ticket.
               </div>
             ) : phone.trim() ? (
-              <button
-                type="button"
-                onMouseDown={e => { e.preventDefault(); createNew(); }}
-                disabled={creating}
-                className="w-full flex items-center gap-2 px-3 py-2.5 text-left text-xs font-medium hover:bg-[hsl(var(--muted))] transition-colors disabled:opacity-60"
-                style={{ color: 'hsl(var(--primary))' }}
-              >
-                <i className="ri-user-add-line" />
-                {creating ? 'Creating…' : `Create "${value.trim()}" as new customer`}
-              </button>
+              <div className="p-3 space-y-2">
+                <BirthdayInput month={birthMonth} day={birthDay} onChange={(m, d) => { setBirthMonth(m); setBirthDay(d); }} required />
+                <button
+                  type="button"
+                  onMouseDown={e => { e.preventDefault(); createNew(); }}
+                  disabled={creating || !birthMonth || !birthDay}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-left text-xs font-medium hover:bg-[hsl(var(--muted))] transition-colors disabled:opacity-40"
+                  style={{ color: 'hsl(var(--primary))' }}
+                >
+                  <i className="ri-user-add-line" />
+                  {creating ? 'Creating…' : `Create "${value.trim()}" as new customer`}
+                </button>
+              </div>
             ) : (
               <div className="px-3 py-3 text-xs text-[hsl(var(--muted-foreground))] flex items-center gap-2">
                 <i className="ri-information-line" />

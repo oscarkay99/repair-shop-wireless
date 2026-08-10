@@ -13,6 +13,7 @@ import { downloadAccessorySaleReceiptPdf } from '@/utils/accessorySaleReceiptPdf
 import { useToast } from '@/contexts/ToastContext';
 import { errMessage } from '@/utils/errors';
 import CustomerPicker from '@/components/shared/CustomerPicker';
+import BirthdayInput from '@/components/shared/BirthdayInput';
 import { useWirelessCustomers } from '@/hooks/useWirelessCustomers';
 import type { WCustomer } from '@/types/wireless';
 
@@ -148,6 +149,8 @@ function RecordSaleModal({ products, onSave, onClose }: {
   const [customerMode, setCustomerMode]   = useState<'existing' | 'new'>('existing');
   const [customerName, setCustomerName]   = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  const [customerBirthMonth, setCustomerBirthMonth] = useState<number | undefined>();
+  const [customerBirthDay, setCustomerBirthDay] = useState<number | undefined>();
   const [selectedCustomer, setSelectedCustomer] = useState<WCustomer | null>(null);
   const [customerError, setCustomerError] = useState('');
 
@@ -173,11 +176,15 @@ function RecordSaleModal({ products, onSave, onClose }: {
       setCustomerError('Phone number is required to create a new customer.');
       return;
     }
+    if (customerMode === 'new' && customerName.trim() && (!customerBirthMonth || !customerBirthDay)) {
+      setCustomerError('Birthday is required to create a new customer.');
+      return;
+    }
     setCustomerError('');
     setSaving(true);
     try {
       const customer = customerMode === 'new' && customerName.trim() && !selectedCustomer
-        ? await addCustomer({ name: customerName.trim(), phone: customerPhone.trim(), email: '', address: '' })
+        ? await addCustomer({ name: customerName.trim(), phone: customerPhone.trim(), email: '', address: '', birth_month: customerBirthMonth, birth_day: customerBirthDay })
         : selectedCustomer;
       // Receipt isn't auto-downloaded — the sale is recorded in Sales
       // History, where it can be downloaded on demand (same pattern as
@@ -222,6 +229,8 @@ function RecordSaleModal({ products, onSave, onClose }: {
                     setSelectedCustomer(null);
                     setCustomerName('');
                     setCustomerPhone('');
+                    setCustomerBirthMonth(undefined);
+                    setCustomerBirthDay(undefined);
                   }}
                   className="flex-1 text-xs font-semibold py-1.5 transition-colors"
                   style={customerMode === mode
@@ -254,6 +263,10 @@ function RecordSaleModal({ products, onSave, onClose }: {
                   style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
                   placeholder="+233…" />
               </div>
+              {customerName.trim() && (
+                <BirthdayInput month={customerBirthMonth} day={customerBirthDay}
+                  onChange={(m, d) => { setCustomerBirthMonth(m); setCustomerBirthDay(d); }} required />
+              )}
             </>
           ) : (
             <>
