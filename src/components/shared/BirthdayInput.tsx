@@ -32,7 +32,7 @@ export default function BirthdayInput({ month, day, onChange, required, label = 
           required={required}
           value={month ?? ''}
           onChange={e => onChange(e.target.value ? Number(e.target.value) : undefined, dayValue)}
-          className="flex-1 h-9 px-3 rounded-lg text-sm outline-none"
+          className="w-40 h-9 px-3 rounded-lg text-sm outline-none"
           style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
         >
           <option value="">Month</option>
