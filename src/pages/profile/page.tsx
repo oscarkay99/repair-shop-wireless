@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/feature/AdminLayout';
 import { useAuth } from '@/hooks/useAuth';
-import { roleLabels, roleColors, rolePermissions } from '@/mocks/users';
+import { roleLabels, roleColors } from '@/mocks/users';
+import { canAccessModule, type AppModule } from '@/utils/access';
 import { getAuditLogs, type AuditLogRecord } from '@/services/wireless/auditLogs';
 import { getMyProfile, updateMyProfile, changePassword as changePasswordReal } from '@/services/wireless/users';
 import Pagination from '@/components/shared/Pagination';
@@ -10,7 +11,15 @@ import { errMessage } from '@/utils/errors';
 
 const ACTIVITY_PAGE_SIZE = 15;
 
-const allModulePermissions = ['Dashboard', 'Analytics', 'Audit Logs', 'POS', 'Inventory', 'Leads', 'Sales', 'Payments', 'Customers', 'Tickets', 'Warranty', 'WhatsApp', 'Instagram', 'TikTok', 'Marketing', 'Price Intel', 'Trade-In', 'Delivery', 'Wallet', 'Expenses', 'Suppliers', 'Reports', 'Loyalty', 'Calendar', 'Team', 'Settings', 'Authentication', 'AI Studio'];
+// 'Repairs' excluded — canAccessModule gates it identically to 'Tickets', so
+// including both would double-count the same access. 'Team' and 'Users' are
+// excluded too — both only ever routed to now-removed mock pages with no
+// real implementation behind them.
+const ALL_MODULES: AppModule[] = [
+  'Dashboard', 'Tickets', 'Customers', 'Technicians', 'Inventory', 'Invoices', 'Sales',
+  'Payments', 'Expenses', 'Attendance', 'Audit Logs', 'Settings', 'Portal',
+  'Analytics', 'Reports', 'Loyalty', 'Delivery', 'Warranty', 'Authentication', 'AI Studio',
+];
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -64,9 +73,12 @@ export default function ProfilePage() {
     }).catch(() => {});
   }, []);
 
-  const roleColor = user?.role ? roleColors[user.role] : '#EC0118';
-  const roleLabel = user?.role ? roleLabels[user.role] : 'User';
-  const userPermissions = user?.role ? rolePermissions[user.role] : [];
+  // DB-resolved values first (works for any custom role); the fixed 4-role
+  // maps in mocks/users.ts are only a fallback for when that resolution
+  // failed (see resolveRoleMeta's catch branch in useAuth.ts).
+  const roleColor = user?.roleColor ?? (user?.role ? roleColors[user.role] : undefined) ?? '#EC0118';
+  const roleLabel = user?.roleName ?? (user?.role ? roleLabels[user.role] : undefined) ?? user?.role ?? 'User';
+  const accessibleModules = ALL_MODULES.filter(m => canAccessModule(user, m));
 
   const handleSaveProfile = async () => {
     try {
@@ -153,7 +165,7 @@ export default function ProfilePage() {
             </span>
             <div className="mt-4 pt-4 border-t border-[hsl(var(--border))] grid grid-cols-1 sm:grid-cols-2 gap-3 text-center">
               <div>
-                <p className="text-lg font-bold text-[hsl(var(--foreground))]">{userPermissions.length}</p>
+                <p className="text-lg font-bold text-[hsl(var(--foreground))]">{accessibleModules.length}</p>
                 <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Modules Access</p>
               </div>
               <div>
@@ -281,15 +293,15 @@ export default function ProfilePage() {
 
               {/* Permissions */}
               <div className="mt-5 pt-5 border-t border-[hsl(var(--border))]">
-                <p className="text-xs font-bold text-[hsl(var(--foreground))] mb-3">Your Module Access ({userPermissions.length}/{allModulePermissions.length})</p>
+                <p className="text-xs font-bold text-[hsl(var(--foreground))] mb-3">Your Module Access ({accessibleModules.length}/{ALL_MODULES.length})</p>
                 <div className="flex flex-wrap gap-1.5">
-                  {allModulePermissions.map(perm => (
+                  {ALL_MODULES.map(mod => (
                     <span
-                      key={perm}
-                      className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${userPermissions.includes(perm) ? 'text-white' : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]'}`}
-                      style={userPermissions.includes(perm) ? { background: roleColor } : {}}
+                      key={mod}
+                      className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${accessibleModules.includes(mod) ? 'text-white' : 'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]'}`}
+                      style={accessibleModules.includes(mod) ? { background: roleColor } : {}}
                     >
-                      {perm}
+                      {mod}
                     </span>
                   ))}
                 </div>

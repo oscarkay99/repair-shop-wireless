@@ -311,14 +311,14 @@ export default function InventoryPortalPage() {
           >
             <div
               className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0"
-              style={{ background: user.role ? (roleColors[user.role] ?? 'hsl(354 60% 35%)') : 'hsl(354 60% 35%)' }}
+              style={{ background: user.roleColor ?? (user.role ? roleColors[user.role] : undefined) ?? 'hsl(354 60% 35%)' }}
             >
               {user.avatar || user.name.slice(0, 2).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold truncate" style={{ color: 'hsl(220 20% 12%)' }}>{user.name}</p>
               <p className="text-[10px] truncate" style={{ color: 'hsl(var(--muted-foreground))' }}>
-                {user.role ? (roleLabels[user.role] ?? user.role) : user.role}
+                {user.roleName ?? (user.role ? (roleLabels[user.role] ?? user.role) : user.role)}
               </p>
             </div>
           </Link>

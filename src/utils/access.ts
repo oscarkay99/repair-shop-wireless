@@ -60,7 +60,7 @@ export function canAccessModule(user: PermCtx, module: AppModule): boolean {
     case 'Customers':
       return has('customers:create') || has('customers:edit') || has('customers:delete');
     case 'Inventory':
-      return has('parts:edit');
+      return has('parts:edit') || has('parts:create');
     // Permission-based, not a hardcoded role id — same fix as Portal above.
     // technicians:edit alone would under-grant: reads on wireless.technicians
     // are open to any active user at the RLS layer (writes are the part
@@ -76,7 +76,7 @@ export function canAccessModule(user: PermCtx, module: AppModule): boolean {
     case 'Sales':
       return has('sales:create');
     case 'Expenses':
-      return has('expenses:view') || has('expenses:edit');
+      return has('expenses:view') || has('expenses:edit') || has('assets:view') || has('assets:edit');
     // Admin is a protected system role that can't carry a DB-seeded
     // attendance:* permission (trg_prevent_system_role_mutation blocks any
     // update to it) — wireless.has_permission() already bypasses is_admin()

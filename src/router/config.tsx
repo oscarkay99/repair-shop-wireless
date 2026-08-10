@@ -2,7 +2,6 @@ import type { RouteObject } from "react-router-dom";
 import AppShell from "@/components/feature/AppShell";
 import NotFound from "../pages/NotFound";
 import SignInPage from "../pages/signin/page";
-import UsersPage from "../pages/users/page";
 import AuthGuard from "../components/feature/AuthGuard";
 import DashboardPage from "../pages/dashboard/page";
 import PaymentsPage from "../pages/payments/page";
@@ -10,7 +9,6 @@ import AIStudioPage from "../pages/ai-studio/page";
 import SettingsPage from "../pages/settings/page";
 import InventoryPage from "../pages/inventory/page";
 import CustomersPage from "../pages/customers/page";
-import TeamPage from "../pages/team/page";
 import RepairsPage from "../pages/repairs/page";
 import AnalyticsPage from "../pages/analytics/page";
 import AuthenticationPage from "../pages/authentication/page";
@@ -42,7 +40,6 @@ const routes: RouteObject[] = [
     children: [
       { path: "/",                   element: <AuthGuard requiredModule="Dashboard"><DashboardPage /></AuthGuard> },
       { path: "/access-denied",      element: <AuthGuard><AccessDeniedPage /></AuthGuard> },
-      { path: "/users",              element: <AuthGuard requiredModule="Users"><UsersPage /></AuthGuard> },
       { path: "/analytics",          element: <AuthGuard requiredModule="Analytics"><AnalyticsPage /></AuthGuard> },
       { path: "/inventory",          element: <AuthGuard requiredModule="Inventory"><InventoryPage /></AuthGuard> },
       { path: "/payments",           element: <AuthGuard requiredModule="Payments"><PaymentsPage /></AuthGuard> },
@@ -54,7 +51,6 @@ const routes: RouteObject[] = [
       { path: "/invoices",           element: <AuthGuard requiredModule="Invoices"><InvoicesPage /></AuthGuard> },
       { path: "/activity",           element: <AuthGuard requiredModule="Activity"><ActivityPage /></AuthGuard> },
       { path: "/ai-studio",          element: <AuthGuard requiredModule="AI Studio"><AIStudioPage /></AuthGuard> },
-      { path: "/team",               element: <AuthGuard requiredModule="Team"><TeamPage /></AuthGuard> },
       { path: "/settings",           element: <AuthGuard requiredModule="Settings"><SettingsPage /></AuthGuard> },
       { path: "/authentication",     element: <AuthGuard requiredModule="Authentication"><AuthenticationPage /></AuthGuard> },
       { path: "/delivery",           element: <AuthGuard requiredModule="Delivery"><DeliveryPage /></AuthGuard> },

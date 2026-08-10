@@ -11,7 +11,7 @@ const PERMISSION_GROUPS: { resource: string; label: string; actions: { value: st
     { value: 'ticket_media:view', label: 'View' }, { value: 'ticket_media:create', label: 'Upload' }, { value: 'ticket_media:delete', label: 'Delete' },
   ] },
   { resource: 'ticket_comments', label: 'Ticket Comments', actions: [
-    { value: 'ticket_comments:view', label: 'View' }, { value: 'ticket_comments:delete', label: 'Delete' },
+    { value: 'ticket_comments:view', label: 'View' }, { value: 'ticket_comments:create', label: 'Add' }, { value: 'ticket_comments:delete', label: 'Delete' },
   ] },
   { resource: 'ticket_parts', label: 'Parts Used on Tickets', actions: [
     { value: 'ticket_parts:view', label: 'View' }, { value: 'ticket_parts:create', label: 'Add / Remove' },
@@ -28,7 +28,9 @@ const PERMISSION_GROUPS: { resource: string; label: string; actions: { value: st
     { value: 'parts:edit', label: 'Manage' }, { value: 'parts:create', label: 'Add New Parts' },
   ] },
   { resource: 'sales', label: 'Accessory Sales (POS)', actions: [{ value: 'sales:create', label: 'Record Sale' }] },
-  { resource: 'payments', label: 'Payments', actions: [{ value: 'payments:create', label: 'Record Payment' }] },
+  { resource: 'payments', label: 'Payments', actions: [
+    { value: 'payments:view', label: 'View' }, { value: 'payments:create', label: 'Record Payment' },
+  ] },
   { resource: 'expenses', label: 'Expenses', actions: [
     { value: 'expenses:view', label: 'View' }, { value: 'expenses:edit', label: 'Manage' },
   ] },

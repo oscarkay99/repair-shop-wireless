@@ -13,7 +13,7 @@ export default function AccessDeniedPage() {
         </div>
         <h1 className="text-2xl font-black text-[hsl(var(--foreground))] tracking-tight mb-2">Access denied</h1>
         <p className="text-sm text-[hsl(var(--muted-foreground))] leading-relaxed mb-6">
-          Your account{user ? ` (${user.role.replace('_', ' ')})` : ''} does not have permission to open this module.
+          Your account{user ? ` (${user.roleName ?? user.role.replace(/_/g, ' ')})` : ''} does not have permission to open this module.
         </p>
         <div className="flex gap-3">
           <button
