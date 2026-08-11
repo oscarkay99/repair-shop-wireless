@@ -36,7 +36,6 @@ import ReassignmentRequestsBanner from '@/components/shared/ReassignmentRequests
 import { useApprovalRequests } from '@/hooks/useApprovalRequests';
 import ApprovalRequestsBanner from '@/components/shared/ApprovalRequestsBanner';
 import StaleTicketsBanner from '@/components/shared/StaleTicketsBanner';
-import EtaRemindersBanner from '@/components/shared/EtaRemindersBanner';
 
 const PAGE_SIZE = 12;
 
@@ -1242,7 +1241,6 @@ export default function RepairsBoard() {
           />
         )}
         <StaleTicketsBanner repairs={repairs} onSelect={setSelectedId} />
-        <EtaRemindersBanner repairs={repairs} onSelect={setSelectedId} />
 
         {/* Controls */}
         <div className="flex items-center gap-2 flex-wrap">
