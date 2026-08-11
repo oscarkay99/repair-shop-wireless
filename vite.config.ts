@@ -39,6 +39,19 @@ export default defineConfig({
     writeVersionFile(),
     VitePWA({
       registerType: "autoUpdate",
+      // generateSW (the default) auto-builds the service worker with no
+      // hook for custom event listeners — switched to injectManifest so
+      // src/sw.ts's push/notificationclick handlers can ship at all.
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.ts",
+      injectManifest: {
+        // version.json is polled with cache: 'no-store' specifically to
+        // detect a new deploy while a tab's been open (useNewVersionAvailable)
+        // — precaching it here would serve a stale copy back to that exact
+        // check and defeat the whole mechanism.
+        globIgnores: ["version.json"],
+      },
       includeAssets: ["wireless-mark.png", "icons/apple-touch-icon.png"],
       manifest: {
         name: "Wireless — Command Center",
@@ -55,17 +68,6 @@ export default defineConfig({
           { src: "icons/maskable-192.png", sizes: "192x192", type: "image/png", purpose: "maskable" },
           { src: "icons/maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
         ],
-      },
-      workbox: {
-        // version.json is polled with cache: 'no-store' specifically to
-        // detect a new deploy while a tab's been open (useNewVersionAvailable)
-        // — precaching it here would serve a stale copy back to that exact
-        // check and defeat the whole mechanism. Nothing else here should ever
-        // touch api.wirelesscares.com either: no runtimeCaching entries are
-        // defined for it, so ticket/inventory/payment data is never served
-        // from the service worker, only ever fetched live.
-        globIgnores: ["version.json"],
-        navigateFallbackDenylist: [/^\/version\.json$/],
       },
     }),
     AutoImport({

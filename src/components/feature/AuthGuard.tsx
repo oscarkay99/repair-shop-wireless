@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { canAccessModule, type AppModule } from '@/utils/access';
+import PushNotificationPrompt from '@/components/shared/PushNotificationPrompt';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -29,5 +30,10 @@ export default function AuthGuard({ children, requiredModule }: AuthGuardProps) 
   if (isLoading && !isAuthenticated) return null;
   if (!isAuthenticated || !hasModuleAccess) return null;
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <PushNotificationPrompt />
+    </>
+  );
 }
