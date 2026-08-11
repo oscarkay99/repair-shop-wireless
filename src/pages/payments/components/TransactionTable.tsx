@@ -45,16 +45,19 @@ export default function TransactionTable() {
 
   return (
     <div
-      className="rounded-2xl overflow-hidden flex"
+      className="rounded-2xl overflow-hidden flex flex-col md:flex-row md:h-[620px]"
       style={{
         background: 'white',
         border: '1px solid rgba(7,16,31,0.07)',
         boxShadow: '0 1px 3px rgba(7,16,31,0.04), 0 8px 32px rgba(236,1,24,0.08)',
-        height: '620px',
       }}
     >
       {/* ── LEFT: Transaction list ─────────────────────────────────── */}
-      <div className="flex flex-col w-[300px] flex-shrink-0" style={{ borderRight: '1px solid rgba(7,16,31,0.07)' }}>
+      {/* Fixed 300px side-by-side on desktop; full-width and stacked
+          above the detail pane on mobile, where there's no room for two
+          300px+ columns — a border-bottom instead of border-right marks
+          the split either way. */}
+      <div className="flex flex-col w-full md:w-[300px] md:flex-shrink-0 border-b md:border-b-0 md:border-r border-[rgba(7,16,31,0.07)]">
         {/* List header */}
         <div className="px-4 pt-4 pb-3" style={{ borderBottom: '1px solid rgba(236,1,24,0.08)' }}>
           <div className="flex items-center justify-between mb-3">
