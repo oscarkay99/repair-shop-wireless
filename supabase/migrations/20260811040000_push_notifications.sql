@@ -7,6 +7,11 @@
 -- about the action they just took is noise the in-app bell doesn't have
 -- to worry about but a push notification does.
 
+-- Added retroactively for reproducibility — this was enabled by hand at the
+-- same time this migration was first applied, so a fresh environment
+-- rebuilt from migrations alone would otherwise be missing it.
+create extension if not exists pg_net with schema extensions;
+
 -- ── 1. One row per subscribed browser/device ────────────────────────────
 create table wireless.push_subscriptions (
   id          uuid primary key default gen_random_uuid(),

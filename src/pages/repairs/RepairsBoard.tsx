@@ -36,6 +36,7 @@ import ReassignmentRequestsBanner from '@/components/shared/ReassignmentRequests
 import { useApprovalRequests } from '@/hooks/useApprovalRequests';
 import ApprovalRequestsBanner from '@/components/shared/ApprovalRequestsBanner';
 import StaleTicketsBanner from '@/components/shared/StaleTicketsBanner';
+import EtaRemindersBanner from '@/components/shared/EtaRemindersBanner';
 
 const PAGE_SIZE = 12;
 
@@ -1241,6 +1242,11 @@ export default function RepairsBoard() {
           />
         )}
         <StaleTicketsBanner repairs={repairs} onSelect={setSelectedId} />
+        {/* Oversight view — admin only. sales_manager/manager also reach this
+            board but weren't part of the intended audience when this was
+            reinstated; receptionist gets the same reminder from their own
+            portal's Tickets tab instead (below), not from here. */}
+        {user?.role === 'admin' && <EtaRemindersBanner repairs={repairs} onSelect={setSelectedId} />}
 
         {/* Controls */}
         <div className="flex items-center gap-2 flex-wrap">
