@@ -16,7 +16,7 @@ export default function ClockInOutButton() {
         : 'Not clocked in'}
     >
       <Clock className="w-3.5 h-3.5" />
-      {busy ? '…' : openSession ? 'Clock Out' : 'Clock In'}
+      <span className="hidden sm:inline">{busy ? '…' : openSession ? 'Clock Out' : 'Clock In'}</span>
     </button>
   );
 }

@@ -533,7 +533,7 @@ export default function TechniciansPage() {
       title: 'Technicians',
       subtitle: `${unavailableTechs} unavailable · ${technicians.length} total`,
       action: canAddTechnician ? { label: 'Add Technician', onClick: () => setShowAdd(true) } : undefined,
-      secondaryAction: { label: 'Reassign', onClick: () => setShowReassign(true) },
+      secondaryAction: { label: 'Reassign', icon: <RefreshCw className="w-3.5 h-3.5" />, onClick: () => setShowReassign(true) },
     });
   }, [technicians.length, unavailableTechs, canAddTechnician, setPageTitle]);
 

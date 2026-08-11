@@ -345,7 +345,7 @@ export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: T
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
             >
               {ea.icon}
-              {ea.label}
+              <span className="hidden sm:inline">{ea.label}</span>
             </button>
           ))}
           {/* Secondary action (outline) */}
@@ -357,7 +357,13 @@ export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: T
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
             >
-              {pageTitle.secondaryAction.label}
+              {pageTitle.secondaryAction.icon}
+              {/* An icon means it can still be identified/used with the label
+                  hidden on mobile — without one, hiding the label would leave
+                  an unlabeled, unusable button, so keep the text forced on. */}
+              <span className={pageTitle.secondaryAction.icon ? 'hidden sm:inline' : undefined}>
+                {pageTitle.secondaryAction.label}
+              </span>
             </button>
           )}
           {/* Primary action or default New Repair */}
@@ -368,7 +374,7 @@ export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: T
               style={{ background: 'hsl(var(--primary))' }}
             >
               <Plus className="w-3.5 h-3.5" />
-              {pageTitle.action.label}
+              <span className="hidden sm:inline">{pageTitle.action.label}</span>
             </button>
           ) : !pageTitle.hideDefaultAction && (user?.permissions?.includes('tickets:create') ?? false) ? (
             <Link to="/tickets">
@@ -377,7 +383,7 @@ export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: T
                 style={{ background: 'hsl(var(--primary))' }}
               >
                 <Plus className="w-3.5 h-3.5" />
-                New Ticket
+                <span className="hidden sm:inline">New Ticket</span>
               </button>
             </Link>
           ) : null}
