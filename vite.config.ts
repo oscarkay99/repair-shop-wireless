@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { resolve } from "node:path";
 import AutoImport from "unplugin-auto-import/vite";
+import { VitePWA } from "vite-plugin-pwa";
 // import { readdyJsxRuntimeProxyPlugin } from "./vite.jsx-runtime-proxy";
 
 const base = process.env.BASE_PATH || "/";
@@ -36,6 +37,37 @@ export default defineConfig({
     // ...proxyPlugins,
     react(),
     writeVersionFile(),
+    VitePWA({
+      registerType: "autoUpdate",
+      includeAssets: ["wireless-mark.png", "icons/apple-touch-icon.png"],
+      manifest: {
+        name: "Wireless — Command Center",
+        short_name: "Wireless",
+        description: "Repair ticket management, inventory, invoicing, and staff tools for Wireless.",
+        theme_color: "#EC0118",
+        background_color: "#ffffff",
+        display: "standalone",
+        start_url: base,
+        scope: base,
+        icons: [
+          { src: "icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+          { src: "icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+          { src: "icons/maskable-192.png", sizes: "192x192", type: "image/png", purpose: "maskable" },
+          { src: "icons/maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+        ],
+      },
+      workbox: {
+        // version.json is polled with cache: 'no-store' specifically to
+        // detect a new deploy while a tab's been open (useNewVersionAvailable)
+        // — precaching it here would serve a stale copy back to that exact
+        // check and defeat the whole mechanism. Nothing else here should ever
+        // touch api.wirelesscares.com either: no runtimeCaching entries are
+        // defined for it, so ticket/inventory/payment data is never served
+        // from the service worker, only ever fetched live.
+        globIgnores: ["version.json"],
+        navigateFallbackDenylist: [/^\/version\.json$/],
+      },
+    }),
     AutoImport({
       imports: [
         {
