@@ -357,7 +357,7 @@ type Tab = 'overview' | 'products' | 'sales';
 
 export default function AccessoriesSalesPage() {
   const { setPageTitle } = usePageTitle();
-  const { products, sales, loading, addProduct, patchProduct, removeProduct, recordSale } = useAccessoryStore();
+  const { products, sales, loading, addProduct, patchProduct, removeProduct, recordSale, removeSale } = useAccessoryStore();
   const { settings } = useWirelessSettings();
   const { showToast } = useToast();
 
@@ -525,9 +525,18 @@ export default function AccessoriesSalesPage() {
                             {s.sale_number} · {new Date(s.sold_at).toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
                           </p>
                         </div>
-                        <div className="text-right">
-                          <p className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>{fmt(s.total)}</p>
-                          <p className="text-xs mt-0.5" style={{ color: 'hsl(var(--muted-foreground))' }}>{s.payment_method}</p>
+                        <div className="flex items-center gap-3">
+                          <div className="text-right">
+                            <p className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>{fmt(s.total)}</p>
+                            <p className="text-xs mt-0.5" style={{ color: 'hsl(var(--muted-foreground))' }}>{s.payment_method}</p>
+                          </div>
+                          <button
+                            onClick={() => { if (confirm(`Delete sale ${s.sale_number}? This cannot be undone.`)) removeSale(s.id); }}
+                            title="Delete sale"
+                            className="w-7 h-7 flex items-center justify-center rounded-lg flex-shrink-0"
+                            style={{ background: 'hsl(var(--muted))' }}>
+                            <Trash2 className="w-3.5 h-3.5" style={{ color: 'hsl(var(--primary))' }} />
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -691,14 +700,23 @@ export default function AccessoriesSalesPage() {
                               {new Date(s.sold_at).toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
                             </td>
                             <td className="px-5 py-3.5">
-                              <button
-                                onClick={() => downloadAccessorySaleReceiptPdf({ sale: s, settings: settings ?? undefined })
-                                  .catch(e => showToast(errMessage(e, 'Failed to generate receipt'), 'error'))}
-                                title="Download receipt"
-                                className="w-7 h-7 flex items-center justify-center rounded-lg"
-                                style={{ background: 'hsl(var(--muted))' }}>
-                                <Printer className="w-3.5 h-3.5" style={{ color: 'hsl(var(--muted-foreground))' }} />
-                              </button>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => downloadAccessorySaleReceiptPdf({ sale: s, settings: settings ?? undefined })
+                                    .catch(e => showToast(errMessage(e, 'Failed to generate receipt'), 'error'))}
+                                  title="Download receipt"
+                                  className="w-7 h-7 flex items-center justify-center rounded-lg"
+                                  style={{ background: 'hsl(var(--muted))' }}>
+                                  <Printer className="w-3.5 h-3.5" style={{ color: 'hsl(var(--muted-foreground))' }} />
+                                </button>
+                                <button
+                                  onClick={() => { if (confirm(`Delete sale ${s.sale_number}? This cannot be undone.`)) removeSale(s.id); }}
+                                  title="Delete sale"
+                                  className="w-7 h-7 flex items-center justify-center rounded-lg"
+                                  style={{ background: 'hsl(var(--muted))' }}>
+                                  <Trash2 className="w-3.5 h-3.5" style={{ color: 'hsl(var(--primary))' }} />
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         );
