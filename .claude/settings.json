@@ -16,7 +16,10 @@
       "Bash(ps -p 85440 -o command=)",
       "Bash(awk '{print $9, $1}')",
       "Bash(supabase sql *)",
-      "Bash(git merge feature --no-ff -m ' *)"
+      "Bash(git merge feature --no-ff -m ' *)",
+      "Bash(ssh -i ~/.ssh/wireless_migration/id_ed25519 root@187.127.233.218 *)",
+      "Bash(ssh -i ~/.ssh/wireless_claude_20260817/id_ed25519 root@187.127.233.218 *)",
+      "Bash(ssh root@187.127.233.218 *)"
     ],
     "additionalDirectories": [
       "/Users/Ox/Desktop"
