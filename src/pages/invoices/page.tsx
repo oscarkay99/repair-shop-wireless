@@ -9,14 +9,14 @@ import { useTaxSettings } from '@/hooks/useTaxSettings';
 import { useToast } from '@/contexts/ToastContext';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import {
-  getInvoiceItems, sendInvoiceEmail, createInvoice, patchInvoice,
+  getInvoiceItems, sendInvoiceEmail, createInvoice, patchInvoice, deleteInvoice,
   getInvoicesPage, getInvoiceTotals, type InvoiceTotals,
 } from '@/services/wireless/invoices';
 import { recordPayment, getPaymentsForInvoice } from '@/services/wireless/payments';
 import SearchDropdown from '@/components/shared/SearchDropdown';
 import Pagination from '@/components/shared/Pagination';
 import DateRangePicker, { type DateRange } from '@/components/shared/DateRangePicker';
-import { Check, Share2, Printer, Download, Mail, Loader2, ChevronLeft, X, Pencil, Plus, Receipt } from 'lucide-react';
+import { Check, Share2, Printer, Download, Mail, Loader2, ChevronLeft, X, Pencil, Plus, Receipt, Trash2 } from 'lucide-react';
 import type { Invoice, InvoiceItem, InvoiceStatus, Payment } from '@/types/wireless';
 import type { PaymentMethod } from '@/types/sale';
 import { errMessage } from '@/utils/errors';
@@ -357,12 +357,14 @@ function EditInvoiceModal({ inv, onSave, onClose }: {
 
 // ─── Invoice Detail View ────────────────────────────────────────────────────
 
-function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
+function InvoiceDetail({ inv, canEdit, canDelete, onBack, onMarkPaid, onEdit, onDelete }: {
   inv: Invoice;
   canEdit: boolean;
+  canDelete: boolean;
   onBack: () => void;
   onMarkPaid: (id: string, method: PaymentMethod) => void;
   onEdit: () => void;
+  onDelete: (id: string) => void;
 }) {
   const { settings } = useWirelessSettings();
   const taxEnabled = settings?.tax_enabled ?? true;
@@ -512,6 +514,17 @@ function InvoiceDetail({ inv, canEdit, onBack, onMarkPaid, onEdit }: {
             <Share2 className="w-3.5 h-3.5" />
             Share
           </button>
+          {canDelete && (
+            <button
+              onClick={() => { if (confirm(`Delete invoice ${inv.invoice_number}? This cannot be undone.`)) onDelete(inv.id); }}
+              className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold transition-colors"
+              style={{ border: '1px solid rgba(239,68,68,0.4)', color: '#ef4444', background: 'transparent' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.1)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
+              <Trash2 className="w-3.5 h-3.5" />
+              Delete
+            </button>
+          )}
         </div>
       </div>
 
@@ -747,8 +760,9 @@ export default function InvoicesPage() {
   const [totals, setTotals] = useState<InvoiceTotals>({ total: 0, collected: 0, outstanding: 0, overdue: 0 });
 
   const perms = user?.permissions ?? [];
-  const canIssue = user?.role === 'admin' || perms.includes('invoices:create');
-  const canEdit  = user?.role === 'admin' || perms.includes('invoices:edit');
+  const canIssue  = user?.role === 'admin' || perms.includes('invoices:create');
+  const canEdit   = user?.role === 'admin' || perms.includes('invoices:edit');
+  const canDelete = user?.role === 'admin' || perms.includes('invoices:delete');
 
   useEffect(() => { setPage(1); }, [debouncedQuery, dateRange]);
 
@@ -805,6 +819,17 @@ export default function InvoicesPage() {
     }
   };
 
+  const remove = async (id: string) => {
+    try {
+      await deleteInvoice(id);
+      setSelectedId(null);
+      showToast('Invoice deleted');
+      await Promise.all([reloadList(), reloadTotals()]);
+    } catch (e) {
+      showToast(`Failed to delete invoice: ${errMessage(e)}`, 'error');
+    }
+  };
+
   const selected = selectedId ? invoices.find(i => i.id === selectedId) ?? null : null;
 
   const handleMarkPaid = (id: string, method: PaymentMethod) => {
@@ -835,9 +860,11 @@ export default function InvoicesPage() {
         <InvoiceDetail
           inv={selected}
           canEdit={canEdit}
+          canDelete={canDelete}
           onBack={() => setSelectedId(null)}
           onMarkPaid={handleMarkPaid}
           onEdit={() => setEditingInvoice(selected)}
+          onDelete={remove}
         />
         {editingInvoice && (
           <EditInvoiceModal
