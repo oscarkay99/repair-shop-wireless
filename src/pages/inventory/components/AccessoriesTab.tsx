@@ -442,6 +442,7 @@ export default function AccessoriesTab({ showAddModal, onCloseAddModal, useCardL
                       <td className="px-4 py-3 font-bold" style={{ color: m >= 70 ? '#22c55e' : m >= 50 ? '#f59e0b' : 'hsl(var(--primary))' }}>{m}%</td>
                     )}
                     <td className="px-4 py-3">
+                      {canEdit && (
                       <div className="flex items-center gap-1 justify-end">
                         <button
                           onClick={() => setEditing(p)}
@@ -460,6 +461,7 @@ export default function AccessoriesTab({ showAddModal, onCloseAddModal, useCardL
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
+                      )}
                     </td>
                   </tr>
                 );
@@ -477,7 +479,7 @@ export default function AccessoriesTab({ showAddModal, onCloseAddModal, useCardL
         onPageChange={setPage}
       />
 
-      {showAddModal && (
+      {showAddModal && canEdit && (
         <AccessoryModal onSave={data => addProduct(data).then(reload)} onClose={onCloseAddModal} existingProducts={products} canSeeCost={canSeeCost} />
       )}
       {editing && (

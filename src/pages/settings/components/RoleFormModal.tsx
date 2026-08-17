@@ -25,7 +25,7 @@ const PERMISSION_GROUPS: { resource: string; label: string; actions: { value: st
   ] },
   { resource: 'technicians', label: 'Technicians Roster', actions: [{ value: 'technicians:edit', label: 'Manage' }] },
   { resource: 'parts', label: 'Inventory / Parts', actions: [
-    { value: 'parts:edit', label: 'Manage' }, { value: 'parts:create', label: 'Add New Parts' },
+    { value: 'parts:view', label: 'View' }, { value: 'parts:edit', label: 'Manage' }, { value: 'parts:create', label: 'Add New Parts' },
   ] },
   { resource: 'sales', label: 'Accessory Sales (POS)', actions: [{ value: 'sales:create', label: 'Record Sale' }] },
   { resource: 'payments', label: 'Payments', actions: [

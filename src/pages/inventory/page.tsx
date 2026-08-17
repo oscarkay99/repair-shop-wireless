@@ -278,6 +278,10 @@ export default function InventoryPage() {
   // existing ones (adjusting stock, not creating catalog entries).
   const canSeeCost = user?.role === 'admin';
   const canCreatePart = user?.role === 'admin' || user?.role === 'stock_manager' || (user?.permissions ?? []).includes('parts:create');
+  // 'Inventory' access is now also granted on parts:view alone (receptionist) —
+  // that grant is read-only, so edit/delete/adjust controls need their own
+  // gate instead of assuming "reached the page" implies "can mutate parts".
+  const canEditPart = user?.role === 'admin' || user?.role === 'stock_manager' || (user?.permissions ?? []).includes('parts:edit');
   // Stock manager's whole job here is "is it in stock, adjust it" — a
   // KPI-tiles-and-cards view built around that, instead of the dense admin
   // table (which also shows things stock_manager can't act on anyway).
@@ -316,7 +320,7 @@ export default function InventoryPage() {
       subtitle: tab === 'parts' ? `${parts.length} parts · ${lowStock.length} low stock` : 'Retail accessories stock',
       action: tab === 'parts'
         ? (canCreatePart ? { label: 'Add Part', onClick: () => setShowAdd(true) } : undefined)
-        : { label: 'Add Accessory', onClick: () => setShowAddAccessory(true) },
+        : (canCreatePart ? { label: 'Add Accessory', onClick: () => setShowAddAccessory(true) } : undefined),
     });
     return () => setPageTitle({ title: 'Dashboard' });
   }, [setPageTitle, tab, parts.length, lowStock.length, canCreatePart]);
@@ -387,7 +391,7 @@ export default function InventoryPage() {
       )}
 
       {tab === 'accessories' ? (
-        <AccessoriesTab showAddModal={showAddAccessory} onCloseAddModal={() => setShowAddAccessory(false)} useCardLayout={useCardLayout} />
+        <AccessoriesTab showAddModal={showAddAccessory} onCloseAddModal={() => setShowAddAccessory(false)} useCardLayout={useCardLayout} canEdit={canEditPart} />
       ) : useCardLayout ? (
         <>
           {/* KPI tiles */}
@@ -461,7 +465,7 @@ export default function InventoryPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <button type="button" onClick={() => adjust(p.id, -1)} disabled={p.stock <= 0}
+                    <button type="button" onClick={() => adjust(p.id, -1)} disabled={!canEditPart || p.stock <= 0}
                       className="w-8 h-8 flex items-center justify-center rounded-lg disabled:opacity-30"
                       style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}>
                       <Minus className="w-3.5 h-3.5" />
@@ -470,8 +474,8 @@ export default function InventoryPage() {
                       <p className="text-sm font-bold" style={{ color: isLow ? '#f59e0b' : 'hsl(var(--foreground))' }}>{p.stock}</p>
                       <p className="text-[9px] uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>units</p>
                     </div>
-                    <button type="button" onClick={() => adjust(p.id, 1)}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg text-white"
+                    <button type="button" onClick={() => adjust(p.id, 1)} disabled={!canEditPart}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg text-white disabled:opacity-30"
                       style={{ background: '#22c55e' }}>
                       <Plus className="w-3.5 h-3.5" />
                     </button>
@@ -479,7 +483,7 @@ export default function InventoryPage() {
                   {/* Defective/returned — tracked separately so a bad unit can't get
                       mistaken for usable stock in the counter above. */}
                   <div className="flex items-center gap-1.5 flex-shrink-0 pl-2" style={{ borderLeft: '1px solid hsl(var(--border))' }}>
-                    <button type="button" onClick={() => adjustDefective(p.id, -1)} disabled={p.defective_stock <= 0}
+                    <button type="button" onClick={() => adjustDefective(p.id, -1)} disabled={!canEditPart || p.defective_stock <= 0}
                       title="Fewer defective units"
                       className="w-6 h-6 flex items-center justify-center rounded-md disabled:opacity-30"
                       style={{ border: '1px solid hsl(var(--border))', color: 'hsl(var(--muted-foreground))' }}>
@@ -489,13 +493,14 @@ export default function InventoryPage() {
                       <p className="text-xs font-bold" style={{ color: p.defective_stock > 0 ? '#f97316' : 'hsl(var(--muted-foreground))' }}>{p.defective_stock}</p>
                       <p className="text-[8px] uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>defective</p>
                     </div>
-                    <button type="button" onClick={() => adjustDefective(p.id, 1)}
+                    <button type="button" onClick={() => adjustDefective(p.id, 1)} disabled={!canEditPart}
                       title="Log a defective/returned unit"
-                      className="w-6 h-6 flex items-center justify-center rounded-md"
+                      className="w-6 h-6 flex items-center justify-center rounded-md disabled:opacity-30"
                       style={{ border: '1px solid rgba(249,115,22,0.4)', color: '#f97316' }}>
                       <Plus className="w-3 h-3" />
                     </button>
                   </div>
+                  {canEditPart && (
                   <div className="flex items-center gap-1 flex-shrink-0">
                     <button onClick={() => setEditing(p)}
                       className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors" style={{ color: 'hsl(var(--muted-foreground))' }}
@@ -510,6 +515,7 @@ export default function InventoryPage() {
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
+                  )}
                 </div>
               );
             })}
@@ -604,6 +610,7 @@ export default function InventoryPage() {
                       ¢{p.selling_price.toFixed(2)}
                     </td>
                     <td className="px-4 py-3">
+                      {canEditPart && (
                       <div className="flex items-center gap-1 justify-end">
                         <button
                           onClick={() => setEditing(p)}
@@ -622,6 +629,7 @@ export default function InventoryPage() {
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
+                      )}
                     </td>
                   </tr>
                 );

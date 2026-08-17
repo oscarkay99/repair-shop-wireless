@@ -60,7 +60,7 @@ export function canAccessModule(user: PermCtx, module: AppModule): boolean {
     case 'Customers':
       return has('customers:create') || has('customers:edit') || has('customers:delete');
     case 'Inventory':
-      return has('parts:edit') || has('parts:create');
+      return has('parts:edit') || has('parts:create') || has('parts:view');
     // Permission-based, not a hardcoded role id — same fix as Portal above.
     // technicians:edit alone would under-grant: reads on wireless.technicians
     // are open to any active user at the RLS layer (writes are the part
