@@ -13,7 +13,6 @@ import { useInventory } from '@/hooks/useInventory';
 import { useInvoices } from '@/hooks/useInvoices';
 import { canAccessModule } from '@/utils/access';
 import SearchDropdown, { type SearchItem } from '@/components/shared/SearchDropdown';
-import ClockInOutButton from '@/components/shared/ClockInOutButton';
 
 type NavItem = SearchItem & { to: string };
 
@@ -424,8 +423,6 @@ export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: T
               {switchingRole ? 'Switching…' : (user.altRoleName ?? 'Switch Role')}
             </button>
           )}
-
-          <ClockInOutButton />
 
           {/* Theme toggle */}
           <button

@@ -27,6 +27,16 @@ export async function getAttendance(params?: { from?: string; to?: string }): Pr
   return (data as AttendanceRecord[] | null) ?? [];
 }
 
+// Unscoped by date range, unlike getAttendance() — used to know who's
+// currently on shift for the manager's quick clock-in/out panel, regardless
+// of whichever history range filter is selected.
+export async function getOpenSessions(): Promise<AttendanceRecord[]> {
+  if (!isSupabaseConfigured) return [];
+  const { data, error } = await db.from('attendance').select(SELECT).is('clock_out', null);
+  if (error) throw error;
+  return (data as AttendanceRecord[] | null) ?? [];
+}
+
 export async function getOpenSession(profileId: string): Promise<AttendanceRecord | null> {
   if (!isSupabaseConfigured || !profileId) return null;
   const { data, error } = await db

@@ -13,7 +13,6 @@ import BirthdayBanner from '@/components/shared/BirthdayBanner';
 import CustomerBirthdayBanner from '@/components/shared/CustomerBirthdayBanner';
 import StaleTicketsBanner from '@/components/shared/StaleTicketsBanner';
 import type { RepairStatus } from '@/types/repair';
-import { useClockInOut } from '@/hooks/useClockInOut';
 
 const QUEUE_STATUSES: RepairStatus[] = ['received', 'diagnosis_paid', 'diagnosing', 'awaiting_approval', 'parts_pending'];
 const DONE_STATUSES: RepairStatus[] = ['ready', 'completed', 'diagnosis_only_closed'];
@@ -36,7 +35,6 @@ export default function TechPortalPage() {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const pickerRef = useRef<HTMLDivElement>(null);
-  const { openSession, busy: clockBusy, clockIn: handleClockIn, clockOut: handleClockOut } = useClockInOut();
 
   const myTech = useMemo(() => technicians.find(t => t.profile_id === user?.id), [technicians, user]);
   const unavailableNow = myTech ? isCurrentlyUnavailable(myTech) : false;
@@ -173,24 +171,6 @@ export default function TechPortalPage() {
               </div>
             </div>
 
-            {user && (
-              <div className="flex items-center justify-between gap-2 mb-4 px-3 py-2.5 rounded-xl"
-                style={{ background: openSession ? 'rgba(34,197,94,0.08)' : 'hsl(var(--muted))' }}>
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4" style={{ color: openSession ? '#22c55e' : 'hsl(var(--muted-foreground))' }} />
-                  <span className="text-xs font-semibold" style={{ color: 'hsl(var(--foreground))' }}>
-                    {openSession
-                      ? `Clocked in at ${new Date(openSession.clock_in).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
-                      : 'Not clocked in'}
-                  </span>
-                </div>
-                <button onClick={openSession ? handleClockOut : handleClockIn} disabled={clockBusy}
-                  className="h-8 px-4 rounded-full text-xs font-bold text-white disabled:opacity-50"
-                  style={{ background: openSession ? '#ef4444' : '#22c55e' }}>
-                  {clockBusy ? '…' : openSession ? 'Clock Out' : 'Clock In'}
-                </button>
-              </div>
-            )}
 
             {/* Status toggle */}
             <div className="flex items-center gap-2 pt-4 flex-wrap relative" style={{ borderTop: '1px solid hsl(var(--border))' }}>

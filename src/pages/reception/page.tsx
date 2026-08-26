@@ -10,7 +10,6 @@ import { useWirelessSettings } from '@/hooks/useWirelessSettings';
 import { useInvoices } from '@/hooks/useInvoices';
 import { useUpcomingBirthdays } from '@/hooks/useUpcomingBirthdays';
 import { roleColors, roleLabels } from '@/mocks/users';
-import ClockInOutButton from '@/components/shared/ClockInOutButton';
 import TicketsPanel from './components/TicketsPanel';
 import InvoicesPanel from './components/InvoicesPanel';
 import SalesPanel from './components/SalesPanel';
@@ -90,7 +89,6 @@ export default function ReceptionPortalPage() {
                 <ArrowLeftRight className="w-3.5 h-3.5" /> {switching ? 'Switching…' : (user.altRoleName ?? 'Switch Role')}
               </button>
             )}
-            <ClockInOutButton />
             <button
               onClick={toggleTheme}
               className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors flex-shrink-0"

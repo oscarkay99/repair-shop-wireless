@@ -137,28 +137,37 @@ function AttendanceModal({ staff, record, onSave, onClose }: {
 export default function AttendanceTab({ canManage }: Props) {
   const [range, setRange] = useState<RangeFilter>('Today');
   const from = useMemo(() => rangeFrom(range), [range]);
-  const { records, loading, add, update, remove } = useAttendance({ from });
+  const { records, openSessions, loading, add, update, remove, clockInStaff, clockOutStaff } = useAttendance({ from });
   const [staff, setStaff] = useState<WirelessProfile[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<AttendanceRecord | null>(null);
   const [page, setPage] = useState(1);
+  const [clockingId, setClockingId] = useState<string | null>(null);
 
   useEffect(() => { getWirelessUsers().then(setStaff).catch(() => setStaff([])); }, []);
   useEffect(() => { setPage(1); }, [range]);
 
-  const onShiftNow = records.filter(r => !r.clock_out);
   const totalHoursInRange = records.reduce((s, r) => s + (hoursBetween(r.clock_in, r.clock_out) ?? 0), 0);
   const pageCount = Math.max(1, Math.ceil(records.length / PAGE_SIZE));
   const pagedRecords = useMemo(() =>
     records.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
   [records, page]);
 
+  const handleQuickClockIn = async (profileId: string) => {
+    setClockingId(profileId);
+    try { await clockInStaff(profileId); } finally { setClockingId(null); }
+  };
+  const handleQuickClockOut = async (recordId: string) => {
+    setClockingId(recordId);
+    try { await clockOutStaff(recordId); } finally { setClockingId(null); }
+  };
+
   return (
     <div className="space-y-5">
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {[
-          { label: 'On Shift Now', value: loading ? '…' : onShiftNow.length },
+          { label: 'On Shift Now', value: loading ? '…' : openSessions.length },
           { label: 'Sessions', value: loading ? '…' : records.length },
           { label: 'Total Hours', value: loading ? '…' : totalHoursInRange.toFixed(1) },
         ].map(s => (
@@ -169,6 +178,47 @@ export default function AttendanceTab({ canManage }: Props) {
           </div>
         ))}
       </div>
+
+      {/* Quick Clock — staff no longer self-clock (20260826040000_attendance_manager_only.sql);
+          admin/manager clock everyone in and out from here. */}
+      {canManage && (
+        <div className="rounded-xl border p-4" style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
+          <p className="text-[10px] font-semibold uppercase tracking-wider mb-3" style={{ color: 'hsl(var(--muted-foreground))' }}>Quick Clock</p>
+          {staff.length === 0 ? (
+            <p className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No staff found.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+              {staff.map(s => {
+                const open = openSessions.find(r => r.profile_id === s.id);
+                const busy = clockingId === s.id || clockingId === open?.id;
+                return (
+                  <div key={s.id} className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg"
+                    style={{ background: 'hsl(var(--muted))' }}>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
+                        style={{ background: avatarColor(s.name) }}>
+                        {initials(s.name)}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold truncate" style={{ color: 'hsl(var(--foreground))' }}>{s.name}</p>
+                        <p className="text-[10px] capitalize truncate" style={{ color: 'hsl(var(--muted-foreground))' }}>{s.role?.replace(/_/g, ' ')}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => open ? handleQuickClockOut(open.id) : handleQuickClockIn(s.id)}
+                      disabled={busy}
+                      className="h-7 px-2.5 rounded-md text-[10px] font-bold text-white disabled:opacity-50 flex-shrink-0"
+                      style={{ background: open ? '#ef4444' : '#22c55e' }}
+                    >
+                      {busy ? '…' : open ? 'Clock Out' : 'Clock In'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Range filter + add */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
