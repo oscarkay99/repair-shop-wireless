@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { getRepairs, createRepair, updateRepairStatus, updateRepairNotes, addRepairMedia, deleteRepairMedia, updateRepair, deleteRepair, hasConfirmedDiagnosisPayment } from '@/services/repairs';
 import type { Repair, RepairStatus, RepairMediaUploadInput } from '@/types/repair';
 import { useToast } from '@/contexts/ToastContext';
@@ -7,21 +7,63 @@ import { useTaxSettings } from '@/hooks/useTaxSettings';
 import { useWirelessSettings } from '@/hooks/useWirelessSettings';
 import { ensureTicketInvoice } from '@/services/wireless/autoInvoice';
 
+interface Store {
+  repairs: Repair[];
+  loading: boolean;
+}
+
+let store: Store = { repairs: [], loading: true };
+let started = false;
+const listeners = new Set<() => void>();
+
+function setStore(next: Partial<Store>) {
+  store = { ...store, ...next };
+  listeners.forEach(l => l());
+}
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+function getSnapshot() {
+  return store;
+}
+
+// Shared across every screen that reads tickets (admin Tickets board, Tech
+// Portal, Sales, Invoices, Reception panels) instead of each mounting its
+// own useState copy — otherwise assigning a technician on one screen only
+// updated that screen's local state, leaving the technician's own already-
+// mounted Tech Portal (or any other open screen) showing the old assignment
+// list until a hard refresh. Mirrors the same fix applied to
+// useWirelessSettings / useTechnicians.
+export async function reloadRepairs() {
+  setStore({ loading: true });
+  try {
+    const repairs = await getRepairs();
+    setStore({ repairs, loading: false });
+  } finally {
+    setStore({ loading: false });
+  }
+}
+
 export function useRepairs() {
-  const [repairs, setRepairs] = useState<Repair[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { repairs, loading } = useSyncExternalStore(subscribe, getSnapshot);
   const { showToast } = useToast();
   const { taxEnabled, vatRate, nhilGetfundRate } = useTaxSettings();
   const { settings } = useWirelessSettings();
 
   useEffect(() => {
-    getRepairs().then(setRepairs).finally(() => setLoading(false));
+    if (!started) {
+      started = true;
+      reloadRepairs();
+    }
   }, []);
 
   const add = async (r: Omit<Repair, 'id'>) => {
     try {
       const created = await createRepair(r);
-      setRepairs(prev => [created, ...prev]);
+      setStore({ repairs: [created, ...store.repairs] });
       showToast('Repair job created');
       // Every ticket gets an invoice immediately at creation — one with a
       // paid diagnosis fee is invoiced for that; a straight repair (no
@@ -48,7 +90,7 @@ export function useRepairs() {
   const setStatus = async (id: string, status: RepairStatus) => {
     try {
       await updateRepairStatus(id, status);
-      setRepairs(prev => prev.map(r => r.id === id ? { ...r, status } : r));
+      setStore({ repairs: store.repairs.map(r => r.id === id ? { ...r, status } : r) });
       showToast('Status updated');
     } catch (e) {
       showToast(errMessage(e, 'Failed to update status'), 'error');
@@ -59,7 +101,7 @@ export function useRepairs() {
   const setNotes = async (id: string, notes: string[]) => {
     try {
       await updateRepairNotes(id, notes);
-      setRepairs(prev => prev.map(r => r.id === id ? { ...r, notes } : r));
+      setStore({ repairs: store.repairs.map(r => r.id === id ? { ...r, notes } : r) });
     } catch (e) {
       showToast(errMessage(e, 'Failed to save note'), 'error');
       throw e;
@@ -69,7 +111,7 @@ export function useRepairs() {
   const updateStatus = async (id: string, status: RepairStatus) => setStatus(id, status);
 
   const addNote = async (id: string, note: string) => {
-    const repair = repairs.find(r => r.id === id);
+    const repair = store.repairs.find(r => r.id === id);
     if (!repair) return;
     await setNotes(id, [...(repair.notes ?? []), note]);
   };
@@ -77,11 +119,13 @@ export function useRepairs() {
   const addMedia = async (id: string, input: RepairMediaUploadInput) => {
     try {
       const media = await addRepairMedia(id, input);
-      setRepairs(prev => prev.map((repair) => (
-        repair.id === id
-          ? { ...repair, media: [media, ...(repair.media ?? [])] }
-          : repair
-      )));
+      setStore({
+        repairs: store.repairs.map((repair) => (
+          repair.id === id
+            ? { ...repair, media: [media, ...(repair.media ?? [])] }
+            : repair
+        )),
+      });
       showToast('Media uploaded');
       return media;
     } catch (e) {
@@ -93,11 +137,13 @@ export function useRepairs() {
   const removeMedia = async (id: string, mediaId: string) => {
     try {
       await deleteRepairMedia(id, mediaId);
-      setRepairs(prev => prev.map((repair) => (
-        repair.id === id
-          ? { ...repair, media: (repair.media ?? []).filter((item) => item.id !== mediaId) }
-          : repair
-      )));
+      setStore({
+        repairs: store.repairs.map((repair) => (
+          repair.id === id
+            ? { ...repair, media: (repair.media ?? []).filter((item) => item.id !== mediaId) }
+            : repair
+        )),
+      });
       showToast('Photo removed');
     } catch (e) {
       showToast(errMessage(e, 'Failed to remove photo'), 'error');
@@ -108,9 +154,11 @@ export function useRepairs() {
   const patchRepair = async (id: string, patch: Partial<Repair>) => {
     try {
       await updateRepair(id, patch);
-      setRepairs(prev => prev.map((repair) => (
-        repair.id === id ? { ...repair, ...patch } : repair
-      )));
+      setStore({
+        repairs: store.repairs.map((repair) => (
+          repair.id === id ? { ...repair, ...patch } : repair
+        )),
+      });
       showToast('Repair updated');
     } catch (e) {
       showToast(errMessage(e, 'Failed to update repair'), 'error');
@@ -121,7 +169,7 @@ export function useRepairs() {
   const remove = async (id: string) => {
     try {
       await deleteRepair(id);
-      setRepairs(prev => prev.filter(r => r.id !== id));
+      setStore({ repairs: store.repairs.filter(r => r.id !== id) });
       showToast('Repair deleted');
     } catch (e) {
       showToast(errMessage(e, 'Failed to delete repair'), 'error');

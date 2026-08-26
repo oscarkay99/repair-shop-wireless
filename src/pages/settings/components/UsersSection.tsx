@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getWirelessUsers, updateWirelessUser, deleteWirelessUser, resetUserPassword, type WirelessProfile } from '@/services/wireless/users';
-import { findTechnicianByProfileId, createTechnician } from '@/services/wireless/technicians';
+import { findTechnicianByProfileId, findUnlinkedTechnicianByName, createTechnician, updateTechnician } from '@/services/wireless/technicians';
 import { getRoles, type WirelessRole } from '@/services/wireless/roles';
 import { isSupabaseConfigured } from '@/services/supabase';
 import { errMessage } from '@/utils/errors';
@@ -46,7 +46,14 @@ function EditUserModal({ user, roles, isLastAdmin, onClose, onSaved }: { user: W
       if (role === 'technician' && user.role !== 'technician') {
         const existing = await findTechnicianByProfileId(user.id);
         if (!existing) {
-          await createTechnician({ profile_id: user.id, name: name.trim(), email: user.email, phone: '', specialty: '', status: 'available' });
+          // A roster row may already exist for this name with no login yet
+          // (added via the Technicians page before this promotion) — link
+          // onto that same row instead of creating a second, duplicate one,
+          // which would leave any ticket already assigned to the original
+          // row invisible in this person's own portal.
+          const unlinked = await findUnlinkedTechnicianByName(name.trim());
+          if (unlinked) await updateTechnician(unlinked.id, { profile_id: user.id, email: user.email });
+          else await createTechnician({ profile_id: user.id, name: name.trim(), email: user.email, phone: '', specialty: '', status: 'available' });
         }
       }
       onSaved();

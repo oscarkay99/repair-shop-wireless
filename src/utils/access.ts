@@ -93,7 +93,7 @@ export function canAccessModule(user: PermCtx, module: AppModule): boolean {
     // not a hardcoded role-id list — otherwise no custom role could ever
     // reach the portal it was actually built and routed for.
     case 'Portal':
-      return user.role === 'admin' || user.dashboardVariant === 'receptionist' || user.dashboardVariant === 'inventory_portal' || user.role === 'stock_manager';
+      return user.role === 'admin' || user.dashboardVariant === 'receptionist' || user.dashboardVariant === 'inventory_portal';
     default:
       return LEGACY_MODULE_VISIBILITY[module]?.includes(user.role) ?? false;
   }

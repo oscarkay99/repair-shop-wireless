@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { createWirelessUser } from '@/services/wireless/users';
-import { createTechnician } from '@/services/wireless/technicians';
+import { createTechnician, findUnlinkedTechnicianByName, updateTechnician } from '@/services/wireless/technicians';
 import type { WirelessRole } from '@/services/wireless/roles';
 import { errMessage } from '@/utils/errors';
 
@@ -59,9 +59,16 @@ export default function InviteUserModal({ open, onClose, onCreated, roles }: Pro
       const profileId = await createWirelessUser({ name: name.trim(), email: email.trim(), username: username.trim() || undefined, role, password: finalPassword });
       // The Technicians module reads from its own table, not profiles — a
       // technician-role account needs a linked row there too, or they'd have
-      // a login but never show up for ticket assignment.
+      // a login but never show up for ticket assignment. If a roster row
+      // already exists for this name with no login yet (added via the
+      // Technicians page before this invite), link this login onto that
+      // same row instead of creating a second, duplicate one — a duplicate
+      // would leave any ticket already assigned to the original row
+      // invisible in this person's own portal.
       if (role === 'technician') {
-        await createTechnician({ profile_id: profileId, name: name.trim(), email: email.trim(), phone: '', specialty: '', status: 'available' });
+        const existing = await findUnlinkedTechnicianByName(name.trim());
+        if (existing) await updateTechnician(existing.id, { profile_id: profileId, email: email.trim() });
+        else await createTechnician({ profile_id: profileId, name: name.trim(), email: email.trim(), phone: '', specialty: '', status: 'available' });
       }
       setResult({ name: name.trim(), email: email.trim(), username: username.trim(), password: finalPassword, role });
       onCreated?.();

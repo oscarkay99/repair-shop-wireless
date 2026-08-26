@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { getInvoices, createInvoice, patchInvoice, deleteInvoice } from '@/services/wireless/invoices';
 import { recordPayment } from '@/services/wireless/payments';
 import type { Invoice } from '@/types/wireless';
@@ -6,23 +6,62 @@ import type { PaymentMethod } from '@/types/sale';
 import { useToast } from '@/contexts/ToastContext';
 import { errMessage } from '@/utils/errors';
 
+interface Store {
+  invoices: Invoice[];
+  loading: boolean;
+}
+
+let store: Store = { invoices: [], loading: true };
+let started = false;
+const listeners = new Set<() => void>();
+
+function setStore(next: Partial<Store>) {
+  store = { ...store, ...next };
+  listeners.forEach(l => l());
+}
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+function getSnapshot() {
+  return store;
+}
+
+// Shared across every screen that reads invoices — including TopBar's
+// global search (mounted once for the whole session) and Reception's own
+// invoice-tab badge, which sits alongside a separately-mounted InvoicesPanel
+// — instead of each mounting its own useState copy. Otherwise marking an
+// invoice paid inside one already-mounted consumer left every other one
+// (like that badge count) stale until a hard refresh. Mirrors the same fix
+// applied to useWirelessSettings / useTechnicians / useRepairs / useInventory.
+export async function reloadInvoices() {
+  setStore({ loading: true });
+  try {
+    const invoices = await getInvoices();
+    setStore({ invoices, loading: false });
+  } catch (e) {
+    setStore({ loading: false });
+    throw e;
+  }
+}
+
 export function useInvoices() {
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { invoices, loading } = useSyncExternalStore(subscribe, getSnapshot);
   const { showToast } = useToast();
 
-  const reload = useCallback(async () => {
-    setLoading(true);
-    try { setInvoices(await getInvoices()); }
-    finally { setLoading(false); }
+  useEffect(() => {
+    if (!started) {
+      started = true;
+      reloadInvoices();
+    }
   }, []);
-
-  useEffect(() => { reload(); }, [reload]);
 
   const add = async (...args: Parameters<typeof createInvoice>) => {
     try {
       const inv = await createInvoice(...args);
-      setInvoices(prev => [inv, ...prev]);
+      setStore({ invoices: [inv, ...store.invoices] });
       showToast('Invoice created');
       return inv;
     } catch (e) {
@@ -37,11 +76,13 @@ export function useInvoices() {
   const markPaid = async (id: string, amount: number, method: PaymentMethod, customerName?: string) => {
     try {
       await recordPayment({ amount, method, invoiceId: id, customerName });
-      setInvoices(prev => prev.map(i => {
-        if (i.id !== id) return i;
-        const amount_paid = i.amount_paid + amount;
-        return { ...i, amount_paid, status: amount_paid >= i.total ? 'paid' : 'partial', payment_method: method };
-      }));
+      setStore({
+        invoices: store.invoices.map(i => {
+          if (i.id !== id) return i;
+          const amount_paid = i.amount_paid + amount;
+          return { ...i, amount_paid, status: amount_paid >= i.total ? 'paid' : 'partial', payment_method: method };
+        }),
+      });
       showToast('Invoice marked paid');
     } catch (e) {
       showToast(`Failed to mark invoice paid: ${errMessage(e)}`, 'error');
@@ -52,7 +93,7 @@ export function useInvoices() {
   const patch = async (id: string, data: Parameters<typeof patchInvoice>[1]) => {
     try {
       await patchInvoice(id, data);
-      setInvoices(prev => prev.map(i => i.id === id ? { ...i, ...data } : i));
+      setStore({ invoices: store.invoices.map(i => i.id === id ? { ...i, ...data } : i) });
       showToast('Invoice updated');
     } catch (e) {
       showToast(`Failed to update invoice: ${errMessage(e)}`, 'error');
@@ -63,7 +104,7 @@ export function useInvoices() {
   const remove = async (id: string) => {
     try {
       await deleteInvoice(id);
-      setInvoices(prev => prev.filter(i => i.id !== id));
+      setStore({ invoices: store.invoices.filter(i => i.id !== id) });
       showToast('Invoice deleted');
     } catch (e) {
       showToast(`Failed to delete invoice: ${errMessage(e)}`, 'error');
@@ -78,5 +119,5 @@ export function useInvoices() {
     overdue: invoices.filter(i => i.status === 'overdue').reduce((s, i) => s + i.total, 0),
   };
 
-  return { invoices, loading, reload, add, markPaid, patch, remove, totals };
+  return { invoices, loading, reload: reloadInvoices, add, markPaid, patch, remove, totals };
 }
