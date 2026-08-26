@@ -102,6 +102,18 @@ export async function changePassword(newPassword: string): Promise<void> {
   if (error) throw error;
 }
 
+// Self-service swap between a profile's role and its admin-provisioned
+// alt_role (e.g. Esther: receptionist <-> manager). trg_prevent_self_
+// privilege_escalation (20260826030000_dual_role_switch.sql) only allows a
+// non-admin to touch role/alt_role when it's exactly this reversible swap —
+// anything else about the row is rejected server-side regardless of what
+// this call sends.
+export async function switchActiveRole(profileId: string, newRole: string, newAltRole: string): Promise<void> {
+  if (!isSupabaseConfigured) throw new Error('Not connected to Supabase');
+  const { error } = await db.from('profiles').update({ role: newRole, alt_role: newAltRole }).eq('id', profileId);
+  if (error) throw error;
+}
+
 export interface MyProfile {
   id: string;
   name: string;

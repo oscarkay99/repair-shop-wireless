@@ -21,6 +21,12 @@ export interface AuthUser {
   dashboardVariant?: string;
   roleName?: string;
   roleColor?: string;
+  // Set only by an admin (e.g. Esther: receptionist day-to-day, alt_role
+  // 'manager') — someone doing two jobs can self-switch role<->alt_role via
+  // the app; see 20260826030000_dual_role_switch.sql for the DB-side guard
+  // that makes this exact swap the only self-service role change allowed.
+  altRole?: string | null;
+  altRoleName?: string;
   _isMock?: boolean;
 }
 
@@ -149,7 +155,7 @@ async function loadProfileFromSession(userId: string, email: string): Promise<Au
     const { data } = await supabase
       .schema('wireless')
       .from('profiles')
-      .select('id, name, role, avatar, last_login, status')
+      .select('id, name, role, avatar, last_login, status, alt_role')
       .eq('id', userId)
       .single();
 
@@ -161,7 +167,8 @@ async function loadProfileFromSession(userId: string, email: string): Promise<Au
       if (data.status !== 'active') return null;
       await supabase.schema('wireless').from('profiles').update({ last_login: new Date().toISOString() }).eq('id', userId);
       const roleMeta = await resolveRoleMeta(data.role);
-      return { id: userId, email, name: data.name, role: data.role as UserRole, avatar: data.avatar, lastLogin: data.last_login ?? '', ...roleMeta };
+      const altRoleName = data.alt_role ? (await getRoleById(data.alt_role))?.name : undefined;
+      return { id: userId, email, name: data.name, role: data.role as UserRole, avatar: data.avatar, lastLogin: data.last_login ?? '', altRole: data.alt_role, altRoleName, ...roleMeta };
     }
 
     // No profile row under this exact auth id — this happens the first time
@@ -276,6 +283,20 @@ export function useAuth() {
 
   const clearDeniedMessage = () => setState({ deniedMessage: null });
 
+  // Swaps role<->alt_role for whoever's logged in right now (e.g. Esther:
+  // receptionist <-> manager). The DB trigger only accepts this exact
+  // reversible swap from a non-admin — see switchActiveRole's own comment.
+  const switchRole = async (): Promise<void> => {
+    const current = state.user;
+    if (!current?.altRole) return;
+    const { switchActiveRole } = await import('@/services/wireless/users');
+    await switchActiveRole(current.id, current.altRole, current.role);
+    const roleMeta = await resolveRoleMeta(current.altRole);
+    const next: AuthUser = { ...current, role: current.altRole, altRole: current.role, altRoleName: current.roleName, ...roleMeta };
+    writeStoredUser(next);
+    setState({ user: next });
+  };
+
   return {
     user: snap.user,
     login,
@@ -287,5 +308,6 @@ export function useAuth() {
     isAuthenticated: !!snap.user,
     isLoading: snap.loading,
     isSupabaseAuth: isSupabaseConfigured,
+    switchRole,
   };
 }

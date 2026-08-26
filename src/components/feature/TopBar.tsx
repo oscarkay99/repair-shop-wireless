@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bell, Plus, ShoppingBag, Wrench, CreditCard, TriangleAlert, Zap, X, CheckCheck, Cake, Sun, Moon, Menu } from 'lucide-react';
+import { Bell, Plus, ShoppingBag, Wrench, CreditCard, TriangleAlert, Zap, X, CheckCheck, Cake, Sun, Moon, Menu, ArrowLeftRight } from 'lucide-react';
 import { usePageTitle } from '@/context/PageTitleContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useNotifications, type Notification } from '@/hooks/useNotifications';
@@ -178,8 +178,9 @@ function NotifToast({ n, onDismiss }: { n: Notification; onDismiss: () => void }
 export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: TopBarProps) {
   const { pageTitle } = usePageTitle();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, switchRole } = useAuth();
   const [query, setQuery] = useState('');
+  const [switchingRole, setSwitchingRole] = useState(false);
   const [bellOpen, setBellOpen] = useState(false);
   const [showAllNotifs, setShowAllNotifs] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -292,6 +293,15 @@ export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: T
 
   const displaySubtitle = subtitle ?? `${getGreeting()} · ${getFormattedDate()}`;
 
+  // Set only by an admin (20260826030000_dual_role_switch.sql) — lets
+  // whoever covers both jobs (e.g. Esther: receptionist <-> manager) swap
+  // into their other role's dashboard without a second account.
+  const handleSwitchRole = async () => {
+    setSwitchingRole(true);
+    try { await switchRole(); navigate('/'); }
+    finally { setSwitchingRole(false); }
+  };
+
   return (
     <>
       <header
@@ -401,6 +411,19 @@ export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: T
             />
           </div>
         </div>
+
+          {user?.altRole && (
+            <button
+              onClick={handleSwitchRole}
+              disabled={switchingRole}
+              className="hidden sm:flex items-center gap-1.5 px-3 h-8 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+              style={{ color: 'hsl(var(--muted-foreground))', border: '1px solid hsl(var(--border))' }}
+              title={`Switch to ${user.altRoleName ?? 'other role'}`}
+            >
+              <ArrowLeftRight className="w-3.5 h-3.5" />
+              {switchingRole ? 'Switching…' : (user.altRoleName ?? 'Switch Role')}
+            </button>
+          )}
 
           <ClockInOutButton />
 

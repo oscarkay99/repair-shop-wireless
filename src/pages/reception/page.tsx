@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Sun, Moon, Plus, ClipboardList, LogOut,
-  FileText, ShoppingCart, Package, UserCog, Cake, Wallet,
+  FileText, ShoppingCart, Package, UserCog, Cake, Wallet, ArrowLeftRight,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/context/ThemeContext';
@@ -35,7 +35,8 @@ const NAV_TABS: { key: TabKey; label: string; icon: typeof ClipboardList }[] = [
 ];
 
 export default function ReceptionPortalPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, switchRole } = useAuth();
+  const [switching, setSwitching] = useState(false);
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const { settings } = useWirelessSettings();
@@ -49,6 +50,12 @@ export default function ReceptionPortalPage() {
   const handleSignOut = async () => {
     await logout();
     navigate('/signin', { replace: true });
+  };
+
+  const handleSwitchRole = async () => {
+    setSwitching(true);
+    try { await switchRole(); navigate('/'); }
+    finally { setSwitching(false); }
   };
 
   return (
@@ -69,6 +76,20 @@ export default function ReceptionPortalPage() {
             <p className="text-[9px] tracking-widest uppercase leading-none" style={{ color: 'hsl(var(--muted-foreground))' }}>Reception</p>
           </div>
           <div className="flex items-center gap-2">
+            {/* Set only by an admin (20260826030000_dual_role_switch.sql) —
+                lets whoever covers both jobs (e.g. Esther) swap into their
+                other role's dashboard without a second account. */}
+            {user?.altRole && (
+              <button
+                onClick={handleSwitchRole}
+                disabled={switching}
+                className="h-8 px-3 flex items-center gap-1.5 rounded-lg text-xs font-medium transition-colors flex-shrink-0 disabled:opacity-50"
+                style={{ color: 'hsl(var(--muted-foreground))', border: '1px solid hsl(var(--border))' }}
+                title={`Switch to ${user.altRoleName ?? 'other role'}`}
+              >
+                <ArrowLeftRight className="w-3.5 h-3.5" /> {switching ? 'Switching…' : (user.altRoleName ?? 'Switch Role')}
+              </button>
+            )}
             <ClockInOutButton />
             <button
               onClick={toggleTheme}
