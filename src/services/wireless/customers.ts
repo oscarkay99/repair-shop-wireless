@@ -58,6 +58,12 @@ export async function deleteCustomer(id: string): Promise<void> {
     return;
   }
   const { error } = await db.from('customers').delete().eq('id', id);
-  if (error) throw error;
+  if (error) {
+    // tickets/accessory_sales/payments all ON DELETE SET NULL their
+    // customer_id (history is kept, just unlinked), but invoices RESTRICT —
+    // a customer with any invoice on file can't be deleted outright.
+    if (error.code === '23503') throw new Error('This customer has invoices on file. Delete or reassign those first.');
+    throw error;
+  }
   localStore = localStore.filter(c => c.id !== id);
 }

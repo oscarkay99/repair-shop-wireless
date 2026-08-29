@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import SearchDropdown from '@/components/shared/SearchDropdown';
 import Pagination from '@/components/shared/Pagination';
 import DateRangePicker, { type DateRange } from '@/components/shared/DateRangePicker';
-import { X, Pencil } from 'lucide-react';
+import { X, Pencil, Trash2 } from 'lucide-react';
 import type { WCustomer } from '@/types/wireless';
 import BirthdayInput from '@/components/shared/BirthdayInput';
 import { formatMonthDay } from '@/utils/birthdays';
@@ -194,11 +194,13 @@ function EditCustomerModal({ customer, onSave, onClose }: {
 
 // ── Customer Detail Panel ────────────────────────────────────────────────────
 
-function CustomerDetailPanel({ customer, lastRepair, canEdit, onEdit, onClose }: {
+function CustomerDetailPanel({ customer, lastRepair, canEdit, canDelete, onEdit, onDelete, onClose }: {
   customer: WCustomer;
   lastRepair: string | null;
   canEdit: boolean;
+  canDelete: boolean;
   onEdit: () => void;
+  onDelete: (id: string) => void;
   onClose: () => void;
 }) {
   return createPortal(
@@ -221,6 +223,18 @@ function CustomerDetailPanel({ customer, lastRepair, canEdit, onEdit, onClose }:
               >
                 <Pencil className="w-3 h-3" />
                 Edit
+              </button>
+            )}
+            {canDelete && (
+              <button
+                onClick={e => { e.stopPropagation(); if (confirm(`Delete ${customer.name}? This cannot be undone.`)) onDelete(customer.id); }}
+                className="flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-semibold transition-colors"
+                style={{ border: '1px solid rgba(239,68,68,0.4)', color: '#ef4444', background: 'transparent' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.1)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+              >
+                <Trash2 className="w-3 h-3" />
+                Delete
               </button>
             )}
             <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-lg" style={{ background: 'hsl(var(--muted))' }}>
@@ -280,7 +294,7 @@ function activityHours(f: ActivityFilter): number | null {
 
 export default function CustomersPage() {
   const { setPageTitle } = usePageTitle();
-  const { customers, loading, add, patch } = useWirelessCustomers();
+  const { customers, loading, add, patch, remove } = useWirelessCustomers();
   const { repairs } = useRepairs();
   const { user } = useAuth();
   const [search, setSearch] = useState('');
@@ -292,6 +306,7 @@ export default function CustomersPage() {
   const [editingCustomer, setEditingCustomer] = useState<WCustomer | null>(null);
 
   const canEdit = user?.role === 'admin' || (user?.permissions ?? []).includes('customers:edit');
+  const canDelete = user?.role === 'admin' || (user?.permissions ?? []).includes('customers:delete');
 
   useEffect(() => { setPage(1); }, [search, activityFilter, dateRange]);
 
@@ -487,7 +502,9 @@ export default function CustomersPage() {
             ? new Date(lastRepairByCustomer[selected.id]).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
             : null}
           canEdit={canEdit}
+          canDelete={canDelete}
           onEdit={() => { setEditingCustomer(selected); setSelectedId(null); }}
+          onDelete={id => { remove(id); setSelectedId(null); }}
           onClose={() => setSelectedId(null)}
         />
       )}
