@@ -1,12 +1,13 @@
 import { useMemo, useState, useEffect } from 'react';
 import { FileText, CreditCard, AlertCircle, Search, Eye, Share2, Printer, Check, Plus, X, Loader2 } from 'lucide-react';
 import { useInvoices } from '@/hooks/useInvoices';
+import { useAuth } from '@/hooks/useAuth';
 import { useTaxSettings } from '@/hooks/useTaxSettings';
 import { useWirelessSettings } from '@/hooks/useWirelessSettings';
 import { useToast } from '@/contexts/ToastContext';
 import { formatDate } from '@/utils/date';
 import Pagination from '@/components/shared/Pagination';
-import { IssueInvoiceModal } from '@/pages/invoices/page';
+import { IssueInvoiceModal, EditInvoiceModal, InvoiceDetail } from '@/pages/invoices/page';
 import { getInvoiceItems } from '@/services/wireless/invoices';
 import { getTicketPublicTokenById } from '@/services/repairs';
 import { printInvoicePdf } from '@/utils/invoicePdf';
@@ -38,18 +39,26 @@ const STATUS_META: Record<InvoiceStatus, { label: string; bg: string; color: str
 const PAYMENT_METHODS: PaymentMethod[] = ['Cash', 'Card', 'MoMo', 'Bank Transfer'];
 
 export default function InvoicesPanel() {
-  const { invoices, loading, totals, markPaid, add } = useInvoices();
+  const { invoices, loading, totals, markPaid, add, patch, remove } = useInvoices();
+  const { user } = useAuth();
   const { taxEnabled, vatRate } = useTaxSettings();
   const { settings } = useWirelessSettings();
   const { showToast } = useToast();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterKey>('all');
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [markingPaidId, setMarkingPaidId] = useState<string | null>(null);
   const [splits, setSplits] = useState<SplitRow[]>([]);
   const [page, setPage] = useState(1);
   const [showIssue, setShowIssue] = useState(false);
   const [printingId, setPrintingId] = useState<string | null>(null);
+
+  // Same rule the admin Invoices page uses, so a receptionist sees the exact
+  // same edit/delete affordances on the detail view — not a stripped-down copy.
+  const perms = user?.permissions ?? [];
+  const canEdit = user?.role === 'admin' || perms.includes('invoices:edit');
+  const canDelete = user?.role === 'admin' || perms.includes('invoices:delete');
 
   const unpaidCount = useMemo(() => invoices.filter(i => i.status === 'unpaid').length, [invoices]);
 
@@ -68,6 +77,12 @@ export default function InvoicesPanel() {
   [filtered, page]);
 
   const levyRate = settings?.nhil_getfund_rate ?? 5;
+  const selected = selectedId ? invoices.find(i => i.id === selectedId) ?? null : null;
+
+  const handleDelete = async (id: string) => {
+    await remove(id);
+    setSelectedId(null);
+  };
 
   const handlePrint = async (inv: Invoice) => {
     setPrintingId(inv.id);
@@ -124,6 +139,32 @@ export default function InvoicesPanel() {
     showToast('Payment recorded');
     cancelMarkingPaid();
   };
+
+  if (selected) {
+    return (
+      <>
+        <InvoiceDetail
+          inv={selected}
+          canEdit={canEdit}
+          canDelete={canDelete}
+          onBack={() => setSelectedId(null)}
+          onMarkPaid={(id, method) => {
+            const inv = invoices.find(i => i.id === id);
+            if (inv) markPaid(id, inv.total - inv.amount_paid, method, inv.customer?.name);
+          }}
+          onEdit={() => setEditingInvoice(selected)}
+          onDelete={handleDelete}
+        />
+        {editingInvoice && (
+          <EditInvoiceModal
+            inv={editingInvoice}
+            onSave={data => patch(editingInvoice.id, data)}
+            onClose={() => setEditingInvoice(null)}
+          />
+        )}
+      </>
+    );
+  }
 
   return (
     <div className="space-y-5">
@@ -198,7 +239,6 @@ export default function InvoicesPanel() {
           ) : pagedInvoices.map(inv => {
             const s = STATUS_META[inv.status];
             const outstanding = inv.total - inv.amount_paid;
-            const expanded = expandedId === inv.id;
             const markingPaid = markingPaidId === inv.id;
             return (
               <div key={inv.id} className="rounded-xl p-4" style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}>
@@ -216,17 +256,6 @@ export default function InvoicesPanel() {
                   </div>
                   <p className="text-lg font-bold" style={{ color: 'hsl(var(--foreground))' }}>GH₵ {inv.total.toFixed(2)}</p>
                 </div>
-
-                {expanded && (
-                  <div className="mt-3 pt-3 grid grid-cols-2 gap-2 text-xs" style={{ borderTop: '1px solid hsl(var(--border))', color: 'hsl(var(--muted-foreground))' }}>
-                    <span>Subtotal: GH₵ {inv.subtotal.toFixed(2)}</span>
-                    <span>Tax: GH₵ {inv.tax.toFixed(2)}</span>
-                    <span>Discount: GH₵ {inv.discount.toFixed(2)}</span>
-                    <span>Paid: GH₵ {inv.amount_paid.toFixed(2)}</span>
-                    {inv.due_date && <span>Due: {formatDate(inv.due_date)}</span>}
-                    {inv.notes && <span className="col-span-2">Notes: {inv.notes}</span>}
-                  </div>
-                )}
 
                 {markingPaid ? (
                   <div className="mt-3 pt-3 space-y-2" style={{ borderTop: '1px solid hsl(var(--border))' }}>
@@ -281,7 +310,7 @@ export default function InvoicesPanel() {
                   </div>
                 ) : (
                   <div className="flex items-center gap-4 mt-3 pt-3" style={{ borderTop: '1px solid hsl(var(--border))' }}>
-                    <button onClick={() => setExpandedId(expanded ? null : inv.id)} className="flex items-center gap-1 text-xs font-semibold cursor-pointer" style={{ color: 'hsl(var(--primary))' }}>
+                    <button onClick={() => setSelectedId(inv.id)} className="flex items-center gap-1 text-xs font-semibold cursor-pointer" style={{ color: 'hsl(var(--primary))' }}>
                       <Eye className="w-3.5 h-3.5" /> View
                     </button>
                     <button onClick={() => handleShare(inv.invoice_number, inv.total, inv.customer?.name)} className="flex items-center gap-1 text-xs font-semibold cursor-pointer" style={{ color: 'hsl(var(--foreground))' }}>

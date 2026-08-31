@@ -273,7 +273,7 @@ export function IssueInvoiceModal({ onSave, onClose }: {
 
 // ─── Edit Invoice Modal (admin only) ────────────────────────────────────────
 
-function EditInvoiceModal({ inv, onSave, onClose }: {
+export function EditInvoiceModal({ inv, onSave, onClose }: {
   inv: Invoice;
   onSave: (data: Partial<Pick<Invoice, 'due_date' | 'notes'>>) => Promise<void>;
   onClose: () => void;
@@ -357,7 +357,7 @@ function EditInvoiceModal({ inv, onSave, onClose }: {
 
 // ─── Invoice Detail View ────────────────────────────────────────────────────
 
-function InvoiceDetail({ inv, canEdit, canDelete, onBack, onMarkPaid, onEdit, onDelete }: {
+export function InvoiceDetail({ inv, canEdit, canDelete, onBack, onMarkPaid, onEdit, onDelete }: {
   inv: Invoice;
   canEdit: boolean;
   canDelete: boolean;
