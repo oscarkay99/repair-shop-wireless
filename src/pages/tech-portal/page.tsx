@@ -11,7 +11,6 @@ import { roleColors, roleLabels } from '@/mocks/users';
 import { isCurrentlyUnavailable } from '@/utils/technicianAvailability';
 import BirthdayBanner from '@/components/shared/BirthdayBanner';
 import CustomerBirthdayBanner from '@/components/shared/CustomerBirthdayBanner';
-import StaleTicketsBanner from '@/components/shared/StaleTicketsBanner';
 import type { RepairStatus } from '@/types/repair';
 
 const QUEUE_STATUSES: RepairStatus[] = ['received', 'diagnosis_paid', 'diagnosing', 'awaiting_approval', 'parts_pending'];
@@ -141,7 +140,6 @@ export default function TechPortalPage() {
         <div className="max-w-2xl w-full mx-auto space-y-5">
           <BirthdayBanner />
           <CustomerBirthdayBanner />
-          <StaleTicketsBanner repairs={myRepairs} onSelect={setSelectedId} />
 
           {/* Profile + status card */}
           <div className="rounded-2xl border p-5" style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
