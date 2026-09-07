@@ -71,7 +71,9 @@ function RepairCard({ repair, onClick, selected }: {
   repair: Repair; onClick: () => void; selected: boolean;
 }) {
   const { user } = useAuth();
-  const hidePrices = !!user?.scopeTicketsToTechnician;
+  // Technicians only ever work their own assigned tickets — pricing and the
+  // customer's identity are a reception/admin concern, not theirs to see.
+  const isTechnicianScoped = !!user?.scopeTicketsToTechnician;
   const s = STATUS[repair.status] ?? STATUS.received;
   return (
     <div
@@ -98,11 +100,13 @@ function RepairCard({ repair, onClick, selected }: {
       <p className="text-xs mb-3" style={{ color: 'hsl(var(--muted-foreground))' }}>{repair.issue}</p>
 
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>{repair.customer}</span>
+        {!isTechnicianScoped && (
+          <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>{repair.customer}</span>
+        )}
         {repair.technicians.length > 0 ? (
-          <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Tech: {formatTechnicians(repair.technicians)}</span>
+          <span className={`text-xs ${isTechnicianScoped ? 'ml-auto' : ''}`} style={{ color: 'hsl(var(--muted-foreground))' }}>Tech: {formatTechnicians(repair.technicians)}</span>
         ) : (
-          <span className="inline-flex items-center gap-1 text-[10px] font-semibold" style={{ color: '#f59e0b' }}>
+          <span className={`inline-flex items-center gap-1 text-[10px] font-semibold ${isTechnicianScoped ? 'ml-auto' : ''}`} style={{ color: '#f59e0b' }}>
             <UserX className="w-3 h-3" /> Unassigned
           </span>
         )}
@@ -115,7 +119,7 @@ function RepairCard({ repair, onClick, selected }: {
             {isOverdueRepair(repair) ? 'Overdue: ' : 'ETA: '}{repair.eta || '—'}
           </span>
         </div>
-        {!hidePrices && (
+        {!isTechnicianScoped && (
           <span className="text-xs font-bold" style={{ color: 'hsl(var(--foreground))' }}>
             {repair.cost || 'TBD'}
           </span>
@@ -202,9 +206,11 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   const [extraSaving, setExtraSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
-  // Technicians repair the device — what the customer's charged is a
-  // reception/admin concern, not shown on their view of the ticket.
-  const hidePrices = !!user?.scopeTicketsToTechnician;
+  // Technicians repair the device — what the customer's charged, who the
+  // customer is, and whether/how they've paid are a reception/admin
+  // concern, not shown on their view of the ticket. Just the repair's
+  // progress.
+  const isTechnicianScoped = !!user?.scopeTicketsToTechnician;
   const s = STATUS[repair.status] ?? STATUS.received;
   const isDxOnly = repair.jobType === 'diagnosis_only';
   const isStraightRepair = repair.jobType === 'straight_repair';
@@ -423,7 +429,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
         style={{ borderBottom: '1px solid hsl(var(--border))' }}>
         <span className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>Ticket Details</span>
         <div className="flex items-center gap-1.5">
-          {canPrintReceipt && !hidePrices && (
+          {canPrintReceipt && !isTechnicianScoped && (
             <button onClick={handlePrintReceipt} className="w-7 h-7 flex items-center justify-center rounded-lg"
               style={{ color: 'hsl(var(--muted-foreground))' }}
               title="Print pickup receipt"
@@ -503,14 +509,15 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
         {/* Details */}
         <div className="space-y-2.5 pt-3" style={{ borderTop: '1px solid hsl(var(--border))' }}>
           {[
-            ['Customer',       repair.customer],
+            // Technicians see only the repair itself — who the customer is
+            // and what they're being charged/have paid is a reception/admin
+            // concern.
+            ...(isTechnicianScoped ? [] : [['Customer', repair.customer]]),
             ['Technician',     repair.technicians.length ? repair.technicians.map(t => t.name).join(', ') : '—'],
             ['Started',        fmtStarted(repair.started)],
             [isOverdueRepair(repair) ? 'Overdue' : 'ETA', repair.eta || '—'],
-            // Technicians don't see pricing at all — they repair the device,
-            // reception/admin handles what the customer's charged.
-            ...(hidePrices ? [] : [['Estimated Cost', repair.cost || '—']]),
-            ...(!hidePrices && depositPaid > 0 ? [['Deposit Paid', `GHS ${depositPaid.toFixed(2)}`]] : []),
+            ...(isTechnicianScoped ? [] : [['Estimated Cost', repair.cost || '—']]),
+            ...(!isTechnicianScoped && depositPaid > 0 ? [['Deposit Paid', `GHS ${depositPaid.toFixed(2)}`]] : []),
             ['Warranty',       repair.warranty ? 'Yes' : 'No'],
           ].map(([label, value]) => (
             <div key={label} className="flex items-center justify-between">
@@ -815,7 +822,8 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
       {/* Footer */}
       {isClosedDiagnosis ? (
         <div className="px-5 py-4 space-y-2 shrink-0" style={{ borderTop: '1px solid hsl(var(--border))' }}>
-          {linkedInvoiceNumber ? (
+          {/* Invoicing/billing state is a reception/admin concern — not shown on a technician's view of the ticket. */}
+          {!isTechnicianScoped && (linkedInvoiceNumber ? (
             <div className="w-full h-9 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5" style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e' }}>
               <CheckCircle2 className="w-3.5 h-3.5" /> Invoice {linkedInvoiceNumber} created
             </div>
@@ -834,7 +842,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
             <p className="text-[11px] text-center py-1" style={{ color: 'hsl(var(--muted-foreground))' }}>
               Only a receptionist or admin can create the invoice for this ticket.
             </p>
-          )}
+          ))}
           {canUpdateProgress ? (
             <>
               <button
@@ -886,7 +894,8 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
         </div>
       ) : !isDone && (
         <div className="px-5 py-4 space-y-2 shrink-0" style={{ borderTop: '1px solid hsl(var(--border))' }}>
-          {readyForInvoice && (
+          {/* Invoicing/billing state is a reception/admin concern — not shown on a technician's view of the ticket. */}
+          {!isTechnicianScoped && readyForInvoice && (
             linkedInvoiceNumber ? (
               <div className="w-full h-9 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5" style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e' }}>
                 <CheckCircle2 className="w-3.5 h-3.5" /> Invoice {linkedInvoiceNumber} created
