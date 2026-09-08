@@ -12,8 +12,15 @@ export default function NewVersionBanner() {
   if (!available) return null;
 
   return (
-    <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 rounded-full pl-4 pr-2 py-2 shadow-lg"
-      style={{ background: 'hsl(var(--primary))', color: 'white' }}>
+    <div className="fixed left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 rounded-full pl-4 pr-2 py-2 shadow-lg"
+      style={{
+        // On an iPhone installed to the home screen, black-translucent draws
+        // the page full-screen behind the status bar/notch — a plain top-3
+        // here lands right under the clock/battery icons and is never seen.
+        // viewport-fit=cover (index.html) makes env() report the real inset.
+        top: 'calc(0.75rem + env(safe-area-inset-top))',
+        background: 'hsl(var(--primary))', color: 'white',
+      }}>
       <p className="text-xs font-semibold whitespace-nowrap">A new version is available</p>
       <button
         onClick={() => window.location.reload()}
