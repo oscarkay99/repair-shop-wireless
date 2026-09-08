@@ -6,6 +6,7 @@ import { errMessage } from '@/utils/errors';
 import { useTaxSettings } from '@/hooks/useTaxSettings';
 import { useWirelessSettings } from '@/hooks/useWirelessSettings';
 import { ensureTicketInvoice } from '@/services/wireless/autoInvoice';
+import { supabase } from '@/services/supabase';
 
 interface Store {
   repairs: Repair[];
@@ -15,6 +16,31 @@ interface Store {
 let store: Store = { repairs: [], loading: true };
 let started = false;
 const listeners = new Set<() => void>();
+
+// A technician assigned to a job (or anyone else's ticket edit) previously
+// only showed up for a client once it happened to refetch on its own —
+// nothing pushed the change to an already-open tab. RLS already scopes what
+// each row's postgres_changes events are delivered to (a technician only
+// ever gets events for tickets/assignments they can SELECT), so this is
+// safe to leave running for every role. Debounced because an assignment is
+// itself a ticket_technicians insert plus often a tickets update landing
+// within the same moment — one refetch covers both.
+let reloadTimer: ReturnType<typeof setTimeout> | null = null;
+function scheduleReload() {
+  if (reloadTimer) clearTimeout(reloadTimer);
+  reloadTimer = setTimeout(() => { reloadTimer = null; reloadRepairs(); }, 300);
+}
+
+let realtimeStarted = false;
+function startRealtimeSync() {
+  if (realtimeStarted) return;
+  realtimeStarted = true;
+  supabase
+    .channel('wireless-tickets-sync')
+    .on('postgres_changes', { event: '*', schema: 'wireless', table: 'tickets' }, scheduleReload)
+    .on('postgres_changes', { event: '*', schema: 'wireless', table: 'ticket_technicians' }, scheduleReload)
+    .subscribe();
+}
 
 function setStore(next: Partial<Store>) {
   store = { ...store, ...next };
@@ -57,6 +83,7 @@ export function useRepairs() {
     if (!started) {
       started = true;
       reloadRepairs();
+      startRealtimeSync();
     }
   }, []);
 
