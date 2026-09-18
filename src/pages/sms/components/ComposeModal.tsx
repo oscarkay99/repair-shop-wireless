@@ -73,7 +73,7 @@ export default function ComposeModal({
             />
             <p className="text-[10px] text-slate-400 mt-1 text-right">{messageText.length}/500 chars · {Math.ceil(messageText.length / 160)} SMS</p>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-slate-500 mb-1 block">Schedule Date</label>
               <input type="date" className="w-full px-4 py-2.5 rounded-xl bg-slate-50 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-200" />

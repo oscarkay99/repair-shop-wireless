@@ -341,7 +341,7 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
               </select>
             )}
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {customerMode === 'new' && !initial ? (
               // Same search-as-you-type flow as the Existing tab — a walk-in
               // who's actually already registered gets linked (and their phone
@@ -446,7 +446,7 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
               )}
             </div>
           )}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Customer Email</label>
               <input value={form.customerEmail} onChange={e => set('customerEmail', e.target.value)}
@@ -477,8 +477,8 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
               {['Phone','Tablet','Laptop','Desktop','Smartwatch','Console','Camera','Audio','Other'].map(t => <option key={t}>{t}</option>)}
             </select>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className={form.jobType === 'diagnosis_only' ? 'col-span-2' : ''}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className={form.jobType === 'diagnosis_only' ? 'sm:col-span-2' : ''}>
               <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>
                 Technician{selectedTechnicianIds.length > 0 && ` (${selectedTechnicianIds.length})`}
               </label>
@@ -526,8 +526,8 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
               </div>
             )}
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className={form.jobType === 'straight_repair' ? 'col-span-2' : ''}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className={form.jobType === 'straight_repair' ? 'sm:col-span-2' : ''}>
               <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>ETA</label>
               <input type="datetime-local" value={form.etaDate} onChange={e => handleEtaDateChange(e.target.value)}
                 title="Used to flag this ticket as overdue if it slips past this date and time"

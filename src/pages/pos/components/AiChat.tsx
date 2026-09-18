@@ -168,7 +168,7 @@ export default function AiChat() {
 
       {/* Chat panel */}
       {open && (
-        <div className="fixed bottom-24 right-6 z-50 w-80 bg-white rounded-3xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden" style={{ height: 440 }}>
+        <div className="fixed bottom-24 right-3 sm:right-6 z-50 w-80 max-w-[calc(100vw-1.5rem)] bg-white rounded-3xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden" style={{ height: 440, maxHeight: 'calc(100vh - 7rem)' }}>
           {/* Header */}
           <div className="px-4 py-3 flex items-center gap-2 border-b border-slate-100" style={{ background: 'linear-gradient(135deg, #EC0118, #6366f1)' }}>
             <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">

@@ -91,7 +91,7 @@ export default function AddAssetModal({ asset, onSave, onClose }: Props) {
               className={inputCls} style={inputStyle} required />
           </Field>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Category">
               <select value={category} onChange={e => setCategory(e.target.value)}
                 className={inputCls} style={inputStyle}>
@@ -108,7 +108,7 @@ export default function AddAssetModal({ asset, onSave, onClose }: Props) {
             </Field>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Purchase Cost (GH₵) *">
               <input type="number" min="0" step="0.01" value={purchaseCost}
                 onChange={e => setPurchaseCost(e.target.value)}
@@ -121,7 +121,7 @@ export default function AddAssetModal({ asset, onSave, onClose }: Props) {
             </Field>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Purchase Date">
               <input type="date" value={purchaseDate} onChange={e => setPurchaseDate(e.target.value)}
                 className={inputCls} style={inputStyle} />

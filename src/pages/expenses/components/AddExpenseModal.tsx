@@ -83,7 +83,7 @@ export default function AddExpenseModal({ categories, expense, onSave, onClose }
               className={inputCls} style={inputStyle} required />
           </Field>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Amount (GH₵) *">
               <input type="number" min="0" step="0.01" value={amount}
                 onChange={e => setAmount(e.target.value)}
@@ -99,7 +99,7 @@ export default function AddExpenseModal({ categories, expense, onSave, onClose }
             </Field>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Date *">
               <input type="date" value={date} onChange={e => setDate(e.target.value)}
                 className={inputCls} style={inputStyle} required />

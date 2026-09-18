@@ -54,7 +54,7 @@ export default function AddProductModal({ onSave, onClose, editProduct }: Props)
               style={{ border: '1px solid rgba(7,16,31,0.12)', background: 'rgba(7,16,31,0.02)', color: '#0F172A' }}
               placeholder="iPhone 16 Pro Max 256GB" />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'rgba(7,16,31,0.4)' }}>Category</label>
               <select value={form.category} onChange={e => set('category', e.target.value)}
@@ -79,7 +79,7 @@ export default function AddProductModal({ onSave, onClose, editProduct }: Props)
               style={{ border: '1px solid rgba(7,16,31,0.12)', background: 'rgba(7,16,31,0.02)', color: '#0F172A' }}
               placeholder="Natural Titanium, Black, Silver" />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'rgba(7,16,31,0.4)' }}>Cost Price (GHS)</label>
               <input type="number" min="0" step="0.01" value={form.costPrice} onChange={e => set('costPrice', e.target.value)}
@@ -131,7 +131,7 @@ export default function AddProductModal({ onSave, onClose, editProduct }: Props)
               style={{ border: '1px solid rgba(7,16,31,0.12)', background: 'rgba(7,16,31,0.02)', color: '#0F172A' }}
               placeholder="358123456789012 or C02XYZ123456" />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'rgba(7,16,31,0.4)' }}>Location</label>
               <input value={form.location} onChange={e => set('location', e.target.value)}

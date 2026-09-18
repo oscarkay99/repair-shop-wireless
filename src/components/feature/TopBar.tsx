@@ -304,10 +304,11 @@ export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: T
   return (
     <>
       <header
-        className="h-14 flex items-center justify-between gap-2 px-3 sm:px-6 flex-shrink-0 border-b"
+        className="min-h-14 flex items-center justify-between gap-2 px-3 sm:px-6 flex-shrink-0 border-b"
         style={{
           background: 'hsl(var(--card))',
           borderColor: 'hsl(var(--border))',
+          paddingTop: 'env(safe-area-inset-top)',
         }}
       >
         {/* Left: menu toggle + page title */}

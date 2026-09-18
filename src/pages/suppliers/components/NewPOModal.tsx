@@ -72,7 +72,7 @@ export default function NewPOModal({ suppliers, onSave, onClose }: Props) {
               {suppliers.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
             </select>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-slate-500 mb-1 block">Expected Delivery</label>
               <input
@@ -97,7 +97,7 @@ export default function NewPOModal({ suppliers, onSave, onClose }: Props) {
             <label className="text-xs text-slate-500 mb-2 block">Items</label>
             <div className="space-y-2">
               {items.map((item, i) => (
-                <div key={i} className="grid grid-cols-3 gap-2">
+                <div key={i} className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <input
                     type="text"
                     value={item.name}

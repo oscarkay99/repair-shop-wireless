@@ -20,7 +20,7 @@ export default function ScheduleVideoModal({ open, onClose }: ScheduleVideoModal
             <label className="text-xs text-slate-500 mb-1 block">Caption</label>
             <textarea className="w-full px-4 py-3 rounded-xl bg-slate-50 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-200 resize-none" rows={3} placeholder="Write your caption..." />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-slate-500 mb-1 block">Schedule Date</label>
               <input type="date" className="w-full px-4 py-2.5 rounded-xl bg-slate-50 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-200" />

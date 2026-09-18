@@ -398,6 +398,7 @@ export default function AccessoriesTab({ showAddModal, onCloseAddModal, useCardL
         {loading ? (
           <div className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Loading…</div>
         ) : (
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr style={{ borderBottom: '1px solid hsl(var(--border))' }}>
@@ -468,6 +469,7 @@ export default function AccessoriesTab({ showAddModal, onCloseAddModal, useCardL
               })}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 

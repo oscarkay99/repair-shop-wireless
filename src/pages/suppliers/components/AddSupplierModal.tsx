@@ -66,7 +66,7 @@ export default function AddSupplierModal({ supplier, onSave, onClose }: Props) {
               style={{ border: '1px solid rgba(7,16,31,0.12)', background: 'rgba(7,16,31,0.02)', color: '#0F172A' }}
               placeholder="e.g. TechZone Distributors" />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block text-slate-400">Category</label>
               <select value={form.category} onChange={e => set('category', e.target.value)}
@@ -83,7 +83,7 @@ export default function AddSupplierModal({ supplier, onSave, onClose }: Props) {
                 placeholder="Phone or email" />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block text-slate-400">Lead Time</label>
               <input value={form.leadTime} onChange={e => set('leadTime', e.target.value)}

@@ -52,7 +52,7 @@ export default function AddLeadModal({ defaultStatus = 'warm', onSave, onClose }
             label="Customer"
             placeholder="Search existing or type new name…"
           />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'rgba(7,16,31,0.4)' }}>Phone *</label>
               <input required value={form.phone} onChange={e => set('phone', e.target.value)}
@@ -69,7 +69,7 @@ export default function AddLeadModal({ defaultStatus = 'warm', onSave, onClose }
               </select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'rgba(7,16,31,0.4)' }}>Temperature</label>
               <select value={form.status} onChange={e => set('status', e.target.value as LeadStatus)}
