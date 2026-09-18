@@ -40,7 +40,7 @@ function bucketOf(status: RepairStatus): FilterKey {
 
 export default function TicketsPanel() {
   const { showToast } = useToast();
-  const { repairs, loading, patchRepair, addNote } = useRepairs();
+  const { repairs, loading, error, reload, patchRepair, addNote } = useRepairs();
   const { technicians } = useTechnicians();
   const { user } = useAuth();
   const { requests: reassignmentRequests, resolve: resolveReassignment } = useReassignmentRequests();
@@ -214,6 +214,12 @@ export default function TicketsPanel() {
         <div className="space-y-2">
           {loading ? (
             <p className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Loading…</p>
+          ) : error ? (
+            <div className="py-16 text-center">
+              <p className="text-xs font-semibold" style={{ color: '#ef4444' }}>{error}</p>
+              <p className="text-[11px] mt-1" style={{ color: 'hsl(var(--muted-foreground))' }}>No cached tickets are displayed when loading fails.</p>
+              <button onClick={reload} className="mt-3 px-3 h-8 rounded-lg text-xs font-semibold text-white" style={{ background: 'hsl(var(--primary))' }}>Try again</button>
+            </div>
           ) : filteredRepairs.length === 0 ? (
             <p className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No tickets match.</p>
           ) : pagedRepairs.map(repair => {

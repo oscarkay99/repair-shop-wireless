@@ -7,14 +7,18 @@ import { useTaxSettings } from '@/hooks/useTaxSettings';
 import { useWirelessSettings } from '@/hooks/useWirelessSettings';
 import { ensureTicketInvoice } from '@/services/wireless/autoInvoice';
 import { supabase } from '@/services/supabase';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Store {
   repairs: Repair[];
   loading: boolean;
+  error: string | null;
 }
 
-let store: Store = { repairs: [], loading: true };
-let started = false;
+let store: Store = { repairs: [], loading: true, error: null };
+let activeAccessKey: string | null = null;
+let loadedAccessKey: string | null = null;
+let requestGeneration = 0;
 const listeners = new Set<() => void>();
 
 // A technician assigned to a job (or anyone else's ticket edit) previously
@@ -106,28 +110,58 @@ function getSnapshot() {
 // list until a hard refresh. Mirrors the same fix applied to
 // useWirelessSettings / useTechnicians.
 export async function reloadRepairs() {
-  setStore({ loading: true });
+  const accessKey = activeAccessKey;
+  if (!accessKey) {
+    setStore({ repairs: [], loading: false, error: null });
+    return;
+  }
+  const generation = ++requestGeneration;
+  setStore({ loading: true, error: null });
   try {
     const repairs = await getRepairs();
-    setStore({ repairs, loading: false });
+    if (accessKey === activeAccessKey && generation === requestGeneration) {
+      setStore({ repairs, loading: false, error: null });
+    }
+  } catch (error) {
+    if (accessKey === activeAccessKey && generation === requestGeneration) {
+      console.error('[useRepairs] ticket refresh failed', error);
+      setStore({ repairs: [], loading: false, error: 'Tickets could not be loaded. Please check your connection and try again.' });
+    }
   } finally {
-    setStore({ loading: false });
+    if (accessKey === activeAccessKey && generation === requestGeneration) {
+      setStore({ loading: false });
+    }
   }
 }
 
 export function useRepairs() {
-  const { repairs, loading } = useSyncExternalStore(subscribe, getSnapshot);
+  const snapshot = useSyncExternalStore(subscribe, getSnapshot);
+  const { user } = useAuth();
   const { showToast } = useToast();
   const { taxEnabled, vatRate, nhilGetfundRate } = useTaxSettings();
   const { settings } = useWirelessSettings();
 
+  const accessKey = user ? `${user.id}:${user.role}` : null;
+  // Effects run after render, so mask an old user's snapshot synchronously
+  // during the account/role transition as well as clearing it below.
+  const accessMatches = activeAccessKey === accessKey;
+  const repairs = accessMatches ? snapshot.repairs : [];
+  const loading = accessMatches ? snapshot.loading : !!accessKey;
+  const error = accessMatches ? snapshot.error : null;
+
   useEffect(() => {
-    if (!started) {
-      started = true;
+    if (activeAccessKey !== accessKey) {
+      activeAccessKey = accessKey;
+      loadedAccessKey = null;
+      requestGeneration += 1;
+      setStore({ repairs: [], loading: !!accessKey, error: null });
+    }
+    if (accessKey && loadedAccessKey !== accessKey) {
+      loadedAccessKey = accessKey;
       reloadRepairs();
       startRealtimeSync();
     }
-  }, []);
+  }, [accessKey]);
 
   const add = async (r: Omit<Repair, 'id'>) => {
     try {
@@ -246,5 +280,5 @@ export function useRepairs() {
     }
   };
 
-  return { repairs, loading, add, setStatus, setNotes, updateStatus, addNote, addMedia, removeMedia, patchRepair, remove };
+  return { repairs, loading, error, reload: reloadRepairs, add, setStatus, setNotes, updateStatus, addNote, addMedia, removeMedia, patchRepair, remove };
 }

@@ -231,10 +231,13 @@ export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: T
 
     if (canAccessModule(user, 'Tickets')) {
       for (const r of repairs) {
-        if (`${r.id} ${r.customer} ${r.device} ${r.issue}`.toLowerCase().includes(q)) {
+        const searchable = user?.role === 'technician'
+          ? `${r.id} ${r.device} ${r.issue}`
+          : `${r.id} ${r.customer} ${r.device} ${r.issue}`;
+        if (searchable.toLowerCase().includes(q)) {
           results.push({
             id: `repair:${r.id}`, to: '/tickets',
-            primary: `${r.device} · ${r.customer || 'Unknown'}`,
+            primary: user?.role === 'technician' ? r.device : `${r.device} · ${r.customer || 'Unknown'}`,
             secondary: r.issue,
             meta: r.id,
             badge: { label: 'Ticket', bg: 'hsl(190 80% 93%)', color: 'hsl(190 80% 35%)' },

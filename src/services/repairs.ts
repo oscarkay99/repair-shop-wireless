@@ -356,7 +356,12 @@ export async function getRepairs(): Promise<Repair[]> {
       );
     });
   } catch (error) {
-    console.warn('Falling back to local repair store.', error);
+    // A configured backend is the sole source of truth. Never retain seed
+    // data or rows loaded under a previous user's broader session when a
+    // scoped fetch fails — callers must render an empty, explicit error state.
+    store = [];
+    console.error('[repairs] failed to load tickets', error);
+    throw error;
   }
 
   return store.map(normalizeRepair);

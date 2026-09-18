@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, Clock, Calendar, ChevronRight } from 'lucide-react';
+import { LogOut, Clock, Calendar, ChevronRight, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTechnicians } from '@/hooks/useTechnicians';
 import { useRepairs } from '@/hooks/useRepairs';
@@ -28,7 +28,7 @@ export default function TechPortalPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { technicians, patch: patchTechnician } = useTechnicians();
-  const { repairs, loading, updateStatus, addNote, addMedia, removeMedia, patchRepair } = useRepairs();
+  const { repairs, loading, error, reload, updateStatus, addNote, addMedia, removeMedia, patchRepair } = useRepairs();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showUnavailablePicker, setShowUnavailablePicker] = useState(false);
   const [fromDate, setFromDate] = useState('');
@@ -252,6 +252,13 @@ export default function TechPortalPage() {
             {loading ? (
               <div className="flex items-center justify-center py-16">
                 <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: 'hsl(var(--primary)) transparent transparent' }} />
+              </div>
+            ) : error ? (
+              <div className="flex flex-col items-center justify-center py-16 gap-2 text-center px-4">
+                <AlertTriangle className="w-7 h-7" style={{ color: '#ef4444' }} />
+                <p className="text-sm font-semibold" style={{ color: '#ef4444' }}>{error}</p>
+                <p className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No cached tickets are displayed when loading fails.</p>
+                <button onClick={reload} className="mt-1 px-3 h-8 rounded-lg text-xs font-semibold text-white" style={{ background: 'hsl(var(--primary))' }}>Try again</button>
               </div>
             ) : openRepairs.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 gap-3">

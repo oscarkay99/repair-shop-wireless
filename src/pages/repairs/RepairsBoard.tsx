@@ -1070,22 +1070,23 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
 
 export default function RepairsBoard() {
   const { setPageTitle } = usePageTitle();
-  const { repairs, loading, add, updateStatus, addNote, addMedia, removeMedia, patchRepair, remove } = useRepairs();
+  const { repairs, loading, error, reload, add, updateStatus, addNote, addMedia, removeMedia, patchRepair, remove } = useRepairs();
   const { technicians } = useTechnicians();
   const { user } = useAuth();
+  const isTechnician = user?.role === 'technician';
   const perms = user?.permissions ?? [];
   // Gates New Ticket, Edit, Create Invoice, and the reassignment banner —
   // was hardcoded to admin/receptionist, which silently dead-ended every
   // custom role (sales_manager, manager, finance) that has the matching
   // tickets/invoices permission but isn't literally one of those two roles.
-  const canManageTickets = user?.role === 'admin' || perms.includes('tickets:edit') || perms.includes('tickets:create') || perms.includes('invoices:create');
+  const canManageTickets = !isTechnician && (user?.role === 'admin' || perms.includes('tickets:edit') || perms.includes('tickets:create') || perms.includes('invoices:create'));
   // Mirrors prevent_unauthorized_ticket_status_change(): admin, or any role
   // with scope_tickets_to_technician set (an editable per-role flag in
   // Settings > Roles, not exclusive to the literal 'technician' role id —
   // a custom scoped-tech role would pass the DB trigger but hit a hidden
   // progress UI under the old hardcoded check).
-  const canUpdateProgress = user?.role === 'admin' || !!user?.scopeTicketsToTechnician;
-  const canDeleteTickets = user?.role === 'admin' || perms.includes('tickets:delete');
+  const canUpdateProgress = user?.role === 'admin' || isTechnician;
+  const canDeleteTickets = !isTechnician && (user?.role === 'admin' || perms.includes('tickets:delete'));
   const { requests: reassignmentRequests, resolve: resolveReassignment } = useReassignmentRequests();
   const { requests: approvalRequests, resolve: resolveApproval } = useApprovalRequests();
   const [query, setQuery] = useState('');
@@ -1102,13 +1103,21 @@ export default function RepairsBoard() {
   useEffect(() => { setPage(1); }, [query, filter, techFilter, dateRange]);
 
   useEffect(() => {
+    if (!isTechnician) return;
+    setTechFilter('all');
+    setFilter(current => current === 'unassigned' ? 'all' : current);
+  }, [isTechnician]);
+
+  useEffect(() => {
     setPageTitle({
-      title: 'Tickets',
-      subtitle: 'Available jobs, assign technicians and track diagnosis & repair progress',
+      title: isTechnician ? 'My Tickets' : 'Tickets',
+      subtitle: isTechnician
+        ? 'Only repair jobs assigned to you are shown here'
+        : 'Available jobs, assign technicians and track diagnosis & repair progress',
       hideDefaultAction: true,
     });
     return () => setPageTitle({ title: 'Dashboard' });
-  }, [setPageTitle]);
+  }, [isTechnician, setPageTitle]);
 
   const unassigned   = useMemo(() => repairs.filter(r => isActiveRepairStatus(r.status) && !r.technicians.length), [repairs]);
   const inDiagnosis  = useMemo(() => repairs.filter(r => isActiveRepairStatus(r.status) && isDiagnosisStage(r)), [repairs]);
@@ -1116,7 +1125,7 @@ export default function RepairsBoard() {
   const ready        = useMemo(() => repairs.filter(r => r.status === 'ready'), [repairs]);
   const overdue      = useMemo(() => repairs.filter(isOverdueRepair), [repairs]);
 
-  const filterTabs = FILTER_TABS;
+  const filterTabs = isTechnician ? FILTER_TABS.filter(tab => tab.key !== 'unassigned') : FILTER_TABS;
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
@@ -1139,7 +1148,7 @@ export default function RepairsBoard() {
       if (q && !r.id.toLowerCase().includes(q)
             && !r.device.toLowerCase().includes(q)
             && !r.issue.toLowerCase().includes(q)
-            && !r.customer.toLowerCase().includes(q)) return false;
+            && (isTechnician || !r.customer.toLowerCase().includes(q))) return false;
       if (from || to) {
         const d = new Date(r.createdAt ?? r.id);
         if (from && d < from) return false;
@@ -1147,7 +1156,7 @@ export default function RepairsBoard() {
       }
       return true;
     });
-  }, [repairs, filter, techFilter, query, dateRange]);
+  }, [repairs, filter, techFilter, query, dateRange, isTechnician]);
 
   const paged = useMemo(() =>
     filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
@@ -1205,7 +1214,7 @@ export default function RepairsBoard() {
     { label: 'IN REPAIR',      value: String(inRepair.length),     icon: Scissors,     border: '#7c3aed' },
     { label: 'READY FOR PICKUP', value: String(ready.length),      icon: CheckCircle2, border: '#22c55e' },
     { label: 'OVERDUE',        value: String(overdue.length),      icon: AlertCircle,  border: '#ef4444' },
-  ] as const;
+  ].filter(card => !isTechnician || card.label !== 'UNASSIGNED');
 
   const cols = selected ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3';
 
@@ -1214,7 +1223,7 @@ export default function RepairsBoard() {
       {/* Scrollable left section */}
       <div className="flex-1 overflow-y-auto p-6 space-y-5 min-w-0">
         {/* Stat cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className={`grid grid-cols-2 ${isTechnician ? 'lg:grid-cols-4' : 'lg:grid-cols-5'} gap-4`}>
           {STATS.map(card => {
             const Icon = card.icon;
             return (
@@ -1265,7 +1274,7 @@ export default function RepairsBoard() {
             suggestions={query.trim() ? filtered.map(r => ({
               id: r.id,
               primary: r.id,
-              secondary: `${r.device} · ${r.customer}`,
+              secondary: isTechnician ? r.device : `${r.device} · ${r.customer}`,
               meta: r.issue.slice(0, 36),
               badge: { label: STATUS[r.status]?.label ?? r.status, bg: STATUS[r.status]?.bg ?? '', color: STATUS[r.status]?.color ?? '' },
             })) : []}
@@ -1286,7 +1295,7 @@ export default function RepairsBoard() {
                 {tab.label}
               </button>
             ))}
-            {technicians.length > 0 && (
+            {!isTechnician && technicians.length > 0 && (
               <select value={techFilter} onChange={e => setTechFilter(e.target.value)}
                 className="h-8 px-3 rounded-lg text-xs font-semibold outline-none"
                 style={{ background: 'transparent', border: '1px solid hsl(var(--border))', color: 'hsl(var(--muted-foreground))' }}>
@@ -1310,9 +1319,16 @@ export default function RepairsBoard() {
         {/* Grid */}
         {loading ? (
           <p className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Loading…</p>
+        ) : error ? (
+          <div className="py-16 text-center">
+            <AlertTriangle className="w-5 h-5 mx-auto mb-2" style={{ color: '#ef4444' }} />
+            <p className="text-xs font-semibold" style={{ color: '#ef4444' }}>{error}</p>
+            <p className="text-[11px] mt-1" style={{ color: 'hsl(var(--muted-foreground))' }}>No cached tickets are displayed when loading fails.</p>
+            <button onClick={reload} className="mt-3 px-3 h-8 rounded-lg text-xs font-semibold text-white" style={{ background: 'hsl(var(--primary))' }}>Try again</button>
+          </div>
         ) : filtered.length === 0 ? (
           <p className="py-16 text-center text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>
-            No tickets match.
+            {isTechnician ? 'No tickets are currently assigned to you.' : 'No tickets match.'}
           </p>
         ) : (
           <>

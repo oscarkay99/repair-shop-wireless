@@ -41,6 +41,7 @@ assert.equal(getLandingPath(spoofedCustomPortal), '/access-denied');
 assert.equal(canViewAdminDashboard(technician), false);
 assert.equal(canViewAdminDashboard(manager), true);
 assert.equal(canAccessModule(technician, 'Technician Portal'), true);
+assert.equal(canAccessModule(technician, 'Tickets'), true);
 assert.equal(canAccessModule(technician, 'Reception Portal'), false);
 assert.equal(canAccessModule(technician, 'Inventory Portal'), false);
 assert.equal(canAccessModule(technician, 'Inventory'), false);

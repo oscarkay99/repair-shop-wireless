@@ -149,9 +149,12 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         <p className="px-3 py-2 text-[9px] font-bold uppercase tracking-[0.15em] opacity-50" style={{ color: 'hsl(var(--sidebar-foreground))' }}>
           Main Menu
         </p>
-        {mainNav.filter(item => canSee(item.module)).map(item => (
-          <NavLink key={item.path} item={item} active={isActive(item.path)} />
-        ))}
+        {mainNav.filter(item => canSee(item.module)).map(item => {
+          const visibleItem = user?.role === 'technician' && item.module === 'Tickets'
+            ? { ...item, label: 'My Tickets' }
+            : item;
+          return <NavLink key={item.path} item={visibleItem} active={isActive(item.path)} />;
+        })}
       </nav>
 
       {/* Bottom section */}
