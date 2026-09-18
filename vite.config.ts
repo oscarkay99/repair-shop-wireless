@@ -50,7 +50,12 @@ export default defineConfig({
         // detect a new deploy while a tab's been open (useNewVersionAvailable)
         // — precaching it here would serve a stale copy back to that exact
         // check and defeat the whole mechanism.
-        globIgnores: ["version.json"],
+        // Never precache the HTML app shell. A broken release previously left
+        // iPhone Safari trapped on an old index.html even after a fixed bundle
+        // was deployed. HTML must come from the network so each launch sees
+        // the current hashed JS/CSS references; hashed assets remain safe to
+        // precache and the app still provides push/service-worker support.
+        globIgnores: ["version.json", "index.html"],
       },
       includeAssets: ["wireless-mark.png", "icons/apple-touch-icon.png"],
       manifest: {
