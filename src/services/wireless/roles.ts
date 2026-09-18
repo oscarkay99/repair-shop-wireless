@@ -18,17 +18,17 @@ const now = () => new Date().toISOString();
 // when running without a live Supabase connection (demo/mock mode).
 let localStore: WirelessRole[] = [
   { id: 'admin', name: 'Admin', color: '#EC0118', is_system: true, scope_tickets_to_technician: false, dashboard_variant: 'admin', created_at: now(), updated_at: now(),
-    permissions: ['tickets:view','tickets:create','tickets:edit','tickets:delete','ticket_media:view','ticket_media:create','ticket_media:delete','ticket_comments:view','ticket_comments:delete','ticket_parts:view','ticket_parts:create','customers:create','customers:edit','customers:delete','invoices:create','invoices:edit','invoices:delete','invoices:items_edit','technicians:edit','parts:edit','sales:create','payments:create','expenses:view','expenses:edit','settings:edit','team:view','team:edit','team:delete','audit_logs:view'] },
+    permissions: ['tickets:view','tickets:create','tickets:edit','tickets:delete','ticket_media:view','ticket_media:create','ticket_media:delete','ticket_comments:view','ticket_comments:delete','ticket_parts:view','ticket_parts:create','customers:view','customers:create','customers:edit','customers:delete','invoices:view','invoices:create','invoices:edit','invoices:delete','invoices:items_edit','technicians:view','technicians:edit','parts:view','parts:edit','sales:view','sales:create','payments:view','payments:create','expenses:view','expenses:edit','settings:edit','team:view','team:edit','team:delete','audit_logs:view'] },
   { id: 'sales_manager', name: 'Sales Manager', color: '#F59E0B', is_system: false, scope_tickets_to_technician: false, dashboard_variant: 'sales_manager', created_at: now(), updated_at: now(),
-    permissions: ['tickets:view','tickets:edit','ticket_media:view','ticket_comments:view','ticket_comments:create','ticket_parts:view','ticket_parts:create','customers:create','customers:edit','customers:delete','invoices:create','invoices:edit','invoices:delete','invoices:items_edit','technicians:edit','parts:edit','sales:create','payments:create','payments:view','team:view','audit_logs:view'] },
+    permissions: ['tickets:view','tickets:edit','ticket_media:view','ticket_comments:view','ticket_comments:create','ticket_parts:view','ticket_parts:create','customers:view','customers:create','customers:edit','customers:delete','invoices:view','invoices:create','invoices:edit','invoices:delete','invoices:items_edit','technicians:view','technicians:edit','parts:view','parts:edit','sales:view','sales:create','payments:create','payments:view','team:view','audit_logs:view'] },
   { id: 'technician', name: 'Technician', color: '#06B6D4', is_system: false, scope_tickets_to_technician: true, dashboard_variant: 'technician', created_at: now(), updated_at: now(),
-    permissions: ['ticket_parts:create'] },
+    permissions: ['ticket_parts:create','parts:view'] },
   // Kept in sync with the cumulative DB patches on top of the original seed
   // (20260728030000, 20260806070000, 20260811000000, 20260817000000):
   // items_edit, sales:create, ticket_parts:create, and parts:view were all
   // granted after the initial custom-roles migration.
   { id: 'receptionist', name: 'Receptionist', color: '#8B5CF6', is_system: false, scope_tickets_to_technician: false, dashboard_variant: 'receptionist', created_at: now(), updated_at: now(),
-    permissions: ['tickets:view','tickets:create','tickets:edit','ticket_media:view','ticket_comments:view','ticket_comments:create','ticket_parts:view','ticket_parts:create','customers:create','customers:edit','invoices:create','invoices:edit','invoices:items_edit','sales:create','payments:create','payments:view','parts:view'] },
+    permissions: ['tickets:view','tickets:create','tickets:edit','ticket_media:view','ticket_comments:view','ticket_comments:create','ticket_parts:view','ticket_parts:create','customers:view','customers:create','customers:edit','invoices:view','invoices:create','invoices:edit','invoices:items_edit','technicians:view','sales:view','sales:create','payments:create','payments:view','parts:view'] },
 ];
 
 export async function getRoles(): Promise<WirelessRole[]> {

@@ -13,7 +13,9 @@ export default function AuthGuard({ children, requiredModule }: AuthGuardProps) 
   const location = useLocation();
   const hasModuleAccess = requiredModule ? canAccessModule(user, requiredModule) : true;
 
-  if (isLoading && !isAuthenticated) {
+  // Never render from cached role metadata while the server session/profile
+  // is still being revalidated. A stale cache must not flash privileged UI.
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background" role="status" aria-label="Loading Wireless">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-red-700" />

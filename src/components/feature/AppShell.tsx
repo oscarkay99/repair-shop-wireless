@@ -43,7 +43,7 @@ class PageErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundary
 function ShellInner() {
   const { pageTitle } = usePageTitle();
   const { pathname } = useLocation();
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Receptionist gets a dedicated sidebar-less portal (/reception) as their
@@ -56,6 +56,14 @@ function ShellInner() {
 
   // Dismiss the mobile drawer on every navigation, not just an explicit close.
   useEffect(() => { setSidebarOpen(false); }, [pathname]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background" role="status" aria-label="Loading Wireless">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-red-700" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full w-full overflow-hidden bg-background">

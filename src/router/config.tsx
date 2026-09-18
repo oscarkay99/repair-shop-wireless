@@ -32,9 +32,9 @@ import HrPage from "../pages/hr/page";
 
 const routes: RouteObject[] = [
   { path: "/signin", element: <SignInPage /> },
-  { path: "/tech-portal", element: <AuthGuard><TechPortalPage /></AuthGuard> },
-  { path: "/reception", element: <AuthGuard requiredModule="Portal"><ReceptionPortalPage /></AuthGuard> },
-  { path: "/inventory-portal", element: <AuthGuard requiredModule="Portal"><InventoryPortalPage /></AuthGuard> },
+  { path: "/tech-portal", element: <AuthGuard requiredModule="Technician Portal"><TechPortalPage /></AuthGuard> },
+  { path: "/reception", element: <AuthGuard requiredModule="Reception Portal"><ReceptionPortalPage /></AuthGuard> },
+  { path: "/inventory-portal", element: <AuthGuard requiredModule="Inventory Portal"><InventoryPortalPage /></AuthGuard> },
 
   {
     element: <AppShell />,

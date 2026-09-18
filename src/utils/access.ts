@@ -14,7 +14,9 @@ export type AppModule =
   | 'Invoices'
   | 'Sales'
   | 'Activity'
-  | 'Portal'
+  | 'Technician Portal'
+  | 'Reception Portal'
+  | 'Inventory Portal'
   | 'Warranty'
   | 'Delivery'
   | 'Expenses'
@@ -47,6 +49,28 @@ const LEGACY_MODULE_VISIBILITY: Partial<Record<AppModule, string[]>> = {
 
 type PermCtx = Pick<AuthUser, 'role' | 'permissions' | 'scopeTicketsToTechnician' | 'dashboardVariant'> | null | undefined;
 
+const hasPermission = (user: PermCtx, permission: string) => !!user?.permissions?.includes(permission);
+
+export function canViewAdminDashboard(user: PermCtx): boolean {
+  return !!user && (user.role === 'admin' || user.role === 'manager' || hasPermission(user, 'dashboard:admin'));
+}
+
+/**
+ * The only supported post-login destinations. Unknown roles/variants fail
+ * closed instead of inheriting the most privileged dashboard.
+ */
+export function getLandingPath(user: PermCtx): string {
+  if (!user?.role) return '/access-denied';
+  if (user.scopeTicketsToTechnician || user.role === 'technician' || user.dashboardVariant === 'technician') return '/tech-portal';
+  if (user.dashboardVariant === 'receptionist') return '/reception';
+  if (user.dashboardVariant === 'inventory_portal' || user.role === 'stock_manager' || user.role === 'inventory_manager') return '/inventory-portal';
+  if (user.role === 'hr' || user.dashboardVariant === 'hr') return '/hr';
+  if (user.role === 'finance' || user.dashboardVariant === 'finance') return '/expenses';
+  if (user.dashboardVariant === 'sales_manager' && (hasPermission(user, 'sales:view') || hasPermission(user, 'sales:create'))) return '/';
+  if (user.dashboardVariant === 'admin' && canViewAdminDashboard(user)) return '/';
+  return '/access-denied';
+}
+
 export function canAccessModule(user: PermCtx, module: AppModule): boolean {
   if (!user?.role) return false;
   const perms = new Set(user.permissions ?? []);
@@ -54,12 +78,12 @@ export function canAccessModule(user: PermCtx, module: AppModule): boolean {
 
   switch (module) {
     case 'Dashboard':
-      return true;
+      return getLandingPath(user) !== '/access-denied';
     case 'Tickets':
     case 'Repairs':
       return !!user.scopeTicketsToTechnician || has('tickets:view') || has('tickets:create') || has('tickets:edit') || has('tickets:delete');
     case 'Customers':
-      return has('customers:create') || has('customers:edit') || has('customers:delete');
+      return has('customers:view') || has('customers:create') || has('customers:edit') || has('customers:delete');
     case 'Inventory':
       return has('parts:edit') || has('parts:create') || has('parts:view');
     // Permission-based, not a hardcoded role id — same fix as Portal above.
@@ -69,13 +93,13 @@ export function canAccessModule(user: PermCtx, module: AppModule): boolean {
     // this page is ticket assignment, not technician management — so ticket
     // permissions imply access here too, matching what reception already had.
     case 'Technicians':
-      return has('technicians:edit') || has('tickets:view') || has('tickets:create') || has('tickets:edit') || has('tickets:delete');
+      return has('technicians:view') || has('technicians:edit') || has('tickets:view') || has('tickets:create') || has('tickets:edit') || has('tickets:delete');
     case 'Payments':
-      return has('payments:create');
+      return has('payments:view') || has('payments:create');
     case 'Invoices':
-      return has('invoices:create') || has('invoices:edit') || has('invoices:delete') || has('invoices:items_edit');
+      return has('invoices:view') || has('invoices:create') || has('invoices:edit') || has('invoices:delete') || has('invoices:items_edit');
     case 'Sales':
-      return has('sales:create');
+      return has('sales:view') || has('sales:create');
     case 'Expenses':
       return has('expenses:view') || has('expenses:edit') || has('assets:view') || has('assets:edit');
     // Admin is a protected system role that can't carry a DB-seeded
@@ -99,11 +123,12 @@ export function canAccessModule(user: PermCtx, module: AppModule): boolean {
       return has('settings:edit');
     case 'Audit Logs':
       return has('audit_logs:view');
-    // Gated on dashboardVariant (which route/portal the role lands on),
-    // not a hardcoded role-id list — otherwise no custom role could ever
-    // reach the portal it was actually built and routed for.
-    case 'Portal':
-      return user.role === 'admin' || user.dashboardVariant === 'receptionist' || user.dashboardVariant === 'inventory_portal';
+    case 'Technician Portal':
+      return user.role === 'admin' || !!user.scopeTicketsToTechnician || user.role === 'technician' || user.dashboardVariant === 'technician';
+    case 'Reception Portal':
+      return user.role === 'admin' || user.dashboardVariant === 'receptionist';
+    case 'Inventory Portal':
+      return user.role === 'admin' || user.dashboardVariant === 'inventory_portal';
     default:
       return LEGACY_MODULE_VISIBILITY[module]?.includes(user.role) ?? false;
   }

@@ -23,7 +23,7 @@ const ACTIVITY_PAGE_SIZE = 15;
 // real implementation behind them.
 const ALL_MODULES: AppModule[] = [
   'Dashboard', 'Tickets', 'Customers', 'Technicians', 'Inventory', 'Invoices', 'Sales',
-  'Payments', 'Expenses', 'Attendance', 'Audit Logs', 'Settings', 'Portal',
+  'Payments', 'Expenses', 'Attendance', 'Audit Logs', 'Settings', 'Technician Portal', 'Reception Portal', 'Inventory Portal',
   'Analytics', 'Reports', 'Loyalty', 'Delivery', 'Warranty', 'Authentication', 'AI Studio',
 ];
 

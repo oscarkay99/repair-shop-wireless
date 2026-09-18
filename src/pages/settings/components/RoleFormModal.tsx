@@ -3,6 +3,9 @@ import type { WirelessRole, RoleInput } from '@/services/wireless/roles';
 import { errMessage } from '@/utils/errors';
 
 const PERMISSION_GROUPS: { resource: string; label: string; actions: { value: string; label: string }[] }[] = [
+  { resource: 'dashboard', label: 'Dashboard', actions: [
+    { value: 'dashboard:admin', label: 'Full operational overview' },
+  ] },
   { resource: 'tickets', label: 'Tickets', actions: [
     { value: 'tickets:view', label: 'View' }, { value: 'tickets:create', label: 'Create' },
     { value: 'tickets:edit', label: 'Edit' }, { value: 'tickets:delete', label: 'Delete' },
@@ -17,17 +20,17 @@ const PERMISSION_GROUPS: { resource: string; label: string; actions: { value: st
     { value: 'ticket_parts:view', label: 'View' }, { value: 'ticket_parts:create', label: 'Add / Remove' },
   ] },
   { resource: 'customers', label: 'Customers', actions: [
-    { value: 'customers:create', label: 'Create' }, { value: 'customers:edit', label: 'Edit' }, { value: 'customers:delete', label: 'Delete' },
+    { value: 'customers:view', label: 'View' }, { value: 'customers:create', label: 'Create' }, { value: 'customers:edit', label: 'Edit' }, { value: 'customers:delete', label: 'Delete' },
   ] },
   { resource: 'invoices', label: 'Invoices', actions: [
-    { value: 'invoices:create', label: 'Create' }, { value: 'invoices:edit', label: 'Edit' },
+    { value: 'invoices:view', label: 'View' }, { value: 'invoices:create', label: 'Create' }, { value: 'invoices:edit', label: 'Edit' },
     { value: 'invoices:delete', label: 'Delete' }, { value: 'invoices:items_edit', label: 'Edit Line Items' },
   ] },
-  { resource: 'technicians', label: 'Technicians Roster', actions: [{ value: 'technicians:edit', label: 'Manage' }] },
+  { resource: 'technicians', label: 'Technicians Roster', actions: [{ value: 'technicians:view', label: 'View' }, { value: 'technicians:edit', label: 'Manage' }] },
   { resource: 'parts', label: 'Inventory / Parts', actions: [
     { value: 'parts:view', label: 'View' }, { value: 'parts:edit', label: 'Manage' }, { value: 'parts:create', label: 'Add New Parts' },
   ] },
-  { resource: 'sales', label: 'Accessory Sales (POS)', actions: [{ value: 'sales:create', label: 'Record Sale' }] },
+  { resource: 'sales', label: 'Accessory Sales (POS)', actions: [{ value: 'sales:view', label: 'View' }, { value: 'sales:create', label: 'Record Sale' }] },
   { resource: 'payments', label: 'Payments', actions: [
     { value: 'payments:view', label: 'View' }, { value: 'payments:create', label: 'Record Payment' },
   ] },
@@ -48,10 +51,14 @@ const PERMISSION_GROUPS: { resource: string; label: string; actions: { value: st
 ];
 
 const DASHBOARD_VARIANTS = [
+  { value: 'restricted', label: 'Restricted (no dashboard)' },
   { value: 'admin', label: 'Admin (full overview)' },
+  { value: 'finance', label: 'Finance (expenses landing)' },
   { value: 'sales_manager', label: 'Sales Manager' },
   { value: 'receptionist', label: 'Receptionist' },
   { value: 'inventory_portal', label: 'Inventory Manager (stock portal)' },
+  { value: 'technician', label: 'Technician Portal' },
+  { value: 'hr', label: 'HR' },
 ];
 
 const COLOR_SWATCHES = ['#EC0118', '#F59E0B', '#06B6D4', '#8B5CF6', '#22C55E', '#3B82F6', '#EC4899', '#64748B'];
@@ -68,7 +75,7 @@ export default function RoleFormModal({ role, onClose, onSave }: Props) {
   const [color, setColor] = useState(role?.color ?? COLOR_SWATCHES[0]);
   const [permissions, setPermissions] = useState<Set<string>>(new Set(role?.permissions ?? []));
   const [scopeTickets, setScopeTickets] = useState(role?.scope_tickets_to_technician ?? false);
-  const [dashboardVariant, setDashboardVariant] = useState(role?.dashboard_variant ?? 'admin');
+  const [dashboardVariant, setDashboardVariant] = useState(role?.dashboard_variant ?? 'restricted');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 

@@ -47,6 +47,10 @@ instead of re-deriving it from migration history.
 
 - Every table in the `wireless` schema has RLS enabled — verified directly against the live database, not just migration files.
 - Permission model: `wireless.roles.permissions text[]`, checked via `wireless.has_permission('resource:action')`. Admin bypasses unconditionally at the DB layer (`wireless.is_admin()`), independent of what's in its own permissions array.
+- Authentication bootstrap is fail-closed: cached user data is never rendered while the Supabase session and profile/role metadata are being revalidated. A missing role row, failed role lookup, unknown dashboard variant, or unrecognized role lands on Access Denied; none defaults to the admin dashboard.
+- Dedicated portals have independent gates (`Technician Portal`, `Reception Portal`, `Inventory Portal`). A role entitled to one portal cannot reach another by typing its URL.
+- Read access to customers, invoices/items, sales/items, parts, and the technician roster is permission-backed at RLS level. Hiding a nav item is not treated as an authorization boundary. See `20260918000000_fail_closed_role_authorization.sql`.
+- Newly created custom roles default to the `restricted` dashboard. The operational overview requires `dashboard:admin`; technician, reception, inventory, HR, finance, and sales roles have explicit safe landing behavior.
 - **Admin is a protected system role** — `trg_prevent_system_role_mutation` blocks *any* `UPDATE`/`DELETE` on the admin row in `wireless.roles`, including adding a new permission string. This means a migration granting a new permission to "admin + manager" will fail on the admin half. Pattern used throughout: skip the admin grant in SQL, and check `user.role === 'admin'` directly on the client instead — `has_permission()` already treats admin as an automatic pass server-side.
 - Technicians are scoped to their own assigned tickets via `wireless.ticket_technicians` (many-to-many; a ticket can have several assignees, all equal).
 - Customer-facing lookups (ticket status, ticket photos) require an exact match on **both** ticket number and phone (numbers are sequential/guessable on their own), or a random unguessable per-ticket `public_token` (used by the QR code on printed receipts). Both paths are rate-limited server-side.
@@ -81,7 +85,7 @@ This system sits behind nginx → Kong → PostgREST/GoTrue. Two headers matter 
 
 - **CSP needs live-browser confirmation.** Shipped and verified live via curl (headers present, both sites return 200), but resource-loading enforcement only happens client-side — a real browser pass (login, viewing ticket photos, the Delivery page's Google Maps embed, Google OAuth) is still needed to be fully sure nothing subtle broke.
 - **Real MFA isn't built**, just honestly labeled as unavailable instead of fake. See Authentication above.
-- **No automated authorization test suite.** Everything in this document was verified live (curl, direct DB queries, a real restore, a real decrypt) during the audit, but nothing re-checks it automatically on the next change. A regression here would currently only be caught by another manual pass.
+- **Database authorization tests are still manual.** `npm run audit:roles` now regression-tests the client landing/portal matrix, but there is not yet an isolated Postgres test environment that executes each RLS policy as every role.
 - **No frontend error tracking** (Sentry-equivalent). A JS error in a real user's browser leaves no trace anywhere right now.
 - **Uneven CI enforcement.** Neither repo blocks a push that fails typecheck/lint/build — those were run manually before every deploy during this audit.
 - **Staging environment doesn't exist.** Single production environment, direct deploy. A reasonable tradeoff at current scale; revisit if deploy frequency or team size grows.

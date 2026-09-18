@@ -31,18 +31,15 @@ export interface AuthUser {
 }
 
 async function resolveRoleMeta(role: string): Promise<Pick<AuthUser, 'permissions' | 'scopeTicketsToTechnician' | 'dashboardVariant' | 'roleName' | 'roleColor'>> {
-  try {
-    const meta = await getRoleById(role);
-    return {
-      permissions: meta?.permissions ?? [],
-      scopeTicketsToTechnician: meta?.scope_tickets_to_technician ?? false,
-      dashboardVariant: meta?.dashboard_variant ?? 'admin',
-      roleName: meta?.name,
-      roleColor: meta?.color,
-    };
-  } catch {
-    return { permissions: [], scopeTicketsToTechnician: false, dashboardVariant: 'admin' };
-  }
+  const meta = await getRoleById(role);
+  if (!meta) throw new Error(`Role metadata not found for ${role}`);
+  return {
+    permissions: meta.permissions ?? [],
+    scopeTicketsToTechnician: meta.scope_tickets_to_technician ?? false,
+    dashboardVariant: meta.dashboard_variant || 'restricted',
+    roleName: meta.name,
+    roleColor: meta.color,
+  };
 }
 
 type AuthResult = { success: boolean; error?: string };
@@ -70,7 +67,7 @@ function writeStoredUser(user: AuthUser | null) {
 interface State { user: AuthUser | null; loading: boolean; deniedMessage: string | null }
 type Listener = () => void;
 const listeners = new Set<Listener>();
-let state: State = { user: readStoredUser(), loading: false, deniedMessage: null };
+let state: State = { user: readStoredUser(), loading: isSupabaseConfigured, deniedMessage: null };
 
 function setState(next: Partial<State>) {
   state = { ...state, ...next };
@@ -97,8 +94,13 @@ if (isSupabaseConfigured) {
         else { handleUnrecognizedSession(); }
       });
     } else {
-      setState({ loading: false });
+      writeStoredUser(null);
+      setState({ user: null, loading: false });
     }
+  }).catch(() => {
+    // A cached client user is never sufficient proof of a live session.
+    writeStoredUser(null);
+    setState({ user: null, loading: false, deniedMessage: 'Your session could not be verified. Please sign in again.' });
   });
 
   // Listen for auth state changes
@@ -110,10 +112,11 @@ if (isSupabaseConfigured) {
     // to signed-in in THIS tab counts as a login worth logging.
     const wasSignedOut = !state.user;
     if (session?.user) {
+      setState({ loading: true });
       loadProfileFromSession(session.user.id, session.user.email ?? '').then(user => {
         if (user) {
           writeStoredUser(user);
-          setState({ user });
+          setState({ user, loading: false });
           if (event === 'SIGNED_IN' && wasSignedOut) logAuthEvent('login', { id: user.id, name: user.name });
         }
         else { handleUnrecognizedSession(); }
@@ -122,7 +125,7 @@ if (isSupabaseConfigured) {
       // Don't clear mock-fallback users — they have no Supabase session
       if (!state.user?._isMock) {
         writeStoredUser(null);
-        setState({ user: null });
+        setState({ user: null, loading: false });
       }
     }
   });

@@ -12,7 +12,6 @@ import { usePagination } from '@/hooks/usePagination';
 import Pagination from '@/components/shared/Pagination';
 import BirthdayBanner from '@/components/shared/BirthdayBanner';
 import CustomerBirthdayBanner from '@/components/shared/CustomerBirthdayBanner';
-import ReceptionistDashboard from './ReceptionistDashboard';
 import SalesManagerDashboard from './SalesManagerDashboard';
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
@@ -25,6 +24,7 @@ import {
 } from 'lucide-react';
 import type { Repair } from '@/types/repair';
 import { REPAIR_STATUS_META, isActiveRepairStatus } from '@/utils/repairStatus';
+import { canViewAdminDashboard, getLandingPath } from '@/utils/access';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -392,7 +392,7 @@ function AdminDashboard() {
   const maxWorkload = Math.max(1, ...techWorkload.map(t => t.jobs));
 
   // ── P&L calculations ──────────────────────────────────────────────────────
-  const { from: pnlFrom } = pnlBounds(pnlPeriod);
+  const pnlFrom = useMemo(() => pnlBounds(pnlPeriod).from, [pnlPeriod]);
 
   // Revenue = paid invoices (amount_paid) + accessory sales. Accessory sales are
   // recorded straight to accessory_sales and never become an invoice, so they
@@ -405,7 +405,7 @@ function AdminDashboard() {
       .filter(s => !pnlFrom || new Date(s.sold_at) >= pnlFrom)
       .reduce((s, sale) => s + sale.total, 0);
     return invoiceRevenue + accessoryRevenue;
-  }, [invoices, sales, pnlPeriod]);
+  }, [invoices, sales, pnlFrom]);
 
   const pnlExpenses = useMemo(() => {
     return expenses.filter(e => {
@@ -413,7 +413,7 @@ function AdminDashboard() {
       if (!pnlFrom) return true;
       return new Date(e.date) >= pnlFrom;
     }).reduce((s, e) => s + parseAmt(e.amount), 0);
-  }, [expenses, pnlPeriod]);
+  }, [expenses, pnlFrom]);
 
   const pnlNet    = pnlRevenue - pnlExpenses;
   const pnlMargin = pnlRevenue > 0 ? Math.round((pnlNet / pnlRevenue) * 100) : 0;
@@ -890,30 +890,20 @@ function AdminDashboard() {
 export default function DashboardPage() {
   const { user } = useAuth();
   if (!user) return null;
-  // Any role scoped to its own tickets gets the dedicated full-screen
-  // technician portal (no sidebar/topbar) — never the shared shell's
-  // dashboard. Distinguishing by the scope flag (not the literal 'technician'
-  // role id) means a renamed or custom technician-like role still lands here.
-  if (user.scopeTicketsToTechnician) return <Navigate to="/tech-portal" replace />;
-  // Receptionist gets the same treatment — a dedicated full-screen portal
-  // (no sidebar/topbar), never the shared shell's dashboard.
-  if (user.dashboardVariant === 'receptionist') return <Navigate to="/reception" replace />;
-  // Stock/inventory-focused roles get the dedicated inventory portal — land
-  // them there directly rather than the shared dashboard they'd otherwise
-  // fall through to. Keyed off dashboardVariant (so any custom role built
-  // for this job works, not just the one literally named/id'd
-  // 'stock_manager') with the legacy role-id check kept as a fallback.
-  if (user.dashboardVariant === 'inventory_portal' || user.role === 'stock_manager') return <Navigate to="/inventory-portal" replace />;
+  const landingPath = getLandingPath(user);
+  if (landingPath !== '/') return <Navigate to={landingPath} replace />;
+
+  const salesDashboard = user.dashboardVariant === 'sales_manager'
+    && (user.permissions ?? []).some(permission => permission === 'sales:view' || permission === 'sales:create');
+
   return (
     <>
       <BirthdayBanner />
       <CustomerBirthdayBanner />
       {(() => {
-        switch (user.dashboardVariant) {
-          case 'receptionist':      return <ReceptionistDashboard />;
-          case 'sales_manager':     return <SalesManagerDashboard />;
-          default:                  return <AdminDashboard />;
-        }
+        if (salesDashboard) return <SalesManagerDashboard />;
+        if (canViewAdminDashboard(user)) return <AdminDashboard />;
+        return <Navigate to="/access-denied" replace />;
       })()}
     </>
   );
