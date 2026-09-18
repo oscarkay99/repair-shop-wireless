@@ -120,15 +120,11 @@ export function canAccessModule(user: PermCtx, module: AppModule): boolean {
     // unconditionally server-side, so the client mirrors that here too.
     case 'Attendance':
       return user.role === 'admin' || has('attendance:view') || has('attendance:manage');
-    // Admin can't carry a DB-seeded hr_*/leave:* permission either (same
-    // protected-system-role reason as Attendance above) — mirror the bypass.
+    // HR is a dedicated built-in boundary, not part of Manager oversight.
+    // Keep this role-ID gate in addition to the database permission split so
+    // stale/corrupt Manager metadata cannot expose the module or direct route.
     case 'HR':
-      return (
-        user.role === 'admin'
-        || has('leave:view') || has('leave:manage')
-        || has('hr_documents:view') || has('hr_documents:manage')
-        || has('hr_queries:view') || has('hr_queries:manage')
-      );
+      return user.role === 'admin' || user.role === 'hr';
     case 'Team':
       return has('team:view') || has('team:edit') || has('team:delete');
     case 'Settings':

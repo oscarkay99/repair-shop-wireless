@@ -17,6 +17,7 @@ const receptionist = user('receptionist', 'receptionist', ['tickets:view', 'cust
 const inventory = user('stock_manager', 'inventory_portal', ['parts:view', 'parts:edit']);
 const sales = user('sales_manager', 'sales_manager', ['sales:view', 'invoices:view']);
 const manager = user('manager', 'admin', ['dashboard:admin', 'expenses:view']);
+const managerWithStaleHrPermissions = user('manager', 'admin', ['leave:manage', 'hr_documents:view', 'hr_queries:view']);
 const finance = user('finance', 'finance', ['expenses:view', 'invoices:view', 'payments:view']);
 const hr = user('hr', 'hr', ['attendance:view', 'hr_documents:view']);
 const unknown = user('custom_unknown', 'admin', []);
@@ -40,6 +41,9 @@ assert.equal(getLandingPath(spoofedCustomPortal), '/access-denied');
 
 assert.equal(canViewAdminDashboard(technician), false);
 assert.equal(canViewAdminDashboard(manager), true);
+assert.equal(canAccessModule(manager, 'HR'), false);
+assert.equal(canAccessModule(managerWithStaleHrPermissions, 'HR'), false);
+assert.equal(canAccessModule(hr, 'HR'), true);
 assert.equal(canAccessModule(technician, 'Technician Portal'), true);
 assert.equal(canAccessModule(technician, 'Tickets'), true);
 assert.equal(canAccessModule(technician, 'Reception Portal'), false);
