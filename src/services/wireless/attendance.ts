@@ -17,11 +17,12 @@ export interface AttendanceRecord {
 // which one to embed and returns 300 Multiple Choices for every request.
 const SELECT = '*, profile:profiles!attendance_profile_id_fkey(id,name,role)';
 
-export async function getAttendance(params?: { from?: string; to?: string }): Promise<AttendanceRecord[]> {
+export async function getAttendance(params?: { from?: string; to?: string; profileId?: string }): Promise<AttendanceRecord[]> {
   if (!isSupabaseConfigured) return [];
   let query = db.from('attendance').select(SELECT).order('clock_in', { ascending: false });
   if (params?.from) query = query.gte('clock_in', params.from);
   if (params?.to) query = query.lte('clock_in', params.to);
+  if (params?.profileId) query = query.eq('profile_id', params.profileId);
   const { data, error } = await query;
   if (error) throw error;
   return (data as AttendanceRecord[] | null) ?? [];

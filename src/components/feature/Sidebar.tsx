@@ -13,6 +13,7 @@ import {
   Receipt,
   CreditCard,
   Clock,
+  Briefcase,
   X,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -29,6 +30,7 @@ const mainNav: NavItem[] = [
   { label: 'Customers',         icon: Users,           path: '/customers',   module: 'Customers' },
   { label: 'Technicians',       icon: UserCog,         path: '/technicians', module: 'Technicians' },
   { label: 'Attendance',        icon: Clock,           path: '/attendance',  module: 'Attendance' },
+  { label: 'HR',                 icon: Briefcase,       path: '/hr',          module: 'HR' },
   { label: 'Accessories Sales', icon: ShoppingBag,     path: '/sales',       module: 'Sales' },
   { label: 'Inventory',         icon: Package,         path: '/inventory',   module: 'Inventory' },
   { label: 'Invoices',          icon: FileText,        path: '/invoices',    module: 'Invoices' },

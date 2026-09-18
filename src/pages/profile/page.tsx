@@ -9,6 +9,11 @@ import { getMyProfile, updateMyProfile, changePassword as changePasswordReal } f
 import Pagination from '@/components/shared/Pagination';
 import { errMessage } from '@/utils/errors';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { useMyLeave } from '@/hooks/useLeave';
+import { useStaffDocuments } from '@/hooks/useStaffDocuments';
+import { useStaffQueries } from '@/hooks/useStaffQueries';
+import LeaveRequestForm from '@/components/shared/LeaveRequestForm';
+import QueryThread from '@/components/shared/QueryThread';
 
 const ACTIVITY_PAGE_SIZE = 15;
 
@@ -26,7 +31,12 @@ export default function ProfilePage() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'activity'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'hr' | 'activity'>('profile');
+  const { types: leaveTypes, balances: leaveBalances, requests: leaveRequests, request: requestLeave, cancel: cancelLeave } = useMyLeave();
+  const { documents: myDocuments, signedUrls: myDocumentUrls } = useStaffDocuments(user?.id);
+  const { queries: myQueries } = useStaffQueries({ mine: true });
+  const [showLeaveForm, setShowLeaveForm] = useState(false);
+  const [selectedQueryId, setSelectedQueryId] = useState<string | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLogRecord[]>([]);
   const [auditTotal, setAuditTotal] = useState(0);
   const [auditPage, setAuditPage] = useState(1);
@@ -196,10 +206,10 @@ export default function ProfilePage() {
         <div className="lg:col-span-2 space-y-4">
           {/* Tab Bar */}
           <div className="flex border border-[hsl(var(--border))] rounded-xl p-1 bg-[hsl(var(--card))] w-fit">
-            {[['profile', 'Profile Info'], ['security', 'Security'], ['activity', 'Activity Log']].map(([id, label]) => (
+            {[['profile', 'Profile Info'], ['security', 'Security'], ['hr', 'Leave & HR'], ['activity', 'Activity Log']].map(([id, label]) => (
               <button
                 key={id}
-                onClick={() => setActiveTab(id as 'profile' | 'security' | 'activity')}
+                onClick={() => setActiveTab(id as 'profile' | 'security' | 'hr' | 'activity')}
                 className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${activeTab === id ? 'text-white' : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'}`}
                 style={activeTab === id ? { background: '#EC0118' } : {}}
               >
@@ -493,6 +503,141 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* LEAVE & HR */}
+          {activeTab === 'hr' && (
+            <div className="space-y-4">
+              {/* My Leave */}
+              <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">My Leave</h3>
+                  <button onClick={() => setShowLeaveForm(true)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold text-white cursor-pointer whitespace-nowrap"
+                    style={{ background: '#EC0118' }}>
+                    Request Leave
+                  </button>
+                </div>
+                {leaveBalances.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+                    {leaveBalances.map(b => {
+                      const type = leaveTypes.find(t => t.id === b.leave_type_id);
+                      const remaining = b.entitled_days + b.carried_over_days - b.used_days;
+                      return (
+                        <div key={b.id} className="rounded-xl p-3 text-center bg-[hsl(var(--muted))]">
+                          <p className="text-lg font-bold text-[hsl(var(--foreground))]">{remaining}</p>
+                          <p className="text-[10px] text-[hsl(var(--muted-foreground))]">{type?.label ?? b.leave_type_id} left · {b.year}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {leaveRequests.length === 0 ? (
+                  <p className="text-xs text-[hsl(var(--muted-foreground))] text-center py-4">No leave requests yet</p>
+                ) : (
+                  <div className="space-y-2">
+                    {leaveRequests.map(r => {
+                      const type = leaveTypes.find(t => t.id === r.leave_type_id);
+                      const style = r.status === 'pending' ? { bg: 'rgba(245,158,11,0.12)', fg: '#B45309' }
+                        : r.status === 'approved' ? { bg: 'rgba(34,197,94,0.12)', fg: '#15803D' }
+                        : r.status === 'rejected' ? { bg: 'rgba(239,68,68,0.12)', fg: '#B91C1C' }
+                        : { bg: 'rgba(100,116,139,0.12)', fg: '#475569' };
+                      return (
+                        <div key={r.id} className="rounded-xl p-3 bg-[hsl(var(--muted))] flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-[hsl(var(--foreground))]">
+                              {type?.label ?? r.leave_type_id} · {r.days_requested} day{r.days_requested !== 1 ? 's' : ''}
+                            </p>
+                            <p className="text-[10px] text-[hsl(var(--muted-foreground))] mt-0.5">
+                              {new Date(r.start_date + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                              {' – '}
+                              {new Date(r.end_date + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold capitalize" style={{ background: style.bg, color: style.fg }}>
+                              {r.status}
+                            </span>
+                            {r.status === 'pending' && (
+                              <button onClick={() => cancelLeave(r.id)} className="text-[10px] font-semibold text-[hsl(var(--muted-foreground))] hover:text-red-500">
+                                Cancel
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* My Documents — RLS already hides confidential rows from the owner */}
+              <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-6">
+                <h3 className="text-sm font-bold text-[hsl(var(--foreground))] mb-4">My Documents</h3>
+                {myDocuments.length === 0 ? (
+                  <p className="text-xs text-[hsl(var(--muted-foreground))] text-center py-4">No documents in your folder</p>
+                ) : (
+                  <div className="space-y-2">
+                    {myDocuments.map(doc => (
+                      <div key={doc.id} className="rounded-xl p-3 bg-[hsl(var(--muted))] flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-[hsl(var(--foreground))] truncate">{doc.title || doc.file_name}</p>
+                          <p className="text-[10px] text-[hsl(var(--muted-foreground))] mt-0.5 capitalize">{doc.category}</p>
+                        </div>
+                        {myDocumentUrls[doc.file_path] && (
+                          <a href={myDocumentUrls[doc.file_path]} target="_blank" rel="noreferrer"
+                            className="text-[10px] font-semibold px-2.5 py-1 rounded-lg whitespace-nowrap flex-shrink-0"
+                            style={{ background: '#EC0118', color: 'white' }}>
+                            View
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* My Queries */}
+              <div className="bg-[hsl(var(--card))] rounded-2xl border border-[hsl(var(--border))] p-6">
+                <h3 className="text-sm font-bold text-[hsl(var(--foreground))] mb-4">My Queries</h3>
+                {selectedQueryId ? (
+                  <div className="space-y-3">
+                    <button onClick={() => setSelectedQueryId(null)} className="text-xs font-semibold text-[hsl(var(--muted-foreground))]">
+                      ← Back to all queries
+                    </button>
+                    {(() => {
+                      const q = myQueries.find(mq => mq.id === selectedQueryId);
+                      return q ? <QueryThread query={q} canManage={false} /> : null;
+                    })()}
+                  </div>
+                ) : myQueries.length === 0 ? (
+                  <p className="text-xs text-[hsl(var(--muted-foreground))] text-center py-4">No queries issued to you</p>
+                ) : (
+                  <div className="space-y-2">
+                    {myQueries.map(q => (
+                      <button key={q.id} onClick={() => setSelectedQueryId(q.id)}
+                        className="w-full text-left rounded-xl p-3 bg-[hsl(var(--muted))] flex items-center justify-between gap-3 cursor-pointer">
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-[hsl(var(--foreground))] truncate">{q.subject}</p>
+                          <p className="text-[10px] text-[hsl(var(--muted-foreground))] mt-0.5">
+                            {new Date(q.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </p>
+                        </div>
+                        {q.status === 'open' && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold whitespace-nowrap flex-shrink-0" style={{ background: 'rgba(245,158,11,0.15)', color: '#B45309' }}>
+                            Response Required
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {showLeaveForm && (
+                <LeaveRequestForm types={leaveTypes} onSave={requestLeave} onClose={() => setShowLeaveForm(false)} />
+              )}
             </div>
           )}
 

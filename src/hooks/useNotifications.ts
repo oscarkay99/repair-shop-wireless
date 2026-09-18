@@ -34,6 +34,9 @@ const TABLE_TITLE: Record<string, string> = {
   purchase_orders: 'Purchase order',
   settings: 'Settings',
   expenses: 'Expense',
+  leave_requests: 'Leave request',
+  staff_queries: 'HR query',
+  staff_query_messages: 'HR query',
 };
 
 function toNotification(row: MyNotificationRow, read: boolean): Notification {
