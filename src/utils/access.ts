@@ -47,12 +47,10 @@ const LEGACY_MODULE_VISIBILITY: Partial<Record<AppModule, string[]>> = {
   Users: ['admin'],
 };
 
-type PermCtx = Pick<AuthUser, 'role' | 'permissions' | 'scopeTicketsToTechnician' | 'dashboardVariant'> | null | undefined;
-
-const hasPermission = (user: PermCtx, permission: string) => !!user?.permissions?.includes(permission);
+type PermCtx = Pick<AuthUser, 'role' | 'permissions' | 'scopeTicketsToTechnician'> | null | undefined;
 
 export function canViewAdminDashboard(user: PermCtx): boolean {
-  return !!user && (user.role === 'admin' || user.role === 'manager' || hasPermission(user, 'dashboard:admin'));
+  return !!user && (user.role === 'admin' || user.role === 'manager');
 }
 
 /**
@@ -61,14 +59,25 @@ export function canViewAdminDashboard(user: PermCtx): boolean {
  */
 export function getLandingPath(user: PermCtx): string {
   if (!user?.role) return '/access-denied';
-  if (user.scopeTicketsToTechnician || user.role === 'technician' || user.dashboardVariant === 'technician') return '/tech-portal';
-  if (user.dashboardVariant === 'receptionist') return '/reception';
-  if (user.dashboardVariant === 'inventory_portal' || user.role === 'stock_manager' || user.role === 'inventory_manager') return '/inventory-portal';
-  if (user.role === 'hr' || user.dashboardVariant === 'hr') return '/hr';
-  if (user.role === 'finance' || user.dashboardVariant === 'finance') return '/expenses';
-  if (user.dashboardVariant === 'sales_manager' && (hasPermission(user, 'sales:view') || hasPermission(user, 'sales:create'))) return '/';
-  if (user.dashboardVariant === 'admin' && canViewAdminDashboard(user)) return '/';
-  return '/access-denied';
+  switch (user.role) {
+    case 'admin':
+    case 'manager':
+    case 'sales_manager':
+      return '/';
+    case 'technician':
+      return '/tech-portal';
+    case 'receptionist':
+      return '/reception';
+    case 'stock_manager':
+    case 'inventory_manager':
+      return '/inventory-portal';
+    case 'hr':
+      return '/hr';
+    case 'finance':
+      return '/expenses';
+    default:
+      return '/access-denied';
+  }
 }
 
 export function canAccessModule(user: PermCtx, module: AppModule): boolean {
@@ -124,11 +133,11 @@ export function canAccessModule(user: PermCtx, module: AppModule): boolean {
     case 'Audit Logs':
       return has('audit_logs:view');
     case 'Technician Portal':
-      return user.role === 'admin' || !!user.scopeTicketsToTechnician || user.role === 'technician' || user.dashboardVariant === 'technician';
+      return user.role === 'admin' || user.role === 'technician';
     case 'Reception Portal':
-      return user.role === 'admin' || user.dashboardVariant === 'receptionist';
+      return user.role === 'admin' || user.role === 'receptionist';
     case 'Inventory Portal':
-      return user.role === 'admin' || user.dashboardVariant === 'inventory_portal';
+      return user.role === 'admin' || user.role === 'stock_manager' || user.role === 'inventory_manager';
     default:
       return LEGACY_MODULE_VISIBILITY[module]?.includes(user.role) ?? false;
   }

@@ -893,7 +893,7 @@ export default function DashboardPage() {
   const landingPath = getLandingPath(user);
   if (landingPath !== '/') return <Navigate to={landingPath} replace />;
 
-  const salesDashboard = user.dashboardVariant === 'sales_manager'
+  const salesDashboard = user.role === 'sales_manager'
     && (user.permissions ?? []).some(permission => permission === 'sales:view' || permission === 'sales:create');
 
   return (

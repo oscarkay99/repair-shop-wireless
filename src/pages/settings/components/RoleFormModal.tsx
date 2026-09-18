@@ -3,9 +3,6 @@ import type { WirelessRole, RoleInput } from '@/services/wireless/roles';
 import { errMessage } from '@/utils/errors';
 
 const PERMISSION_GROUPS: { resource: string; label: string; actions: { value: string; label: string }[] }[] = [
-  { resource: 'dashboard', label: 'Dashboard', actions: [
-    { value: 'dashboard:admin', label: 'Full operational overview' },
-  ] },
   { resource: 'tickets', label: 'Tickets', actions: [
     { value: 'tickets:view', label: 'View' }, { value: 'tickets:create', label: 'Create' },
     { value: 'tickets:edit', label: 'Edit' }, { value: 'tickets:delete', label: 'Delete' },
@@ -50,17 +47,6 @@ const PERMISSION_GROUPS: { resource: string; label: string; actions: { value: st
   { resource: 'audit_logs', label: 'Audit Logs', actions: [{ value: 'audit_logs:view', label: 'View All' }] },
 ];
 
-const DASHBOARD_VARIANTS = [
-  { value: 'restricted', label: 'Restricted (no dashboard)' },
-  { value: 'admin', label: 'Admin (full overview)' },
-  { value: 'finance', label: 'Finance (expenses landing)' },
-  { value: 'sales_manager', label: 'Sales Manager' },
-  { value: 'receptionist', label: 'Receptionist' },
-  { value: 'inventory_portal', label: 'Inventory Manager (stock portal)' },
-  { value: 'technician', label: 'Technician Portal' },
-  { value: 'hr', label: 'HR' },
-];
-
 const COLOR_SWATCHES = ['#EC0118', '#F59E0B', '#06B6D4', '#8B5CF6', '#22C55E', '#3B82F6', '#EC4899', '#64748B'];
 
 interface Props {
@@ -74,8 +60,10 @@ export default function RoleFormModal({ role, onClose, onSave }: Props) {
   const [name, setName] = useState(role?.name ?? '');
   const [color, setColor] = useState(role?.color ?? COLOR_SWATCHES[0]);
   const [permissions, setPermissions] = useState<Set<string>>(new Set(role?.permissions ?? []));
-  const [scopeTickets, setScopeTickets] = useState(role?.scope_tickets_to_technician ?? false);
-  const [dashboardVariant, setDashboardVariant] = useState(role?.dashboard_variant ?? 'restricted');
+  // Custom roles never inherit a built-in dashboard or portal. Their module
+  // permissions may still be configured below, but their home remains
+  // restricted until a developer adds an explicit role-id mapping in code.
+  const dashboardVariant = 'restricted';
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -99,7 +87,7 @@ export default function RoleFormModal({ role, onClose, onSave }: Props) {
         name: name.trim(),
         color,
         permissions: [...permissions],
-        scope_tickets_to_technician: scopeTickets,
+        scope_tickets_to_technician: false,
         dashboard_variant: dashboardVariant,
       });
       onClose();
@@ -148,21 +136,10 @@ export default function RoleFormModal({ role, onClose, onSave }: Props) {
             </div>
           </div>
 
-          <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Dashboard Layout</label>
-            <select
-              value={dashboardVariant}
-              onChange={e => setDashboardVariant(e.target.value)}
-              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
-            >
-              {DASHBOARD_VARIANTS.map(v => <option key={v.value} value={v.value}>{v.label}</option>)}
-            </select>
+          <div className="rounded-lg border border-border bg-background px-3 py-2">
+            <p className="text-xs font-medium text-foreground">Restricted landing</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Built-in portals are fixed to built-in role IDs and cannot be assigned to custom roles.</p>
           </div>
-
-          <label className="flex items-center gap-2.5 py-1 cursor-pointer">
-            <input type="checkbox" checked={scopeTickets} onChange={e => setScopeTickets(e.target.checked)} className="w-4 h-4" />
-            <span className="text-xs text-foreground">Only see tickets assigned to them (technician-style scoping)</span>
-          </label>
 
           <div>
             <p className="text-xs text-muted-foreground mb-2">Permissions</p>

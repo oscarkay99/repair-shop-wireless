@@ -285,10 +285,9 @@ export default function InventoryPage() {
   // Stock manager's whole job here is "is it in stock, adjust it" — a
   // KPI-tiles-and-cards view built around that, instead of the dense admin
   // table (which also shows things stock_manager can't act on anyway).
-  // Gated on dashboardVariant (not just the literal 'stock_manager' role id)
-  // so any other role routed to the same inventory portal — e.g.
-  // inventory_manager — gets the same layout, not the dense admin table.
-  const useCardLayout = user?.dashboardVariant === 'inventory_portal' || user?.role === 'stock_manager';
+  // Role-id locked, matching the inventory portal route boundary. Editable
+  // role metadata cannot opt another role into this purpose-built view.
+  const useCardLayout = user?.role === 'stock_manager' || user?.role === 'inventory_manager';
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [tab, setTab] = useState<InventoryTab>('parts');
   const [query, setQuery] = useState('');
