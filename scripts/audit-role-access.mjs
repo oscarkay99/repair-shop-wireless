@@ -43,6 +43,7 @@ assert.equal(canViewAdminDashboard(manager), true);
 assert.equal(canAccessModule(technician, 'Technician Portal'), true);
 assert.equal(canAccessModule(technician, 'Reception Portal'), false);
 assert.equal(canAccessModule(technician, 'Inventory Portal'), false);
+assert.equal(canAccessModule(technician, 'Inventory'), false);
 assert.equal(canAccessModule(receptionist, 'Technician Portal'), false);
 assert.equal(canAccessModule(receptionist, 'Inventory Portal'), false);
 assert.equal(canAccessModule(inventory, 'Reception Portal'), false);

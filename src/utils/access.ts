@@ -94,6 +94,9 @@ export function canAccessModule(user: PermCtx, module: AppModule): boolean {
     case 'Customers':
       return has('customers:view') || has('customers:create') || has('customers:edit') || has('customers:delete');
     case 'Inventory':
+      // Technicians may read the limited parts catalog inside their assigned
+      // repair workflow, but must never enter the Inventory module itself.
+      if (user.role === 'technician') return false;
       return has('parts:edit') || has('parts:create') || has('parts:view');
     // Permission-based, not a hardcoded role id — same fix as Portal above.
     // technicians:edit alone would under-grant: reads on wireless.technicians
