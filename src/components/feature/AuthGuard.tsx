@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { canAccessModule, type AppModule } from '@/utils/access';
 import PushNotificationPrompt from '@/components/shared/PushNotificationPrompt';
@@ -11,24 +10,22 @@ interface AuthGuardProps {
 
 export default function AuthGuard({ children, requiredModule }: AuthGuardProps) {
   const { isAuthenticated, isLoading, user } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   const hasModuleAccess = requiredModule ? canAccessModule(user, requiredModule) : true;
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated && location.pathname !== '/signin') {
-      navigate('/signin', { replace: true });
-      return;
-    }
-
-    if (!isLoading && isAuthenticated && !hasModuleAccess) {
-      navigate('/access-denied', { replace: true });
-    }
-  }, [hasModuleAccess, isAuthenticated, isLoading, location.pathname, navigate]);
-
-  // Block only if we have no user at all (cold start, no stored session)
-  if (isLoading && !isAuthenticated) return null;
-  if (!isAuthenticated || !hasModuleAccess) return null;
+  if (isLoading && !isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background" role="status" aria-label="Loading Wireless">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-red-700" />
+      </div>
+    );
+  }
+  if (!isAuthenticated) {
+    return <Navigate to="/signin" replace state={{ from: location.pathname }} />;
+  }
+  if (!hasModuleAccess) {
+    return <Navigate to="/access-denied" replace />;
+  }
 
   return (
     <>

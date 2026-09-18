@@ -32,14 +32,56 @@ function scheduleReload() {
 }
 
 let realtimeStarted = false;
+let fallbackPollTimer: ReturnType<typeof setInterval> | null = null;
+
+function startFallbackPolling() {
+  if (fallbackPollTimer) return;
+  // Realtime may be unavailable because of a browser policy, proxy, or
+  // temporary network failure. Ticket updates are important, so keep the
+  // shared store fresh without allowing a WebSocket failure to crash React.
+  fallbackPollTimer = setInterval(() => {
+    reloadRepairs().catch(error => {
+      console.warn('[repairs] fallback refresh failed', error);
+    });
+  }, 45_000);
+}
+
 function startRealtimeSync() {
   if (realtimeStarted) return;
   realtimeStarted = true;
-  supabase
-    .channel('wireless-tickets-sync')
-    .on('postgres_changes', { event: '*', schema: 'wireless', table: 'tickets' }, scheduleReload)
-    .on('postgres_changes', { event: '*', schema: 'wireless', table: 'ticket_technicians' }, scheduleReload)
-    .subscribe();
+
+  // The production nginx policy currently permits HTTPS API calls but not
+  // the WSS endpoint. WebKit treats that policy rejection as a fatal thrown
+  // exception (and can unmount React), while Chromium merely logs it. Avoid
+  // constructing the socket on that host and retain near-realtime behavior
+  // through the safe polling fallback below.
+  if (typeof window !== 'undefined' && window.location.hostname === 'operations.wirelesscares.com') {
+    startFallbackPolling();
+    return;
+  }
+
+  try {
+    supabase
+      .channel('wireless-tickets-sync')
+      .on('postgres_changes', { event: '*', schema: 'wireless', table: 'tickets' }, scheduleReload)
+      .on('postgres_changes', { event: '*', schema: 'wireless', table: 'ticket_technicians' }, scheduleReload)
+      .subscribe(status => {
+        if (status === 'SUBSCRIBED') {
+          if (fallbackPollTimer) clearInterval(fallbackPollTimer);
+          fallbackPollTimer = null;
+          return;
+        }
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          startFallbackPolling();
+        }
+      });
+  } catch (error) {
+    // WebKit throws synchronously when CSP blocks the WebSocket. Chromium
+    // only logs the same violation. Never let either behavior unmount the
+    // entire React tree; polling keeps the app usable until Realtime returns.
+    console.warn('[repairs] realtime unavailable; using polling', error);
+    startFallbackPolling();
+  }
 }
 
 function setStore(next: Partial<Store>) {
