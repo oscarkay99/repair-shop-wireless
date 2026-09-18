@@ -82,11 +82,15 @@ export default function ReceptionPortalPage() {
               <button
                 onClick={handleSwitchRole}
                 disabled={switching}
-                className="h-8 px-3 flex items-center gap-1.5 rounded-lg text-xs font-medium transition-colors flex-shrink-0 disabled:opacity-50"
+                className="h-8 px-2 sm:px-3 flex items-center gap-1.5 rounded-lg text-xs font-medium transition-colors flex-shrink-0 disabled:opacity-50"
                 style={{ color: 'hsl(var(--muted-foreground))', border: '1px solid hsl(var(--border))' }}
                 title={`Switch to ${user.altRoleName ?? 'other role'}`}
+                aria-label={`Switch to ${user.altRoleName ?? 'other role'}`}
               >
-                <ArrowLeftRight className="w-3.5 h-3.5" /> {switching ? 'Switching…' : (user.altRoleName ?? 'Switch Role')}
+                <ArrowLeftRight className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">
+                  {switching ? 'Switching…' : (user.altRoleName ?? 'Switch Role')}
+                </span>
               </button>
             )}
             <button

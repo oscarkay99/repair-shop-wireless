@@ -419,12 +419,15 @@ export default function TopBar({ title = 'Dashboard', subtitle, onMenuClick }: T
             <button
               onClick={handleSwitchRole}
               disabled={switchingRole}
-              className="hidden sm:flex items-center gap-1.5 px-3 h-8 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+              className="flex items-center gap-1.5 px-2 sm:px-3 h-8 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
               style={{ color: 'hsl(var(--muted-foreground))', border: '1px solid hsl(var(--border))' }}
               title={`Switch to ${user.altRoleName ?? 'other role'}`}
+              aria-label={`Switch to ${user.altRoleName ?? 'other role'}`}
             >
               <ArrowLeftRight className="w-3.5 h-3.5" />
-              {switchingRole ? 'Switching…' : (user.altRoleName ?? 'Switch Role')}
+              <span className="hidden sm:inline">
+                {switchingRole ? 'Switching…' : (user.altRoleName ?? 'Switch Role')}
+              </span>
             </button>
           )}
 
