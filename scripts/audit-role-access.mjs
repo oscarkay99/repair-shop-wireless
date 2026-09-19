@@ -18,6 +18,7 @@ const inventory = user('stock_manager', 'inventory_portal', ['parts:view', 'part
 const sales = user('sales_manager', 'sales_manager', ['sales:view', 'invoices:view']);
 const manager = user('manager', 'admin', ['dashboard:admin', 'expenses:view']);
 const managerWithStaleHrPermissions = user('manager', 'admin', ['leave:manage', 'hr_documents:view', 'hr_queries:view']);
+const managerWithStaleAttendancePermission = user('manager', 'admin', ['attendance:manage']);
 const finance = user('finance', 'finance', ['expenses:view', 'invoices:view', 'payments:view']);
 const hr = user('hr', 'hr', ['attendance:view', 'hr_documents:view']);
 const unknown = user('custom_unknown', 'admin', []);
@@ -44,6 +45,10 @@ assert.equal(canViewAdminDashboard(manager), true);
 assert.equal(canAccessModule(manager, 'HR'), false);
 assert.equal(canAccessModule(managerWithStaleHrPermissions, 'HR'), false);
 assert.equal(canAccessModule(hr, 'HR'), true);
+assert.equal(canAccessModule(manager, 'Attendance'), false);
+assert.equal(canAccessModule(managerWithStaleAttendancePermission, 'Attendance'), false);
+assert.equal(canAccessModule(hr, 'Attendance'), true);
+assert.equal(canAccessModule(technician, 'Attendance'), false);
 assert.equal(canAccessModule(technician, 'Technician Portal'), true);
 assert.equal(canAccessModule(technician, 'Tickets'), true);
 assert.equal(canAccessModule(technician, 'Reception Portal'), false);

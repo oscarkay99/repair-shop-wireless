@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import AdminLayout from '@/components/feature/AdminLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { roleLabels, roleColors } from '@/mocks/users';
@@ -29,9 +29,12 @@ const ALL_MODULES: AppModule[] = [
 
 export default function ProfilePage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, logout } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'hr' | 'activity'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'hr' | 'activity'>(
+    searchParams.get('tab') === 'hr' ? 'hr' : 'profile',
+  );
   const { types: leaveTypes, balances: leaveBalances, requests: leaveRequests, request: requestLeave, cancel: cancelLeave } = useMyLeave();
   const { documents: myDocuments, signedUrls: myDocumentUrls } = useStaffDocuments(user?.id);
   const { queries: myQueries } = useStaffQueries({ mine: true });
@@ -206,7 +209,7 @@ export default function ProfilePage() {
         <div className="lg:col-span-2 space-y-4">
           {/* Tab Bar */}
           <div className="flex border border-[hsl(var(--border))] rounded-xl p-1 bg-[hsl(var(--card))] w-fit">
-            {[['profile', 'Profile Info'], ['security', 'Security'], ['hr', 'Leave & HR'], ['activity', 'Activity Log']].map(([id, label]) => (
+            {[['profile', 'Profile Info'], ['security', 'Security'], ['hr', 'My Leave & Documents'], ['activity', 'Activity Log']].map(([id, label]) => (
               <button
                 key={id}
                 onClick={() => setActiveTab(id as 'profile' | 'security' | 'hr' | 'activity')}

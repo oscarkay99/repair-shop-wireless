@@ -7,7 +7,9 @@ export interface AttendanceRecord {
   clock_in: string;
   clock_out: string | null;
   notes: string | null;
+  correction_reason: string | null;
   recorded_by?: string | null;
+  recorder?: { id: string; name: string; role: string } | null;
   created_at: string;
   updated_at: string;
 }
@@ -15,11 +17,12 @@ export interface AttendanceRecord {
 // attendance has two FKs into profiles (profile_id and recorded_by) — the
 // relationship must be named explicitly or PostgREST can't disambiguate
 // which one to embed and returns 300 Multiple Choices for every request.
-const SELECT = '*, profile:profiles!attendance_profile_id_fkey(id,name,role)';
+const SELECT = '*, profile:profiles!attendance_profile_id_fkey!inner(id,name,role,status), recorder:profiles!attendance_recorded_by_fkey(id,name,role)';
 
 export async function getAttendance(params?: { from?: string; to?: string; profileId?: string }): Promise<AttendanceRecord[]> {
   if (!isSupabaseConfigured) return [];
   let query = db.from('attendance').select(SELECT).order('clock_in', { ascending: false });
+  query = query.eq('profile.role', 'technician');
   if (params?.from) query = query.gte('clock_in', params.from);
   if (params?.to) query = query.lte('clock_in', params.to);
   if (params?.profileId) query = query.eq('profile_id', params.profileId);
@@ -33,7 +36,7 @@ export async function getAttendance(params?: { from?: string; to?: string; profi
 // of whichever history range filter is selected.
 export async function getOpenSessions(): Promise<AttendanceRecord[]> {
   if (!isSupabaseConfigured) return [];
-  const { data, error } = await db.from('attendance').select(SELECT).is('clock_out', null);
+  const { data, error } = await db.from('attendance').select(SELECT).eq('profile.role', 'technician').is('clock_out', null);
   if (error) throw error;
   return (data as AttendanceRecord[] | null) ?? [];
 }
@@ -78,6 +81,7 @@ export async function createAttendanceRecord(input: {
   clockIn: string;
   clockOut?: string | null;
   notes?: string;
+  correctionReason: string;
 }): Promise<AttendanceRecord> {
   if (!isSupabaseConfigured) throw new Error('Not configured');
   const { data, error } = await db
@@ -87,6 +91,7 @@ export async function createAttendanceRecord(input: {
       clock_in: input.clockIn,
       clock_out: input.clockOut ?? null,
       notes: input.notes || null,
+      correction_reason: input.correctionReason.trim(),
     })
     .select(SELECT)
     .single();
@@ -98,12 +103,14 @@ export async function updateAttendanceRecord(id: string, changes: {
   clockIn?: string;
   clockOut?: string | null;
   notes?: string;
+  correctionReason: string;
 }): Promise<AttendanceRecord> {
   if (!isSupabaseConfigured) throw new Error('Not configured');
   const patch: Record<string, unknown> = {};
   if (changes.clockIn !== undefined) patch.clock_in = changes.clockIn;
   if (changes.clockOut !== undefined) patch.clock_out = changes.clockOut;
   if (changes.notes !== undefined) patch.notes = changes.notes || null;
+  patch.correction_reason = changes.correctionReason.trim();
   const { data, error } = await db
     .from('attendance')
     .update(patch)

@@ -16,13 +16,14 @@ export interface WirelessProfile {
   role: string;
   avatar: string;
   last_login: string | null;
+  status: string;
 }
 
 export async function getWirelessUsers(): Promise<WirelessProfile[]> {
   if (!isSupabaseConfigured) return [];
   const { data, error } = await db
     .from('profiles')
-    .select('id, name, email, username, role, avatar, last_login')
+    .select('id, name, email, username, role, avatar, last_login, status')
     .order('name');
   if (error) throw error;
   return (data ?? []) as WirelessProfile[];

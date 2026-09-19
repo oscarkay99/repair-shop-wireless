@@ -29,9 +29,9 @@ export function useAttendance(params?: { from?: string; to?: string }) {
 
   useEffect(() => { refresh(); }, [refresh]);
 
-  // Only reachable by whoever has attendance:manage (admin/manager) —
-  // staff no longer clock themselves in/out, see
-  // 20260826040000_attendance_manager_only.sql.
+  // The database accepts these quick actions only when profileId is the
+  // signed-in Technician's own profile and replaces browser timestamps with
+  // server time. HR uses the correction methods below, never these actions.
   const clockInStaff = async (profileId: string) => {
     try {
       const created = await clockInSvc(profileId);
@@ -56,7 +56,7 @@ export function useAttendance(params?: { from?: string; to?: string }) {
     }
   };
 
-  const add = async (input: { profileId: string; clockIn: string; clockOut?: string | null; notes?: string }) => {
+  const add = async (input: { profileId: string; clockIn: string; clockOut?: string | null; notes?: string; correctionReason: string }) => {
     try {
       const created = await createAttendanceRecord(input);
       setRecords(prev => [created, ...prev]);
@@ -69,7 +69,7 @@ export function useAttendance(params?: { from?: string; to?: string }) {
     }
   };
 
-  const update = async (id: string, changes: { clockIn?: string; clockOut?: string | null; notes?: string }) => {
+  const update = async (id: string, changes: { clockIn?: string; clockOut?: string | null; notes?: string; correctionReason: string }) => {
     try {
       const updated = await updateAttendanceRecord(id, changes);
       setRecords(prev => prev.map(r => r.id === id ? updated : r));

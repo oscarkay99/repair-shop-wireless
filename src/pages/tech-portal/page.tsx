@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, Clock, Calendar, ChevronRight, AlertTriangle } from 'lucide-react';
+import { LogOut, Clock, Calendar, ChevronRight, AlertTriangle, CalendarDays } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTechnicians } from '@/hooks/useTechnicians';
 import { useRepairs } from '@/hooks/useRepairs';
@@ -12,6 +12,9 @@ import { isCurrentlyUnavailable } from '@/utils/technicianAvailability';
 import BirthdayBanner from '@/components/shared/BirthdayBanner';
 import CustomerBirthdayBanner from '@/components/shared/CustomerBirthdayBanner';
 import type { RepairStatus } from '@/types/repair';
+import { useAttendance } from '@/hooks/useAttendance';
+import { useMyLeave } from '@/hooks/useLeave';
+import LeaveRequestForm from '@/components/shared/LeaveRequestForm';
 
 const QUEUE_STATUSES: RepairStatus[] = ['received', 'diagnosis_paid', 'diagnosing', 'awaiting_approval', 'parts_pending'];
 const DONE_STATUSES: RepairStatus[] = ['ready', 'completed', 'diagnosis_only_closed'];
@@ -33,7 +36,12 @@ export default function TechPortalPage() {
   const [showUnavailablePicker, setShowUnavailablePicker] = useState(false);
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
+  const [showLeaveForm, setShowLeaveForm] = useState(false);
+  const [clocking, setClocking] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
+  const attendanceFrom = useMemo(() => new Date(Date.now() - 30 * 86_400_000).toISOString(), []);
+  const { records: attendanceRecords, openSessions, loading: attendanceLoading, clockInStaff, clockOutStaff } = useAttendance({ from: attendanceFrom });
+  const { types: leaveTypes, requests: leaveRequests, request: requestLeave } = useMyLeave();
 
   const myTech = useMemo(() => technicians.find(t => t.profile_id === user?.id), [technicians, user]);
   const unavailableNow = myTech ? isCurrentlyUnavailable(myTech) : false;
@@ -76,10 +84,27 @@ export default function TechPortalPage() {
   const openRepairs   = [...activeRepairs, ...queueRepairs];
 
   const selected = selectedId ? repairs.find(r => r.id === selectedId) ?? null : null;
+  const myAttendance = useMemo(
+    () => attendanceRecords.filter(record => record.profile_id === user?.id),
+    [attendanceRecords, user?.id],
+  );
+  const myOpenSession = openSessions.find(record => record.profile_id === user?.id) ?? null;
+  const latestLeaveRequest = leaveRequests[0] ?? null;
 
   const handleSignOut = async () => {
     await logout();
     navigate('/signin', { replace: true });
+  };
+
+  const handleClock = async () => {
+    if (!user) return;
+    setClocking(true);
+    try {
+      if (myOpenSession) await clockOutStaff(myOpenSession.id);
+      else await clockInStaff(user.id);
+    } finally {
+      setClocking(false);
+    }
   };
 
   const returnToWork = () => {
@@ -247,6 +272,78 @@ export default function TechPortalPage() {
             )}
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="rounded-2xl border p-5" style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4" style={{ color: myOpenSession ? '#22c55e' : 'hsl(var(--muted-foreground))' }} />
+                    <p className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>My Attendance</p>
+                  </div>
+                  <p className="text-xs mt-2" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                    {attendanceLoading
+                      ? 'Checking your status…'
+                      : myOpenSession
+                      ? `Clocked in at ${new Date(myOpenSession.clock_in).toLocaleTimeString('en-GH', { hour: '2-digit', minute: '2-digit' })}`
+                      : 'You are currently clocked out'}
+                  </p>
+                  <p className="text-[10px] mt-1" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                    {myAttendance.length} session{myAttendance.length === 1 ? '' : 's'} in the last 30 days
+                  </p>
+                </div>
+                <button onClick={handleClock} disabled={clocking || attendanceLoading}
+                  className="h-9 px-3 rounded-lg text-xs font-bold text-white disabled:opacity-50 flex-shrink-0"
+                  style={{ background: myOpenSession ? '#ef4444' : '#22c55e' }}>
+                  {clocking ? '…' : myOpenSession ? 'Clock Out' : 'Clock In'}
+                </button>
+              </div>
+              {myAttendance.length > 0 && (
+                <div className="mt-4 pt-3 space-y-2" style={{ borderTop: '1px solid hsl(var(--border))' }}>
+                  {myAttendance.slice(0, 3).map(record => (
+                    <div key={record.id} className="flex items-center justify-between gap-3 text-[10px]">
+                      <span style={{ color: 'hsl(var(--muted-foreground))' }}>
+                        {new Date(record.clock_in).toLocaleDateString('en-GH', { month: 'short', day: 'numeric' })}
+                      </span>
+                      <span className="font-semibold" style={{ color: 'hsl(var(--foreground))' }}>
+                        {new Date(record.clock_in).toLocaleTimeString('en-GH', { hour: '2-digit', minute: '2-digit' })}
+                        {' – '}
+                        {record.clock_out
+                          ? new Date(record.clock_out).toLocaleTimeString('en-GH', { hour: '2-digit', minute: '2-digit' })
+                          : 'On shift'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-2xl border p-5" style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <CalendarDays className="w-4 h-4" style={{ color: 'hsl(var(--primary))' }} />
+                    <p className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>My Leave</p>
+                  </div>
+                  {latestLeaveRequest ? (
+                    <p className="text-xs mt-2 capitalize" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                      Latest request: <span className="font-semibold">{latestLeaveRequest.status}</span>
+                    </p>
+                  ) : (
+                    <p className="text-xs mt-2" style={{ color: 'hsl(var(--muted-foreground))' }}>No leave requests yet</p>
+                  )}
+                  <Link to="/profile?tab=hr" className="inline-block text-[10px] font-semibold mt-1" style={{ color: 'hsl(var(--primary))' }}>
+                    View my leave history
+                  </Link>
+                </div>
+                <button onClick={() => setShowLeaveForm(true)}
+                  className="h-9 px-3 rounded-lg text-xs font-bold text-white flex-shrink-0"
+                  style={{ background: 'hsl(var(--primary))' }}>
+                  Request Leave
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* Queue */}
           <div className="rounded-2xl border overflow-hidden" style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
             {loading ? (
@@ -352,6 +449,10 @@ export default function TechPortalPage() {
             />
           </div>
         </div>
+      )}
+
+      {showLeaveForm && (
+        <LeaveRequestForm types={leaveTypes} onSave={requestLeave} onClose={() => setShowLeaveForm(false)} />
       )}
     </div>
   );

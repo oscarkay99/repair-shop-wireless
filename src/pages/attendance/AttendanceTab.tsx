@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Pencil, Trash2, X, Clock } from 'lucide-react';
+import { Plus, Pencil, X, Clock } from 'lucide-react';
 import { useAttendance } from '@/hooks/useAttendance';
 import type { AttendanceRecord } from '@/services/wireless/attendance';
 import { getWirelessUsers, type WirelessProfile } from '@/services/wireless/users';
@@ -44,20 +44,21 @@ function toLocalInput(iso: string): string {
 function AttendanceModal({ staff, record, onSave, onClose }: {
   staff: WirelessProfile[];
   record?: AttendanceRecord | null;
-  onSave: (input: { profileId: string; clockIn: string; clockOut?: string | null; notes?: string }) => Promise<unknown>;
+  onSave: (input: { profileId: string; clockIn: string; clockOut?: string | null; notes?: string; correctionReason: string }) => Promise<unknown>;
   onClose: () => void;
 }) {
   const [profileId, setProfileId] = useState(record?.profile_id ?? staff[0]?.id ?? '');
   const [clockIn, setClockIn] = useState(record ? toLocalInput(record.clock_in) : toLocalInput(new Date().toISOString()));
   const [clockOut, setClockOut] = useState(record?.clock_out ? toLocalInput(record.clock_out) : '');
   const [notes, setNotes] = useState(record?.notes ?? '');
+  const [correctionReason, setCorrectionReason] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!profileId || !clockIn) { setError('Staff member and clock in time are required'); return; }
+    if (!profileId || !clockIn || !correctionReason.trim()) { setError('Technician, clock in time, and correction reason are required'); return; }
     setSaving(true);
     try {
       await onSave({
@@ -65,6 +66,7 @@ function AttendanceModal({ staff, record, onSave, onClose }: {
         clockIn: new Date(clockIn).toISOString(),
         clockOut: clockOut ? new Date(clockOut).toISOString() : null,
         notes: notes.trim(),
+        correctionReason: correctionReason.trim(),
       });
       onClose();
     } catch (err) {
@@ -82,14 +84,14 @@ function AttendanceModal({ staff, record, onSave, onClose }: {
         style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
         onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'hsl(var(--border))' }}>
-          <p className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>{record ? 'Edit Attendance' : 'Add Attendance Record'}</p>
+          <p className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>{record ? 'Correct Attendance Record' : 'Add Manual Attendance Record'}</p>
           <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-lg" style={{ background: 'hsl(var(--muted))' }}>
             <X className="w-3.5 h-3.5" style={{ color: 'hsl(var(--muted-foreground))' }} />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="px-5 py-4 space-y-3">
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>Staff Member *</label>
+            <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>Technician *</label>
             <select required value={profileId} onChange={e => setProfileId(e.target.value)} disabled={!!record}
               className="w-full h-9 px-3 rounded-lg text-sm outline-none disabled:opacity-60"
               style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}>
@@ -117,12 +119,20 @@ function AttendanceModal({ staff, record, onSave, onClose }: {
               style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
           </div>
 
+          <div>
+            <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>Correction Reason *</label>
+            <textarea required value={correctionReason} onChange={e => setCorrectionReason(e.target.value)} rows={2}
+              placeholder="Explain why this manual record or correction is needed"
+              className="w-full px-3 py-2 rounded-lg text-sm outline-none resize-none"
+              style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
+          </div>
+
           {error && <p className="text-xs rounded-lg px-3 py-2" style={{ background: 'rgba(239,68,68,0.1)', color: '#dc2626' }}>{error}</p>}
 
           <div className="flex gap-2 pt-1">
             <button type="button" onClick={onClose} className="flex-1 h-9 rounded-lg text-xs font-semibold"
               style={{ background: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' }}>Cancel</button>
-            <button type="submit" disabled={saving} className="flex-1 h-9 rounded-lg text-xs font-semibold text-white disabled:opacity-60"
+            <button type="submit" disabled={saving || !correctionReason.trim()} className="flex-1 h-9 rounded-lg text-xs font-semibold text-white disabled:opacity-60"
               style={{ background: 'hsl(var(--primary))' }}>{saving ? 'Saving…' : 'Save'}</button>
           </div>
         </form>
@@ -137,14 +147,17 @@ function AttendanceModal({ staff, record, onSave, onClose }: {
 export default function AttendanceTab({ canManage }: Props) {
   const [range, setRange] = useState<RangeFilter>('Today');
   const from = useMemo(() => rangeFrom(range), [range]);
-  const { records, openSessions, loading, add, update, remove, clockInStaff, clockOutStaff } = useAttendance({ from });
+  const { records, openSessions, loading, add, update } = useAttendance({ from });
   const [staff, setStaff] = useState<WirelessProfile[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<AttendanceRecord | null>(null);
   const [page, setPage] = useState(1);
-  const [clockingId, setClockingId] = useState<string | null>(null);
 
-  useEffect(() => { getWirelessUsers().then(setStaff).catch(() => setStaff([])); }, []);
+  useEffect(() => {
+    getWirelessUsers()
+      .then(rows => setStaff(rows.filter(profile => profile.role === 'technician' && profile.status === 'active')))
+      .catch(() => setStaff([]));
+  }, []);
   useEffect(() => { setPage(1); }, [range]);
 
   const totalHoursInRange = records.reduce((s, r) => s + (hoursBetween(r.clock_in, r.clock_out) ?? 0), 0);
@@ -152,15 +165,6 @@ export default function AttendanceTab({ canManage }: Props) {
   const pagedRecords = useMemo(() =>
     records.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
   [records, page]);
-
-  const handleQuickClockIn = async (profileId: string) => {
-    setClockingId(profileId);
-    try { await clockInStaff(profileId); } finally { setClockingId(null); }
-  };
-  const handleQuickClockOut = async (recordId: string) => {
-    setClockingId(recordId);
-    try { await clockOutStaff(recordId); } finally { setClockingId(null); }
-  };
 
   return (
     <div className="space-y-5">
@@ -179,46 +183,9 @@ export default function AttendanceTab({ canManage }: Props) {
         ))}
       </div>
 
-      {/* Quick Clock — staff no longer self-clock (20260826040000_attendance_manager_only.sql);
-          admin/manager clock everyone in and out from here. */}
-      {canManage && (
-        <div className="rounded-xl border p-4" style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
-          <p className="text-[10px] font-semibold uppercase tracking-wider mb-3" style={{ color: 'hsl(var(--muted-foreground))' }}>Quick Clock</p>
-          {staff.length === 0 ? (
-            <p className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No staff found.</p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-              {staff.map(s => {
-                const open = openSessions.find(r => r.profile_id === s.id);
-                const busy = clockingId === s.id || clockingId === open?.id;
-                return (
-                  <div key={s.id} className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg"
-                    style={{ background: 'hsl(var(--muted))' }}>
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
-                        style={{ background: avatarColor(s.name) }}>
-                        {initials(s.name)}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs font-semibold truncate" style={{ color: 'hsl(var(--foreground))' }}>{s.name}</p>
-                        <p className="text-[10px] capitalize truncate" style={{ color: 'hsl(var(--muted-foreground))' }}>{s.role?.replace(/_/g, ' ')}</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => open ? handleQuickClockOut(open.id) : handleQuickClockIn(s.id)}
-                      disabled={busy}
-                      className="h-7 px-2.5 rounded-md text-[10px] font-bold text-white disabled:opacity-50 flex-shrink-0"
-                      style={{ background: open ? '#ef4444' : '#22c55e' }}
-                    >
-                      {busy ? '…' : open ? 'Clock Out' : 'Clock In'}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
+      <p className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>
+        Attendance includes active technicians only. Technicians clock themselves in and out; manual entries below are audited corrections.
+      </p>
 
       {/* Range filter + add */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -256,7 +223,7 @@ export default function AttendanceTab({ canManage }: Props) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-left" style={{ borderColor: 'hsl(var(--border))' }}>
-                {['Staff Member', 'Role', 'Clock In', 'Clock Out', 'Hours', 'Notes', ''].map(h => (
+                {['Technician', 'Role', 'Clock In', 'Clock Out', 'Hours', 'Notes / Correction', ''].map(h => (
                   <th key={h} className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'hsl(var(--muted-foreground))' }}>{h}</th>
                 ))}
               </tr>
@@ -281,17 +248,16 @@ export default function AttendanceTab({ canManage }: Props) {
                       {r.clock_out ? fmtDateTime(r.clock_out) : <span className="font-semibold" style={{ color: 'hsl(142 60% 45%)' }}>On shift</span>}
                     </td>
                     <td className="px-4 py-2.5" style={{ color: 'hsl(var(--foreground))' }}>{hrs !== null ? `${hrs.toFixed(1)}h` : '—'}</td>
-                    <td className="px-4 py-2.5 max-w-[16rem] truncate" style={{ color: 'hsl(var(--muted-foreground))' }}>{r.notes || '—'}</td>
+                    <td className="px-4 py-2.5 max-w-[16rem]" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                      <p className="truncate">{r.notes || '—'}</p>
+                      {r.correction_reason && <p className="text-[10px] truncate mt-0.5" title={r.correction_reason}>Correction: {r.correction_reason}</p>}
+                    </td>
                     <td className="px-4 py-2.5">
                       {canManage && (
                         <div className="flex items-center gap-1.5 justify-end">
                           <button onClick={() => setEditing(r)} className="w-7 h-7 flex items-center justify-center rounded-lg"
                             style={{ background: 'hsl(var(--muted))' }} title="Edit">
                             <Pencil className="w-3.5 h-3.5" style={{ color: 'hsl(var(--muted-foreground))' }} />
-                          </button>
-                          <button onClick={() => { if (window.confirm('Delete this attendance record?')) remove(r.id); }}
-                            className="w-7 h-7 flex items-center justify-center rounded-lg" style={{ background: 'hsl(var(--muted))' }} title="Delete">
-                            <Trash2 className="w-3.5 h-3.5" style={{ color: 'hsl(var(--primary))' }} />
                           </button>
                         </div>
                       )}
@@ -318,7 +284,7 @@ export default function AttendanceTab({ canManage }: Props) {
         <AttendanceModal
           staff={staff}
           record={editing}
-          onSave={input => update(editing.id, { clockIn: input.clockIn, clockOut: input.clockOut, notes: input.notes })}
+          onSave={input => update(editing.id, { clockIn: input.clockIn, clockOut: input.clockOut, notes: input.notes, correctionReason: input.correctionReason })}
           onClose={() => setEditing(null)}
         />
       )}

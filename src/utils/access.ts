@@ -119,7 +119,7 @@ export function canAccessModule(user: PermCtx, module: AppModule): boolean {
     // update to it) — wireless.has_permission() already bypasses is_admin()
     // unconditionally server-side, so the client mirrors that here too.
     case 'Attendance':
-      return user.role === 'admin' || has('attendance:view') || has('attendance:manage');
+      return user.role === 'admin' || user.role === 'hr';
     // HR is a dedicated built-in boundary, not part of Manager oversight.
     // Keep this role-ID gate in addition to the database permission split so
     // stale/corrupt Manager metadata cannot expose the module or direct route.
