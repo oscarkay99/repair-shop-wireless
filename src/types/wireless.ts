@@ -120,6 +120,7 @@ export interface Invoice {
 
 export interface Payment {
   id: string;
+  receipt_number?: string;
   amount: number;
   method: PaymentMethod;
   invoice_id?: string;
@@ -129,6 +130,12 @@ export interface Payment {
   customer_id?: string;
   customer_name: string;
   reference?: string;
+  provider?: 'paystack' | 'manual' | string;
+  provider_reference?: string;
+  provider_transaction_id?: string;
+  currency?: string;
+  channel?: string;
+  paid_at?: string;
   notes?: string;
   recorded_by?: string;
   created_at: string;

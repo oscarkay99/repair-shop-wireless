@@ -96,6 +96,7 @@ export async function buildPaymentReceiptPdf({ payment, settings, invoiceContext
 
   const metaX = 126, metaW = RIGHT_X - 126, metaTop = 48;
   const metaRows: { label: string; value: string }[] = [
+    ...(payment.receipt_number ? [{ label: 'Receipt', value: payment.receipt_number }] : []),
     { label: 'Date', value: fmtDate(payment.created_at) },
     ...(payment.reference ? [{ label: 'Reference', value: payment.reference }] : []),
   ];
@@ -180,6 +181,9 @@ export async function buildPaymentReceiptPdf({ payment, settings, invoiceContext
 
 export async function downloadPaymentReceiptPdf(opts: PaymentReceiptPdfOptions) {
   const doc = await buildPaymentReceiptPdf(opts);
-  const label = opts.payment.invoice?.invoice_number ?? opts.payment.ticket?.ticket_number ?? opts.payment.id.slice(0, 8);
+  const label = opts.payment.receipt_number
+    ?? opts.payment.invoice?.invoice_number
+    ?? opts.payment.ticket?.ticket_number
+    ?? opts.payment.id.slice(0, 8);
   doc.save(`${label}-payment-${new Date(opts.payment.created_at).toISOString().slice(0, 10)}.pdf`);
 }

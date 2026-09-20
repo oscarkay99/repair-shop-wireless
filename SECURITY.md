@@ -88,6 +88,17 @@ This system sits behind nginx → Kong → PostgREST/GoTrue. Two headers matter 
 
 ## Known gaps (not fixed, and why)
 
+### Paystack staging implementation (not live)
+
+The `testing` branch contains a server-authoritative Paystack implementation:
+test/live key separation, a payment-attempt state machine, server-calculated
+invoice amounts, signed webhook verification, server-to-server transaction
+verification, unique gateway references, idempotency keys, invoice row locks,
+duplicate-webhook protection, and scheduled reconciliation. The portal payment
+UI is fail-closed behind `VITE_PAYMENTS_ENABLED=false`. It is not considered
+production-enabled until the isolated staging prerequisites and test matrix in
+`docs/paystack-staging-runbook.md` have been completed.
+
 - **CSP needs live-browser confirmation.** Shipped and verified live via curl (headers present, both sites return 200), but resource-loading enforcement only happens client-side — a real browser pass (login, viewing ticket photos, the Delivery page's Google Maps embed, Google OAuth) is still needed to be fully sure nothing subtle broke.
 - **Real MFA isn't built**, just honestly labeled as unavailable instead of fake. See Authentication above.
 - **Database authorization tests are still manual.** `npm run audit:roles` now regression-tests the client landing/portal matrix, but there is not yet an isolated Postgres test environment that executes each RLS policy as every role.
