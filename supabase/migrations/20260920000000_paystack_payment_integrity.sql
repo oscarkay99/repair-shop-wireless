@@ -242,10 +242,14 @@ begin
   v_info := wireless.get_public_invoice_payment_info(p_public_token, p_ticket_number, p_phone, p_request_ip);
   if not coalesce((v_info->>'has_invoice')::boolean, false) then raise exception 'No invoice is available for this ticket.'; end if;
 
-  select i, t into v_invoice, v_ticket
-  from wireless.invoices i join wireless.tickets t on t.id = i.ticket_id
+  select i.* into v_invoice
+  from wireless.invoices i
   where i.invoice_number = v_info->>'invoice_number'
-  for update of i;
+  for update;
+
+  select t.* into v_ticket
+  from wireless.tickets t
+  where t.id = v_invoice.ticket_id;
 
   v_balance := greatest(0, round((v_invoice.total - v_invoice.amount_paid) * 100)::bigint);
   if v_balance <= 0 then raise exception 'This invoice is already paid in full.'; end if;

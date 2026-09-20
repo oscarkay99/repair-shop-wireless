@@ -1,0 +1,51 @@
+_format_version: "1.1"
+
+consumers:
+  - username: anon
+    keyauth_credentials:
+      - key: __ANON_KEY__
+  - username: service_role
+    keyauth_credentials:
+      - key: __SERVICE_ROLE_KEY__
+
+acls:
+  - consumer: anon
+    group: anon
+  - consumer: service_role
+    group: admin
+
+services:
+  - name: rest-v1
+    url: http://rest:3000/
+    routes:
+      - name: rest-v1-all
+        strip_path: true
+        paths: [/rest/v1/]
+    plugins:
+      - name: cors
+      - name: key-auth
+        config:
+          hide_credentials: true
+      - name: acl
+        config:
+          hide_groups_header: true
+          allow: [admin, anon]
+
+  # Function authentication is enforced by each function. The Paystack webhook
+  # cannot send a Supabase API key and instead uses HMAC plus source-IP checks.
+  - name: functions-v1
+    url: http://functions:9000/
+    routes:
+      - name: functions-v1-all
+        strip_path: true
+        paths: [/functions/v1/]
+    plugins:
+      - name: cors
+      - name: rate-limiting
+        config:
+          minute: 120
+          limit_by: ip
+          policy: local
+          fault_tolerant: true
+          hide_client_headers: false
+

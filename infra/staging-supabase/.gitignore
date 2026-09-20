@@ -1,0 +1,5 @@
+.env
+kong.yml
+functions/
+migrations/
+

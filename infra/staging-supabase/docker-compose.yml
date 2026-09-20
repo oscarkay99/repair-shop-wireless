@@ -1,0 +1,115 @@
+name: wireless-staging
+
+networks:
+  staging-net:
+    driver: bridge
+
+volumes:
+  db-data:
+  deno-cache:
+
+services:
+  db:
+    image: supabase/postgres:15.8.1.060
+    container_name: wireless-staging-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_HOST: /var/run/postgresql
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: postgres
+      POSTGRES_PORT: 5432
+      JWT_SECRET: ${JWT_SECRET}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks: [staging-net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    mem_limit: 640m
+    cpus: 0.75
+
+  rest:
+    image: postgrest/postgrest:v12.2.0
+    container_name: wireless-staging-rest
+    restart: unless-stopped
+    environment:
+      PGRST_DB_URI: postgres://authenticator:${POSTGRES_PASSWORD}@db:5432/postgres
+      PGRST_DB_SCHEMAS: public,storage,graphql_public,wireless
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+      PGRST_APP_SETTINGS_JWT_SECRET: ${JWT_SECRET}
+      PGRST_APP_SETTINGS_JWT_EXP: 3600
+    networks: [staging-net]
+    depends_on:
+      db:
+        condition: service_healthy
+    mem_limit: 160m
+    cpus: 0.35
+
+  functions:
+    image: supabase/edge-runtime:v1.76.2
+    container_name: wireless-staging-functions
+    restart: unless-stopped
+    command: ["start", "--main-service", "/home/deno/functions/main"]
+    volumes:
+      - ./functions:/home/deno/functions:ro
+      - deno-cache:/root/.cache/deno
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
+      VERIFY_JWT: "false"
+      SUPABASE_URL: http://kong:8000
+      SUPABASE_PUBLIC_URL: https://api.wirelesscares.com/staging
+      SUPABASE_ANON_KEY: ${ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+      SUPABASE_DB_URL: postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/postgres
+      PAYSTACK_SECRET_KEY: ${PAYSTACK_SECRET_KEY:-}
+      PAYSTACK_ENVIRONMENT: test
+      CUSTOMER_APP_ORIGINS: https://oscarkay99.github.io,http://localhost:5173
+      PAYSTACK_CALLBACK_URL: https://oscarkay99.github.io/Wireless/customer-staging/?payment_return=1
+      PAYSTACK_RECONCILE_SECRET: ${PAYSTACK_RECONCILE_SECRET}
+      PAYSTACK_WEBHOOK_IP_ALLOWLIST: 52.31.139.75,52.49.173.169,52.214.14.220
+    networks: [staging-net]
+    depends_on:
+      rest:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 1 bash -c '</dev/tcp/127.0.0.1/9000'"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+    mem_limit: 320m
+    cpus: 0.50
+
+  kong:
+    image: kong:2.8.1
+    container_name: wireless-staging-kong
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8100:8000"
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /var/lib/kong/kong.yml
+      KONG_DNS_ORDER: LAST,A,CNAME
+      KONG_PLUGINS: request-transformer,cors,key-auth,acl,rate-limiting
+      KONG_NGINX_PROXY_PROXY_BUFFER_SIZE: 160k
+      KONG_NGINX_PROXY_PROXY_BUFFERS: 64 160k
+      KONG_REAL_IP_HEADER: X-Real-IP
+      KONG_TRUSTED_IPS: 127.0.0.1
+    volumes:
+      - ./kong.yml:/var/lib/kong/kong.yml:ro
+    networks: [staging-net]
+    depends_on:
+      rest:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    mem_limit: 256m
+    cpus: 0.40
+
