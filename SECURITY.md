@@ -94,7 +94,8 @@ The `testing` branch contains a server-authoritative Paystack implementation:
 test/live key separation, a payment-attempt state machine, server-calculated
 invoice amounts, signed webhook verification, server-to-server transaction
 verification, unique gateway references, idempotency keys, invoice row locks,
-duplicate-webhook protection, and scheduled reconciliation. The portal payment
+duplicate-webhook protection, Paystack source-IP allowlisting at both nginx and
+Edge Function layers, and scheduled reconciliation. The portal payment
 UI is fail-closed behind `VITE_PAYMENTS_ENABLED=false`. It is not considered
 production-enabled until the isolated staging prerequisites and test matrix in
 `docs/paystack-staging-runbook.md` have been completed.

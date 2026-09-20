@@ -1,10 +1,14 @@
 import {
-  adminClient, finalizeVerifiedSuccess, paystackConfig, sha256,
+  adminClient, finalizeVerifiedSuccess, isAllowedPaystackWebhookIp, paystackConfig, sha256,
   validPaystackSignature, verifyTransaction,
 } from '../_shared/paystack.ts';
 
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 });
+  if (!isAllowedPaystackWebhookIp(req)) {
+    console.warn('[paystack-webhook] rejected source IP');
+    return new Response('Source not allowed', { status: 403 });
+  }
   const rawBody = await req.text();
   try {
     const { secret } = paystackConfig();

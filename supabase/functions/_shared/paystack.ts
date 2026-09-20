@@ -39,6 +39,25 @@ export function clientIp(req: Request): string {
   return (req.headers.get('x-real-ip') ?? 'unknown').trim().slice(0, 80) || 'unknown';
 }
 
+const DEFAULT_PAYSTACK_WEBHOOK_IPS = [
+  '52.31.139.75',
+  '52.49.173.169',
+  '52.214.14.220',
+];
+
+/**
+ * Defense in depth for the public webhook. In this deployment nginx replaces
+ * X-Real-IP with the actual peer address; unlike X-Forwarded-For, callers
+ * cannot choose its value. The environment override exists so a changed
+ * Paystack range can be tested before changing the default in source.
+ */
+export function isAllowedPaystackWebhookIp(req: Request): boolean {
+  const configured = (Deno.env.get('PAYSTACK_WEBHOOK_IP_ALLOWLIST') ?? DEFAULT_PAYSTACK_WEBHOOK_IPS.join(','))
+    .split(',').map((value) => value.trim()).filter(Boolean);
+  const ip = clientIp(req).replace(/^::ffff:/i, '');
+  return configured.includes(ip);
+}
+
 export function parseCredential(body: Record<string, unknown>): PublicCredential {
   const token = typeof body.token === 'string' ? body.token.trim() : '';
   const ticketNumber = typeof body.ticketNumber === 'string' ? body.ticketNumber.trim() : '';

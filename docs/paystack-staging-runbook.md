@@ -28,10 +28,14 @@ enforces the configured minimum and current outstanding balance.
    `supabase/functions/paystack-initialize/README.md` with `sk_test_...`.
 4. Deploy the five Paystack functions. Webhook and reconciliation functions
    intentionally need `--no-verify-jwt`; they use HMAC and a scheduler secret.
-5. Configure the Paystack **test** webhook URL.
-6. Deploy the portal from `testing` with the staging Supabase URL/anon key and
+5. Install and test `deploy/nginx/paystack-webhook-allowlist.conf.example` on
+   staging, adapting only its proxy target to the existing Kong upstream.
+6. Confirm all three published Paystack IPs can reach the route and another
+   source receives `403`; then test valid and invalid webhook signatures.
+7. Configure the Paystack **test** webhook URL.
+8. Deploy the portal from `testing` with the staging Supabase URL/anon key and
    `VITE_PAYMENTS_ENABLED=true`.
-7. Schedule reconciliation every five minutes.
+9. Schedule reconciliation every five minutes.
 
 ## Required tests
 
@@ -42,6 +46,8 @@ enforces the configured minimum and current outstanding balance.
 - cancel while Paystack is processing (must verify, never assume failure);
 - callback missing, webhook missing, duplicate webhook, and webhook retry;
 - invalid signature, malformed event, unknown reference, wrong environment;
+- allowed Paystack source IP, denied non-Paystack source IP, and an
+  IPv4-mapped IPv6 Paystack address;
 - amount/currency mismatch (must remain `requires_verification`);
 - simultaneous payment attempts for the same invoice;
 - gateway timeout before and after Paystack accepts initialization;
