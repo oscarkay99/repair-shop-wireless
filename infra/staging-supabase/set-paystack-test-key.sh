@@ -9,14 +9,18 @@ if [[ ! -f "$ENV_FILE" ]]; then
   exit 1
 fi
 
-read -r -s -p "Enter the Paystack test secret key (sk_test_...): " paystack_key
-printf '\n'
-
-if [[ ! "$paystack_key" =~ ^sk_test_[A-Za-z0-9]+$ ]]; then
+while true; do
+  if ! read -r -s -p "Enter the Paystack test secret key (sk_test_...; Ctrl+C to cancel): " paystack_key; then
+    printf '\n'
+    exit 1
+  fi
+  printf '\n'
+  if [[ "$paystack_key" =~ ^sk_test_[A-Za-z0-9]+$ ]]; then
+    break
+  fi
   unset paystack_key
-  echo "Refusing key: only a Paystack test secret beginning with sk_test_ is accepted." >&2
-  exit 1
-fi
+  echo "That was empty or invalid. The prompt remains active; do not paste the key at a shell prompt." >&2
+done
 
 temporary="$(mktemp "$SCRIPT_DIR/.env.XXXXXX")"
 trap 'rm -f "$temporary"' EXIT
