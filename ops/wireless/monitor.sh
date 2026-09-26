@@ -147,3 +147,21 @@ if [ "${top_count:-0}" -ge 5 ]; then
 else
   record "recurring database errors" ok "no repeating database errors"
 fi
+
+# ── Database function + per-role smoke test (db-checks.sql) ──────────
+# Every 10 minutes, not every run. Static-checks every wireless PL/pgSQL
+# function and, as one real user of each role, calls the app's read-only
+# RPCs and reads its tables — all inside a transaction that's rolled back.
+DB_CHECKS_EVERY=600
+DB_CHECKS_STAMP=/opt/wireless/.db_checks_last_run
+last=$(cat "$DB_CHECKS_STAMP" 2>/dev/null || echo 0)
+if [ $(( $(date +%s) - last )) -ge $DB_CHECKS_EVERY ]; then
+  date +%s > "$DB_CHECKS_STAMP"
+  PW=$(grep -E "^POSTGRES_PASSWORD=" /opt/wireless/supabase/.env | cut -d= -f2-)
+  if out=$({ echo "begin;"; cat "$DIR/db-checks.sql"; echo "rollback;"; } \
+        | docker exec -i -e PGPASSWORD="$PW" wireless-db psql -U supabase_admin -h 127.0.0.1 -d postgres -v ON_ERROR_STOP=1 -q 2>&1); then
+    record "database functions and role access" ok "db-checks.sql passed"
+  else
+    record "database functions and role access" fail "$(printf '%s' "$out" | grep -m1 'ERROR' | sed -E 's/^.*ERROR: +//' | cut -c1-300)"
+  fi
+fi

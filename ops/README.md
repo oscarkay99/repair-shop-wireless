@@ -12,13 +12,20 @@ lives here. Edit it here, commit it, then install it with
    `supabase_admin`'s password. Storage kept working on the connections it
    already had, then every photo upload failed with a 500 until 2026-09-26.
 2. **Apply migrations only with `ops/wireless/apply-migration.sh`.** It backs
-   up first, never prompts for a password, and records what was applied.
-   Check what's pending with `ops/wireless/apply-migration.sh --status`.
-3. **Restart services only with `safe-restart.sh`** (on the VPS:
+   up first and never prompts for a password. The migration, its ledger
+   entry and the DB checks (`db-checks.sql`) run in one transaction, which
+   commits only if every check passes. A migration that breaks a function
+   or a role's access is rejected and nothing changes. Try one first with
+   `--dry-run <file>`; see what's pending with `--status`.
+3. **Release the app only with `ops/wireless/release.sh`.** It refuses
+   unless `development` is pushed, every migration is applied in
+   production, and the production DB checks pass, then tags the next
+   version. The deploy re-runs the full CI suite and stops if it fails.
+4. **Restart services only with `safe-restart.sh`** (on the VPS:
    `/opt/wireless/ops/safe-restart.sh storage`). It refuses to restart a
    service that can't log into the database, because the restart would drop
    the connections it's still running on and take it fully down.
-4. **A successful `psql -h 127.0.0.1` inside `wireless-db` proves nothing.**
+5. **A successful `psql -h 127.0.0.1` inside `wireless-db` proves nothing.**
    Local connections there are trusted and accept any password. Use
    `check-db-credentials.sh`, which tests each service's real login over
    the network.
@@ -27,10 +34,12 @@ lives here. Edit it here, commit it, then install it with
 
 | Script | Runs on | Purpose |
 | --- | --- | --- |
-| `wireless/monitor.sh` | VPS, systemd `wireless-monitor.timer` every 2 min | Sites, containers, per-service DB logins, real storage and REST requests, 5xx in logs. Alerts to the ntfy topic on change, and hourly while down. Output: `journalctl -u wireless-monitor` |
+| `wireless/monitor.sh` | VPS, systemd `wireless-monitor.timer` every 2 min | Sites, containers, per-service DB logins, real storage and REST requests, 5xx in logs, repeating DB errors, and `db-checks.sql` every 10 min. Alerts to the ntfy topic on change, and hourly while down. Output: `journalctl -u wireless-monitor` |
 | `wireless/check-db-credentials.sh` | VPS | Logs into Postgres as each service, with the credentials that container is running with |
 | `wireless/safe-restart.sh <service>` | VPS | Credential preflight, recreate, then verify it came back |
-| `wireless/apply-migration.sh` | your machine | Backup, apply, and record a migration; `--status` for pending ones |
+| `wireless/apply-migration.sh` | your machine | Backup, then apply + record + check in one transaction; `--dry-run`, `--status`, `--check` |
+| `wireless/db-checks.sql` | used by the two scripts above | `plpgsql_check` on every wireless function, plus a smoke test as one real user of each role (the app's read-only RPCs and every table it reads). Keep its RPC/table lists in sync with the app |
+| `wireless/release.sh` | your machine | Preconditions above, then tag the next `v*` and watch the deploy |
 | `wireless/install.sh` | your machine | Copies the VPS scripts to `/opt/wireless/ops` and installs the systemd timer (the only scheduler; don't add a cron entry too) |
 
 Alerts go to an ntfy topic set in `/opt/wireless/ops/alerts.env`

@@ -4,6 +4,8 @@ on:
   push:
     branches: [development, main]
   pull_request:
+  # Also run as a required gate by deploy-production.yml.
+  workflow_call:
 
 permissions:
   contents: read

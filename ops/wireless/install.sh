@@ -8,7 +8,7 @@ HOST=root@187.127.233.218
 KEY="${WIRELESS_SSH_KEY:-$HOME/.ssh/wireless_migration/id_ed25519}"
 DEST=/opt/wireless/ops
 
-SCRIPTS=(monitor.sh check-db-credentials.sh safe-restart.sh)
+SCRIPTS=(monitor.sh check-db-credentials.sh safe-restart.sh db-checks.sql)
 ssh -i "$KEY" -o BatchMode=yes "$HOST" "mkdir -p $DEST/.incoming"
 scp -q -i "$KEY" -o BatchMode=yes "${SCRIPTS[@]/#/ops/wireless/}" "$HOST:$DEST/.incoming/"
 
