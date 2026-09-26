@@ -33,6 +33,7 @@ export default function TechPortalPage() {
   const { technicians, patch: patchTechnician } = useTechnicians();
   const { repairs, loading, error, reload, updateStatus, addNote, addMedia, removeMedia, patchRepair } = useRepairs();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [listTab, setListTab] = useState<'active' | 'done'>('active');
   const [showUnavailablePicker, setShowUnavailablePicker] = useState(false);
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
@@ -82,6 +83,11 @@ export default function TechPortalPage() {
   const queueRepairs  = myRepairs.filter(r => QUEUE_STATUSES.includes(r.status));
   const doneRepairs   = myRepairs.filter(r => DONE_STATUSES.includes(r.status));
   const openRepairs   = [...activeRepairs, ...queueRepairs];
+  // Finished jobs stay visible (newest first) instead of vanishing from the
+  // technician's list the moment they're marked done.
+  const finishedAt = (r: typeof myRepairs[number]) => r.readyAt ?? r.completedDate ?? '';
+  const doneSorted = [...doneRepairs].sort((a, b) => finishedAt(b).localeCompare(finishedAt(a)));
+  const listed = listTab === 'active' ? openRepairs : doneSorted;
 
   const selected = selectedId ? repairs.find(r => r.id === selectedId) ?? null : null;
   const myAttendance = useMemo(
@@ -344,8 +350,19 @@ export default function TechPortalPage() {
             </div>
           </div>
 
-          {/* Queue */}
+          {/* My tickets: Active / Done */}
           <div className="rounded-2xl border overflow-hidden" style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>
+            <div className="flex gap-2 px-4 pt-3 pb-3" style={{ borderBottom: '1px solid hsl(var(--border))' }}>
+              {([['active', 'Active', openRepairs.length], ['done', 'Done', doneRepairs.length]] as const).map(([key, label, count]) => (
+                <button key={key} onClick={() => setListTab(key)}
+                  className="h-8 px-3 rounded-full text-xs font-semibold"
+                  style={listTab === key
+                    ? { background: 'hsl(var(--foreground))', color: 'hsl(var(--background))' }
+                    : { color: 'hsl(var(--muted-foreground))', border: '1px solid hsl(var(--border))' }}>
+                  {label} ({count})
+                </button>
+              ))}
+            </div>
             {loading ? (
               <div className="flex items-center justify-center py-16">
                 <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: 'hsl(var(--primary)) transparent transparent' }} />
@@ -357,16 +374,23 @@ export default function TechPortalPage() {
                 <p className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>No cached tickets are displayed when loading fails.</p>
                 <button onClick={reload} className="mt-1 px-3 h-8 rounded-lg text-xs font-semibold text-white" style={{ background: 'hsl(var(--primary))' }}>Try again</button>
               </div>
-            ) : openRepairs.length === 0 ? (
+            ) : listed.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 gap-3">
                 <Clock className="w-9 h-9 opacity-20" style={{ color: 'hsl(var(--foreground))' }} />
-                <p className="text-sm font-semibold" style={{ color: 'hsl(var(--foreground))' }}>No tickets assigned</p>
-                <p className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Check back when work is assigned to you.</p>
+                <p className="text-sm font-semibold" style={{ color: 'hsl(var(--foreground))' }}>
+                  {listTab === 'active' ? 'No tickets assigned' : 'No finished jobs yet'}
+                </p>
+                <p className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                  {listTab === 'active' ? 'Check back when work is assigned to you.' : 'Jobs you mark "Job Done" appear here.'}
+                </p>
               </div>
             ) : (
               <div className="divide-y" style={{ borderColor: 'hsl(var(--border))' }}>
-                {openRepairs.map(r => {
+                {listed.map(r => {
                   const s = REPAIR_STATUS_META[r.status];
+                  const finished = listTab === 'done' && finishedAt(r)
+                    ? new Date(finishedAt(r)).toLocaleString('en-GH', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                    : null;
                   return (
                     <button key={r.id} onClick={() => setSelectedId(r.id)}
                       className="w-full flex items-center gap-4 px-5 py-3.5 text-left transition-colors"
@@ -374,7 +398,9 @@ export default function TechPortalPage() {
                       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold truncate" style={{ color: 'hsl(var(--foreground))' }}>{r.device}</p>
-                        <p className="text-xs truncate" style={{ color: 'hsl(var(--muted-foreground))' }}>{r.issue}</p>
+                        <p className="text-xs truncate" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                          {finished ? `Finished ${finished} · ${r.issue}` : r.issue}
+                        </p>
                       </div>
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold flex-shrink-0"
                         style={{ background: s.bg, color: s.color }}>

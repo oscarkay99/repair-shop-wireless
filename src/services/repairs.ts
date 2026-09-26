@@ -43,6 +43,7 @@ type TicketRow = {
   received_at: string;
   estimated_cost?: number | null;
   completed_at?: string | null;
+  ready_at?: string | null;
   warranty: boolean;
   parts_json: unknown;
   notes_json: unknown;
@@ -198,6 +199,7 @@ function normalizeTicketRow(row: TicketRow, media: RepairMedia[], technicians: R
     costNum: row.estimated_cost ?? undefined,
     started: row.received_at,
     completedDate: row.completed_at ?? undefined,
+    readyAt: row.ready_at ?? undefined,
     warranty: Boolean(row.warranty),
     parts: parseParts(row.parts_json),
     notes: parseNotes(row.notes_json),
@@ -437,6 +439,9 @@ export async function updateRepairStatus(id: string, status: RepairStatus): Prom
   // this.
   const isNowDone = status === 'completed' || status === 'diagnosis_only_closed';
   const completedDate = isNowDone ? new Date().toISOString() : repair.completedDate;
+  // Mirrors the DB trigger that stamps ready_at, so this tab updates
+  // immediately; the next refresh replaces it with the server's value.
+  const readyAt = status === 'ready' && repair.status !== 'ready' ? new Date().toISOString() : repair.readyAt;
 
   if (isSupabaseConfigured) {
     const { error } = await db.from('tickets').update({
@@ -446,7 +451,7 @@ export async function updateRepairStatus(id: string, status: RepairStatus): Prom
     }).eq('ticket_number', id);
     if (error) throw error;
   }
-  updateLocalRepair(id, (currentRepair) => ({ ...currentRepair, status, serviceStage, completedDate }));
+  updateLocalRepair(id, (currentRepair) => ({ ...currentRepair, status, serviceStage, completedDate, readyAt }));
 }
 
 export async function updateRepairNotes(id: string, notes: string[]): Promise<void> {

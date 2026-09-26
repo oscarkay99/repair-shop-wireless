@@ -193,7 +193,13 @@ export function useRepairs() {
   const setStatus = async (id: string, status: RepairStatus) => {
     try {
       await updateRepairStatus(id, status);
-      setStore({ repairs: store.repairs.map(r => r.id === id ? { ...r, status } : r) });
+      const now = new Date().toISOString();
+      setStore({ repairs: store.repairs.map(r => r.id !== id ? r : {
+        ...r,
+        status,
+        ...(status === 'ready' && r.status !== 'ready' ? { readyAt: now } : {}),
+        ...(status === 'completed' || status === 'diagnosis_only_closed' ? { completedDate: now } : {}),
+      }) });
       showToast('Status updated');
     } catch (e) {
       showToast(errMessage(e, 'Failed to update status'), 'error');

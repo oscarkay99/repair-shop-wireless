@@ -62,8 +62,14 @@ export default function TicketsPanel() {
     [repairs],
   );
   const readyPickups = useMemo(() => repairs.filter(r => r.status === 'ready'), [repairs]);
-  const doneToday = useMemo(
-    () => repairs.filter(r => r.completedDate && new Date(r.completedDate).toDateString() === today).length,
+  // Jobs technicians finished today. ready_at is when the technician marked
+  // it done; completed_at alone (customer collected) used to be the only
+  // signal, so finished-but-uncollected jobs never showed up here.
+  const finishedToday = useMemo(
+    () => repairs.filter(r => {
+      const finished = r.readyAt ?? (r.status === 'diagnosis_only_closed' ? r.completedDate : undefined);
+      return !!finished && new Date(finished).toDateString() === today;
+    }).length,
     [repairs, today],
   );
 
@@ -71,7 +77,7 @@ export default function TicketsPanel() {
     { label: "Today's Intake", value: todaysIntake, icon: ClipboardList, chipBg: 'hsl(var(--muted))',     chipColor: 'hsl(var(--muted-foreground))' },
     { label: 'Active Jobs',    value: activeJobs,   icon: Clock3,        chipBg: 'rgba(245,158,11,0.15)', chipColor: '#f59e0b' },
     { label: 'Ready Pickup',   value: readyPickups.length, icon: Bell,   chipBg: 'rgba(34,197,94,0.15)',  chipColor: '#22c55e' },
-    { label: 'Done Today',     value: doneToday,    icon: CheckCircle2,  chipBg: 'rgba(34,197,94,0.15)',  chipColor: '#22c55e' },
+    { label: 'Finished Today', value: finishedToday, icon: CheckCircle2, chipBg: 'rgba(34,197,94,0.15)',  chipColor: '#22c55e' },
   ];
 
   const filteredRepairs = useMemo(() => {

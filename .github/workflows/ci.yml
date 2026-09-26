@@ -28,11 +28,12 @@ jobs:
 
       # Row-level security for repair photos, run against the real migration
       # SQL in an isolated Postgres (PGlite) — never a live database.
-      - name: Repair media policy tests
+      - name: Database trigger and policy tests
         run: |
           mkdir -p "$RUNNER_TEMP/pglite" && echo '{}' > "$RUNNER_TEMP/pglite/package.json"
           npm install --prefix "$RUNNER_TEMP/pglite" --no-save @electric-sql/pglite
           node scripts/test-repair-media-policies.mjs "$RUNNER_TEMP/pglite"
+          node scripts/test-ticket-ready-stamp.mjs "$RUNNER_TEMP/pglite"
 
       - name: Ops scripts parse
         run: for f in ops/wireless/*.sh; do bash -n "$f"; done

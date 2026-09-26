@@ -83,14 +83,14 @@ export function nextAction(status: RepairStatus, jobType?: RepairJobType): strin
   if (jobType === 'straight_repair') {
     if (status === 'received')      return 'Start Repair';
     if (status === 'parts_pending') return 'Mark In Progress';
-    if (status === 'in_progress')   return 'Mark Ready';
+    if (status === 'in_progress')   return 'Job Done – Ready for Pickup';
     if (status === 'ready')         return 'Mark Collected';
     return 'Close';
   }
   if (['received', 'diagnosis_paid'].includes(status)) return 'Mark Diagnosed';
   if (status === 'diagnosing')                         return 'Diagnosis Complete';
   if (status === 'parts_pending')                      return 'Mark In Progress';
-  if (status === 'in_progress')                        return 'Mark Ready';
+  if (status === 'in_progress')                        return 'Job Done – Ready for Pickup';
   if (status === 'ready')                              return 'Mark Collected';
   return 'Close';
 }

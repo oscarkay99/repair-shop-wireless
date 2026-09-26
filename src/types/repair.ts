@@ -109,6 +109,9 @@ export interface Repair {
   costNum?: number;
   started: string;
   completedDate?: string;
+  /** When a technician marked the job done (entered `ready`). Stamped by the
+   *  database, never written by the client. */
+  readyAt?: string;
   warranty: boolean;
   parts: RepairPart[];
   notes: string[];
