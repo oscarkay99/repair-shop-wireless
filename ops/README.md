@@ -27,11 +27,11 @@ lives here. Edit it here, commit it, then install it with
 
 | Script | Runs on | Purpose |
 | --- | --- | --- |
-| `wireless/monitor.sh` | VPS, cron every 5 min | Sites, containers, per-service DB logins, real storage and REST requests, 5xx in logs. Alerts to the ntfy topic on change, and hourly while down. Log: `/var/log/wireless-monitor.log` |
+| `wireless/monitor.sh` | VPS, systemd `wireless-monitor.timer` every 2 min | Sites, containers, per-service DB logins, real storage and REST requests, 5xx in logs. Alerts to the ntfy topic on change, and hourly while down. Output: `journalctl -u wireless-monitor` |
 | `wireless/check-db-credentials.sh` | VPS | Logs into Postgres as each service, with the credentials that container is running with |
 | `wireless/safe-restart.sh <service>` | VPS | Credential preflight, recreate, then verify it came back |
 | `wireless/apply-migration.sh` | your machine | Backup, apply, and record a migration; `--status` for pending ones |
-| `wireless/install.sh` | your machine | Copies the VPS scripts to `/opt/wireless/ops` and sets up cron |
+| `wireless/install.sh` | your machine | Copies the VPS scripts to `/opt/wireless/ops` and installs the systemd timer (the only scheduler; don't add a cron entry too) |
 
 Alerts go to an ntfy topic set in `/opt/wireless/ops/alerts.env`
 (`NTFY_TOPIC=...`), which the backup script also reads. Subscribe to it in

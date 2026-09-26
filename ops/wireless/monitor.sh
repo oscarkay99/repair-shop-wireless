@@ -1,5 +1,5 @@
 #!/bin/bash
-# Wireless health monitor — cron, every 5 minutes. Source of truth is
+# Wireless health monitor — systemd timer (wireless-monitor.timer), every 2 minutes. Source of truth is
 # ops/wireless/monitor.sh in the repair-shop-wireless repo; install with
 # ops/wireless/install.sh, don't edit the copy on the server.
 #
@@ -15,7 +15,13 @@
 #   - no 5xx responses in the service logs since the last run
 set -uo pipefail
 
-DIR="$(cd "$(dirname "$0")" && pwd)"
+# readlink -f: find sibling scripts even when started through a symlink.
+DIR="$(dirname "$(readlink -f "$0")")"
+
+# Never run two copies at once: they race on the state file and turn
+# passing checks into false alerts (happened 2026-09-26).
+exec 9>/run/wireless-monitor.lock
+flock -n 9 || { echo "$(date -u +%FT%TZ) monitor: previous run still in progress, skipping" >&2; exit 0; }
 # The ntfy topic is effectively a password (anyone who knows it can read
 # and post alerts), and this repo is public, so it lives only on the server
 # in /opt/wireless/ops/alerts.env (NTFY_TOPIC=...), shared with backup-db.sh.
@@ -62,24 +68,31 @@ record() {
   fi
 }
 
+# check <name> <ok detail> <fail detail> <expected> <actual>
+# (if/else, not `a && ok || fail`, which also fires the fail branch
+# whenever recording the success itself returns non-zero)
+check() {
+  if [ "$5" = "$4" ]; then record "$1" ok "$2"; else record "$1" fail "$3"; fi
+}
+
 http_code() { curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$@"; }
 
 # ── Public endpoints ──────────────────────────────────────────────────
 for site in operations.wirelesscares.com user.wirelesscares.com; do
   code=$(http_code "https://$site/")
-  [ "$code" = "200" ] && record "$site" ok "HTTP $code" || record "$site" fail "https://$site/ returned HTTP $code"
+  check "$site" "HTTP $code" "https://$site/ returned HTTP $code" 200 "$code"
 done
 ADMIN_ENV=$(docker inspect wireless-admin --format '{{range .Config.Env}}{{println .}}{{end}}' 2>/dev/null)
 ANON_KEY=$(printf '%s\n' "$ADMIN_ENV" | grep -m1 '^ANON_KEY=' | cut -d= -f2-)
 SERVICE_KEY=$(printf '%s\n' "$ADMIN_ENV" | grep -m1 '^SERVICE_ROLE_KEY=' | cut -d= -f2-)
 # The gateway requires an apikey even for health (401 without one).
 code=$(http_code -H "apikey: $ANON_KEY" "$API/auth/v1/health")
-[ "$code" = "200" ] && record "auth API" ok "HTTP $code" || record "auth API" fail "$API/auth/v1/health returned HTTP $code"
+check "auth API" "HTTP $code" "$API/auth/v1/health returned HTTP $code" 200 "$code"
 
 # ── Containers ────────────────────────────────────────────────────────
 for c in wireless-db wireless-kong wireless-auth wireless-rest wireless-storage wireless-realtime wireless-meta wireless-admin wireless-imgproxy; do
   s=$(docker inspect -f '{{.State.Status}}' "$c" 2>/dev/null)
-  [ "$s" = "running" ] && record "container $c" ok "running again" || record "container $c" fail "status: ${s:-not found}"
+  check "container $c" "running again" "status: ${s:-not found}" running "$s"
 done
 
 # ── Database logins, per service, with the credentials it runs with ───
@@ -90,23 +103,19 @@ checked=0
 while IFS= read -r line; do
   if [[ $line =~ ^(OK|FAIL)\ +([a-z0-9-]+): ]]; then
     checked=$((checked + 1))
-    [ "${BASH_REMATCH[1]}" = "OK" ] && record "db login ${BASH_REMATCH[2]}" ok "$line" \
-      || record "db login ${BASH_REMATCH[2]}" fail "$line"
+    check "db login ${BASH_REMATCH[2]}" "$line" "$line" OK "${BASH_REMATCH[1]}"
   fi
 done < <("$DIR/check-db-credentials.sh" 2>&1)
-[ $checked -gt 0 ] && record "db login checker" ok "running" \
-  || record "db login checker" fail "check-db-credentials.sh produced no results"
+check "db login checker" "running" "check-db-credentials.sh produced no results" yes "$([ $checked -gt 0 ] && echo yes)"
 
 # ── Real requests through the gateway (these need a working DB) ──────
 if [ -n "$SERVICE_KEY" ]; then
   auth=(-H "apikey: $SERVICE_KEY" -H "Authorization: Bearer $SERVICE_KEY")
   code=$(http_code -X POST "${auth[@]}" -H "Content-Type: application/json" \
     -d '{"prefix":"repairs","limit":1}' "$API/storage/v1/object/list/repair-media")
-  [ "$code" = "200" ] && record "storage requests" ok "HTTP $code" \
-    || record "storage requests" fail "Listing repair-media returned HTTP $code — photo uploads and viewing are likely failing"
+  check "storage requests" "HTTP $code" "Listing repair-media returned HTTP $code — photo uploads and viewing are likely failing" 200 "$code"
   code=$(http_code "${auth[@]}" -H "Accept-Profile: wireless" "$API/rest/v1/tickets?select=id&limit=1")
-  [ "$code" = "200" ] && record "database API requests" ok "HTTP $code" \
-    || record "database API requests" fail "Reading tickets returned HTTP $code — the app is likely failing to load data"
+  check "database API requests" "HTTP $code" "Reading tickets returned HTTP $code — the app is likely failing to load data" 200 "$code"
 else
   record "monitor config" fail "Could not read SERVICE_ROLE_KEY from wireless-admin; request checks skipped"
 fi

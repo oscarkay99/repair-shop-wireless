@@ -7,7 +7,6 @@ set -euo pipefail
 HOST=root@187.127.233.218
 KEY="${WIRELESS_SSH_KEY:-$HOME/.ssh/wireless_migration/id_ed25519}"
 DEST=/opt/wireless/ops
-CRON_LINE="*/5 * * * * $DEST/monitor.sh >> /var/log/wireless-monitor.log 2>&1"
 
 SCRIPTS=(monitor.sh check-db-credentials.sh safe-restart.sh)
 ssh -i "$KEY" -o BatchMode=yes "$HOST" "mkdir -p $DEST/.incoming"
@@ -24,10 +23,34 @@ sed -i -E '/^db login line=/d' /opt/wireless/.monitor_state 2>/dev/null || true
 if [ -f /opt/wireless/monitor.sh ] && [ ! -L /opt/wireless/monitor.sh ]; then
   mv /opt/wireless/monitor.sh /opt/wireless/monitor.sh.retired-\$(date +%Y%m%d)
 fi
-ln -sfn $DEST/monitor.sh /opt/wireless/monitor.sh
+rm -f /opt/wireless/monitor.sh   # old path; the timer runs $DEST/monitor.sh directly
 # Drop state keys from the retired monitor's naming scheme.
 sed -i -E '/^(container_|api\.wirelesscares\.com=)/d' /opt/wireless/.monitor_state 2>/dev/null || true
-( crontab -l 2>/dev/null | grep -vF "$DEST/monitor.sh" ; echo "$CRON_LINE" ) | crontab -
-echo "Installed. Cron:"; crontab -l | grep -F "$DEST/monitor.sh"
+# One scheduler only: the systemd timer (a oneshot service never overlaps
+# itself). Remove any cron entry an earlier install added.
+crontab -l 2>/dev/null | grep -vF "$DEST/monitor.sh" | crontab -
+cat > /etc/systemd/system/wireless-monitor.service <<UNIT
+[Unit]
+Description=Wireless health monitor (source: repair-shop-wireless ops/wireless/monitor.sh)
+
+[Service]
+Type=oneshot
+ExecStart=$DEST/monitor.sh
+UNIT
+cat > /etc/systemd/system/wireless-monitor.timer <<UNIT
+[Unit]
+Description=Run the Wireless health monitor every 2 minutes
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=2min
+AccuracySec=15s
+
+[Install]
+WantedBy=timers.target
+UNIT
+systemctl daemon-reload
+systemctl enable --now wireless-monitor.timer >/dev/null
+echo "Installed. Timer:"; systemctl list-timers wireless-monitor.timer --no-pager | sed -n 2p
 echo "Credential check:"; $DEST/check-db-credentials.sh || true
 EOF
