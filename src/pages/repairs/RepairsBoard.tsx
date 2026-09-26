@@ -376,7 +376,9 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
 
   useEffect(() => {
     let cancelled = false;
-    if (!repair.ticketDbId || !readyForInvoice) { setLinkedInvoiceNumber(null); return; }
+    // Technicians can't create invoices (RLS rejects it) and never see
+    // invoice state, so don't fire a request that can only fail.
+    if (!repair.ticketDbId || !readyForInvoice || isTechnicianScoped) { setLinkedInvoiceNumber(null); return; }
     setCheckingInvoice(true);
     ensureTicketInvoice(repair, { depositPaid, taxEnabled, vatRate, nhilGetfundRate, warrantyDays: settings?.warranty_days })
       .then(invoiceNumber => { if (!cancelled) setLinkedInvoiceNumber(invoiceNumber); })
@@ -384,7 +386,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
       .finally(() => { if (!cancelled) setCheckingInvoice(false); });
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [repair.ticketDbId, readyForInvoice, depositPaid, taxEnabled, vatRate, nhilGetfundRate, settings?.warranty_days]);
+  }, [repair.ticketDbId, readyForInvoice, isTechnicianScoped, depositPaid, taxEnabled, vatRate, nhilGetfundRate, settings?.warranty_days]);
 
   const handleAddNote = () => {
     if (!noteText.trim()) return;

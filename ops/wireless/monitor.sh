@@ -131,3 +131,19 @@ for c in wireless-storage wireless-rest wireless-auth; do
     record "server errors $c" fail "$count 5xx response(s) in the last 5 minutes${sample:+ — latest: $sample}"
   fi
 done
+
+# ── Recurring database errors ─────────────────────────────────────────
+# PostgREST turns SQL errors into 4xx responses, so the 5xx scan above
+# can't see them. A broken function then fails silently for every user:
+# the notification bell failed ~340 times a day from 2026-09-10 to
+# 2026-09-26 with "column reference "id" is ambiguous". Alert when one
+# error message repeats 5+ times since the last run. Occasional RLS
+# denials (a request correctly refused) stay below the threshold.
+top=$(docker logs --since 3m wireless-db 2>&1 | grep -oE 'ERROR:  .*' | sed -E 's/ at character [0-9]+//' \
+  | sort | uniq -c | sort -rn | head -1)
+top_count=$(printf '%s' "$top" | awk '{print $1+0}')
+if [ "${top_count:-0}" -ge 5 ]; then
+  record "recurring database errors" fail "$top_count× in the last few minutes: $(printf '%s' "$top" | sed -E 's/^ *[0-9]+ ERROR:  //' | cut -c1-160)"
+else
+  record "recurring database errors" ok "no repeating database errors"
+fi
