@@ -9,14 +9,17 @@ KEY="${WIRELESS_SSH_KEY:-$HOME/.ssh/wireless_migration/id_ed25519}"
 DEST=/opt/wireless/ops
 CRON_LINE="*/5 * * * * $DEST/monitor.sh >> /var/log/wireless-monitor.log 2>&1"
 
-ssh -i "$KEY" -o BatchMode=yes "$HOST" "mkdir -p $DEST"
-scp -q -i "$KEY" -o BatchMode=yes \
-  ops/wireless/monitor.sh ops/wireless/check-db-credentials.sh ops/wireless/safe-restart.sh \
-  "$HOST:$DEST/"
+SCRIPTS=(monitor.sh check-db-credentials.sh safe-restart.sh)
+ssh -i "$KEY" -o BatchMode=yes "$HOST" "mkdir -p $DEST/.incoming"
+scp -q -i "$KEY" -o BatchMode=yes "${SCRIPTS[@]/#/ops/wireless/}" "$HOST:$DEST/.incoming/"
 
 ssh -i "$KEY" -o BatchMode=yes "$HOST" bash -s <<EOF
 set -euo pipefail
-chmod 750 $DEST/*.sh
+# Rename into place: atomic, and a run already in progress keeps reading
+# the old file. Overwriting in place makes a running bash script read
+# garbage mid-run (this sent a false alert on 2026-09-26).
+for f in ${SCRIPTS[*]}; do chmod 750 $DEST/.incoming/\$f && mv -f $DEST/.incoming/\$f $DEST/\$f; done
+sed -i -E '/^db login line=/d' /opt/wireless/.monitor_state 2>/dev/null || true
 # Retire the old unscheduled monitor so there is one copy, not two.
 if [ -f /opt/wireless/monitor.sh ] && [ ! -L /opt/wireless/monitor.sh ]; then
   mv /opt/wireless/monitor.sh /opt/wireless/monitor.sh.retired-\$(date +%Y%m%d)

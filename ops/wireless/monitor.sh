@@ -73,14 +73,19 @@ for c in wireless-db wireless-kong wireless-auth wireless-rest wireless-storage 
 done
 
 # ── Database logins, per service, with the credentials it runs with ───
+# Only "OK|FAIL <container>: ..." lines name a check; anything else (e.g. a
+# shell error) must not become a bogus check name. No parseable lines at
+# all means the checker itself is broken, which is its own alert.
+checked=0
 while IFS= read -r line; do
-  name=$(printf '%s' "$line" | awk '{print $2}' | tr -d ':')
-  [ -z "$name" ] && continue
-  case "$line" in
-    OK*)   record "db login $name" ok "$line" ;;
-    *)     record "db login $name" fail "$line" ;;
-  esac
+  if [[ $line =~ ^(OK|FAIL)\ +([a-z0-9-]+): ]]; then
+    checked=$((checked + 1))
+    [ "${BASH_REMATCH[1]}" = "OK" ] && record "db login ${BASH_REMATCH[2]}" ok "$line" \
+      || record "db login ${BASH_REMATCH[2]}" fail "$line"
+  fi
 done < <("$DIR/check-db-credentials.sh" 2>&1)
+[ $checked -gt 0 ] && record "db login checker" ok "running" \
+  || record "db login checker" fail "check-db-credentials.sh produced no results"
 
 # ── Real requests through the gateway (these need a working DB) ──────
 if [ -n "$SERVICE_KEY" ]; then
