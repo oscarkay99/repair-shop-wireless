@@ -16,13 +16,23 @@
 set -uo pipefail
 
 DIR="$(cd "$(dirname "$0")" && pwd)"
-TOPIC="wireless-alerts-3911ae3824e88018"
+# The ntfy topic is effectively a password (anyone who knows it can read
+# and post alerts), and this repo is public, so it lives only on the server
+# in /opt/wireless/ops/alerts.env (NTFY_TOPIC=...), shared with backup-db.sh.
+ALERTS_ENV=/opt/wireless/ops/alerts.env
+# shellcheck source=/dev/null
+[ -r "$ALERTS_ENV" ] && . "$ALERTS_ENV"
+TOPIC="${NTFY_TOPIC:-}"
+if [ -z "$TOPIC" ]; then
+  echo "$(date -u +%FT%TZ) monitor: NTFY_TOPIC missing from $ALERTS_ENV; alerts cannot be sent" >&2
+fi
 STATE_FILE="/opt/wireless/.monitor_state"
 API="https://api.wirelesscares.com"
 REMIND_AFTER_SECONDS=3600
 touch "$STATE_FILE"
 
 notify() {
+  [ -n "$TOPIC" ] || { echo "$(date -u +%FT%TZ) ALERT (unsent): $1 — $2" >&2; return 0; }
   curl -s --max-time 10 -H "Title: $1" -H "Priority: $3" -d "$2" "https://ntfy.sh/$TOPIC" >/dev/null || true
 }
 

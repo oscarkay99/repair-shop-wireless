@@ -33,8 +33,10 @@ lives here. Edit it here, commit it, then install it with
 | `wireless/apply-migration.sh` | your machine | Backup, apply, and record a migration; `--status` for pending ones |
 | `wireless/install.sh` | your machine | Copies the VPS scripts to `/opt/wireless/ops` and sets up cron |
 
-Alerts go to the ntfy topic already used by the backup script. Subscribe
-to it in the ntfy app to receive them.
+Alerts go to an ntfy topic set in `/opt/wireless/ops/alerts.env`
+(`NTFY_TOPIC=...`), which the backup script also reads. Subscribe to it in
+the ntfy app. The topic name works like a password (anyone who has it can
+read and send alerts), so it's never committed. This repo is public.
 
 ## If a service can't log into the database
 
