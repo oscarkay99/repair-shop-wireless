@@ -34,7 +34,17 @@ instead of re-deriving it from migration history.
 - Daily `pg_dump -Fc` (custom/binary format — **not** plain SQL text; a plain-text dump piped through `psql` was tested and found to silently drop `auth.users` on restore due to an unrelated schema mismatch cascading the parser), GPG-encrypted (`gpg --encrypt`, recipient key fingerprint in the backup script) at 2:30 AM, `/opt/wireless/backups` on the VPS, 14-day local rotation, failure alerts via ntfy.
 - The GPG private key exists nowhere on the server — generated there transiently, exported, handed off, then deleted from the box entirely. Only the public key remains, which can encrypt but not decrypt. Whoever holds the private key offline is the only one who can ever restore a backup.
 - Restore is tested, not just assumed: verified by decrypting a real backup and restoring it into an isolated `supabase/postgres` container, confirming real row counts (users, tickets, customers, invoices) matched production.
-- **Known gap:** this backup is local to the same VPS as the live database. It protects against bad migrations, human error, and accidental deletion — not against losing the VPS itself. Off-site storage (S3, Backblaze B2, etc.) needs an account decision before it can be added.
+- Off-site copy: since 2026-09-12 each backup (database dump and the storage files volume) is also copied to a dedicated Backblaze B2 bucket via rclone, with 60-day retention there. See `/opt/wireless/scripts/backup-db.sh`.
+
+## Operations safeguards
+
+Added after the September 2026 upload outage. Scripts and the runbook live in `ops/` (see `ops/README.md`); edit them there and install with `ops/wireless/install.sh`, never on the server.
+
+- **What happened:** around 2026-09-01, a password prompt during a hand-applied migration was worked around by resetting `supabase_admin`'s password to a value that didn't match `/opt/wireless/supabase/.env`. `wireless-storage` kept working on connections it already held, then failed every photo upload with a 500. Photos are required to advance a ticket, so tickets stayed in the queue. Nothing alerted, because the old monitor only checked "container running" and "site answers", and it wasn't scheduled in cron anyway. Fixed 2026-09-26 by making the database password match `.env` again.
+- **Monitoring:** `/opt/wireless/ops/monitor.sh` runs every 5 minutes from cron. It checks each service's database login with the credentials that container actually runs with (over the docker network), real storage and REST requests using the service key, and 5xx responses in the storage/REST/auth logs. Alerts go to the ntfy topic on change, with an hourly reminder while something stays down.
+- **Migrations:** applied only with `ops/wireless/apply-migration.sh`, which backs up first, never prompts for a password, and records each file with its sha256 in `wireless.schema_migrations` (not reachable by `anon`/`authenticated`). `--status` lists repo migrations not recorded in production. Every migration up to 2026-09-26 was recorded as `baseline`; the 2026-09-18/19/26 ones were individually verified against the live schema first.
+- **Restarts:** `/opt/wireless/ops/safe-restart.sh <service>` refuses to recreate a service that can't log into the database, since that drops the connections it's still running on.
+- **Repair photos:** only an active technician assigned to the ticket can upload or attach them, and only an admin or that technician can delete them from storage. Both are enforced with restrictive policies, so a future broad policy can't reopen them. `scripts/test-repair-media-policies.mjs` tests this in an isolated Postgres (PGlite) on every push.
 
 ## Infrastructure hardening
 
@@ -90,11 +100,11 @@ This system sits behind nginx → Kong → PostgREST/GoTrue. Two headers matter 
 
 - **CSP needs live-browser confirmation.** Shipped and verified live via curl (headers present, both sites return 200), but resource-loading enforcement only happens client-side — a real browser pass (login, viewing ticket photos, the Delivery page's Google Maps embed, Google OAuth) is still needed to be fully sure nothing subtle broke.
 - **Real MFA isn't built**, just honestly labeled as unavailable instead of fake. See Authentication above.
-- **Database authorization tests are still manual.** `npm run audit:roles` now regression-tests the client landing/portal matrix, but there is not yet an isolated Postgres test environment that executes each RLS policy as every role.
+- **Database authorization tests only cover repair photos.** `scripts/test-repair-media-policies.mjs` runs the real migration SQL against an isolated Postgres in CI, but only for `storage.objects`/`ticket_media`. Other tables' RLS is still verified by hand.
 - **No frontend error tracking** (Sentry-equivalent). A JS error in a real user's browser leaves no trace anywhere right now.
-- **Uneven CI enforcement.** Neither repo blocks a push that fails typecheck/lint/build — those were run manually before every deploy during this audit.
+- **CI doesn't enforce typecheck or lint yet.** `.github/workflows/ci.yml` runs the role audit, the repair photo policy tests, and the build on every push and PR. Typecheck isn't included because the codebase has about 278 pre-existing TypeScript errors (mostly `src/pages/whatsapp`). CI also doesn't block the tag deploy.
+- **Local connections inside `wireless-db` are trusted.** `psql -h 127.0.0.1` from inside the container accepts any password (Supabase image default, also used by the backup script and `apply-migration.sh`). Reaching it requires root on the VPS already, but it means a successful local login proves nothing about real credentials — `check-db-credentials.sh` tests over the network instead.
 - **Staging environment doesn't exist.** Single production environment, direct deploy. A reasonable tradeoff at current scale; revisit if deploy frequency or team size grows.
-- **Off-site backup storage** needs a cloud account decision (S3, Backblaze B2, etc.) before it can be added — current backups are encrypted but still physically on the same VPS as the database.
 - **Vendor image CVEs** (Kong, GoTrue, Postgres, PostgREST, Storage, Realtime, Meta, imgproxy) remain — see Infrastructure hardening above. Fixing these means coordinated version bumps with compatibility testing, not something to do blind.
 
 ## Where to look next

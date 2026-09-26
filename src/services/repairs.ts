@@ -3,6 +3,7 @@ import type { Repair, RepairMedia, RepairMediaType, RepairStatus, RepairMediaUpl
 import { isSupabaseConfigured, supabase, db } from './supabase';
 import { statusToServiceStage } from '@/utils/repairStatus';
 import { errMessage } from '@/utils/errors';
+import { shrinkImageForUpload } from '@/utils/imageCompression';
 
 export const MAX_REPAIR_MEDIA_BYTES = 5 * 1024 * 1024;
 export const MAX_REPAIR_VIDEO_DURATION_SECONDS = 30;
@@ -513,7 +514,8 @@ export async function getSignedMediaUrls(paths: string[], expiresIn = 600): Prom
   return map;
 }
 
-export async function addRepairMedia(repairId: string, input: RepairMediaUploadInput): Promise<RepairMedia> {
+export async function addRepairMedia(repairId: string, rawInput: RepairMediaUploadInput): Promise<RepairMedia> {
+  const input = { ...rawInput, file: await shrinkImageForUpload(rawInput.file) };
   if (!input.file.size) {
     throw new Error('This file is empty. Please choose another photo.');
   }

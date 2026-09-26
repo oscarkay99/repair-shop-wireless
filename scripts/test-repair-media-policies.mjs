@@ -45,6 +45,9 @@ try {
     create function wireless.current_role_scopes_tickets() returns boolean language sql stable security definer as $$
       select coalesce(wireless.current_user_role() = 'technician', false)
     $$;
+    create function wireless.is_admin() returns boolean language sql stable security definer as $$
+      select coalesce(wireless.current_user_role() = 'admin', false)
+    $$;
     create function wireless.my_technician_id() returns uuid language sql stable security definer as $$
       select id from wireless.technicians where profile_id = auth.uid() limit 1
     $$;
@@ -53,6 +56,9 @@ try {
     create policy broad_insert on storage.objects for insert to authenticated with check (true);
     create policy broad_update on storage.objects for update to authenticated using (true) with check (true);
     create policy other_bucket_read on storage.objects for select to authenticated using (bucket_id <> 'repair-media');
+    create policy repair_media_bucket_delete on storage.objects for delete to authenticated using (bucket_id = 'repair-media');
+    create policy broad_delete on storage.objects for delete to authenticated using (true);
+    create role anon;
     create policy broad_media_insert on wireless.ticket_media for insert to authenticated with check (true);
     create policy broad_media_update on wireless.ticket_media for update to authenticated using (true) with check (true);
     -- Simulate stale policies with broken dependencies. The new migration
@@ -76,6 +82,7 @@ try {
     await db.exec(sql.slice(start, sql.indexOf(';', start) + 1));
   }
   await db.exec(await sqlFile('20260926000000_technician_only_repair_uploads.sql'));
+  await db.exec(await sqlFile('20260926010000_migration_ledger_and_media_delete.sql'));
   const actors = ['technician', 'technician', 'admin', 'receptionist', 'custom', 'technician'];
   for (const [i, role] of actors.entries()) {
     await db.query('insert into wireless.profiles values ($1, $2, $3)', [uid(i + 1), role, i === 5 ? 'pending' : 'active']);
@@ -133,6 +140,24 @@ try {
   assertions++;
   await db.query('delete from wireless.ticket_technicians where technician_id = $1', [uid(1)]);
   await denied(1, upload, ['repair-media', 'repairs/TK-OWN/received/after-reassignment.jpg']);
+
+  // Deleting repair evidence: only an admin or the currently assigned
+  // technician. RLS filters deletes silently (0 rows), it doesn't raise.
+  const del = 'delete from storage.objects where bucket_id = $1 and name = $2 returning name';
+  const deleted = async (actor, bucket, name) => (await asActor(actor, () => db.query(del, [bucket, name]))).rows.length;
+  assert.equal(await deleted(4, 'repair-media', path), 0);  // receptionist
+  assert.equal(await deleted(5, 'repair-media', path), 0);  // custom role
+  assert.equal(await deleted(1, 'repair-media', path), 0);  // no longer assigned
+  assert.equal(await deleted(null, 'repair-media', path), 0);
+  assert.equal(await deleted(2, 'repair-media', 'repairs/TK-OWN/received/second.jpg'), 1);
+  assert.equal(await deleted(3, 'repair-media', path), 1);  // admin
+  assert.equal(await deleted(3, 'branding', 'logo.png'), 1); // other buckets untouched
+  assertions += 7;
+
+  // The migration ledger is never reachable through the API roles.
+  await denied(3, 'select * from wireless.schema_migrations');
+  await denied(null, 'insert into wireless.schema_migrations (filename) values ($1)', ['x.sql']);
+
   console.log(`Repair media policies: ${assertions} assertions passed in isolated PostgreSQL.`);
 } finally {
   await db.close();

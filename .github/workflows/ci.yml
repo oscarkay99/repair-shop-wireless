@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [development, main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  security-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Client-side role → landing page / portal matrix.
+      - name: Role access audit
+        run: npm run audit:roles
+
+      # Row-level security for repair photos, run against the real migration
+      # SQL in an isolated Postgres (PGlite) — never a live database.
+      - name: Repair media policy tests
+        run: |
+          mkdir -p "$RUNNER_TEMP/pglite" && echo '{}' > "$RUNNER_TEMP/pglite/package.json"
+          npm install --prefix "$RUNNER_TEMP/pglite" --no-save @electric-sql/pglite
+          node scripts/test-repair-media-policies.mjs "$RUNNER_TEMP/pglite"
+
+      - name: Ops scripts parse
+        run: for f in ops/wireless/*.sh; do bash -n "$f"; done
+
+      - name: Build
+        run: npm run build

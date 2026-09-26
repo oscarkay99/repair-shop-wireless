@@ -196,6 +196,9 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   const [commentText, setCommentText] = useState('');
   const [commentSaving, setCommentSaving] = useState(false);
   const [discontinuing, setDiscontinuing] = useState(false);
+  const [waivingPhoto, setWaivingPhoto] = useState(false);
+  const [waiveReason, setWaiveReason] = useState('');
+  const [waiveSaving, setWaiveSaving] = useState(false);
   const [discontinueReason, setDiscontinueReason] = useState('');
   const [requestingReassign, setRequestingReassign] = useState(false);
   const [reassignReason, setReassignReason] = useState('');
@@ -411,6 +414,28 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
     } finally {
       setUploading(false);
       setPromptStage(null);
+    }
+  };
+
+  // Admin-only escape hatch for when a required photo can't be attached
+  // (e.g. a storage outage froze every ticket in the queue in Sept 2026).
+  // The reason is logged to Internal Notes before the status moves, so a
+  // skipped photo is always attributable.
+  const canWaivePhoto = user?.role === 'admin' && !!requiredStage && !hasRequiredPhoto && !!repair.ticketDbId;
+  const handleWaivePhoto = async () => {
+    const reason = waiveReason.trim();
+    if (!reason || !repair.ticketDbId || !requiredStage) return;
+    setWaiveSaving(true);
+    try {
+      await addTicketComment(repair.ticketDbId, `[Photo waived: ${REQUIRED_MEDIA_STAGE_LABEL[requiredStage] ?? requiredStage}] ${reason}`, user?.name ?? 'Admin');
+      onUpdateStatus(repair.id, upcomingStatus);
+      setWaivingPhoto(false);
+      setWaiveReason('');
+      loadComments();
+    } catch (e) {
+      alert(errMessage(e, 'Failed to record the reason; the ticket was not advanced.'));
+    } finally {
+      setWaiveSaving(false);
     }
   };
 
@@ -940,6 +965,37 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
             <p className="text-[11px] text-center py-1" style={{ color: 'hsl(var(--muted-foreground))' }}>
               Only a technician or admin can update this ticket's progress.
             </p>
+          )}
+          {canWaivePhoto && (
+            waivingPhoto ? (
+              <div className="space-y-2 pt-1">
+                <p className="text-[11px] font-semibold" style={{ color: 'hsl(var(--foreground))' }}>
+                  Why is this ticket continuing without the photo? This is recorded in Internal Notes.
+                </p>
+                <textarea autoFocus rows={2} value={waiveReason} onChange={e => setWaiveReason(e.target.value)}
+                  placeholder="e.g. Photo uploads are down; technician confirmed the device condition in person"
+                  className="w-full px-3 py-2 rounded-xl text-xs outline-none resize-none"
+                  style={{ background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }} />
+                <div className="flex gap-2 justify-end">
+                  <button onClick={() => { setWaivingPhoto(false); setWaiveReason(''); }}
+                    className="px-3 py-1.5 text-xs rounded-lg"
+                    style={{ color: 'hsl(var(--muted-foreground))', border: '1px solid hsl(var(--border))' }}>
+                    Cancel
+                  </button>
+                  <button onClick={handleWaivePhoto} disabled={!waiveReason.trim() || waiveSaving}
+                    className="px-3 py-1.5 text-xs font-semibold text-white rounded-lg disabled:opacity-50"
+                    style={{ background: '#b45309' }}>
+                    {waiveSaving ? 'Saving…' : `Continue: ${nextAction(repair.status, repair.jobType)}`}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button onClick={() => setWaivingPhoto(true)}
+                className="w-full h-9 rounded-xl text-xs font-semibold"
+                style={{ border: '1px solid rgba(180,83,9,0.35)', color: '#b45309' }}>
+                Continue without photo (admin)
+              </button>
+            )
           )}
           {canUpdateProgress && (
             <button onClick={() => setAddingNote(true)}
