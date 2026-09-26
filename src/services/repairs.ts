@@ -2,6 +2,7 @@ import { repairs as seedData } from '@/mocks/repairs';
 import type { Repair, RepairMedia, RepairMediaType, RepairStatus, RepairMediaUploadInput, RepairTechnician } from '@/types/repair';
 import { isSupabaseConfigured, supabase, db } from './supabase';
 import { statusToServiceStage } from '@/utils/repairStatus';
+import { errMessage } from '@/utils/errors';
 
 export const MAX_REPAIR_MEDIA_BYTES = 5 * 1024 * 1024;
 export const MAX_REPAIR_VIDEO_DURATION_SECONDS = 30;
@@ -513,16 +514,18 @@ export async function getSignedMediaUrls(paths: string[], expiresIn = 600): Prom
 }
 
 export async function addRepairMedia(repairId: string, input: RepairMediaUploadInput): Promise<RepairMedia> {
+  if (!input.file.size) {
+    throw new Error('This file is empty. Please choose another photo.');
+  }
   if (input.file.size > MAX_REPAIR_MEDIA_BYTES) {
     throw new Error('Each photo or video must be 5MB or less.');
+  }
+  if (!['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/quicktime', 'video/webm'].includes(input.file.type)) {
+    throw new Error('Use a JPEG, PNG or WebP photo, or an MP4, MOV or WebM video.');
   }
 
   const mediaType = toMediaType(input.file);
   const createdAt = new Date().toISOString();
-  // Local blob preview — instant, and doesn't depend on the (private)
-  // bucket's public URL working. Superseded once the signed-URL effect
-  // in RepairsBoard resolves `path` below to a real signed URL.
-  const resolvedUrl = URL.createObjectURL(input.file);
   let resolvedPath: string | undefined;
   let savedId = crypto.randomUUID();
 
@@ -535,7 +538,14 @@ export async function addRepairMedia(repairId: string, input: RepairMediaUploadI
         contentType: input.file.type,
         upsert: false,
       });
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      console.error('[repair-media] storage upload failed', {
+        ticket: repairId, stage: input.stage, mimeType: input.file.type,
+        fileSize: input.file.size, message: uploadError.message,
+        ...('statusCode' in uploadError ? { statusCode: uploadError.statusCode } : {}),
+      });
+      throw new Error(`Photo upload failed: ${errMessage(uploadError, 'Please try again.')}`);
+    }
 
     resolvedPath = filePath;
     // Inert legacy string (see getSignedMediaUrls above) — kept only so the
@@ -561,7 +571,13 @@ export async function addRepairMedia(repairId: string, input: RepairMediaUploadI
       })
       .select()
       .single();
-    if (insertError) throw insertError;
+    if (insertError) {
+      console.error('[repair-media] attachment save failed', {
+        ticket: repairId, path: filePath, code: insertError.code,
+        message: insertError.message, details: insertError.details, hint: insertError.hint,
+      });
+      throw new Error(`The file uploaded, but could not be attached to this ticket: ${errMessage(insertError, 'Please try again.')}`);
+    }
     savedId = (inserted as TicketMediaRow).id;
   }
 
@@ -571,7 +587,9 @@ export async function addRepairMedia(repairId: string, input: RepairMediaUploadI
     path: resolvedPath,
     stage: input.stage,
     type: mediaType,
-    url: resolvedUrl,
+    // Allocate a preview only after both writes succeed, avoiding a leaked
+    // blob URL on every failed upload. Signed URLs replace it when available.
+    url: URL.createObjectURL(input.file),
     fileName: input.file.name,
     fileSize: input.file.size,
     mimeType: input.file.type,

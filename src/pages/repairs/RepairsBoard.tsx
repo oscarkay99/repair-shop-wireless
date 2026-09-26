@@ -206,6 +206,10 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   const [extraSaving, setExtraSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
+  const { technicians } = useTechnicians();
+  const canUploadMedia = user?.role === 'technician' && technicians.some(tech =>
+    tech.profile_id === user.id && repair.technicians.some(assigned => assigned.id === tech.id),
+  );
   // Technicians repair the device — what the customer's charged, who the
   // customer is, and whether/how they've paid are a reception/admin
   // concern, not shown on their view of the ticket. Just the repair's
@@ -387,6 +391,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   };
 
   const openPhotoPicker = (stage: RepairMediaStage) => {
+    if (!canUploadMedia) return;
     setUploadError('');
     setPromptStage(stage);
     fileInputRef.current?.click();
@@ -396,7 +401,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
     const file = e.target.files?.[0];
     const stage = promptStage ?? statusToMediaStage(repair.status);
     e.target.value = '';
-    if (!file) return;
+    if (!file || !canUploadMedia) return;
     setUploading(true);
     setUploadError('');
     try {
@@ -642,7 +647,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
         <div className="pt-3" style={{ borderTop: '1px solid hsl(var(--border))' }}>
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs font-bold" style={{ color: 'hsl(var(--foreground))' }}>Photos</p>
-            {!isDone && canUpdateProgress && (
+            {!isDone && canUploadMedia && (
               <button
                 onClick={() => openPhotoPicker(statusToMediaStage(repair.status))}
                 disabled={uploading}
@@ -659,7 +664,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
               style={{ background: 'rgba(245,158,11,0.1)', color: '#b45309' }}>
               <AlertCircle className="w-3.5 h-3.5 shrink-0" />
               <span className="text-[11px] font-medium">
-                Attach a {(requiredStage && REQUIRED_MEDIA_STAGE_LABEL[requiredStage]) || 'required'} photo before you can {nextAction(repair.status, repair.jobType).toLowerCase()}.
+                {canUploadMedia ? 'Attach a' : 'An assigned technician must attach a'} {REQUIRED_MEDIA_STAGE_LABEL[requiredStage] || 'required'} photo before this ticket can advance.
               </span>
             </div>
           )}
@@ -719,7 +724,8 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp"
+            disabled={!canUploadMedia}
             capture="environment"
             className="hidden"
             onChange={handleFileChange}
@@ -920,13 +926,15 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
           {canUpdateProgress ? (
             <button
               onClick={handleAdvanceClick}
-              disabled={uploading}
+              disabled={uploading || (!!requiredStage && !hasRequiredPhoto && !canUploadMedia)}
               className="w-full h-10 rounded-xl text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-60"
               style={requiredStage && !hasRequiredPhoto
                 ? { background: 'rgba(245,158,11,0.15)', color: '#b45309' }
                 : { background: 'hsl(var(--foreground))', color: 'hsl(var(--background))' }}>
               {requiredStage && !hasRequiredPhoto ? <Camera className="w-4 h-4" /> : null}
-              {requiredStage && !hasRequiredPhoto ? 'Add Photo to Continue' : nextAction(repair.status, repair.jobType)}
+              {requiredStage && !hasRequiredPhoto
+                ? (canUploadMedia ? 'Add Photo to Continue' : 'Awaiting Technician Photo')
+                : nextAction(repair.status, repair.jobType)}
             </button>
           ) : (
             <p className="text-[11px] text-center py-1" style={{ color: 'hsl(var(--muted-foreground))' }}>
