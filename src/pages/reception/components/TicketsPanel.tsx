@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import {
   Search, Phone, Clock3, ClipboardList, ChevronDown,
-  CheckCircle2, UserX, Smartphone, Bell, User, Tag, X,
+  CheckCircle2, UserX, Smartphone, Bell, User, Tag, X, PackageCheck,
 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import { useAuth } from '@/hooks/useAuth';
@@ -40,16 +40,21 @@ function bucketOf(status: RepairStatus): FilterKey {
 
 export default function TicketsPanel() {
   const { showToast } = useToast();
-  const { repairs, loading, error, reload, patchRepair, addNote } = useRepairs();
+  const { repairs, loading, error, reload, patchRepair, addNote, updateStatus } = useRepairs();
   const { technicians } = useTechnicians();
   const { user } = useAuth();
   const { requests: reassignmentRequests, resolve: resolveReassignment } = useReassignmentRequests();
   const { requests: approvalRequests, resolve: resolveApproval } = useApprovalRequests();
+  // Mirrors the DB's ready→completed gate (tickets:collect) — the pickup
+  // handoff is reception's call, not the technician's. See RepairsBoard.tsx.
+  const perms = user?.permissions ?? [];
+  const canMarkCollected = user?.role === 'admin' || perms.includes('tickets:collect');
 
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterKey>('all');
   const [discountRequestId, setDiscountRequestId] = useState<string | null>(null);
   const [discountReason, setDiscountReason] = useState('');
+  const [collectingId, setCollectingId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
 
   const today = new Date().toDateString();
@@ -117,6 +122,18 @@ export default function TicketsPanel() {
     }
   };
 
+  const handleMarkCollected = async (repair: Repair) => {
+    setCollectingId(repair.id);
+    try {
+      // updateStatus already shows its own success/error toast.
+      await updateStatus(repair.id, 'completed');
+    } catch {
+      // swallow — toasted above
+    } finally {
+      setCollectingId(null);
+    }
+  };
+
   return (
     <div className="space-y-5">
       {/* Stat cards */}
@@ -170,14 +187,25 @@ export default function TicketsPanel() {
                   <p className="text-sm font-bold" style={{ color: 'hsl(var(--foreground))' }}>{r.device}</p>
                   <p className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>{r.customer} · {r.id} · {r.cost}</p>
                 </div>
-                {r.customerPhone && (
-                  <a href={`tel:${r.customerPhone}`}
-                    onClick={() => handleCall(r.customerPhone!)}
-                    className="h-8 px-3 inline-flex items-center gap-1.5 rounded-lg text-xs font-semibold flex-shrink-0 cursor-pointer"
-                    style={{ background: 'rgba(34,197,94,0.15)', color: '#16a34a' }}>
-                    <Phone className="w-3.5 h-3.5" /> Call
-                  </a>
-                )}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {r.customerPhone && (
+                    <a href={`tel:${r.customerPhone}`}
+                      onClick={() => handleCall(r.customerPhone!)}
+                      className="h-8 px-3 inline-flex items-center gap-1.5 rounded-lg text-xs font-semibold flex-shrink-0 cursor-pointer"
+                      style={{ background: 'rgba(34,197,94,0.15)', color: '#16a34a' }}>
+                      <Phone className="w-3.5 h-3.5" /> Call
+                    </a>
+                  )}
+                  {canMarkCollected && (
+                    <button
+                      onClick={() => handleMarkCollected(r)}
+                      disabled={collectingId === r.id}
+                      className="h-8 px-3 inline-flex items-center gap-1.5 rounded-lg text-xs font-semibold flex-shrink-0 cursor-pointer text-white disabled:opacity-60"
+                      style={{ background: '#22c55e' }}>
+                      <PackageCheck className="w-3.5 h-3.5" /> {collectingId === r.id ? 'Marking…' : 'Mark Collected'}
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -321,13 +349,25 @@ export default function TicketsPanel() {
                     </button>
                   </div>
                 ) : (
-                  <button
-                    onClick={() => { setDiscountRequestId(repair.id); setDiscountReason(''); }}
-                    className="flex items-center gap-1.5 text-xs mt-2 cursor-pointer"
-                    style={{ color: 'hsl(var(--muted-foreground))' }}
-                  >
-                    <Tag className="w-3.5 h-3.5" /> Request Discount
-                  </button>
+                  <div className="flex items-center gap-3 mt-2">
+                    <button
+                      onClick={() => { setDiscountRequestId(repair.id); setDiscountReason(''); }}
+                      className="flex items-center gap-1.5 text-xs cursor-pointer"
+                      style={{ color: 'hsl(var(--muted-foreground))' }}
+                    >
+                      <Tag className="w-3.5 h-3.5" /> Request Discount
+                    </button>
+                    {repair.status === 'ready' && canMarkCollected && (
+                      <button
+                        onClick={() => handleMarkCollected(repair)}
+                        disabled={collectingId === repair.id}
+                        className="flex items-center gap-1.5 text-xs font-semibold cursor-pointer disabled:opacity-60"
+                        style={{ color: '#16a34a' }}
+                      >
+                        <PackageCheck className="w-3.5 h-3.5" /> {collectingId === repair.id ? 'Marking…' : 'Mark Collected'}
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             );
