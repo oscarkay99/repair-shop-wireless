@@ -152,7 +152,7 @@ function RepairCard({ repair, onClick, selected }: {
 
 // ── Detail Panel ──────────────────────────────────────────────────────────
 
-export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, onAddMedia, onRemoveMedia, uploaderName, canManageTickets, canUpdateProgress, canDeleteTickets, onProceedToRepair, onCloseDiagnosisOnly, onDiscontinue, onPatchParts, onEdit, onDelete }: {
+export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, onAddMedia, onRemoveMedia, uploaderName, canManageTickets, canUpdateProgress, canMarkCollected = false, canDeleteTickets, onProceedToRepair, onCloseDiagnosisOnly, onDiscontinue, onPatchParts, onEdit, onDelete }: {
   repair: Repair;
   onClose: () => void;
   onUpdateStatus: (id: string, s: RepairStatus) => void;
@@ -161,8 +161,10 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   onRemoveMedia: (id: string, mediaId: string) => Promise<unknown>;
   uploaderName?: string;
   canManageTickets: boolean;
-  /** Receptionists can create/edit/assign a ticket but never advance its status — that's reserved for the assigned technician and admin. */
+  /** Receptionists can create/edit/assign a ticket but never advance its status through the repair pipeline — that's reserved for the assigned technician and admin. The one exception is the final handoff, gated separately by `canMarkCollected`. */
   canUpdateProgress: boolean;
+  /** The ready → completed step ("Mark Collected") is the pickup handoff, not repair progress — reception's call, not the technician's. Defaults to false so a caller that hasn't been updated (e.g. an older embed) never grants it by omission. */
+  canMarkCollected?: boolean;
   /** Deleting a ticket is admin-only — receptionist can create/edit but not delete. */
   canDeleteTickets: boolean;
   onProceedToRepair: (id: string) => void;
@@ -251,6 +253,10 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   });
 
   const upcomingStatus = nextStatus(repair.status, repair.jobType);
+  // The pickup handoff — ready → completed — is reception's call, not the
+  // technician's; every earlier step in the pipeline is the other way
+  // around. Gated separately below via canMarkCollected vs canUpdateProgress.
+  const isMarkCollectedStep = repair.status === 'ready';
   const requiredStage = requiredMediaStageForAdvance(repair.status, upcomingStatus);
   const hasRequiredPhoto = !requiredStage || media.some(m => m.stage === requiredStage);
   const depositPaid = ticketPayments.reduce((s, p) => s + p.amount, 0);
@@ -950,7 +956,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
               </p>
             )
           )}
-          {canUpdateProgress ? (
+          {(isMarkCollectedStep ? canMarkCollected : canUpdateProgress) ? (
             <button
               onClick={handleAdvanceClick}
               disabled={uploading || (!!requiredStage && !hasRequiredPhoto && !canUploadMedia)}
@@ -965,7 +971,9 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
             </button>
           ) : (
             <p className="text-[11px] text-center py-1" style={{ color: 'hsl(var(--muted-foreground))' }}>
-              Only a technician or admin can update this ticket's progress.
+              {isMarkCollectedStep
+                ? 'Only reception or an admin can mark this ticket collected.'
+                : "Only a technician or admin can update this ticket's progress."}
             </p>
           )}
           {canWaivePhoto && (
@@ -1152,6 +1160,9 @@ export default function RepairsBoard() {
   // a custom scoped-tech role would pass the DB trigger but hit a hidden
   // progress UI under the old hardcoded check).
   const canUpdateProgress = user?.role === 'admin' || isTechnician;
+  // Mirrors the DB's ready→completed gate: the pickup handoff is reception's
+  // call (or any custom role explicitly granted it), never the technician's.
+  const canMarkCollected = user?.role === 'admin' || perms.includes('tickets:collect');
   const canDeleteTickets = !isTechnician && (user?.role === 'admin' || perms.includes('tickets:delete'));
   const { requests: reassignmentRequests, resolve: resolveReassignment } = useReassignmentRequests();
   const { requests: approvalRequests, resolve: resolveApproval } = useApprovalRequests();
@@ -1433,6 +1444,7 @@ export default function RepairsBoard() {
             uploaderName={user?.name}
             canManageTickets={canManageTickets}
             canUpdateProgress={canUpdateProgress}
+            canMarkCollected={canMarkCollected}
             canDeleteTickets={canDeleteTickets}
             onProceedToRepair={handleProceedToRepair}
             onCloseDiagnosisOnly={handleCloseDiagnosisOnly}

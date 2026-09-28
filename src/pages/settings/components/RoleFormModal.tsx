@@ -6,6 +6,7 @@ const PERMISSION_GROUPS: { resource: string; label: string; actions: { value: st
   { resource: 'tickets', label: 'Tickets', actions: [
     { value: 'tickets:view', label: 'View' }, { value: 'tickets:create', label: 'Create' },
     { value: 'tickets:edit', label: 'Edit' }, { value: 'tickets:delete', label: 'Delete' },
+    { value: 'tickets:collect', label: 'Mark Collected (Pickup)' },
   ] },
   { resource: 'ticket_media', label: 'Ticket Photos/Videos', actions: [
     { value: 'ticket_media:view', label: 'View' }, { value: 'ticket_media:create', label: 'Upload' }, { value: 'ticket_media:delete', label: 'Delete' },

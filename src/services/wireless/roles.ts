@@ -24,11 +24,12 @@ let localStore: WirelessRole[] = [
   { id: 'technician', name: 'Technician', color: '#06B6D4', is_system: true, scope_tickets_to_technician: true, dashboard_variant: 'technician', created_at: now(), updated_at: now(),
     permissions: ['ticket_parts:create','parts:view'] },
   // Kept in sync with the cumulative DB patches on top of the original seed
-  // (20260728030000, 20260806070000, 20260811000000, 20260817000000):
-  // items_edit, sales:create, ticket_parts:create, and parts:view were all
-  // granted after the initial custom-roles migration.
+  // (20260728030000, 20260806070000, 20260811000000, 20260817000000,
+  // 20260928000000): items_edit, sales:create, ticket_parts:create,
+  // parts:view, and tickets:collect were all granted after the initial
+  // custom-roles migration.
   { id: 'receptionist', name: 'Receptionist', color: '#8B5CF6', is_system: true, scope_tickets_to_technician: false, dashboard_variant: 'receptionist', created_at: now(), updated_at: now(),
-    permissions: ['tickets:view','tickets:create','tickets:edit','ticket_media:view','ticket_comments:view','ticket_comments:create','ticket_parts:view','ticket_parts:create','customers:view','customers:create','customers:edit','invoices:view','invoices:create','invoices:edit','invoices:items_edit','technicians:view','sales:view','sales:create','payments:create','payments:view','parts:view'] },
+    permissions: ['tickets:view','tickets:create','tickets:edit','tickets:collect','ticket_media:view','ticket_comments:view','ticket_comments:create','ticket_parts:view','ticket_parts:create','customers:view','customers:create','customers:edit','invoices:view','invoices:create','invoices:edit','invoices:items_edit','technicians:view','sales:view','sales:create','payments:create','payments:view','parts:view'] },
 ];
 
 export async function getRoles(): Promise<WirelessRole[]> {
