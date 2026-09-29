@@ -36,6 +36,7 @@ function toDatetimeLocalValue(iso: string): string {
 // long; the ETA picker below stays editable for anything else. Overdue
 // flags and reminders already run off the ETA, so nothing else changes.
 const DURATION_PRESETS: { hours: number; label: string }[] = [
+  { hours: 1, label: '1 hr' },
   { hours: 2, label: '2 hrs' },
   { hours: 6, label: '6 hrs' },
   { hours: 24, label: '24 hrs' },
