@@ -1,4 +1,4 @@
-import { Clock, Phone, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Clock, BellRing, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Repair } from '@/types/repair';
 import { useStaleTickets } from '@/hooks/useStaleTickets';
 import { usePagination } from '@/hooks/usePagination';
@@ -9,7 +9,7 @@ interface Props {
   repairs: Repair[];
   /** RepairsBoard can open the detail panel on click; pages without one just omit this. */
   onSelect?: (ticketNumber: string) => void;
-  /** Called when the follow-up tag is tapped (it also dials the customer). */
+  /** Called when the follow-up tag is tapped to notify the assigned technician. */
   onFollowUp?: (repair: Repair) => void;
 }
 
@@ -57,17 +57,17 @@ export default function StaleTicketsBanner({ repairs, onSelect, onFollowUp }: Pr
                   No activity for {formatQuiet(hoursSinceUpdate)}
                 </p>
               </div>
-              {repair.customerPhone ? (
-                <a
-                  href={`tel:${repair.customerPhone}`}
-                  onClick={e => { e.stopPropagation(); onFollowUp?.(repair); }}
+              {onFollowUp ? (
+                <button
+                  type="button"
+                  onClick={e => { e.stopPropagation(); onFollowUp(repair); }}
                   className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold flex-shrink-0 cursor-pointer"
                   style={urgent
                     ? { background: 'rgba(239,68,68,0.15)', color: '#ef4444' }
                     : { background: 'rgba(245,158,11,0.15)', color: '#f59e0b' }}
                 >
-                  <Phone className="w-3 h-3" /> {urgent ? 'FOLLOW UP' : 'CHECK IN'}
-                </a>
+                  <BellRing className="w-3 h-3" /> {urgent ? 'FOLLOW UP' : 'CHECK IN'}
+                </button>
               ) : (
                 <span
                   className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0"

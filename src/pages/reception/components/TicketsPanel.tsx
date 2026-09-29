@@ -121,10 +121,9 @@ export default function TicketsPanel() {
     }
   };
 
-  // Dials (via the tag's tel: link) and leaves a banner for the assigned
-  // technician so they know reception is chasing their dormant ticket.
+  // Leaves a banner for the assigned technician so they know reception is
+  // chasing their dormant ticket. Doesn't dial anything.
   const handleFollowUp = async (repair: Repair) => {
-    if (repair.customerPhone) handleCall(repair.customerPhone);
     if (!repair.ticketDbId) return;
     if (!repair.technicians?.length) {
       showToast(`${repair.id} has no assigned technician to notify`, 'error');
