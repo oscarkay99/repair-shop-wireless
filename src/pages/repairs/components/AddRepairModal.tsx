@@ -32,6 +32,24 @@ function toDatetimeLocalValue(iso: string): string {
   return iso.slice(0, 16);
 }
 
+// How long the customer was promised. Picking one sets the ETA to now + that
+// long; the ETA picker below stays editable for anything else. Overdue
+// flags and reminders already run off the ETA, so nothing else changes.
+const DURATION_PRESETS: { hours: number; label: string }[] = [
+  { hours: 2, label: '2 hrs' },
+  { hours: 6, label: '6 hrs' },
+  { hours: 24, label: '24 hrs' },
+  { hours: 48, label: '48 hrs' },
+  { hours: 72, label: '72 hrs' },
+  { hours: 168, label: '1 week' },
+];
+
+// datetime-local wants local wall-clock time, not UTC.
+function toLocalDatetimeValue(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 export default function AddRepairModal({ onSave, onClose, repairs, defaultJobType, initial, onUpdate }: Props) {
   const [form, setForm] = useState({
     customer: initial?.customer ?? '',
@@ -138,7 +156,13 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
   // all ("1hr", "April 2023"). The date+time picker is the only thing that
   // ever actually drove overdue detection; the label shown everywhere else
   // is now always derived from it, so there's exactly one thing to fill in.
-  const handleEtaDateChange = (dateTimeStr: string) => {
+  const [durationHours, setDurationHours] = useState<number | null>(null);
+  const pickDuration = (hours: number) => {
+    setDurationHours(hours);
+    handleEtaDateChange(toLocalDatetimeValue(new Date(Date.now() + hours * 3_600_000)), true);
+  };
+  const handleEtaDateChange = (dateTimeStr: string, fromPreset = false) => {
+    if (!fromPreset) setDurationHours(null);
     set('etaDate', dateTimeStr);
     set('eta', dateTimeStr ? new Date(dateTimeStr).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '');
   };
@@ -528,7 +552,19 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className={form.jobType === 'straight_repair' ? 'sm:col-span-2' : ''}>
-              <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>ETA</label>
+              <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Duration promised</label>
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {DURATION_PRESETS.map(({ hours, label }) => (
+                  <button key={hours} type="button" onClick={() => pickDuration(hours)}
+                    className="px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer"
+                    style={durationHours === hours
+                      ? { background: '#EC0118', color: '#fff', border: '1px solid #EC0118' }
+                      : { background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))', border: '1px solid hsl(var(--border))' }}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>ETA (overdue after this)</label>
               <input type="datetime-local" value={form.etaDate} onChange={e => handleEtaDateChange(e.target.value)}
                 title="Used to flag this ticket as overdue if it slips past this date and time"
                 className="w-full text-sm rounded-xl px-3 py-2 outline-none"
