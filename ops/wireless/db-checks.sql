@@ -143,6 +143,25 @@ begin
     exception when others then
       null;  -- an exception is also "blocked"
     end;
+    -- Reception edits a ticket's details but can never delete a ticket.
+    begin
+      update wireless.tickets set device = device where id = tid;
+      get diagnostics n = row_count;
+      if n <> 1 then
+        failures := failures || 'as receptionist: editing a ticket updated 0 rows';
+      end if;
+    exception when others then
+      failures := failures || format('as receptionist: editing a ticket -> %s', sqlerrm);
+    end;
+    begin
+      delete from wireless.tickets where id = tid;
+      get diagnostics n = row_count;
+      if n <> 0 then
+        failures := failures || 'as receptionist: was able to DELETE a ticket (must never be allowed)';
+      end if;
+    exception when others then
+      null;  -- an exception is also "blocked"
+    end;
     execute 'reset role';
   end if;
 
