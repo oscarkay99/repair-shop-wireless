@@ -1,4 +1,4 @@
-import { Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Clock, Phone, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Repair } from '@/types/repair';
 import { useStaleTickets } from '@/hooks/useStaleTickets';
 import { usePagination } from '@/hooks/usePagination';
@@ -9,6 +9,8 @@ interface Props {
   repairs: Repair[];
   /** RepairsBoard can open the detail panel on click; pages without one just omit this. */
   onSelect?: (ticketNumber: string) => void;
+  /** Called when the follow-up tag is tapped, e.g. to copy the number. The tag always dials the customer. */
+  onCall?: (phone: string) => void;
 }
 
 function formatQuiet(hours: number): string {
@@ -16,7 +18,7 @@ function formatQuiet(hours: number): string {
   return `${Math.floor(hours / 24)}d`;
 }
 
-export default function StaleTicketsBanner({ repairs, onSelect }: Props) {
+export default function StaleTicketsBanner({ repairs, onSelect, onCall }: Props) {
   const stale = useStaleTickets(repairs);
   const { page, setPage, paginated, totalPages, total, from, to } = usePagination(stale, PAGE_SIZE, stale.length);
   if (stale.length === 0) return null;
@@ -36,11 +38,14 @@ export default function StaleTicketsBanner({ repairs, onSelect }: Props) {
       <div className="space-y-2">
         {paginated.map(({ repair, tier, hoursSinceUpdate }) => {
           const urgent = tier === 'urgent';
-          const Row = onSelect ? 'button' : 'div';
           return (
-            <Row
+            <div
               key={repair.id}
-              {...(onSelect ? { onClick: () => onSelect(repair.id) } : {})}
+              {...(onSelect ? {
+                role: 'button', tabIndex: 0,
+                onClick: () => onSelect(repair.id),
+                onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Enter') onSelect(repair.id); },
+              } : {})}
               className={`w-full flex items-center gap-3 flex-wrap rounded-lg px-3 py-2.5 text-left ${onSelect ? 'cursor-pointer' : ''}`}
               style={{ background: 'rgba(0,0,0,0.15)' }}
             >
@@ -52,15 +57,28 @@ export default function StaleTicketsBanner({ repairs, onSelect }: Props) {
                   No activity for {formatQuiet(hoursSinceUpdate)}
                 </p>
               </div>
-              <span
-                className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0"
-                style={urgent
-                  ? { background: 'rgba(239,68,68,0.15)', color: '#ef4444' }
-                  : { background: 'rgba(245,158,11,0.15)', color: '#f59e0b' }}
-              >
-                {urgent ? 'FOLLOW UP' : 'CHECK IN'}
-              </span>
-            </Row>
+              {repair.customerPhone ? (
+                <a
+                  href={`tel:${repair.customerPhone}`}
+                  onClick={e => { e.stopPropagation(); onCall?.(repair.customerPhone!); }}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold flex-shrink-0 cursor-pointer"
+                  style={urgent
+                    ? { background: 'rgba(239,68,68,0.15)', color: '#ef4444' }
+                    : { background: 'rgba(245,158,11,0.15)', color: '#f59e0b' }}
+                >
+                  <Phone className="w-3 h-3" /> {urgent ? 'FOLLOW UP' : 'CHECK IN'}
+                </a>
+              ) : (
+                <span
+                  className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0"
+                  style={urgent
+                    ? { background: 'rgba(239,68,68,0.15)', color: '#ef4444' }
+                    : { background: 'rgba(245,158,11,0.15)', color: '#f59e0b' }}
+                >
+                  {urgent ? 'FOLLOW UP' : 'CHECK IN'}
+                </span>
+              )}
+            </div>
           );
         })}
       </div>

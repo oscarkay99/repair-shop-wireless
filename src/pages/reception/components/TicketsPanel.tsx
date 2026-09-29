@@ -174,7 +174,7 @@ export default function TicketsPanel() {
         onResolve={(commentId, ticketId, decision) => resolveApproval(commentId, ticketId, decision, user?.name ?? 'Staff')}
       />
 
-      <StaleTicketsBanner repairs={repairs} />
+      <StaleTicketsBanner repairs={repairs} onCall={handleCall} />
       <EtaRemindersBanner repairs={repairs} />
 
       {/* Ready-for-pickup banner */}
