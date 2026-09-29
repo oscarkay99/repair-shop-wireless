@@ -26,6 +26,7 @@ declare
   u record;
   t text;
   tid uuid;
+  admin_id uuid;
   n integer;
   failures text[] := '{}';
   app_tables text[] := array[
@@ -95,7 +96,10 @@ begin
   -- back, including the ticket changes below.
   select id, role into u from wireless.profiles where status = 'active' and role = 'receptionist' order by created_at limit 1;
   select id into tid from wireless.tickets order by created_at limit 1;
+  select id into admin_id from wireless.profiles where status = 'active' and role = 'admin' order by created_at limit 1;
   if u.id is not null and tid is not null then
+    perform set_config('request.jwt.claims', json_build_object('sub', admin_id, 'role', 'authenticated')::text, true);
+    perform set_config('request.jwt.claim.sub', admin_id::text, true);
     update wireless.tickets set status = 'ready', service_stage = 'pickup', completed_at = null where id = tid;
     perform set_config('request.jwt.claims', json_build_object('sub', u.id, 'role', 'authenticated')::text, true);
     perform set_config('request.jwt.claim.sub', u.id::text, true);
@@ -108,6 +112,72 @@ begin
       end if;
     exception when others then
       failures := failures || format('as receptionist: marking a ready ticket collected -> %s', sqlerrm);
+    end;
+    execute 'reset role';
+  end if;
+
+  -- 4. More write paths, built-in roles only (custom roles are editable, so
+  -- nothing can be asserted for them). Each case is (role, action, expected)
+  -- and every one runs in its own subtransaction so a failure is recorded,
+  -- not fatal. "blocked" means 0 rows or an exception; "allowed" means 1 row.
+  --
+  -- 4a. Reception can comment on a ticket (used for discount requests) but
+  -- can NOT write ticket notes.
+  select id into u from wireless.profiles where status = 'active' and role = 'receptionist' order by created_at limit 1;
+  if u.id is not null and tid is not null then
+    perform set_config('request.jwt.claims', json_build_object('sub', u.id, 'role', 'authenticated')::text, true);
+    perform set_config('request.jwt.claim.sub', u.id::text, true);
+    execute 'set local role authenticated';
+    begin
+      insert into wireless.ticket_comments (ticket_id, author_id, author_name, body, is_internal)
+      values (tid, u.id, 'db-check', 'db-check', true);
+    exception when others then
+      failures := failures || format('as receptionist: commenting on a ticket -> %s', sqlerrm);
+    end;
+    begin
+      update wireless.tickets set notes_json = '[]'::jsonb where id = tid;
+      get diagnostics n = row_count;
+      if n <> 0 then
+        failures := failures || 'as receptionist: ticket notes were writable (should be technician/admin only)';
+      end if;
+    exception when others then
+      null;  -- an exception is also "blocked"
+    end;
+    execute 'reset role';
+  end if;
+
+  -- 4b. Technician: can move their own ticket forward, can NOT collect it.
+  select p.id, tk.id as ticket_id into u
+  from wireless.profiles p
+  join wireless.technicians te on te.profile_id = p.id
+  join wireless.ticket_technicians tt on tt.technician_id = te.id
+  join wireless.tickets tk on tk.id = tt.ticket_id
+  where p.status = 'active' and p.role = 'technician'
+  order by tk.created_at limit 1;
+  if u.id is not null then
+    perform set_config('request.jwt.claims', json_build_object('sub', admin_id, 'role', 'authenticated')::text, true);
+    perform set_config('request.jwt.claim.sub', admin_id::text, true);
+    update wireless.tickets set status = 'in_progress', service_stage = 'repair', completed_at = null where id = u.ticket_id;
+    perform set_config('request.jwt.claims', json_build_object('sub', u.id, 'role', 'authenticated')::text, true);
+    perform set_config('request.jwt.claim.sub', u.id::text, true);
+    execute 'set local role authenticated';
+    begin
+      update wireless.tickets set status = 'ready', service_stage = 'pickup' where id = u.ticket_id;
+      get diagnostics n = row_count;
+      if n <> 1 then
+        failures := failures || 'as technician: moving own ticket to ready updated 0 rows';
+      end if;
+    exception when others then
+      failures := failures || format('as technician: moving own ticket to ready -> %s', sqlerrm);
+    end;
+    begin
+      update wireless.tickets set status = 'completed', service_stage = 'pickup' where id = u.ticket_id;
+      get diagnostics n = row_count;
+      if n <> 0 then
+        failures := failures || 'as technician: was able to mark a ticket collected (reception/admin only)';
+      end if;
+    exception when others then
+      null;
     end;
     execute 'reset role';
   end if;
