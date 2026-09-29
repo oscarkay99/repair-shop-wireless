@@ -25,6 +25,8 @@ declare
   c record;
   u record;
   t text;
+  tid uuid;
+  n integer;
   failures text[] := '{}';
   app_tables text[] := array[
     'accessory_sales', 'attendance', 'audit_logs', 'customers', 'expenses', 'fixed_assets',
@@ -85,6 +87,30 @@ begin
     end loop;
     execute 'reset role';
   end loop;
+
+  -- 3. Write-path check for reception. RLS silently turns a disallowed
+  -- UPDATE into "0 rows, no error", so the only way to know a write really
+  -- works for a role is to run it and count rows. "Mark Collected" shipped
+  -- broken for a day because nothing did this. The caller rolls everything
+  -- back, including the ticket changes below.
+  select id, role into u from wireless.profiles where status = 'active' and role = 'receptionist' order by created_at limit 1;
+  select id into tid from wireless.tickets order by created_at limit 1;
+  if u.id is not null and tid is not null then
+    update wireless.tickets set status = 'ready', service_stage = 'pickup', completed_at = null where id = tid;
+    perform set_config('request.jwt.claims', json_build_object('sub', u.id, 'role', 'authenticated')::text, true);
+    perform set_config('request.jwt.claim.sub', u.id::text, true);
+    execute 'set local role authenticated';
+    begin
+      update wireless.tickets set status = 'completed', service_stage = 'pickup', completed_at = now() where id = tid;
+      get diagnostics n = row_count;
+      if n <> 1 then
+        failures := failures || 'as receptionist: marking a ready ticket collected updated 0 rows (RLS blocks it)';
+      end if;
+    exception when others then
+      failures := failures || format('as receptionist: marking a ready ticket collected -> %s', sqlerrm);
+    end;
+    execute 'reset role';
+  end if;
 
   if array_length(failures, 1) > 0 then
     raise exception 'Wireless DB checks failed (% problem(s)): %', array_length(failures, 1), array_to_string(failures, ' || ');

@@ -3,6 +3,7 @@ import {
   Search, Phone, Clock3, ClipboardList, ChevronDown,
   CheckCircle2, UserX, Smartphone, Bell, User, Tag, X, PackageCheck,
 } from 'lucide-react';
+import { addTicketComment } from '@/services/wireless/ticketComments';
 import { useToast } from '@/contexts/ToastContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useRepairs } from '@/hooks/useRepairs';
@@ -40,7 +41,7 @@ function bucketOf(status: RepairStatus): FilterKey {
 
 export default function TicketsPanel() {
   const { showToast } = useToast();
-  const { repairs, loading, error, reload, patchRepair, addNote, updateStatus } = useRepairs();
+  const { repairs, loading, error, reload, patchRepair, updateStatus } = useRepairs();
   const { technicians } = useTechnicians();
   const { user } = useAuth();
   const { requests: reassignmentRequests, resolve: resolveReassignment } = useReassignmentRequests();
@@ -105,12 +106,19 @@ export default function TicketsPanel() {
     if (tech) patchRepair(repairId, { technicians: [{ id: tech.id, name: tech.name }] });
   };
 
-  const submitDiscountRequest = (repair: Repair) => {
-    if (!discountReason.trim()) return;
-    addNote(repair.id, `Discount requested: ${discountReason.trim()}`);
-    showToast('Discount request sent');
-    setDiscountRequestId(null);
-    setDiscountReason('');
+  // Posted as an internal ticket comment, not a ticket note: reception can't
+  // write tickets.notes_json (that's technician/admin only), so the old
+  // addNote path was silently rejected while the toast claimed success.
+  const submitDiscountRequest = async (repair: Repair) => {
+    if (!discountReason.trim() || !repair.ticketDbId) return;
+    try {
+      await addTicketComment(repair.ticketDbId, `Discount requested: ${discountReason.trim()}`, user?.name ?? 'Reception');
+      showToast('Discount request sent');
+      setDiscountRequestId(null);
+      setDiscountReason('');
+    } catch {
+      showToast('Discount request could not be sent', 'error');
+    }
   };
 
   const handleCall = async (phone: string) => {
