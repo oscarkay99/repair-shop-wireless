@@ -444,12 +444,15 @@ export async function updateRepairStatus(id: string, status: RepairStatus): Prom
   const readyAt = status === 'ready' && repair.status !== 'ready' ? new Date().toISOString() : repair.readyAt;
 
   if (isSupabaseConfigured) {
-    const { error } = await db.from('tickets').update({
+    const { data, error } = await db.from('tickets').update({
       status,
       service_stage: serviceStage,
       ...(isNowDone ? { completed_at: completedDate } : {}),
-    }).eq('ticket_number', id);
+    }).eq('ticket_number', id).select('ticket_number');
     if (error) throw error;
+    // RLS filters a disallowed UPDATE down to zero rows without an error;
+    // without this the UI reported success and the change vanished on refresh.
+    if (!data?.length) throw new Error("You don't have permission to change this ticket's status.");
   }
   updateLocalRepair(id, (currentRepair) => ({ ...currentRepair, status, serviceStage, completedDate, readyAt }));
 }
