@@ -11,14 +11,16 @@ export const isSupabaseConfigured = !!supabaseUrl && !!supabaseAnonKey;
 // Row-level security never errors on an UPDATE/DELETE it filters out — it just
 // matches zero rows, and the client reports success. That is how "Mark
 // Collected" looked saved for reception and then reverted on refresh. Ask
-// PostgREST for the affected-row count on every PATCH/DELETE and turn a zero
-// into a real error, so a blocked write can never look like it worked.
+// PostgREST for the affected-row count on every PATCH and turn a zero into a
+// real error, so a blocked update can never look like it worked. DELETE is
+// deliberately left alone: "delete whatever is there, then insert" is used
+// for technician assignment, and deleting nothing is normal there.
 const NOT_PERMITTED_MESSAGE = "That change wasn't saved: you may not have permission, or the record no longer exists.";
 
 const strictWriteFetch: typeof fetch = async (input, init) => {
   const method = (init?.method ?? (input instanceof Request ? input.method : 'GET')).toUpperCase();
   const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-  if ((method !== 'PATCH' && method !== 'DELETE') || !url.includes('/rest/v1/')) {
+  if (method !== 'PATCH' || !url.includes('/rest/v1/')) {
     return fetch(input, init);
   }
   const headers = new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined));
