@@ -228,3 +228,87 @@ export async function resolveApprovalRequest(commentId: string, ticketId: string
     is_internal: true,
   });
 }
+
+export interface FollowUpNotice {
+  commentId: string;
+  ticketId: string;
+  ticketNumber: string;
+  device: string;
+  customerName: string;
+  requestedBy: string;
+  createdAt: string;
+  /** When the ticket last changed; a follow-up older than this has been acted on. */
+  ticketUpdatedAt: string | null;
+}
+
+type FollowUpRow = {
+  id: string;
+  ticket_id: string;
+  author_name: string;
+  created_at: string;
+  ticket: { ticket_number: string; device: string; customer_name: string; updated_at: string | null } | null;
+};
+
+const FOLLOW_UP_COOLDOWN_MS = 6 * 3_600_000;
+
+/**
+ * Reception chasing a dormant ticket. Stored as a tagged internal comment so the
+ * assigned technician (whose RLS already lets them read comments on their own
+ * tickets) sees it as a banner. Not resolved by anyone: it disappears on its own
+ * once the ticket has any activity after it (see getOpenFollowUps callers).
+ * Repeated taps within the cooldown don't stack up new notices.
+ */
+export async function requestFollowUp(ticketId: string, authorName: string): Promise<void> {
+  if (!isSupabaseConfigured) return;
+  const since = new Date(Date.now() - FOLLOW_UP_COOLDOWN_MS).toISOString();
+  const { data: existing, error: existingError } = await db
+    .from('ticket_comments')
+    .select('id')
+    .eq('ticket_id', ticketId)
+    .eq('request_type', 'follow_up')
+    .gte('created_at', since)
+    .limit(1);
+  if (existingError) throw existingError;
+  if (existing?.length) return;
+  const { data: sessionData } = await supabase.auth.getSession();
+  const { error } = await db.from('ticket_comments').insert({
+    ticket_id: ticketId,
+    author_id: sessionData.session?.user?.id ?? null,
+    author_name: authorName,
+    body: 'Follow-up: this ticket has had no activity for a while. Please update its status or add a note.',
+    is_internal: true,
+    request_type: 'follow_up',
+  });
+  if (error) throw error;
+}
+
+/** Follow-ups on tickets the caller can see (technicians: only their own), newest first, one per ticket, not yet acted on. */
+export async function getOpenFollowUps(): Promise<FollowUpNotice[]> {
+  if (!isSupabaseConfigured) return [];
+  const { data, error } = await db
+    .from('ticket_comments')
+    .select('id, ticket_id, author_name, created_at, ticket:tickets(ticket_number,device,customer_name,updated_at)')
+    .eq('request_type', 'follow_up')
+    .order('created_at', { ascending: false })
+    .limit(100);
+  if (error) throw error;
+  const seen = new Set<string>();
+  const notices: FollowUpNotice[] = [];
+  for (const row of (data as unknown as FollowUpRow[] | null) ?? []) {
+    if (seen.has(row.ticket_id) || !row.ticket) continue;
+    seen.add(row.ticket_id);
+    // Any change to the ticket after the follow-up counts as the technician acting on it.
+    if (row.ticket.updated_at && row.ticket.updated_at > row.created_at) continue;
+    notices.push({
+      commentId: row.id,
+      ticketId: row.ticket_id,
+      ticketNumber: row.ticket.ticket_number,
+      device: row.ticket.device,
+      customerName: row.ticket.customer_name,
+      requestedBy: row.author_name,
+      createdAt: row.created_at,
+      ticketUpdatedAt: row.ticket.updated_at,
+    });
+  }
+  return notices;
+}

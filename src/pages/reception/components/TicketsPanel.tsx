@@ -3,7 +3,7 @@ import {
   Search, Phone, Clock3, ClipboardList, ChevronDown,
   CheckCircle2, UserX, Smartphone, Bell, User, Tag, X, PackageCheck,
 } from 'lucide-react';
-import { addTicketComment } from '@/services/wireless/ticketComments';
+import { addTicketComment, requestFollowUp } from '@/services/wireless/ticketComments';
 import { useToast } from '@/contexts/ToastContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useRepairs } from '@/hooks/useRepairs';
@@ -121,6 +121,23 @@ export default function TicketsPanel() {
     }
   };
 
+  // Dials (via the tag's tel: link) and leaves a banner for the assigned
+  // technician so they know reception is chasing their dormant ticket.
+  const handleFollowUp = async (repair: Repair) => {
+    if (repair.customerPhone) handleCall(repair.customerPhone);
+    if (!repair.ticketDbId) return;
+    if (!repair.technicians?.length) {
+      showToast(`${repair.id} has no assigned technician to notify`, 'error');
+      return;
+    }
+    try {
+      await requestFollowUp(repair.ticketDbId, user?.name ?? 'Reception');
+      showToast(`Technician notified about ${repair.id}`);
+    } catch {
+      showToast('Could not notify the technician', 'error');
+    }
+  };
+
   const handleCall = async (phone: string) => {
     try {
       await navigator.clipboard.writeText(phone);
@@ -174,7 +191,7 @@ export default function TicketsPanel() {
         onResolve={(commentId, ticketId, decision) => resolveApproval(commentId, ticketId, decision, user?.name ?? 'Staff')}
       />
 
-      <StaleTicketsBanner repairs={repairs} onCall={handleCall} />
+      <StaleTicketsBanner repairs={repairs} onFollowUp={handleFollowUp} />
       <EtaRemindersBanner repairs={repairs} />
 
       {/* Ready-for-pickup banner */}

@@ -10,6 +10,7 @@ import { REPAIR_STATUS_META, statusToServiceStage } from '@/utils/repairStatus';
 import { roleColors, roleLabels } from '@/mocks/users';
 import { isCurrentlyUnavailable } from '@/utils/technicianAvailability';
 import BirthdayBanner from '@/components/shared/BirthdayBanner';
+import FollowUpBanner from '@/components/shared/FollowUpBanner';
 import CustomerBirthdayBanner from '@/components/shared/CustomerBirthdayBanner';
 import type { RepairStatus } from '@/types/repair';
 import { useAttendance } from '@/hooks/useAttendance';
@@ -171,6 +172,7 @@ export default function TechPortalPage() {
         <div className="max-w-2xl w-full mx-auto space-y-5">
           <BirthdayBanner />
           <CustomerBirthdayBanner />
+          <FollowUpBanner onSelect={setSelectedId} refreshKey={repairs} />
 
           {/* Profile + status card */}
           <div className="rounded-2xl border p-5" style={{ background: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}>

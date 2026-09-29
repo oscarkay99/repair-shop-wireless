@@ -9,8 +9,8 @@ interface Props {
   repairs: Repair[];
   /** RepairsBoard can open the detail panel on click; pages without one just omit this. */
   onSelect?: (ticketNumber: string) => void;
-  /** Called when the follow-up tag is tapped, e.g. to copy the number. The tag always dials the customer. */
-  onCall?: (phone: string) => void;
+  /** Called when the follow-up tag is tapped (it also dials the customer). */
+  onFollowUp?: (repair: Repair) => void;
 }
 
 function formatQuiet(hours: number): string {
@@ -18,7 +18,7 @@ function formatQuiet(hours: number): string {
   return `${Math.floor(hours / 24)}d`;
 }
 
-export default function StaleTicketsBanner({ repairs, onSelect, onCall }: Props) {
+export default function StaleTicketsBanner({ repairs, onSelect, onFollowUp }: Props) {
   const stale = useStaleTickets(repairs);
   const { page, setPage, paginated, totalPages, total, from, to } = usePagination(stale, PAGE_SIZE, stale.length);
   if (stale.length === 0) return null;
@@ -60,7 +60,7 @@ export default function StaleTicketsBanner({ repairs, onSelect, onCall }: Props)
               {repair.customerPhone ? (
                 <a
                   href={`tel:${repair.customerPhone}`}
-                  onClick={e => { e.stopPropagation(); onCall?.(repair.customerPhone!); }}
+                  onClick={e => { e.stopPropagation(); onFollowUp?.(repair); }}
                   className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold flex-shrink-0 cursor-pointer"
                   style={urgent
                     ? { background: 'rgba(239,68,68,0.15)', color: '#ef4444' }
