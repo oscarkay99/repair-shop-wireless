@@ -399,7 +399,7 @@ export default function TechPortalPage() {
                       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'; }}
                       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = ''; }}>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold truncate" style={{ color: 'hsl(var(--foreground))' }}>{r.device}</p>
+                        <p className="text-sm font-semibold truncate" style={{ color: 'hsl(var(--foreground))' }}>{r.device} · {r.customer}</p>
                         <p className="text-xs truncate" style={{ color: 'hsl(var(--muted-foreground))' }}>
                           {finished ? `Finished ${finished} · ${r.issue}` : r.issue}
                         </p>

@@ -100,9 +100,7 @@ function RepairCard({ repair, onClick, selected }: {
       <p className="text-xs mb-3" style={{ color: 'hsl(var(--muted-foreground))' }}>{repair.issue}</p>
 
       <div className="flex items-center justify-between mb-2">
-        {!isTechnicianScoped && (
-          <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>{repair.customer}</span>
-        )}
+        <span className="text-xs truncate" style={{ color: 'hsl(var(--muted-foreground))' }}>{repair.customer}</span>
         {repair.technicians.length > 0 ? (
           <span className={`text-xs ${isTechnicianScoped ? 'ml-auto' : ''}`} style={{ color: 'hsl(var(--muted-foreground))' }}>Tech: {formatTechnicians(repair.technicians)}</span>
         ) : (
@@ -547,10 +545,10 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
         {/* Details */}
         <div className="space-y-2.5 pt-3" style={{ borderTop: '1px solid hsl(var(--border))' }}>
           {[
-            // Technicians see only the repair itself — who the customer is
-            // and what they're being charged/have paid is a reception/admin
-            // concern.
-            ...(isTechnicianScoped ? [] : [['Customer', repair.customer]]),
+            // Technicians see the customer's name (same-model devices are told
+            // apart by owner) but not what they're being charged/have paid —
+            // that's a reception/admin concern.
+            ['Customer', repair.customer],
             ['Technician',     repair.technicians.length ? repair.technicians.map(t => t.name).join(', ') : '—'],
             ['Started',        fmtStarted(repair.started)],
             [isOverdueRepair(repair) ? 'Overdue' : 'ETA', repair.eta || '—'],
