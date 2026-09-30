@@ -194,10 +194,6 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
         setCustomerError('Name and phone are required to create a new customer.');
         return;
       }
-      if (!customerBirthMonth || !customerBirthDay) {
-        setCustomerError('Birthday is required to create a new customer.');
-        return;
-      }
     } else if (!form.customer) {
       return;
     }
@@ -222,7 +218,8 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
       const customer = customerMode === 'new' && !initial
         ? selectedCustomer ?? await addCustomer({
             name: form.customer.trim(), phone: form.customerPhone.trim(), email: form.customerEmail.trim(), address: '',
-            birth_month: customerBirthMonth, birth_day: customerBirthDay,
+            birth_month: customerBirthMonth && customerBirthDay ? customerBirthMonth : undefined,
+            birth_day: customerBirthMonth && customerBirthDay ? customerBirthDay : undefined,
           })
         : selectedCustomer;
 
@@ -492,7 +489,7 @@ export default function AddRepairModal({ onSave, onClose, repairs, defaultJobTyp
           {customerMode === 'new' && !initial && (
             <BirthdayInput month={customerBirthMonth} day={customerBirthDay}
               onChange={(m, d) => { setCustomerBirthMonth(m); setCustomerBirthDay(d); }}
-              label="Customer Birthday" required />
+              label="Customer Birthday" />
           )}
           <div>
             <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'hsl(var(--muted-foreground))' }}>Device Type</label>

@@ -29,9 +29,9 @@ function AddCustomerModal({ onSave, onClose }: {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.phone || !birthMonth || !birthDay) return;
+    if (!form.name || !form.phone) return;
     setSaving(true);
-    try { await onSave({ ...form, birth_month: birthMonth, birth_day: birthDay }); onClose(); }
+    try { await onSave({ ...form, birth_month: birthMonth && birthDay ? birthMonth : undefined, birth_day: birthMonth && birthDay ? birthDay : undefined }); onClose(); }
     finally { setSaving(false); }
   };
 
@@ -77,7 +77,7 @@ function AddCustomerModal({ onSave, onClose }: {
               />
             </div>
           ))}
-          <BirthdayInput month={birthMonth} day={birthDay} onChange={(m, d) => { setBirthMonth(m); setBirthDay(d); }} required />
+          <BirthdayInput month={birthMonth} day={birthDay} onChange={(m, d) => { setBirthMonth(m); setBirthDay(d); }} />
           <div className="flex gap-2 pt-1">
             <button type="button" onClick={onClose}
               className="flex-1 h-9 rounded-lg text-xs font-semibold"
@@ -118,9 +118,9 @@ function EditCustomerModal({ customer, onSave, onClose }: {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.phone || !birthMonth || !birthDay) return;
+    if (!form.name || !form.phone) return;
     setSaving(true);
-    try { await onSave({ ...form, birth_month: birthMonth, birth_day: birthDay }); onClose(); }
+    try { await onSave({ ...form, birth_month: birthMonth && birthDay ? birthMonth : undefined, birth_day: birthMonth && birthDay ? birthDay : undefined }); onClose(); }
     finally { setSaving(false); }
   };
 
@@ -162,7 +162,7 @@ function EditCustomerModal({ customer, onSave, onClose }: {
               />
             </div>
           ))}
-          <BirthdayInput month={birthMonth} day={birthDay} onChange={(m, d) => { setBirthMonth(m); setBirthDay(d); }} required />
+          <BirthdayInput month={birthMonth} day={birthDay} onChange={(m, d) => { setBirthMonth(m); setBirthDay(d); }} />
           <div>
             <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>Notes</label>
             <textarea

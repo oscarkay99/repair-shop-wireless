@@ -75,10 +75,10 @@ export default function CustomerPicker({
 
   const createNew = async () => {
     const name = value.trim();
-    if (!name || !phone.trim() || !birthMonth || !birthDay || creating) return;
+    if (!name || !phone.trim() || creating) return;
     setCreating(true);
     try {
-      const c = await add({ name, phone: phone.trim(), email: '', address: '', birth_month: birthMonth, birth_day: birthDay });
+      const c = await add({ name, phone: phone.trim(), email: '', address: '', birth_month: birthMonth && birthDay ? birthMonth : undefined, birth_day: birthMonth && birthDay ? birthDay : undefined });
       pick(c);
       setBirthMonth(undefined);
       setBirthDay(undefined);
@@ -172,11 +172,11 @@ export default function CustomerPicker({
               </div>
             ) : phone.trim() ? (
               <div className="p-3 space-y-2">
-                <BirthdayInput month={birthMonth} day={birthDay} onChange={(m, d) => { setBirthMonth(m); setBirthDay(d); }} required />
+                <BirthdayInput month={birthMonth} day={birthDay} onChange={(m, d) => { setBirthMonth(m); setBirthDay(d); }} />
                 <button
                   type="button"
                   onMouseDown={e => { e.preventDefault(); createNew(); }}
-                  disabled={creating || !birthMonth || !birthDay}
+                  disabled={creating}
                   className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-left text-xs font-medium hover:bg-[hsl(var(--muted))] transition-colors disabled:opacity-40"
                   style={{ color: 'hsl(var(--primary))' }}
                 >

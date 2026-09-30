@@ -176,15 +176,11 @@ function RecordSaleModal({ products, onSave, onClose }: {
       setCustomerError('Phone number is required to create a new customer.');
       return;
     }
-    if (customerMode === 'new' && customerName.trim() && (!customerBirthMonth || !customerBirthDay)) {
-      setCustomerError('Birthday is required to create a new customer.');
-      return;
-    }
     setCustomerError('');
     setSaving(true);
     try {
       const customer = customerMode === 'new' && customerName.trim() && !selectedCustomer
-        ? await addCustomer({ name: customerName.trim(), phone: customerPhone.trim(), email: '', address: '', birth_month: customerBirthMonth, birth_day: customerBirthDay })
+        ? await addCustomer({ name: customerName.trim(), phone: customerPhone.trim(), email: '', address: '', birth_month: customerBirthMonth && customerBirthDay ? customerBirthMonth : undefined, birth_day: customerBirthMonth && customerBirthDay ? customerBirthDay : undefined })
         : selectedCustomer;
       // Receipt isn't auto-downloaded — the sale is recorded in Sales
       // History, where it can be downloaded on demand (same pattern as
@@ -264,7 +260,7 @@ function RecordSaleModal({ products, onSave, onClose }: {
                   placeholder="+233…" />
               </div>
               <BirthdayInput month={customerBirthMonth} day={customerBirthDay}
-                onChange={(m, d) => { setCustomerBirthMonth(m); setCustomerBirthDay(d); }} required={!!customerName.trim()} />
+                onChange={(m, d) => { setCustomerBirthMonth(m); setCustomerBirthDay(d); }} />
             </>
           ) : (
             <>
