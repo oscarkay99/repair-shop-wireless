@@ -32,7 +32,7 @@ const listeners = new Set<() => void>();
 let reloadTimer: ReturnType<typeof setTimeout> | null = null;
 function scheduleReload() {
   if (reloadTimer) clearTimeout(reloadTimer);
-  reloadTimer = setTimeout(() => { reloadTimer = null; reloadRepairs(); }, 300);
+  reloadTimer = setTimeout(() => { reloadTimer = null; reloadRepairs({ silent: true }); }, 300);
 }
 
 let realtimeStarted = false;
@@ -44,7 +44,7 @@ function startFallbackPolling() {
   // temporary network failure. Ticket updates are important, so keep the
   // shared store fresh without allowing a WebSocket failure to crash React.
   fallbackPollTimer = setInterval(() => {
-    reloadRepairs().catch(error => {
+    reloadRepairs({ silent: true }).catch(error => {
       console.warn('[repairs] fallback refresh failed', error);
     });
   }, 45_000);
@@ -109,26 +109,36 @@ function getSnapshot() {
 // mounted Tech Portal (or any other open screen) showing the old assignment
 // list until a hard refresh. Mirrors the same fix applied to
 // useWirelessSettings / useTechnicians.
-export async function reloadRepairs() {
+//
+// `silent` is for background refreshes (poll / realtime): no loading flag, so
+// lists and open forms stay put, a transient failure keeps the data already
+// on screen, and the store is only touched if the data actually changed.
+export async function reloadRepairs(opts: { silent?: boolean } = {}) {
+  const silent = !!opts.silent;
   const accessKey = activeAccessKey;
   if (!accessKey) {
     setStore({ repairs: [], loading: false, error: null });
     return;
   }
   const generation = ++requestGeneration;
-  setStore({ loading: true, error: null });
+  if (!silent) setStore({ loading: true, error: null });
   try {
     const repairs = await getRepairs();
     if (accessKey === activeAccessKey && generation === requestGeneration) {
+      if (silent && !store.error && JSON.stringify(repairs) === JSON.stringify(store.repairs)) return;
       setStore({ repairs, loading: false, error: null });
     }
   } catch (error) {
     if (accessKey === activeAccessKey && generation === requestGeneration) {
+      if (silent) {
+        console.warn('[useRepairs] background refresh failed', error);
+        return;
+      }
       console.error('[useRepairs] ticket refresh failed', error);
       setStore({ repairs: [], loading: false, error: 'Tickets could not be loaded. Please check your connection and try again.' });
     }
   } finally {
-    if (accessKey === activeAccessKey && generation === requestGeneration) {
+    if (accessKey === activeAccessKey && generation === requestGeneration && store.loading) {
       setStore({ loading: false });
     }
   }
@@ -286,5 +296,5 @@ export function useRepairs() {
     }
   };
 
-  return { repairs, loading, error, reload: reloadRepairs, add, setStatus, setNotes, updateStatus, addNote, addMedia, removeMedia, patchRepair, remove };
+  return { repairs, loading, error, reload: () => reloadRepairs(), add, setStatus, setNotes, updateStatus, addNote, addMedia, removeMedia, patchRepair, remove };
 }

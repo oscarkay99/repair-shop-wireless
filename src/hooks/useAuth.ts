@@ -112,7 +112,11 @@ if (isSupabaseConfigured) {
     // to signed-in in THIS tab counts as a login worth logging.
     const wasSignedOut = !state.user;
     if (session?.user) {
-      setState({ loading: true });
+      // Only block the UI with the full-screen spinner when nobody is signed
+      // in yet. For an already-signed-in user this event is a silent token
+      // refresh / tab re-sync: revalidate the profile in the background so
+      // the current page (and anything half-typed) isn't torn down.
+      if (!state.user) setState({ loading: true });
       loadProfileFromSession(session.user.id, session.user.email ?? '').then(user => {
         if (user) {
           writeStoredUser(user);
