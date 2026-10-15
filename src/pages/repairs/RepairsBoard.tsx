@@ -14,7 +14,7 @@ import Pagination from '@/components/shared/Pagination';
 import DateRangePicker, { type DateRange } from '@/components/shared/DateRangePicker';
 import {
   X, Clock, Shield, Plus, Pencil, Trash2, Camera, Video, AlertCircle, Loader2,
-  CheckCircle2, Scissors, Stethoscope, ArrowRightCircle, UserX, Users, XCircle, Zap, Printer, AlertTriangle,
+  CheckCircle2, Scissors, Stethoscope, ArrowRightCircle, UserX, Users, XCircle, Zap, Printer, AlertTriangle, Images,
 } from 'lucide-react';
 import type { Repair, RepairStatus, RepairMediaStage, RepairMediaUploadInput } from '@/types/repair';
 import type { Payment } from '@/types/wireless';
@@ -208,6 +208,8 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   const [extraAmount, setExtraAmount] = useState('');
   const [extraSaving, setExtraSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const [photoSheetOpen, setPhotoSheetOpen] = useState(false);
   const { user } = useAuth();
   const { technicians } = useTechnicians();
   const canUploadMedia = user?.role === 'technician' && technicians.some(tech =>
@@ -403,7 +405,12 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
     if (!canUploadMedia) return;
     setUploadError('');
     setPromptStage(stage);
-    fileInputRef.current?.click();
+    setPhotoSheetOpen(true);
+  };
+
+  const pickPhotoSource = (source: 'photos' | 'camera') => {
+    setPhotoSheetOpen(false);
+    (source === 'camera' ? cameraInputRef : fileInputRef).current?.click();
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -757,10 +764,43 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
             type="file"
             accept="image/jpeg,image/png,image/webp"
             disabled={!canUploadMedia}
+            className="hidden"
+            onChange={handleFileChange}
+          />
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            disabled={!canUploadMedia}
             capture="environment"
             className="hidden"
             onChange={handleFileChange}
           />
+          {photoSheetOpen && (
+            <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center"
+              style={{ background: 'rgba(0,0,0,0.5)' }}
+              onClick={() => { setPhotoSheetOpen(false); setPromptStage(null); }}>
+              <div className="w-full sm:w-auto sm:min-w-[320px] rounded-t-3xl sm:rounded-3xl px-8 pt-6 pb-8"
+                style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
+                onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-center gap-10">
+                  {([
+                    { key: 'photos', label: 'Photos', Icon: Images, color: '#3b82f6' },
+                    { key: 'camera', label: 'Camera', Icon: Camera, color: 'hsl(var(--foreground))' },
+                  ] as const).map(({ key, label, Icon, color }) => (
+                    <button key={key} onClick={() => pickPhotoSource(key)}
+                      className="flex flex-col items-center gap-2">
+                      <span className="w-20 h-20 rounded-full flex items-center justify-center"
+                        style={{ background: 'hsl(var(--muted))' }}>
+                        <Icon className="w-9 h-9" style={{ color }} />
+                      </span>
+                      <span className="text-sm font-medium" style={{ color: 'hsl(var(--foreground))' }}>{label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Notes */}
