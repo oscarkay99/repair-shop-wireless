@@ -16,6 +16,8 @@ export interface InvoiceBrandSettings {
   phone?: string;
   address?: string;
   logo_url?: string | null;
+  /** Repair Service Terms text from Settings ("## Heading" sections). */
+  terms_and_conditions?: string | null;
 }
 
 export interface InvoicePdfOptions {
@@ -29,6 +31,9 @@ export interface InvoicePdfOptions {
    *  invoice.ticket_id — lets the tracker QR authenticate on scan with no
    *  phone-number match needed. Omitted for invoices with no linked ticket. */
   trackerToken?: string | null;
+  /** Appends a separate terms-and-conditions page with signature lines for
+   *  staff and customer. Off by default so emailed/other PDFs are unchanged. */
+  includeTermsSheet?: boolean;
 }
 
 const PAGE_W = 210;
@@ -63,7 +68,7 @@ function drawPaidStamp(doc: jsPDF, cx: number, cy: number) {
   doc.text('PAID', cx, cy, { angle: angleDeg, align: 'center', baseline: 'middle' });
 }
 
-export async function buildInvoicePdf({ invoice, items, taxEnabled, vatRate, levyRate, settings, trackerToken }: InvoicePdfOptions): Promise<jsPDF> {
+export async function buildInvoicePdf({ invoice, items, taxEnabled, vatRate, levyRate, settings, trackerToken, includeTermsSheet }: InvoicePdfOptions): Promise<jsPDF> {
   const doc = new jsPDF();
   const isPaid = invoice.status === 'paid';
   const businessName = settings?.business_name?.trim() || 'Wireless';
@@ -284,11 +289,104 @@ export async function buildInvoicePdf({ invoice, items, taxEnabled, vatRate, lev
     doc.text('Scan to track', qrX + qrSize / 2, qrY + qrSize + 3, { align: 'center' });
   }
 
+  if (includeTermsSheet && settings?.terms_and_conditions?.trim()) {
+    drawTermsSheet(doc, settings.terms_and_conditions, businessName, invoice.invoice_number);
+  }
+
   return doc;
 }
 
+/** Splits Settings terms text into sections: a "## " line starts a new
+ *  heading, everything else is that heading's body. */
+function parseTermsSections(raw: string): { title: string; body: string }[] {
+  const sections: { title: string; lines: string[] }[] = [];
+  let current = { title: '', lines: [] as string[] };
+  const flush = () => {
+    if (current.title || current.lines.some(l => l.trim())) sections.push(current);
+  };
+  for (const line of raw.split('\n')) {
+    const heading = line.match(/^##\s+(.*)/);
+    if (heading) { flush(); current = { title: heading[1].trim(), lines: [] }; }
+    else current.lines.push(line);
+  }
+  flush();
+  return sections.map(s => ({ title: s.title, body: s.lines.join('\n').trim() }));
+}
+
+/** Adds a standalone terms page ending in two signature blocks (business
+ *  and customer), so the printed invoice can be collected with a signed copy. */
+function drawTermsSheet(doc: jsPDF, terms: string, businessName: string, invoiceNumber: string) {
+  const SIGNATURE_BLOCK_H = 42;
+  const BOTTOM = 287;
+  doc.addPage();
+  let y = 20;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(15);
+  doc.setTextColor(30);
+  doc.text('Terms and Conditions', MARGIN, y);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(136);
+  doc.text(`${businessName}  ·  Invoice # ${invoiceNumber}`, RIGHT_X, y, { align: 'right' });
+  y += 4;
+  doc.setDrawColor(224, 224, 224);
+  doc.line(MARGIN, y, RIGHT_X, y);
+  y += 7;
+
+  const ensureRoom = (needed: number) => {
+    if (y + needed > BOTTOM) { doc.addPage(); y = 20; }
+  };
+
+  for (const section of parseTermsSections(terms)) {
+    const lines = section.body ? doc.splitTextToSize(section.body, RIGHT_X - MARGIN) as string[] : [];
+    ensureRoom((section.title ? 6 : 0) + Math.min(lines.length, 3) * 4 + 2);
+    if (section.title) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(40);
+      doc.text(section.title.toUpperCase(), MARGIN, y);
+      y += 5;
+    }
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(85);
+    for (const line of lines) {
+      ensureRoom(4);
+      doc.text(line, MARGIN, y);
+      y += 4;
+    }
+    y += 3;
+  }
+
+  ensureRoom(SIGNATURE_BLOCK_H);
+  y += 8;
+  doc.setFontSize(8.5);
+  doc.setTextColor(85);
+  doc.text('By signing below, the customer confirms they have read and accepted these terms.', MARGIN, y);
+  y += 16;
+
+  const colW = (RIGHT_X - MARGIN - 12) / 2;
+  const blocks = [
+    { x: MARGIN, title: `For ${businessName}` },
+    { x: MARGIN + colW + 12, title: 'Customer' },
+  ];
+  doc.setDrawColor(120);
+  doc.setLineWidth(0.3);
+  for (const b of blocks) {
+    doc.line(b.x, y, b.x + colW, y);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(40);
+    doc.text(b.title, b.x, y + 5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(136);
+    doc.text('Name: ______________________', b.x, y + 12);
+    doc.text('Date: _______________', b.x, y + 19);
+  }
+}
+
 export async function downloadInvoicePdf(opts: InvoicePdfOptions) {
-  const doc = await buildInvoicePdf(opts);
+  const doc = await buildInvoicePdf({ includeTermsSheet: true, ...opts });
   doc.save(`${opts.invoice.invoice_number}.pdf`);
 }
 
@@ -297,7 +395,7 @@ export async function downloadInvoicePdf(opts: InvoicePdfOptions) {
  *  printed whatever was on screen (sidebar, nav tabs, stat tiles and all),
  *  not a real invoice document. */
 export async function printInvoicePdf(opts: InvoicePdfOptions) {
-  const doc = await buildInvoicePdf(opts);
+  const doc = await buildInvoicePdf({ includeTermsSheet: true, ...opts });
   window.open(doc.output('bloburl'), '_blank');
 }
 

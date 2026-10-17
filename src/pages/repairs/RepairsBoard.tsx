@@ -212,6 +212,9 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
   const [photoSheetOpen, setPhotoSheetOpen] = useState(false);
   const { user } = useAuth();
   const { technicians } = useTechnicians();
+  // Technicians/admins as before, plus any role explicitly granted
+  // ticket_parts:create (reception logs the part after the tech confirms it).
+  const canLogParts = canUpdateProgress || (user?.permissions ?? []).includes('ticket_parts:create');
   const canUploadMedia = user?.role === 'technician' && technicians.some(tech =>
     tech.profile_id === user.id && repair.technicians.some(assigned => assigned.id === tech.id),
   );
@@ -646,7 +649,7 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
         <div className="pt-3" style={{ borderTop: '1px solid hsl(var(--border))' }}>
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs font-bold" style={{ color: 'hsl(var(--foreground))' }}>Parts Used</p>
-            {!isDone && canUpdateProgress && (
+            {!isDone && canLogParts && (
               <button
                 onClick={() => setShowAddPart(true)}
                 className="text-xs font-medium flex items-center gap-1"
@@ -667,8 +670,13 @@ export function RepairDetailPanel({ repair, onClose, onUpdateStatus, onAddNote, 
                     <p className="text-[11px]" style={{ color: 'hsl(var(--muted-foreground))' }}>
                       ×{part.quantity} @ ¢{part.unit_cost.toFixed(2)} = ¢{(part.quantity * part.unit_cost).toFixed(2)}
                     </p>
+                    {part.substituted_for && (
+                      <p className="text-[11px] font-medium" style={{ color: '#b45309' }}>
+                        In-house: booked as {part.substituted_for}
+                      </p>
+                    )}
                   </div>
-                  {canUpdateProgress && (
+                  {canLogParts && (
                     <button onClick={() => handleRemoveTicketPart(part)}
                       className="w-7 h-7 flex items-center justify-center rounded-lg flex-shrink-0"
                       style={{ color: 'hsl(var(--muted-foreground))' }}>

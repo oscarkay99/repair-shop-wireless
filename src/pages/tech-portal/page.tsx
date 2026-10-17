@@ -80,8 +80,13 @@ export default function TechPortalPage() {
     myTech ? repairs.filter(r => r.technicians.some(t => t.id === myTech.id)) : [],
     [repairs, myTech]);
 
-  const activeRepairs = myRepairs.filter(r => r.status === 'in_progress');
-  const queueRepairs  = myRepairs.filter(r => QUEUE_STATUSES.includes(r.status));
+  // Newest ticket first within each group — the list was arriving in
+  // whatever order the board returned it, which read as random.
+  const receivedAt = (r: typeof myRepairs[number]) => r.createdAt ?? r.started ?? '';
+  const newestFirst = (a: typeof myRepairs[number], b: typeof myRepairs[number]) =>
+    receivedAt(b).localeCompare(receivedAt(a));
+  const activeRepairs = myRepairs.filter(r => r.status === 'in_progress').sort(newestFirst);
+  const queueRepairs  = myRepairs.filter(r => QUEUE_STATUSES.includes(r.status)).sort(newestFirst);
   const doneRepairs   = myRepairs.filter(r => DONE_STATUSES.includes(r.status));
   const openRepairs   = [...activeRepairs, ...queueRepairs];
   // Finished jobs stay visible (newest first) instead of vanishing from the

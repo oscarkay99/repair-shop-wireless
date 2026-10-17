@@ -17,6 +17,7 @@ export default function AddTicketPartModal({ ticketDbId, onClose, onAdded }: {
   const [search, setSearch] = useState('');
   const [partId, setPartId] = useState('');
   const [quantity, setQuantity] = useState('1');
+  const [substitutedFor, setSubstitutedFor] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -43,6 +44,7 @@ export default function AddTicketPartModal({ ticketDbId, onClose, onAdded }: {
         partName: selected.name,
         quantity: qty,
         unitCost: selected.unit_cost,
+        substitutedFor,
       });
       onAdded();
       onClose();
@@ -110,6 +112,25 @@ export default function AddTicketPartModal({ ticketDbId, onClose, onAdded }: {
               />
               <p className="text-[11px] mt-1" style={{ color: exceedsStock ? '#ef4444' : 'hsl(var(--muted-foreground))' }}>
                 {selected.stock} currently in stock{exceedsStock ? '. This will take stock to 0' : ''}
+              </p>
+            </div>
+          )}
+
+          {selected && (
+            <div>
+              <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                Booked as (optional)
+              </label>
+              <input
+                type="text"
+                value={substitutedFor}
+                onChange={e => setSubstitutedFor(e.target.value)}
+                placeholder="Only if a different part was quoted, e.g. 820-00xxx-34"
+                className={inputCls}
+                style={inputStyle}
+              />
+              <p className="text-[11px] mt-1" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                In-house note. Stock is deducted for the part selected above. Not shown on customer tickets or invoices.
               </p>
             </div>
           )}

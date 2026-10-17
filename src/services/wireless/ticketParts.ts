@@ -12,6 +12,9 @@ export interface TicketPart {
   part_name: string;
   quantity: number;
   unit_cost: number;
+  /** In-house only: the part the customer was quoted/booked for when a
+   *  different (compatible) part was fitted. Never printed. */
+  substituted_for?: string | null;
   created_at: string;
 }
 
@@ -32,6 +35,7 @@ export async function addTicketPart(input: {
   partName: string;
   quantity: number;
   unitCost: number;
+  substitutedFor?: string;
 }): Promise<TicketPart> {
   const { data, error } = await db
     .from('ticket_parts')
@@ -41,6 +45,8 @@ export async function addTicketPart(input: {
       part_name: input.partName,
       quantity: input.quantity,
       unit_cost: input.unitCost,
+      // Only sent when filled in, so ordinary adds don't depend on the column.
+      ...(input.substitutedFor?.trim() ? { substituted_for: input.substitutedFor.trim() } : {}),
     })
     .select()
     .single();
